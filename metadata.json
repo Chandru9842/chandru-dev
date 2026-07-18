@@ -1,0 +1,6 @@
+{
+  "name": "Personal Portfolio CMS",
+  "description": "A comprehensive database architecture and design for a production-ready Personal Portfolio CMS, normalized to 3NF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

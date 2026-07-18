@@ -1,0 +1,1987 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "AI-Powered Meeting Summarizer",
+      "slug": "ai-meeting-summarizer",
+      "description": "Full-stack enterprise application with a clean, responsive layout utilizing Gemini API to transcribe, summarize, and categorize workspace calls.",
+      "liveUrl": "https://example.com/summarizer",
+      "githubUrl": "https://github.com/admin/summarizer",
+      "startDate": "2026-01-15",
+      "endDate": "2026-04-30",
+      "isFeatured": true,
+      "displayOrder": 1,
+      "skills": [
+        "React",
+        "Spring Boot",
+        "MySQL",
+        "Gemini API"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+      "category": "Full-Stack",
+      "status": "Completed",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "gallery": [
+        "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80"
+      ],
+      "createdAt": "2026-01-15T09:00:00Z",
+      "updatedAt": "2026-04-30T17:30:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Real-time Collaborative Board",
+      "slug": "collab-board-realtime",
+      "description": "Multiplayer interactive canvas with custom room locks, vector toolkits, and server-authoritative state replication using WebSockets.",
+      "liveUrl": "https://example.com/collab",
+      "githubUrl": "https://github.com/admin/collab",
+      "startDate": "2025-08-10",
+      "endDate": "2025-12-20",
+      "isFeatured": true,
+      "displayOrder": 2,
+      "skills": [
+        "React",
+        "Node.js",
+        "WebSocket",
+        "TailwindCSS"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80",
+      "category": "Frontend",
+      "status": "Maintained",
+      "videoUrl": "",
+      "gallery": [
+        "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80"
+      ],
+      "createdAt": "2025-08-10T10:00:00Z",
+      "updatedAt": "2025-12-20T18:00:00Z"
+    },
+    {
+      "id": 3,
+      "title": "Personal FinTech Dashboard",
+      "slug": "fintech-dashboard-pro",
+      "description": "Financial statistics suite with D3 charts tracking banking transaction streams, user goals, and dynamic tax forecasting engines.",
+      "liveUrl": "https://example.com/fintech",
+      "githubUrl": "https://github.com/admin/fintech",
+      "startDate": "2025-03-01",
+      "endDate": "2025-07-15",
+      "isFeatured": false,
+      "displayOrder": 3,
+      "skills": [
+        "React",
+        "D3.js",
+        "Spring Boot",
+        "MySQL"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+      "category": "Full-Stack",
+      "status": "Completed",
+      "videoUrl": "",
+      "gallery": [
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+      ],
+      "createdAt": "2025-03-01T08:00:00Z",
+      "updatedAt": "2025-07-15T16:00:00Z"
+    }
+  ],
+  "skills": [
+    {
+      "id": 1,
+      "name": "React / Next.js",
+      "category": "Frontend",
+      "displayOrder": 1,
+      "color": "#0ea5e9",
+      "description": "Modern React and Next.js frameworks for fast, reactive user interfaces and server-side applications.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 2,
+      "name": "TypeScript",
+      "category": "Frontend",
+      "displayOrder": 2,
+      "color": "#3178c6",
+      "description": "Typed superset of JavaScript providing robust developer tooling and compiler safety.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1516116211223-5c359a36298a?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 3,
+      "name": "TailwindCSS",
+      "category": "Frontend",
+      "displayOrder": 3,
+      "color": "#38bdf8",
+      "description": "Utility-first CSS framework for rapid design implementations with custom tokens.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 4,
+      "name": "Spring Boot",
+      "category": "Backend",
+      "displayOrder": 4,
+      "color": "#6db33f",
+      "description": "Enterprise-grade JVM framework for resilient microservices and RESTful API structures.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 5,
+      "name": "Spring Security & JWT",
+      "category": "Backend",
+      "displayOrder": 5,
+      "color": "#005a9c",
+      "description": "Token-based credentials architectures and role-based access control filters.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 6,
+      "name": "MySQL / Hibernate",
+      "category": "Database",
+      "displayOrder": 6,
+      "color": "#4479a1",
+      "description": "Relational query optimizations, schema constraints, and Object-Relational mappings.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 7,
+      "name": "Cloudinary",
+      "category": "DevOps",
+      "displayOrder": 7,
+      "color": "#3448c5",
+      "description": "Cloud media management API serving optimized, compressed assets dynamically.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&h=120&q=80"
+    },
+    {
+      "id": 8,
+      "name": "Docker & Kubernetes",
+      "category": "DevOps",
+      "displayOrder": 8,
+      "color": "#2496ed",
+      "description": "Container virtualization, service orchestrations, and automated deployment pipelines.",
+      "visibility": true,
+      "iconUrl": "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=120&h=120&q=80"
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "name": "Spring Certified Professional",
+      "issuingOrganization": "VMware",
+      "issueDate": "2025-05-12",
+      "expirationDate": "2028-05-12",
+      "credentialId": "VMW-SPC-779021",
+      "credentialUrl": "https://badgr.com/public/assertions/v9012"
+    },
+    {
+      "id": 2,
+      "name": "AWS Certified Solutions Architect",
+      "issuingOrganization": "Amazon Web Services",
+      "issueDate": "2024-11-20",
+      "expirationDate": "2027-11-20",
+      "credentialId": "AWS-ASA-99031",
+      "credentialUrl": "https://aws.amazon.com/verification"
+    }
+  ],
+  "experiences": [
+    {
+      "id": 1,
+      "company": "Google AI Studio Labs",
+      "role": "Senior Full-Stack Architect",
+      "description": "Designing cloud native templates, securing backend REST services with JWT integrations, and building high-fidelity workspace visualizers.",
+      "location": "Mountain View, CA (Remote)",
+      "startDate": "2024-06-01",
+      "endDate": "",
+      "isCurrent": true
+    },
+    {
+      "id": 2,
+      "company": "Pinnacle Software Systems",
+      "role": "Java Backend Engineer",
+      "description": "Implemented high-throughput microservices using Spring Boot and JPA/Hibernate. Managed database migrations for multi-tenant configurations.",
+      "location": "Austin, TX",
+      "startDate": "2022-03-15",
+      "endDate": "2024-05-30",
+      "isCurrent": false
+    }
+  ],
+  "education": [
+    {
+      "id": 1,
+      "institution": "Stanford University",
+      "degree": "Master of Science",
+      "fieldOfStudy": "Computer Science (Specialization: AI Systems)",
+      "startDate": "2020-09-15",
+      "endDate": "2022-06-15",
+      "isCurrent": false,
+      "grade": "GPA: 3.92/4.0"
+    },
+    {
+      "id": 2,
+      "institution": "University of Texas at Austin",
+      "degree": "Bachelor of Science",
+      "fieldOfStudy": "Software Engineering",
+      "startDate": "2016-09-01",
+      "endDate": "2020-05-30",
+      "isCurrent": false,
+      "grade": "GPA: 3.85/4.0"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "senderName": "Sarah Jenkins",
+      "senderEmail": "sarah@stripe.com",
+      "subject": "Hiring Inquiry: Full-Stack Developer Role",
+      "messageContent": "Hi, I checked out your recent fintech project and loved the custom transaction reporting. We have an open staff role in our core team. Let me know if you would like to connect next Tuesday!",
+      "isRead": false,
+      "isStarred": true,
+      "createdAt": "2026-07-08T14:30:00Z"
+    },
+    {
+      "id": 2,
+      "senderName": "Marcus Aurelius",
+      "senderEmail": "marcus@rome.org",
+      "subject": "Collaboration Request on Zen App",
+      "messageContent": "A wonderful portfolio! I am looking for an architect to bootstrap the backend of our meditation log app using clean architecture guidelines. Your spring security expertise is exactly what we need.",
+      "isRead": true,
+      "isStarred": false,
+      "createdAt": "2026-07-06T09:15:00Z"
+    }
+  ],
+  "analytics": {
+    "pageViews": 12527,
+    "uniqueVisitors": 4143,
+    "averageSessionSec": 184,
+    "contactConversionRate": 2.8,
+    "viewsHistory": [
+      {
+        "date": "Jul 03",
+        "views": 1200,
+        "visitors": 390
+      },
+      {
+        "date": "Jul 04",
+        "views": 1450,
+        "visitors": 420
+      },
+      {
+        "date": "Jul 05",
+        "views": 1100,
+        "visitors": 350
+      },
+      {
+        "date": "Jul 06",
+        "views": 1800,
+        "visitors": 580
+      },
+      {
+        "date": "Jul 07",
+        "views": 2100,
+        "visitors": 690
+      },
+      {
+        "date": "Jul 08",
+        "views": 2450,
+        "visitors": 820
+      },
+      {
+        "date": "Jul 09",
+        "views": 2350,
+        "visitors": 870
+      },
+      {
+        "date": "Jul 11",
+        "views": 74,
+        "visitors": 23
+      },
+      {
+        "date": "Jul 18",
+        "views": 3,
+        "visitors": 0
+      }
+    ],
+    "referrals": [
+      {
+        "source": "GitHub",
+        "count": 4890,
+        "percentage": 39
+      },
+      {
+        "source": "LinkedIn",
+        "count": 3240,
+        "percentage": 25.9
+      },
+      {
+        "source": "Direct Traffic",
+        "count": 2180,
+        "percentage": 17.4
+      },
+      {
+        "source": "Google / SEO",
+        "count": 1517,
+        "percentage": 12.1
+      },
+      {
+        "source": "Twitter / X",
+        "count": 700,
+        "percentage": 5.6
+      }
+    ],
+    "countries": [
+      {
+        "country": "United States",
+        "count": 5890
+      },
+      {
+        "country": "India",
+        "count": 2197
+      },
+      {
+        "country": "Germany",
+        "count": 1100
+      },
+      {
+        "country": "United Kingdom",
+        "count": 980
+      },
+      {
+        "country": "Canada",
+        "count": 850
+      },
+      {
+        "country": "Japan",
+        "count": 710
+      }
+    ],
+    "browsers": [
+      {
+        "browser": "Chrome",
+        "count": 7527
+      },
+      {
+        "browser": "Safari",
+        "count": 2890
+      },
+      {
+        "browser": "Firefox",
+        "count": 1120
+      },
+      {
+        "browser": "Edge",
+        "count": 710
+      },
+      {
+        "browser": "Other",
+        "count": 280
+      }
+    ],
+    "devices": [
+      {
+        "device": "Desktop",
+        "count": 8667
+      },
+      {
+        "device": "Mobile",
+        "count": 3240
+      },
+      {
+        "device": "Tablet",
+        "count": 520
+      },
+      {
+        "device": "Other",
+        "count": 100
+      }
+    ],
+    "projectsViewed": [
+      {
+        "projectTitle": "AI-Powered Meeting Summarizer",
+        "count": 1241,
+        "slug": "ai-meeting-summarizer"
+      },
+      {
+        "projectTitle": "Distributed Redis Clone",
+        "count": 980,
+        "slug": "distributed-redis-clone"
+      },
+      {
+        "projectTitle": "Enterprise Cloud Security Mesh",
+        "count": 720,
+        "slug": "cloud-security-mesh"
+      },
+      {
+        "projectTitle": "Real-time Collaborative Board",
+        "count": 1,
+        "slug": "collab-board-realtime"
+      }
+    ],
+    "clicks": [
+      {
+        "elementId": "github_profile",
+        "label": "GitHub Profile View",
+        "count": 320
+      },
+      {
+        "elementId": "linkedin_profile",
+        "label": "LinkedIn Connect",
+        "count": 280
+      },
+      {
+        "elementId": "contact_submit",
+        "label": "Contact Form Submit Button",
+        "count": 45
+      },
+      {
+        "elementId": "experience_linkedin",
+        "label": "Company Profile Link",
+        "count": 110
+      },
+      {
+        "elementId": "contact_btn_hero",
+        "label": "Contact Click",
+        "count": 1
+      },
+      {
+        "elementId": "resume_view_hero",
+        "label": "View Resume",
+        "count": 1
+      }
+    ],
+    "resumeDownloads": 345
+  },
+  "settings": {
+    "siteName": "Alex Dev | Tech Architect & Systems builder",
+    "siteDescription": "The digital home of Alex Dev, showing core full-stack competencies, cloud engineering certifications, and interactive UI creations.",
+    "metaKeywords": "Alex Dev, software architect, Spring Boot developer, React specialist, cloud engineering, Java backend portfolio",
+    "themeColor": "#10b981",
+    "analyticsId": "G-990321A8",
+    "isMaintenanceMode": false,
+    "allowContact": true
+  },
+  "socialLinks": [
+    {
+      "id": 1,
+      "platform": "GitHub",
+      "username": "alex-dev",
+      "profileUrl": "https://github.com/alex-dev",
+      "icon": "GitHub",
+      "displayOrder": 1,
+      "isVisible": true,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 2,
+      "platform": "LinkedIn",
+      "username": "alex-dev-architect",
+      "profileUrl": "https://linkedin.com/in/alex-dev-architect",
+      "icon": "LinkedIn",
+      "displayOrder": 2,
+      "isVisible": true,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 3,
+      "platform": "X (Twitter)",
+      "username": "alex_dev",
+      "profileUrl": "https://x.com/alex_dev",
+      "icon": "X (Twitter)",
+      "displayOrder": 3,
+      "isVisible": true,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 4,
+      "platform": "Email",
+      "username": "alex.dev@example.com",
+      "profileUrl": "mailto:alex.dev@example.com",
+      "icon": "Email",
+      "displayOrder": 4,
+      "isVisible": true,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    }
+  ],
+  "resumes": [
+    {
+      "id": 1,
+      "title": "Alex Dev - Principal Systems Engineer Resume",
+      "version": "2.4.0",
+      "description": "Principal Systems Engineer CV focusing on Full-Stack systems architecture, Kubernetes, and AI Integration with Gemini API.",
+      "fileName": "Alex_Dev_Resume_v2.4.pdf",
+      "fileUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 45210,
+      "cloudinaryPublicId": "portfolio/resume/alex_dev_systems_eng_v2_4",
+      "thumbnailImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=260&auto=format&fit=crop",
+      "isActive": true,
+      "isDownloadEnabled": true,
+      "uploadedAt": "2026-06-15T09:30:00.000Z",
+      "updatedAt": "2026-07-01T12:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "title": "Alex Dev - Full-Stack React Architect CV",
+      "version": "2.3.1",
+      "description": "Secondary draft focusing specifically on Frontend performance, Tailwind UI crafting, and edge rendering systems.",
+      "fileName": "Alex_Dev_CV_Frontend_v2.3.1.pdf",
+      "fileUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 38940,
+      "cloudinaryPublicId": "portfolio/resume/alex_dev_react_arch_v2_3_1",
+      "thumbnailImage": "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?q=80&w=260&auto=format&fit=crop",
+      "isActive": false,
+      "isDownloadEnabled": true,
+      "uploadedAt": "2026-05-10T14:15:00.000Z",
+      "updatedAt": "2026-05-10T14:15:00.000Z"
+    }
+  ],
+  "profile": {
+    "id": 1,
+    "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+    "coverImage": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+    "aboutImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+    "heroBackground": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+    "fullName": "Chandru  Mohan",
+    "displayName": "Chandru M",
+    "title": "Principal Systems Architect",
+    "subtitle": "Designing high-throughput distributed architectures & interactive visual frameworks.",
+    "typingText": "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
+    "shortBio": "Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
+    "aboutDescription": "With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
+    "email": "chandrumohan550@gmail.com",
+    "phone": "9655384140",
+    "location": "San Francisco, California",
+    "country": "United States",
+    "availability": "Open to Work",
+    "yearsExperience": 8,
+    "currentCompany": "Nexus Cloud Systems",
+    "currentPosition": "Lead Engineer",
+    "birthday": "1994-10-14",
+    "resumeId": 1,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-07-11T10:34:34.598Z",
+    "name": "Chandru  Mohan",
+    "username": "chandru",
+    "backupEmail": "",
+    "recoveryPhoneNumber": "",
+    "password": "814723104029",
+    "phoneNumber": "9655384140",
+    "heroBadge": "Full Stack Java Developer",
+    "heroName": "Alex Rivera",
+    "heroTitle": "Principal Systems Architect",
+    "heroSubtitle": "Ecosystem Architect & Product Pioneer",
+    "heroDescription": "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
+    "resumeUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+  },
+  "themeSettings": {
+    "id": 1,
+    "themeMode": "dark",
+    "primaryColor": "#10b981",
+    "secondaryColor": "#059669",
+    "accentColor": "#34d399",
+    "textColor": "#f8fafc",
+    "backgroundColor": "#020617",
+    "cardColor": "#0f172a66",
+    "borderColor": "#10b98133",
+    "buttonColor": "#10b981",
+    "hoverColor": "#059669",
+    "gradientStart": "#020617",
+    "gradientEnd": "#0b1528",
+    "heroBackground": {
+      "type": "image",
+      "src": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+      "enabled": true,
+      "opacity": 0.15,
+      "blur": 0,
+      "brightness": 1,
+      "overlayColor": "#020617"
+    },
+    "aboutBackground": {
+      "type": "gradient",
+      "src": "",
+      "enabled": true,
+      "opacity": 0.1,
+      "blur": 4,
+      "brightness": 1,
+      "overlayColor": "#020617"
+    },
+    "sectionBackgrounds": {
+      "type": "gradient",
+      "src": "",
+      "enabled": true,
+      "opacity": 0.1,
+      "blur": 0,
+      "brightness": 1,
+      "overlayColor": "#020617"
+    },
+    "footerBackground": {
+      "type": "gradient",
+      "src": "",
+      "enabled": true,
+      "opacity": 0.1,
+      "blur": 0,
+      "brightness": 1,
+      "overlayColor": "#020617"
+    },
+    "customWallpaper": {
+      "type": "image",
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+      "enabled": false,
+      "opacity": 0.1,
+      "blur": 8,
+      "brightness": 0.8,
+      "overlayColor": "#020617"
+    },
+    "animationsEnabled": true,
+    "pageTransition": "fade",
+    "mouseGlow": true,
+    "cursorEffect": "none",
+    "floatingObjects": true,
+    "particlesEnabled": true,
+    "glassEffect": true,
+    "animationSpeed": 1,
+    "threeDEnabled": true,
+    "galaxyEnabled": true,
+    "starsEnabled": true,
+    "planetEarthEnabled": true,
+    "laptopModelEnabled": true,
+    "floatingIconsEnabled": true,
+    "cameraMovement": "follow",
+    "mouseInteraction3D": true,
+    "lightingIntensity": 1,
+    "fogDensity": 0.015,
+    "performanceMode": false,
+    "fontFamily": "Inter",
+    "headingFont": "Space Grotesk",
+    "bodyFont": "Inter",
+    "fontSizeBase": "base",
+    "letterSpacing": "normal",
+    "lineHeight": "relaxed",
+    "buttonShape": "rounded",
+    "buttonBorderRadius": "0.75rem",
+    "buttonShadow": "md",
+    "buttonGlow": true,
+    "buttonHoverEffect": "lift",
+    "buttonAnimation": "none",
+    "containerWidth": "max-w-7xl",
+    "sidebarWidth": "w-64",
+    "navbarStyle": "glass",
+    "footerStyle": "simple",
+    "layoutSpacing": "normal",
+    "layoutBorderRadius": "xl"
+  },
+  "achievements": [
+    {
+      "id": 1,
+      "title": "Global AI Hackathon Champion",
+      "subtitle": "1st Place out of 450+ Teams Worldwide",
+      "shortDescription": "Won first prize in the open-track AI automation and generative models division with an autonomous microservice orchestration platform.",
+      "description": "Led a remote engineering team of 4 to design, build, and pitch an intelligent service orchestration engine. The solution utilized localized LLMs to auto-heal distributed REST endpoints, achieving a 98% reduction in mean time to repair (MTTR). Awarded Grand Prize by industry experts.",
+      "category": "Hackathon",
+      "organization": "Global AI Alliance & Google Cloud",
+      "achievementDate": "2026-05-15",
+      "imageUrl": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
+      "logoUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=120&q=80",
+      "certificateUrl": "",
+      "credentialUrl": "https://example.com/credentials/global-ai-winner",
+      "projectUrl": "https://example.com/projects/ai-orchestrator",
+      "githubUrl": "https://github.com/admin/ai-orchestration-engine",
+      "demoUrl": "https://example.com/demo/ai-orchestrator",
+      "skills": [
+        "Team Leadership",
+        "Distributed Systems",
+        "Generative AI API",
+        "Clean Architecture"
+      ],
+      "technologies": [
+        "React",
+        "Go",
+        "Docker",
+        "Python",
+        "Gemini API"
+      ],
+      "position": "Team Lead & Lead Architect",
+      "awardType": "1st Place Grand Prize",
+      "badge": "🏆 Champion",
+      "featured": true,
+      "visibility": true,
+      "displayOrder": 1,
+      "createdAt": "2026-05-16T08:00:00Z",
+      "updatedAt": "2026-05-16T08:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "AWS Certified Solutions Architect - Professional",
+      "subtitle": "Validation of advanced cloud architecture competencies",
+      "shortDescription": "Acquired industry-standard certification demonstrating expertise in design, migration, and management of complex enterprise cloud deployments.",
+      "description": "Successfully cleared the professional tier examination proving mastery in designing secure, resilient, and dynamically scalable multi-tier web architectures across complex hybrid-cloud environments with stringent high-availability constraints.",
+      "category": "Certification",
+      "organization": "Amazon Web Services (AWS)",
+      "achievementDate": "2026-02-10",
+      "imageUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+      "logoUrl": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=120&q=80",
+      "certificateUrl": "",
+      "credentialUrl": "https://example.com/verify/aws-sap-994321",
+      "skills": [
+        "Cloud Architecture",
+        "Enterprise Security",
+        "Cost Optimization",
+        "Disaster Recovery"
+      ],
+      "technologies": [
+        "AWS",
+        "Terraform",
+        "Kubernetes",
+        "IAM",
+        "VPC"
+      ],
+      "position": "Solutions Architect",
+      "awardType": "Professional Certification",
+      "badge": "☁️ AWS SAP-C02",
+      "featured": true,
+      "visibility": true,
+      "displayOrder": 2,
+      "createdAt": "2026-02-11T10:00:00Z",
+      "updatedAt": "2026-02-11T10:00:00Z"
+    },
+    {
+      "id": 3,
+      "title": "1st Place - National Competitive Coding Championship",
+      "subtitle": "Ranked #1 out of 2,500+ Top Collegiate Programmers",
+      "shortDescription": "Achieved perfect score in record speed across advanced data structures, graph theory, and dynamic programming algorithms.",
+      "description": "Competed in the annual algorithmic showdown, solving all 8 complex logic problems in under 92 minutes. Leveraged highly optimized C++ code and advanced algorithmic complexity techniques to secure the top spot in the leaderboards.",
+      "category": "Coding",
+      "organization": "National Informatics Society",
+      "achievementDate": "2025-11-05",
+      "imageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
+      "logoUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=120&q=80",
+      "certificateUrl": "",
+      "credentialUrl": "https://example.com/rank/nicc-2025-alex",
+      "skills": [
+        "Competitive Programming",
+        "Advanced Algorithms",
+        "Dynamic Programming",
+        "Time Complexity Optimization"
+      ],
+      "technologies": [
+        "C++",
+        "Python",
+        "Data Structures"
+      ],
+      "position": "Contestant",
+      "awardType": "1st Place Winner",
+      "badge": "💻 Elite Coder",
+      "featured": false,
+      "visibility": true,
+      "displayOrder": 3,
+      "createdAt": "2025-11-06T09:00:00Z",
+      "updatedAt": "2025-11-06T09:00:00Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Chandru  Mohan",
+      "email": "chandrumohan550@gmail.com",
+      "passwordHash": "$2b$10$d2eXyybOm52bCAmrktl81eI1dp7I7LytV0htcacOWGBJzndSBQhQe",
+      "role": "ROLE_ADMIN",
+      "createdAt": "2026-07-11T08:23:09.164Z",
+      "updatedAt": "2026-07-11T10:34:34.598Z",
+      "lastLogin": "2026-07-11T10:34:12.062Z",
+      "isActive": true,
+      "failedAttempts": 0,
+      "lockUntil": null,
+      "username": "chandru",
+      "phoneNumber": "9655384140",
+      "backupEmail": "",
+      "recoveryPhoneNumber": "",
+      "alwaysRequireLogin": false,
+      "rememberLogin": true,
+      "verifyNewDevice": true,
+      "sessionTimeout": "Never",
+      "refreshTokenEnabled": true,
+      "maxLoginAttempts": 5,
+      "lockDuration": 15,
+      "enableRememberMe": true,
+      "enableJWT": true,
+      "allowLoginEmail": true,
+      "allowLoginUsername": true,
+      "allowLoginPhone": true,
+      "knownDevices": [
+        "dev_gzzn5njtwort78qqar6sk"
+      ],
+      "otpEnabled": false,
+      "otpExpiration": 5,
+      "otpLength": 6
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": 1,
+      "createdAt": "2026-07-11T09:23:53.007Z",
+      "action": "OTP_GENERATED",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "OTP verification code generated for chandrumohan550@gmail.com"
+    },
+    {
+      "id": 2,
+      "createdAt": "2026-07-11T09:24:12.465Z",
+      "action": "OTP_GENERATED",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "OTP verification code generated for chandrumohan550@gmail.com"
+    },
+    {
+      "id": 3,
+      "createdAt": "2026-07-11T09:39:30.032Z",
+      "action": "OTP_GENERATED",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "OTP verification code generated for chandrumohan550@gmail.com"
+    },
+    {
+      "id": 4,
+      "createdAt": "2026-07-11T09:42:38.733Z",
+      "action": "OTP_GENERATED",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "OTP verification code generated for chandrumohan550@gmail.com"
+    },
+    {
+      "id": 5,
+      "createdAt": "2026-07-11T09:43:00.060Z",
+      "action": "OTP_GENERATED",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "OTP verification code generated for chandrumohan550@gmail.com"
+    },
+    {
+      "id": 6,
+      "createdAt": "2026-07-11T10:09:57.466Z",
+      "action": "LOGIN_FAILED",
+      "email": "chandrumohan550@gmail.com",
+      "success": false,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Failed attempt 1/5"
+    },
+    {
+      "id": 7,
+      "createdAt": "2026-07-11T10:10:15.711Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 8,
+      "createdAt": "2026-07-11T10:10:56.850Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 9,
+      "createdAt": "2026-07-11T10:11:59.036Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 10,
+      "createdAt": "2026-07-11T10:12:35.825Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 11,
+      "createdAt": "2026-07-11T10:12:54.461Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 12,
+      "createdAt": "2026-07-11T10:13:33.556Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 13,
+      "createdAt": "2026-07-11T10:13:48.106Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 14,
+      "createdAt": "2026-07-11T10:14:11.641Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 15,
+      "createdAt": "2026-07-11T10:15:58.617Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 16,
+      "createdAt": "2026-07-11T10:16:28.412Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 17,
+      "createdAt": "2026-07-11T10:26:18.412Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 18,
+      "createdAt": "2026-07-11T10:26:42.930Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    },
+    {
+      "id": 19,
+      "createdAt": "2026-07-11T10:34:12.062Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    }
+  ],
+  "activityHistory": [
+    {
+      "id": 1,
+      "action": "Profile Updated",
+      "module": "Profile",
+      "description": "Founder updated profile and account details.",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Alex Rivera\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"alex.dev@example.com\",\"phone\":\"+1 (555) 019-2834\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-09T04:40:00.000Z\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T08:55:47.781Z"
+    },
+    {
+      "id": 2,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":false,\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":5,\"otpLength\":6,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T08:57:55.463Z"
+    },
+    {
+      "id": 3,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T08:58:30.831Z"
+    },
+    {
+      "id": 4,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T08:59:41.342Z"
+    },
+    {
+      "id": 5,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":false,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "New York, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:00:00.820Z"
+    },
+    {
+      "id": 6,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":false,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:10:58.846Z"
+    },
+    {
+      "id": 7,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"otpEnabled\":true,\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"otpExpiration\":10,\"otpLength\":8,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:11:02.356Z"
+    },
+    {
+      "id": 8,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Password matched. One-Time Password verification session established.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:23:53.008Z"
+    },
+    {
+      "id": 9,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Password matched. One-Time Password verification session established.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Singapore",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:24:12.465Z"
+    },
+    {
+      "id": 10,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Password matched. One-Time Password verification session established.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:39:30.033Z"
+    },
+    {
+      "id": 11,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Password matched. One-Time Password verification session established.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:42:38.734Z"
+    },
+    {
+      "id": 12,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Password matched. One-Time Password verification session established.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T09:43:00.060Z"
+    },
+    {
+      "id": 13,
+      "action": "Login Failed",
+      "module": "Authentication",
+      "description": "Incorrect password entered (Attempt 1/5).",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "ERROR",
+      "createdAt": "2026-07-11T10:09:57.467Z"
+    },
+    {
+      "id": 14,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:10:15.711Z"
+    },
+    {
+      "id": 15,
+      "action": "Logout",
+      "module": "Authentication",
+      "description": "Admin logged out and terminated token session.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:10:42.931Z"
+    },
+    {
+      "id": 16,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "New York, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:10:56.850Z"
+    },
+    {
+      "id": 17,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:11:59.036Z"
+    },
+    {
+      "id": 18,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:12:35.825Z"
+    },
+    {
+      "id": 19,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:12:54.461Z"
+    },
+    {
+      "id": 20,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":false,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:13:22.174Z"
+    },
+    {
+      "id": 21,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:13:33.556Z"
+    },
+    {
+      "id": 22,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:13:48.106Z"
+    },
+    {
+      "id": 23,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":false,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:14:01.576Z"
+    },
+    {
+      "id": 24,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:14:11.641Z"
+    },
+    {
+      "id": 25,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Tokyo, Japan",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:15:58.617Z"
+    },
+    {
+      "id": 26,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:16:28.412Z"
+    },
+    {
+      "id": 27,
+      "action": "Profile Updated",
+      "module": "Profile",
+      "description": "Founder updated profile and account details.",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:16:32.028Z"
+    },
+    {
+      "id": 28,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "New York, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:26:18.412Z"
+    },
+    {
+      "id": 29,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Singapore",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:26:31.027Z"
+    },
+    {
+      "id": 30,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:26:42.930Z"
+    },
+    {
+      "id": 31,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Bengaluru, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:33:26.775Z"
+    },
+    {
+      "id": 32,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:34:04.971Z"
+    },
+    {
+      "id": 33,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:34:12.062Z"
+    },
+    {
+      "id": 34,
+      "action": "Security Settings Updated",
+      "module": "Settings",
+      "description": "Founder updated authentication & core security settings.",
+      "oldValue": "{\"alwaysRequireLogin\":true,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "newValue": "{\"alwaysRequireLogin\":false,\"rememberLogin\":true,\"verifyNewDevice\":true,\"sessionTimeout\":\"Never\",\"refreshTokenEnabled\":true,\"maxLoginAttempts\":5,\"lockDuration\":15,\"enableRememberMe\":true,\"enableJWT\":true,\"allowLoginEmail\":true,\"allowLoginUsername\":true,\"allowLoginPhone\":true}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "London, UK",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:34:24.160Z"
+    },
+    {
+      "id": 35,
+      "action": "Profile Updated",
+      "module": "Profile",
+      "description": "Founder updated profile and account details.",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:34:34.598Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-11T10:34:34.598Z"
+    }
+  ],
+  "refreshTokens": [
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ2MTUsImV4cCI6MTc4NDM2OTQxNX0.B_fOBHwa0kY2bvSJ-iRAHyV8RUl1yPSfWTBlI_Lv0Dg",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:10:15.711Z",
+      "expiresAt": "2026-07-18T10:10:15.711Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ2NTYsImV4cCI6MTc4NDM2OTQ1Nn0.QLUSYEPw6ypxBikrox21b7Q_h5kAHGalIw6GQA0ZCVU",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:10:56.850Z",
+      "expiresAt": "2026-07-18T10:10:56.850Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ3MTksImV4cCI6MTc4NDM2OTUxOX0.I8C6O-O2WT-Mr22jQdh5ueJq1yVGN4afXoETkHeH_Zw",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:11:59.036Z",
+      "expiresAt": "2026-07-18T10:11:59.036Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ3NTUsImV4cCI6MTc4NDM2OTU1NX0.MCj9VP4YWqOzicSbOUDc7zAn2BZyRoONhZUHtxODIU8",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:12:35.825Z",
+      "expiresAt": "2026-07-18T10:12:35.825Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ3NzQsImV4cCI6MTc4NDM2OTU3NH0.WpYTyh8LcAyZNSRMOzq6FvC7sQx3IVKloNXQ3PlNOvM",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:12:54.461Z",
+      "expiresAt": "2026-07-18T10:12:54.461Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ4MTMsImV4cCI6MTc4NDM2OTYxM30.gYK5_mtqe7_jj9U7S4YqSdH-tkyAyDNHPqxCjQ1p9I8",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:13:33.556Z",
+      "expiresAt": "2026-07-18T10:13:33.556Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ4MjgsImV4cCI6MTc4NDM2OTYyOH0.SDCuhQJtcRIhbrbi1qgd6DfLp5hQ083O3_C5C4GCe3Y",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:13:48.106Z",
+      "expiresAt": "2026-07-18T10:13:48.106Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ4NTEsImV4cCI6MTc4NDM2OTY1MX0.YNuGmWSfJmuY4z7AA4BGBvJczdAwzuQ6p4YFmdNBUjg",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:14:11.641Z",
+      "expiresAt": "2026-07-18T10:14:11.641Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ5NTgsImV4cCI6MTc4NDM2OTc1OH0.x65T2vERyiBhhHXgTxjqUFfZ32t2G3wb7wC8lka2dVU",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:15:58.617Z",
+      "expiresAt": "2026-07-18T10:15:58.617Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjQ5ODgsImV4cCI6MTc4NDM2OTc4OH0.FOX008nLC31t6ln_tKnNyNa3eah3iGNhR2gB0VvnoIQ",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:16:28.412Z",
+      "expiresAt": "2026-07-18T10:16:28.412Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjU1NzgsImV4cCI6MTc4NDM3MDM3OH0.JJ-6PpwuVJL36cZey8d1Z-JkE-Hj-DbvloCPdQbYHMg",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:26:18.412Z",
+      "expiresAt": "2026-07-18T10:26:18.412Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjU2MDIsImV4cCI6MTc4NDM3MDQwMn0.ZpImWfJiap50rY5_AEIoRhZ4Mr82z2J1pojlw35et_o",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:26:42.930Z",
+      "expiresAt": "2026-07-18T10:26:42.930Z"
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM3NjYwNTIsImV4cCI6MTc4NDM3MDg1Mn0.r4-hDLDuiuFfEi2ONhvxLadbmv_MgFRX4U0gBU1zM2I",
+      "userId": 1,
+      "createdAt": "2026-07-11T10:34:12.062Z",
+      "expiresAt": "2026-07-18T10:34:12.062Z"
+    }
+  ],
+  "loginHistory": [
+    {
+      "id": 1,
+      "eventType": "Login Failed",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "FAILURE",
+      "details": "Password verification failed. Attempt 1/5.",
+      "date": "7/11/2026",
+      "time": "10:09:57 AM",
+      "createdAt": "2026-07-11T10:09:57.467Z"
+    },
+    {
+      "id": 2,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:10:15 AM",
+      "createdAt": "2026-07-11T10:10:15.711Z"
+    },
+    {
+      "id": 3,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:10:56 AM",
+      "createdAt": "2026-07-11T10:10:56.850Z"
+    },
+    {
+      "id": 4,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:11:59 AM",
+      "createdAt": "2026-07-11T10:11:59.036Z"
+    },
+    {
+      "id": 5,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:12:35 AM",
+      "createdAt": "2026-07-11T10:12:35.825Z"
+    },
+    {
+      "id": 6,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:12:54 AM",
+      "createdAt": "2026-07-11T10:12:54.461Z"
+    },
+    {
+      "id": 7,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:13:33 AM",
+      "createdAt": "2026-07-11T10:13:33.556Z"
+    },
+    {
+      "id": 8,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:13:48 AM",
+      "createdAt": "2026-07-11T10:13:48.106Z"
+    },
+    {
+      "id": 9,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:14:11 AM",
+      "createdAt": "2026-07-11T10:14:11.641Z"
+    },
+    {
+      "id": 10,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:15:58 AM",
+      "createdAt": "2026-07-11T10:15:58.617Z"
+    },
+    {
+      "id": 11,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:16:28 AM",
+      "createdAt": "2026-07-11T10:16:28.412Z"
+    },
+    {
+      "id": 12,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:26:18 AM",
+      "createdAt": "2026-07-11T10:26:18.413Z"
+    },
+    {
+      "id": 13,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:26:42 AM",
+      "createdAt": "2026-07-11T10:26:42.930Z"
+    },
+    {
+      "id": 14,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "7/11/2026",
+      "time": "10:34:12 AM",
+      "createdAt": "2026-07-11T10:34:12.062Z"
+    }
+  ],
+  "otps": [],
+  "footer": {
+    "title": "Alex Dev",
+    "description": "Designing high-throughput distributed architectures & interactive visual frameworks.",
+    "copyrightText": "© 2026 Chandru Mohan Portfolio. All database relations mapped to 3NF standards.",
+    "builtWithText": "Securely served from local sandbox cache. Admin actions synchronized with Express backend.",
+    "contactInfo": "chandrumohan550@gmail.com | San Francisco, California",
+    "showResume": true,
+    "resumeText": "View Resume",
+    "logoText": "Alex Dev",
+    "logoUrl": "",
+    "backgroundType": "glass",
+    "customBackgroundUrl": "",
+    "theme": "glass",
+    "isVisible": true
+  },
+  "footerSocialLinks": [
+    {
+      "id": 1,
+      "platform": "GitHub",
+      "url": "https://github.com/alex-dev",
+      "icon": "GitHub",
+      "isVisible": true,
+      "displayOrder": 1,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 2,
+      "platform": "LinkedIn",
+      "url": "https://linkedin.com/in/alex-dev-architect",
+      "icon": "LinkedIn",
+      "isVisible": true,
+      "displayOrder": 2,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 3,
+      "platform": "X (Twitter)",
+      "url": "https://x.com/alex_dev",
+      "icon": "X (Twitter)",
+      "isVisible": true,
+      "displayOrder": 3,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    },
+    {
+      "id": 4,
+      "platform": "Email",
+      "url": "mailto:alex.dev@example.com",
+      "icon": "Email",
+      "isVisible": true,
+      "displayOrder": 4,
+      "createdAt": "2026-07-09T04:40:00.000Z",
+      "updatedAt": "2026-07-09T04:40:00.000Z"
+    }
+  ],
+  "technologies": [
+    {
+      "id": 1,
+      "name": "Java",
+      "enabled": true,
+      "order": 1
+    },
+    {
+      "id": 2,
+      "name": "Spring Boot",
+      "enabled": true,
+      "order": 2
+    },
+    {
+      "id": 3,
+      "name": "React",
+      "enabled": true,
+      "order": 3
+    },
+    {
+      "id": 4,
+      "name": "MySQL",
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "id": 5,
+      "name": "Docker",
+      "enabled": true,
+      "order": 5
+    },
+    {
+      "id": 6,
+      "name": "AWS",
+      "enabled": true,
+      "order": 6
+    }
+  ]
+}
