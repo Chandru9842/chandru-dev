@@ -2,9 +2,9 @@ name: 🚀 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master, dev ]
+    branches: [main, master, dev]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   build-and-verify:
@@ -15,14 +15,14 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-    - name: 🟢 Setup Node.js Environment
-  uses: actions/setup-node@v4
-  with:
-    node-version: '22'
-    cache: 'npm'
+      - name: 🟢 Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
 
       - name: 📦 Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: ⚙️ Run Linters & Type Checks
         run: npm run lint
@@ -38,12 +38,15 @@ jobs:
             echo "Error: Dist directory was not created!"
             exit 1
           fi
+
           if [ ! -f "dist/index.html" ]; then
             echo "Error: Production frontend bundle index.html is missing!"
             exit 1
           fi
+
           if [ ! -f "dist/server.cjs" ]; then
             echo "Error: Production bundled backend server.cjs is missing!"
             exit 1
           fi
+
           echo "Success: Production bundle built and validated perfectly."
