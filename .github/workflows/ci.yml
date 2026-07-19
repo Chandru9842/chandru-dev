@@ -15,11 +15,11 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-size: '20'
-          cache: 'npm'
+    - name: 🟢 Setup Node.js Environment
+  uses: actions/setup-node@v4
+  with:
+    node-version: '22'
+    cache: 'npm'
 
       - name: 📦 Install NPM Dependencies
         run: npm ci
