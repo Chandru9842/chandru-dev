@@ -13,12 +13,10 @@ An elite, full-stack Content Management System (CMS) and highly interactive deve
 Designed for professional developers and enterprise software engineers, this system replaces static JSON profiles and hardcoded pages with a robust, secure administrative console featuring cryptographically signed sessions, granular CRUD operations, database persistence, and system-wide custom styling.
 
 ---
-
 ## 🎨 Live Demo Preview
 
-*   **Development Instance**: [Vite + Express Live Sandbox](https://ais-dev-7kdbqdtdk2uzadil46mstk-490441282507.asia-southeast1.run.app)
-*   **Production Deployment**: [Shared Application Release](https://ais-pre-7kdbqdtdk2uzadil46mstk-490441282507.asia-southeast1.run.app)
-
+- **Live Portfolio:** https://chandru-dev-production.up.railway.app
+- **GitHub Repository:** https://github.com/Chandru9842/chandru-dev
 ---
 
 ## 🏗️ Folder Structure Blueprint
@@ -162,8 +160,9 @@ npm run start
 
 ## 👥 Authors & Maintainers
 
-*   **Chandru Mohan** - Lead Full-Stack Architect & Principal Software Engineer - [GitHub Profile](https://github.com/chandru-mohan)
-
+- **Chandru M** – Full-Stack Developer
+  - GitHub: https://github.com/Chandru9842
+  - LinkedIn: https://www.linkedin.com/in/chandru9842
 ---
 
 ## 📄 License
