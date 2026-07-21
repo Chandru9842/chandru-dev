@@ -80,10 +80,19 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
     if (!issuingOrganization.trim()) tempErrors.issuingOrganization = "Issuing organization is required.";
     if (!issueDate) tempErrors.issueDate = "Date of achievement is required.";
 
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-    if (credentialUrl && !urlPattern.test(credentialUrl)) {
-      tempErrors.credentialUrl = "Please supply a valid verification website URL.";
+   // Validate Verification URL
+if (credentialUrl.trim()) {
+    try {
+        const url = new URL(credentialUrl.trim());
+
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+            throw new Error("Invalid protocol");
+        }
+    } catch {
+        tempErrors.credentialUrl =
+            "Please supply a valid verification website URL.";
     }
+}
 
     if (expirationDate && issueDate && new Date(expirationDate) < new Date(issueDate)) {
       tempErrors.expirationDate = "Expiration date cannot occur prior to issue date.";
