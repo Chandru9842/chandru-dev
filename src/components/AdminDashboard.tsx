@@ -298,15 +298,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   // Achievements CRUD
   const handleAddAchievement = async (achievement: Omit<AchievementItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch('/api/achievements', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(achievement)
-      });
+   const res = await fetch('/api/achievements', {
+    method: 'POST',
+    headers: getJsonHeaders(),
+    body: JSON.stringify(achievement)
+});
       if (res.ok) {
         const created = await res.json();
         setAchievements(prev => [...prev, created]);
@@ -319,17 +315,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleUpdateAchievement = async (achievement: AchievementItem) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch(`/api/achievements/${achievement.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(achievement)
-      });
+const handleUpdateAchievement = async (achievement: AchievementItem) => {
+  try {
+    const res = await fetch(`/api/achievements/${achievement.id}`, {
+      method: 'PUT',
+      headers: getJsonHeaders(),
+      body: JSON.stringify(achievement)
+    });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === achievement.id ? achievement : a));
         triggerToast(`Updated achievement "${achievement.title}" successfully.`, 'success');
@@ -341,15 +333,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleDeleteAchievement = async (id: number) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch(`/api/achievements/${id}`, { 
-        method: 'DELETE',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      });
+const handleDeleteAchievement = async (id: number) => {
+  try {
+    const res = await fetch(`/api/achievements/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeader()
+    });
       if (res.ok) {
         const target = achievements.find(a => a.id === id);
         setAchievements(prev => prev.filter(a => a.id !== id));
@@ -362,17 +351,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleToggleAchievementVisibility = async (id: number, visibility: boolean) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch(`/api/achievements/${id}/visibility`, {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({ visibility })
-      });
+ const handleToggleAchievementVisibility = async (id: number, visibility: boolean) => {
+  try {
+    const res = await fetch(`/api/achievements/${id}/visibility`, {
+      method: 'PATCH',
+      headers: getJsonHeaders(),
+      body: JSON.stringify({ visibility })
+    });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility } : a));
         triggerToast(`Visibility toggled: ${visibility ? 'Published' : 'Draft'}`, 'success');
@@ -384,17 +369,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleToggleAchievementFeatured = async (id: number, featured: boolean) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch(`/api/achievements/${id}/featured`, {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({ featured })
-      });
+ const handleToggleAchievementFeatured = async (id: number, featured: boolean) => {
+  try {
+    const res = await fetch(`/api/achievements/${id}/featured`, {
+      method: 'PATCH',
+      headers: getJsonHeaders(),
+      body: JSON.stringify({ featured })
+    });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, featured } : a));
         triggerToast(`Highlight toggled: ${featured ? 'Featured' : 'Standard'}`, 'success');
@@ -406,21 +387,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleReorderAchievements = async (reordered: AchievementItem[]) => {
-    // Optimistic state update
-    setAchievements(reordered);
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch('/api/achievements/order', {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({
-          order: reordered.map((item, index) => ({ id: item.id, displayOrder: index + 1 }))
-        })
-      });
+ const handleReorderAchievements = async (reordered: AchievementItem[]) => {
+  setAchievements(reordered);
+
+  try {
+    const res = await fetch('/api/achievements/order', {
+      method: 'PATCH',
+      headers: getJsonHeaders(),
+      body: JSON.stringify({
+        order: reordered.map((item, index) => ({
+          id: item.id,
+          displayOrder: index + 1
+        }))
+      })
+    });
       if (res.ok) {
         triggerToast('Committed new display hierarchy order to database.', 'success');
       } else {
@@ -808,29 +788,25 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   // Footer Save
-  const handleSaveFooter = async (footerData: any) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch('/api/footer', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(footerData)
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setFooter(updated);
-        triggerToast("Committed footer configurations and contact highlights.", 'success');
-      } else {
-        triggerToast('Failed to save footer settings.', 'error');
-      }
-    } catch (e) {
-      triggerToast('Error saving footer settings.', 'error');
-    }
-  };
+ const handleSaveFooter = async (footerData: any) => {
+  try {
+    const res = await fetch('/api/footer', {
+      method: 'PUT',
+      headers: getJsonHeaders(),
+      body: JSON.stringify(footerData)
+    });
 
+    if (res.ok) {
+      const updated = await res.json();
+      setFooter(updated);
+      triggerToast("Committed footer configurations and contact highlights.", 'success');
+    } else {
+      triggerToast('Failed to save footer settings.', 'error');
+    }
+  } catch (e) {
+    triggerToast('Error saving footer settings.', 'error');
+  }
+};
   // Footer Social Links CRUD Handlers
   const handleAddFooterSocialLink = async (social: Omit<FooterSocialLinkItem, 'id'>) => {
     try {
@@ -934,50 +910,44 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   // Theme & Appearance Customizer Handlers
-  const handleSaveTheme = async (updatedTheme: ThemeSettings) => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch('/api/theme', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(updatedTheme)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setThemeSettings(data);
-      } else {
-        triggerToast("Unauthorized access. Admin credentials required to modify theme assets.", 'error');
-      }
-    } catch (e) {
-      triggerToast('Failed to save theme modifications.', 'error');
-    }
-  };
+ const handleSaveTheme = async (updatedTheme: ThemeSettings) => {
+  try {
+    const res = await fetch('/api/theme', {
+      method: 'PUT',
+      headers: getJsonHeaders(),
+      body: JSON.stringify(updatedTheme)
+    });
 
-  const handleResetTheme = async () => {
-    try {
-      const token = localStorage.getItem('alex_dev_jwt_token');
-      const res = await fetch('/api/theme', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(initialThemeSettings)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setThemeSettings(data);
-        triggerToast("Successfully restored standard design template.", 'success');
-      } else {
-        triggerToast("Unauthorized access. Admin credentials required.", 'error');
-      }
-    } catch (e) {
-      triggerToast('Failed to restore theme configuration.', 'error');
+    if (res.ok) {
+      const data = await res.json();
+      setThemeSettings(data);
+    } else {
+      triggerToast("Unauthorized access. Admin credentials required to modify theme assets.", 'error');
     }
-  };
+  } catch (e) {
+    triggerToast('Failed to save theme modifications.', 'error');
+  }
+};
+
+ const handleResetTheme = async () => {
+  try {
+    const res = await fetch('/api/theme', {
+      method: 'PUT',
+      headers: getJsonHeaders(),
+      body: JSON.stringify(initialThemeSettings)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setThemeSettings(data);
+      triggerToast("Successfully restored standard design template.", 'success');
+    } else {
+      triggerToast("Unauthorized access. Admin credentials required.", 'error');
+    }
+  } catch (e) {
+    triggerToast('Failed to restore theme configuration.', 'error');
+  }
+};
 
   // Global Sync handler
   const handleRefreshStats = async () => {
