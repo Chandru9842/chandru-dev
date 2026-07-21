@@ -1,8 +1,30 @@
+# Dependencies
 node_modules/
+
+# Build output
 build/
 dist/
 coverage/
-.DS_Store
-*.log
+target/
+**/target/
+
+# Environment
 .env*
 !.env.example
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Maven Wrapper (keep these)
+!.mvn/wrapper/maven-wrapper.jar
+!mvnw
+!mvnw.cmd
