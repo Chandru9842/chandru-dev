@@ -1,5 +1,6 @@
 package com.portfolio.cms.service;
 
+import com.portfolio.cms.dto.SkillOrderRequest;
 import com.portfolio.cms.entity.Admin;
 import com.portfolio.cms.entity.Skill;
 import com.portfolio.cms.repository.AdminRepository;
@@ -73,7 +74,8 @@ public class SkillService {
     public Skill updateSkill(Long id, Skill input) {
 
         Skill existing = skillRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Skill not found with id: " + id));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Skill not found with id: " + id));
 
         existing.setName(input.getName());
         existing.setCategory(input.getCategory());
@@ -99,5 +101,20 @@ public class SkillService {
         }
 
         skillRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void reorderSkills(List<SkillOrderRequest> orderList) {
+
+        for (SkillOrderRequest item : orderList) {
+
+            Skill skill = skillRepository.findById(item.getId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Skill not found with id: " + item.getId()));
+
+            skill.setDisplayOrder(item.getDisplayOrder());
+
+            skillRepository.save(skill);
+        }
     }
 }
