@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -47,7 +48,8 @@ public class SkillController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Skill> updateSkill(@PathVariable Long id, @Valid @RequestBody Skill skill) {
+    public ResponseEntity<Skill> updateSkill(@PathVariable Long id,
+                                             @Valid @RequestBody Skill skill) {
         try {
             Skill updated = skillService.updateSkill(id, skill);
             return ResponseEntity.ok(updated);
@@ -57,7 +59,7 @@ public class SkillController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole("ADMIN")")
     public ResponseEntity<Void> deleteSkill(@PathVariable Long id) {
         try {
             skillService.deleteSkill(id);
@@ -65,5 +67,13 @@ public class SkillController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // Add only if SkillService has reorderSkills(...)
+    @PatchMapping("/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reorderSkills(@RequestBody List<SkillOrderRequest> order) {
+        skillService.reorderSkills(order);
+        return ResponseEntity.ok().build();
     }
 }
