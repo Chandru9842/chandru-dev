@@ -26,8 +26,9 @@ public class Skill extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String category; // e.g., "Frontend", "Backend", "DevOps", "Database"
 
+    @Builder.Default
     @Column(nullable = false)
-    private Integer proficiency; // 1 to 100 percentage
+    private Integer proficiency = 80; // Default proficiency
 
     @Column(name = "icon_url")
     private String iconUrl;
