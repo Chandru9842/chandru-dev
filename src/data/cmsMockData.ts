@@ -630,8 +630,8 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 1,
     platform: "GitHub",
-    username: "alex-dev",
-    profileUrl: "https://github.com/alex-dev",
+    username: "Chandru9842",
+    profileUrl: "https://github.com/Chandru9842",
     icon: "GitHub",
     displayOrder: 1,
     isVisible: true,
@@ -641,8 +641,8 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 2,
     platform: "LinkedIn",
-    username: "alex-dev-architect",
-    profileUrl: "https://linkedin.com/in/alex-dev-architect",
+   username: "chandru9842",
+    profileUrl: "https://www.linkedin.com/in/chandru9842/",
     icon: "LinkedIn",
     displayOrder: 2,
     isVisible: true,
@@ -652,8 +652,8 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 3,
     platform: "X (Twitter)",
-    username: "alex_dev",
-    profileUrl: "https://x.com/alex_dev",
+    username: "chandru_kmn",
+    profileUrl: "https://x.com/chandru_kmn",
     icon: "X (Twitter)",
     displayOrder: 3,
     isVisible: true,
@@ -663,8 +663,8 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 4,
     platform: "Email",
-    username: "alex.dev@example.com",
-    profileUrl: "mailto:alex.dev@example.com",
+    username: "chandrumohan550@gmail.com",
+  profileUrl: "mailto:chandrumohan550@gmail.com",
     icon: "Email",
     displayOrder: 4,
     isVisible: true,
