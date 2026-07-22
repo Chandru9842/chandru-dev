@@ -2,13 +2,17 @@ package com.portfolio.cms.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "skills", indexes = {
-    @Index(name = "idx_skill_category", columnList = "category")
-})
+@Table(
+    name = "skills",
+    indexes = {
+        @Index(name = "idx_skill_category", columnList = "category")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,17 +28,18 @@ public class Skill extends BaseEntity {
     private String name;
 
     @Column(nullable = false, length = 50)
-    private String category; // e.g., "Frontend", "Backend", "DevOps", "Database"
+    private String category;
 
     @Builder.Default
     @Column(nullable = false)
-    private Integer proficiency = 80; // Default proficiency
+    private Integer proficiency = 80;
 
     @Column(name = "icon_url")
     private String iconUrl;
 
+    @Builder.Default
     @Column(name = "display_order", nullable = false)
-    private Integer displayOrder;
+    private Integer displayOrder = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
