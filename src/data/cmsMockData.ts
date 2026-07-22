@@ -641,7 +641,11 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 2,
     platform: "LinkedIn",
+<<<<<<< HEAD
    username: "chandru9842",
+=======
+    username: "chandru9842",
+>>>>>>> e09de67 (feat: import latest AI Studio portfolio CMS update before debugging)
     profileUrl: "https://www.linkedin.com/in/chandru9842/",
     icon: "LinkedIn",
     displayOrder: 2,
@@ -661,6 +665,7 @@ export const initialSocialLinks: SocialLinkItem[] = [
     updatedAt: "2026-07-09T04:40:00.000Z"
   },
   {
+<<<<<<< HEAD
     id: 4,
     platform: "Email",
     username: "chandrumohan550@gmail.com",
@@ -670,6 +675,17 @@ export const initialSocialLinks: SocialLinkItem[] = [
     isVisible: true,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
+=======
+     id: 4,
+  platform: "Email",
+  username: "chandrumohan550@gmail.com",
+  profileUrl: "mailto:chandrumohan550@gmail.com",
+  icon: "Email",
+  displayOrder: 4,
+  isVisible: true,
+  createdAt: "2026-07-09T04:40:00.000Z",
+  updatedAt: "2026-07-09T04:40:00.000Z"
+>>>>>>> e09de67 (feat: import latest AI Studio portfolio CMS update before debugging)
   }
 ];
 

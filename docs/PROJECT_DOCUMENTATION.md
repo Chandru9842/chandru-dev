@@ -187,7 +187,7 @@ interface AuditLog {
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/alex-dev/portfolio-cms.git
+    git clone https://github.com/Chandru9842/chandru-dev
     cd portfolio-cms
     ```
 2.  **Install Base Workspace Dependencies**:

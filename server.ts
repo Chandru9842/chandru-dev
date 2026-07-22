@@ -53,7 +53,7 @@ function loadDatabase() {
             {
               id: 1,
               platform: "GitHub",
-              url: "https://github.com/alex-dev",
+              url: "https://github.com/Chandru9842",
               icon: "GitHub",
               isVisible: true,
               displayOrder: 1,
@@ -63,7 +63,7 @@ function loadDatabase() {
             {
               id: 2,
               platform: "LinkedIn",
-              url: "https://linkedin.com/in/alex-dev-architect",
+              url: "https://www.linkedin.com/in/chandru9842/",
               icon: "LinkedIn",
               isVisible: true,
               displayOrder: 2,
@@ -391,7 +391,7 @@ async function startServer() {
 
   // --- API ROUTES ---
 
-  const JWT_SECRET = process.env.JWT_SECRET || "portfolio-cms-super-secret-key-alex-dev-2026";
+  const JWT_SECRET = process.env.JWT_SECRET || "portfolio-cms-super-secret-key-chandru-dev-2026";
 
   // Helper to sanitize input strings against stored XSS
   function sanitizeInput(str: any): string {
