@@ -7,8 +7,10 @@ import {
 interface TechnologyItem {
   id: number;
   name: string;
-  enabled: boolean;
-  order?: number;
+ category: string;
+proficiency: number;
+iconUrl?: string;
+displayOrder: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -25,17 +27,22 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   const [newTechName, setNewTechName] = useState('');
   const [editingTechId, setEditingTechId] = useState<number | null>(null);
   const [editingTechName, setEditingTechName] = useState('');
-  const [jwtToken] = useState<string | null>(localStorage.getItem('alex_dev_jwt_token'));
+const getJwtToken = () =>
+    localStorage.getItem("alex_dev_jwt_token") ||
+    localStorage.getItem("admin_token") ||
+    sessionStorage.getItem("admin_token");
 
   const fetchTechnologies = async () => {
     setLoading(true);
     try {
       const cacheBuster = `t=${Date.now()}`;
-      const res = await fetch(`/api/technologies?${cacheBuster}`);
+      const res = await fetch(`/api/skills?${cacheBuster}`);
       if (res.ok) {
         const data = await res.json();
         // Sort by order ascending
-        const sorted = (data || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+       const sorted = (data || []).sort(
+    (a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)
+);
         setTechnologies(sorted);
       } else {
         onTriggerToast("Failed to fetch tech stack list.", "error");
@@ -57,25 +64,32 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
       return;
     }
 
-    if (!jwtToken) {
-      onTriggerToast("Administrative privileges locked. Log in first.", "error");
-      return;
-    }
+  const token = getJwtToken();
 
-    try {
-      const maxOrder = technologies.length > 0 ? Math.max(...technologies.map(t => t.order || 0)) : 0;
-      const res = await fetch('/api/technologies', {
+if (!token) {
+    onTriggerToast("Administrative privileges locked. Log in first.", "error");
+    return;
+}
+
+   try {
+    const maxOrder = technologies.length > 0
+        ? Math.max(...technologies.map(t => t.displayOrder || 0))
+        : 0;
+
+    const res = await fetch('/api/skills', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: newTechName.trim(),
-          order: maxOrder + 1,
-          enabled: true
+            name: newTechName.trim(),
+            category: "Frontend",
+            proficiency: 80,
+            iconUrl: "",
+            displayOrder: maxOrder + 1
         })
-      });
+    });
 
       if (res.ok) {
         setNewTechName('');
@@ -92,17 +106,19 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   };
 
   const handleUpdateTechnology = async (id: number, payload: Partial<TechnologyItem>) => {
-    if (!jwtToken) {
-      onTriggerToast("Administrative session locked. Please re-login.", "error");
-      return;
-    }
+    const token = getJwtToken();
+
+if (!token) {
+    onTriggerToast("Administrative session locked. Please re-login.", "error");
+    return;
+}
 
     try {
-      const res = await fetch(`/api/technologies/${id}`, {
+      const res = await fetch(`/api/skills/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -122,7 +138,9 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   };
 
   const handleDeleteTechnology = async (id: number, name: string) => {
-    if (!jwtToken) {
+   const token = getJwtToken();
+
+if (!token) {
       onTriggerToast("Administrative privileges locked.", "error");
       return;
     }
@@ -132,10 +150,10 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
     }
 
     try {
-      const res = await fetch(`/api/technologies/${id}`, {
+      const res = await fetch(`/api/skills/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${jwtToken}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -166,20 +184,25 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
     // Optimistic local state update
     setTechnologies(newList);
 
-    if (!jwtToken) return;
+   const token = getJwtToken();
+
+if (!token) return;
 
     setSavingOrder(true);
     try {
       // Send bulk reorder request to server
-      const updatedOrders = newList.map((item, idx) => ({ id: item.id, order: idx + 1 }));
-      const res = await fetch('/api/technologies-reorder', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
-        },
-        body: JSON.stringify({ order: updatedOrders })
-      });
+     const updatedOrders = newList.map((item, idx) => ({
+    id: item.id,
+    displayOrder: idx + 1
+}));
+      const res =await fetch("/api/skills/reorder", {
+    method: "PATCH",
+    headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updatedOrders),
+});
 
       if (res.ok) {
         onTriggerToast("Tech stack rendering hierarchy saved.", "success");
@@ -265,9 +288,7 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
               return (
                 <div 
                   key={tech.id} 
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all hover:bg-slate-950/10 ${
-                    tech.enabled ? '' : 'opacity-60 bg-rose-950/5 border-l-2 border-rose-500/20'
-                  }`}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all hover:bg-slate-950/10"
                 >
                   
                   {/* Left Name Info */}
@@ -282,12 +303,28 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
                           type="text" 
                           value={editingTechName}
                           onChange={(e) => setEditingTechName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleUpdateTechnology(tech.id, { name: editingTechName })}
-                          className="bg-slate-950 border border-emerald-500 text-slate-100 text-xs font-mono rounded-xl px-3.5 py-1.5 w-full focus:outline-none"
+onKeyDown={(e) =>
+    e.key === "Enter" &&
+    handleUpdateTechnology(tech.id, {
+        name: editingTechName,
+        category: tech.category,
+        proficiency: tech.proficiency,
+        iconUrl: tech.iconUrl,
+        displayOrder: tech.displayOrder
+    })
+}                          className="bg-slate-950 border border-emerald-500 text-slate-100 text-xs font-mono rounded-xl px-3.5 py-1.5 w-full focus:outline-none"
                           autoFocus
                         />
                         <button
-                          onClick={() => handleUpdateTechnology(tech.id, { name: editingTechName })}
+                          onClick={() =>
+    handleUpdateTechnology(tech.id, {
+        name: editingTechName,
+        category: tech.category,
+        proficiency: tech.proficiency,
+        iconUrl: tech.iconUrl,
+        displayOrder: tech.displayOrder
+    })
+}
                           className="p-2 text-emerald-400 hover:text-emerald-300 rounded-xl hover:bg-emerald-500/10 cursor-pointer shrink-0"
                           title="Save Name"
                         >
@@ -324,16 +361,7 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     
                     {/* Status Pill Toggle */}
-                    <button
-                      onClick={() => handleUpdateTechnology(tech.id, { enabled: !tech.enabled })}
-                      className={`px-3 py-1 text-[10px] font-mono rounded-lg border transition cursor-pointer ${
-                        tech.enabled 
-                          ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
-                          : 'bg-rose-950/20 border-rose-500/20 text-rose-400 hover:bg-rose-500/10'
-                      }`}
-                    >
-                      {tech.enabled ? '● Enabled' : '○ Disabled'}
-                    </button>
+                  
 
                     {/* Hierarchy Display Reorder up */}
                     <button

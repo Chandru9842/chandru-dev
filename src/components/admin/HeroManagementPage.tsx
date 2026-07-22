@@ -43,8 +43,10 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
   const [originalProfile, setOriginalProfile] = useState<HeroProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [jwtToken] = useState<string | null>(localStorage.getItem('alex_dev_jwt_token'));
-
+const getJwtToken = () =>
+  localStorage.getItem("alex_dev_jwt_token") ||
+  localStorage.getItem("admin_token") ||
+  sessionStorage.getItem("admin_token");
   // Split stats state helper
   const [stats, setStats] = useState<{ value: string; label: string }[]>([]);
   const [newStatValue, setNewStatValue] = useState('');
@@ -195,10 +197,12 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
   // Save changes to database
   const handleSaveHero = async () => {
     if (!profile) return;
-    if (!jwtToken) {
-      onTriggerToast("Administrative session expired or locked. Please re-login.", "error");
-      return;
-    }
+   const token = getJwtToken();
+
+if (!token) {
+    onTriggerToast("Administrative session expired or locked. Please re-login.", "error");
+    return;
+}
 
     setSaving(true);
     try {
@@ -218,7 +222,7 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -249,10 +253,12 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!jwtToken) {
-      onTriggerToast("Upload locked. Please unlock admin panel first.", "error");
-      return;
-    }
+    const token = getJwtToken();
+
+if (!token) {
+    onTriggerToast("Upload locked. Please unlock admin panel first.", "error");
+    return;
+}
 
     // Read file as base64 data URL
     const reader = new FileReader();
@@ -266,7 +272,7 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${jwtToken}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ image: dataUrl })
         });
@@ -290,14 +296,18 @@ export default function HeroManagementPage({ onTriggerToast, onHeroUpdated }: He
   };
 
   const handleDeleteImage = async (type: 'avatar' | 'background') => {
-    if (!profile || !jwtToken) return;
+    if (!profile) return;
+
+    const token = getJwtToken();
+
+    if (!token) return;
 
     try {
       const deleteRoute = `/api/profile/${type === 'avatar' ? 'hero-avatar' : 'hero-background'}`;
       const res = await fetch(deleteRoute, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${jwtToken}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
