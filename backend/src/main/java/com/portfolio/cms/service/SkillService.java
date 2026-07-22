@@ -1,10 +1,16 @@
 package com.portfolio.cms.service;
 
+import com.portfolio.cms.entity.Admin;
 import com.portfolio.cms.entity.Skill;
+import com.portfolio.cms.repository.AdminRepository;
 import com.portfolio.cms.repository.SkillRepository;
+import com.portfolio.cms.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -12,10 +18,15 @@ import java.util.Optional;
 public class SkillService {
 
     private final SkillRepository skillRepository;
+    private final AdminRepository adminRepository;
 
     @Autowired
-    public SkillService(SkillRepository skillRepository) {
+    public SkillService(
+            SkillRepository skillRepository,
+            AdminRepository adminRepository) {
+
         this.skillRepository = skillRepository;
+        this.adminRepository = adminRepository;
     }
 
     @Transactional(readOnly = true)
@@ -35,28 +46,58 @@ public class SkillService {
 
     @Transactional
     public Skill createSkill(Skill skill) {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        Admin admin = adminRepository.findById(principal.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+
+        skill.setAdmin(admin);
+
+        if (skill.getProficiency() == null) {
+            skill.setProficiency(80);
+        }
+
+        if (skill.getDisplayOrder() == null) {
+            skill.setDisplayOrder(skillRepository.findAll().size() + 1);
+        }
+
         return skillRepository.save(skill);
     }
 
     @Transactional
     public Skill updateSkill(Long id, Skill input) {
+
         Skill existing = skillRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Skill not found with id: " + id));
 
         existing.setName(input.getName());
         existing.setCategory(input.getCategory());
-        existing.setProficiency(input.getProficiency());
+
+        if (input.getProficiency() != null) {
+            existing.setProficiency(input.getProficiency());
+        }
+
         existing.setIconUrl(input.getIconUrl());
-        existing.setDisplayOrder(input.getDisplayOrder());
+
+        if (input.getDisplayOrder() != null) {
+            existing.setDisplayOrder(input.getDisplayOrder());
+        }
 
         return skillRepository.save(existing);
     }
 
     @Transactional
     public void deleteSkill(Long id) {
+
         if (!skillRepository.existsById(id)) {
             throw new IllegalArgumentException("Skill not found with id: " + id);
         }
+
         skillRepository.deleteById(id);
     }
 }
