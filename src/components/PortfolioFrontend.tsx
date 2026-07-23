@@ -7,7 +7,7 @@ import {
   Code2, Sparkles, MessageSquare, Terminal, X, ChevronLeft, Video, Play, Film,
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
-  Menu, XCircle, AlertCircle
+  Menu, XCircle, AlertCircle, Star, Wrench, Search
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
@@ -38,9 +38,10 @@ class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode },
     return this.props.children;
   }
 }
-import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem } from '../data/cmsMockData';
+import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem, ToolItem, initialTools } from '../data/cmsMockData';
 import { getPlatformIconComponent } from './admin/SocialLinksPage';
 import { getPlatformIconComponent as getCodingPlatformIconComponent } from './admin/CodingProfilesPage';
+import { ToolIconRenderer } from './admin/ToolsPage';
 
 const getFooterPlatformIconComponent = (platform: string) => {
   switch (platform) {
@@ -174,6 +175,7 @@ const navItems = [
   { id: "projects", label: "Projects" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
+  { id: "tools", label: "Tools & Technologies" },
   { id: "timeline", label: "Experience" },
   { id: "credentials", label: "Certificates" },
   { id: "achievements", label: "Achievements" },
@@ -368,6 +370,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [theme, setTheme] = useState<any>(null);
   const [technologies, setTechnologies] = useState<any[]>([]);
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>([]);
+  const [tools, setTools] = useState<ToolItem[]>([]);
+  const [selectedToolCategory, setSelectedToolCategory] = useState<string>('All');
+  const [toolSearchQuery, setToolSearchQuery] = useState<string>('');
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
@@ -381,7 +386,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, []);
 
   useEffect(() => {
-    const sections = ["home", "about", "projects", "coding-profiles", "skills", "timeline", "credentials", "achievements", "contact"];
+    const sections = ["home", "about", "projects", "coding-profiles", "skills", "tools", "timeline", "credentials", "achievements", "contact"];
     const observers = sections.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -407,7 +412,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => {
       observers.forEach(({ el }) => observer.unobserve(el));
     };
-  }, [projects, skills, certificates, achievements, experiences, education]);
+  }, [projects, skills, certificates, achievements, experiences, education, tools]);
 
   const handleNavLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     e.preventDefault();
@@ -467,6 +472,27 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   // Filter/tab selection for skills and projects
   const [selectedSkillCategory, setSelectedSkillCategory] = useState<string>('All');
+
+  const displayTools = useMemo(() => {
+    return tools.length > 0 ? tools : initialTools;
+  }, [tools]);
+
+  const toolCategories = useMemo(() => {
+    const cats = Array.from(new Set(displayTools.map(t => t.category).filter(Boolean)));
+    return ['All', ...cats];
+  }, [displayTools]);
+
+  const filteredTools = useMemo(() => {
+    return displayTools.filter(t => {
+      const matchesCategory = selectedToolCategory === 'All' || t.category === selectedToolCategory;
+      const q = toolSearchQuery.trim().toLowerCase();
+      const matchesSearch = !q || 
+        t.name.toLowerCase().includes(q) || 
+        (t.category && t.category.toLowerCase().includes(q)) || 
+        (t.description && t.description.toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    });
+  }, [displayTools, selectedToolCategory, toolSearchQuery]);
   const [selectedAchievementCategory, setSelectedAchievementCategory] = useState<string>('All');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBackendOffline, setIsBackendOffline] = useState<boolean>(false);
@@ -679,7 +705,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       setExperiences(data.experiences || []);
       setEducation(data.education || []);
       setAnalytics(data.analytics);
-      setSocialLinks((data.socialLinks || []).filter((s: any) => s.isVisible));
+      setSocialLinks((data.socialLinks || []).filter((s: any) => s.isVisible !== false));
       
       const visibleFooterLinks = (data.footerSocialLinks || [])
         .filter((s: any) => s.isVisible)
@@ -690,6 +716,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         .filter((p: any) => p.visible)
         .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setCodingProfiles(visibleCodingProfiles);
+
+      const visibleTools = (data.tools || [])
+        .filter((t: any) => t.isVisible !== false)
+        .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      setTools(visibleTools);
 
       setActiveResume(data.activeResume);
       setProfile(data.profile);
@@ -1155,6 +1186,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           {/* Buttons Area */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Header Navigation Social Links */}
+            {socialLinks.filter(l => l.showInNavigation === true && l.isVisible !== false).map((link) => (
+              <SocialLinkAnchor
+                key={link.id}
+                link={link}
+                onClick={() => trackClick('social_nav_' + link.platform.toLowerCase(), link.platform)}
+                className="hidden lg:flex p-2 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-sm"
+                childrenClassName="w-4 h-4 object-contain"
+              />
+            ))}
+
             {/* Desktop Dashboard Button */}
             <button
               onClick={onEnterCMS}
@@ -1375,12 +1417,27 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               )}
             </div>
 
-            {/* Dynamic Social Links in Hero Section */}
-            {socialLinks.length > 0 && (
+            {/* Dedicated Hero Section Links */}
+            {socialLinks.filter(l => l.showInHero === true).length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-3 relative z-30">
+                {socialLinks.filter(l => l.showInHero === true).map((link) => (
+                  <SocialLinkAnchor
+                    key={link.id}
+                    link={link}
+                    onClick={() => trackClick('social_herodock_' + link.platform.toLowerCase(), link.platform)}
+                    className="px-3.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 shadow-md"
+                    childrenClassName="w-4 h-4 object-contain"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Dynamic Social Links in Hero Section (Coordinates Channels) */}
+            {socialLinks.filter(l => l.showInCoordinates !== false).length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-5 border-t border-white/[0.04] w-full max-w-lg lg:max-w-xl relative z-30">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-semibold">Coordinates:</span>
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-semibold">Coordinates Channels:</span>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {socialLinks.map((link) => (
+                  {socialLinks.filter(l => l.showInCoordinates !== false).map((link) => (
                     <SocialLinkAnchor
                       key={link.id}
                       link={link}
@@ -1487,6 +1544,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dynamic Profile Social Links */}
+                {socialLinks.filter(l => l.showInDynamicProfile !== false).length > 0 && (
+                  <div className="glass-card p-4 rounded-2xl border border-white/[0.05] bg-slate-950/40 relative space-y-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Profile Channels</span>
+                    <div className="flex flex-wrap gap-2">
+                      {socialLinks.filter(l => l.showInDynamicProfile !== false).map((link) => (
+                        <SocialLinkAnchor
+                          key={link.id}
+                          link={link}
+                          onClick={() => trackClick('social_profile_' + link.platform.toLowerCase(), link.platform)}
+                          className="w-8.5 h-8.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/60 bg-slate-900/90 hover:bg-slate-950/95 text-slate-200 hover:text-emerald-400 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer group relative shadow-md"
+                          childrenClassName="w-4.5 h-4.5 object-contain"
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -1859,6 +1934,190 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               })}
             </div>
           </motion.section>
+
+          {/* Tools & Technologies Section */}
+          {(tools.length > 0 || initialTools.length > 0) && (
+            <motion.section 
+              id="tools" 
+              className="space-y-8 scroll-mt-24 relative"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={sectionVariants}
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Ecosystem Tools & Software</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {filteredTools.length} {filteredTools.length === 1 ? 'Tool' : 'Tools'}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Tools & Technologies</h2>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    Frameworks, IDEs, databases, development platforms, and tools utilized across system design, full-stack engineering, and cloud workflows.
+                  </p>
+                </div>
+
+                {/* Real-time Search Input */}
+                <div className="relative w-full md:w-72 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={toolSearchQuery}
+                    onChange={(e) => setToolSearchQuery(e.target.value)}
+                    placeholder="Search tools, tags, categories..."
+                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                  />
+                  {toolSearchQuery && (
+                    <button
+                      onClick={() => setToolSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category Filter Pills */}
+              {toolCategories.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                  {toolCategories.map((cat) => {
+                    const isActive = selectedToolCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedToolCategory(cat)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                          isActive
+                            ? 'bg-emerald-500 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20'
+                            : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Empty state if search/filter produces no items */}
+              {filteredTools.length === 0 ? (
+                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
+                  <Wrench className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-slate-300">No matching tools found</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    No software tools match your current filter query. Try searching for another keyword or resetting the category filter.
+                  </p>
+                  {(toolSearchQuery || selectedToolCategory !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setSelectedToolCategory('All');
+                        setToolSearchQuery('');
+                      }}
+                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Tools Cards Grid */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredTools.map((tool) => {
+                    const brandColor = tool.brandColor || '#10B981';
+                    const hoverScale = tool.hoverScale || 1.03;
+                    const hoverRotation = tool.hoverRotation || 0;
+
+                    return (
+                      <motion.div
+                        key={tool.id}
+                        whileHover={{ 
+                          y: -4, 
+                          scale: hoverScale,
+                          rotate: hoverRotation,
+                          transition: { duration: 0.2, ease: "easeOut" } 
+                        }}
+                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+                        style={{
+                          boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
+                        }}
+                      >
+                        <div className="space-y-3.5">
+                          {/* Header: Icon + Category Badge + Star if featured */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div 
+                              className="p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
+                              style={{ 
+                                backgroundColor: tool.backgroundColor || `${brandColor}15`,
+                                borderColor: tool.borderColor || `${brandColor}30`,
+                                borderWidth: '1px'
+                              }}
+                            >
+                              <ToolIconRenderer tool={tool} />
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                              {tool.isFeatured && (
+                                <span className="p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm" title="Featured Tool">
+                                  <Star className="w-3 h-3 fill-amber-400" />
+                                </span>
+                              )}
+                              {tool.category && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60">
+                                  {tool.category}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Tool Name & Description */}
+                          <div>
+                            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                              {tool.name}
+                            </h3>
+                            {tool.description && (
+                              <p className="text-xs text-slate-400 leading-relaxed mt-1.5 line-clamp-3">
+                                {tool.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Footer Meta & Website Link */}
+                        <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {tool.experienceLevel && (
+                              <span className="text-emerald-400 font-medium">
+                                {tool.experienceLevel}
+                              </span>
+                            )}
+                            {tool.yearsOfExperience && (
+                              <span className="text-slate-500">• {tool.yearsOfExperience} yrs</span>
+                            )}
+                          </div>
+
+                          {tool.officialWebsite && (
+                            <a
+                              href={tool.officialWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-1.5 rounded hover:bg-emerald-500/10"
+                              title={`Visit ${tool.name} official website`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span>Website</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.section>
+          )}
 
           {/* Timeline (Experience + Education) Section */}
           <motion.section 
@@ -2236,11 +2495,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
 
                 {/* Dynamic Social Links in Contact Section */}
-                {socialLinks.length > 0 && (
+                {socialLinks.filter(l => l.showInContact !== false).length > 0 && (
                   <div className="space-y-2.5 pt-4 border-t border-white/[0.05] relative z-30">
                     <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Dynamic Channels</span>
                     <div className="flex flex-wrap gap-2">
-                      {socialLinks.map((link) => (
+                      {socialLinks.filter(l => l.showInContact !== false).map((link) => (
                         <SocialLinkAnchor
                           key={link.id}
                           link={link}
@@ -2263,6 +2522,23 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                     <span>Cascade Purge Hooks: ATTACHED</span>
                   </div>
+
+                  {socialLinks.filter(l => l.showInSystemConsole === true).length > 0 && (
+                    <div className="space-y-1.5 pt-2 border-t border-white/[0.05]">
+                      <span className="text-[9px] text-slate-500 font-mono uppercase font-bold tracking-wider">Console Telemetry Channels:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {socialLinks.filter(l => l.showInSystemConsole === true).map((link) => (
+                          <SocialLinkAnchor
+                            key={link.id}
+                            link={link}
+                            onClick={() => trackClick('social_console_' + link.platform.toLowerCase(), link.platform)}
+                            className="px-2 py-1 bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 font-mono text-[10px] rounded flex items-center gap-1.5 transition-colors"
+                            childrenClassName="w-3.5 h-3.5 object-contain"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2362,7 +2638,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         const themeCls = getFooterThemeClasses(footer?.theme);
         const linksToRender = footerSocialLinks.length > 0 
           ? footerSocialLinks.map(l => ({ id: l.id, platform: l.platform, url: l.url, logoUrl: l.logoUrl }))
-          : socialLinks.map(l => ({ id: l.id, platform: l.platform, url: l.profileUrl, logoUrl: l.logoUrl }));
+          : socialLinks.filter(l => l.showInFooter !== false).map(l => ({ id: l.id, platform: l.platform, url: l.profileUrl, logoUrl: l.logoUrl }));
         return (
           <footer 
             className={`border-t border-white/[0.04] py-8 lg:py-10 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 text-[10px] font-mono text-slate-500 relative overflow-hidden transition-all duration-500 ${

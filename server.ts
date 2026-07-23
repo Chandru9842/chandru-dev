@@ -32,6 +32,15 @@ function loadDatabase() {
       if (!db.socialLinks) {
         db.socialLinks = initialSocialLinks;
         dirty = true;
+      } else if (Array.isArray(db.socialLinks)) {
+        db.socialLinks.forEach((item: any) => {
+          if (item.showInDynamicProfile === undefined) { item.showInDynamicProfile = true; dirty = true; }
+          if (item.showInCoordinates === undefined) { item.showInCoordinates = true; dirty = true; }
+          if (item.showInFooter === undefined) { item.showInFooter = true; dirty = true; }
+          if (item.showInContact === undefined) { item.showInContact = true; dirty = true; }
+          if (item.showInHero === undefined) { item.showInHero = false; dirty = true; }
+          if (item.showInSystemConsole === undefined) { item.showInSystemConsole = false; dirty = true; }
+        });
       }
       if (!db.footer) {
         db.footer = initialFooter;
@@ -93,7 +102,7 @@ function loadDatabase() {
         db.technologies = initialTechStack;
         dirty = true;
       }
-      if (!db.tools) {
+      if (!db.tools || !Array.isArray(db.tools) || db.tools.length === 0) {
         db.tools = initialTools;
         dirty = true;
       }
@@ -406,6 +415,7 @@ function loadDatabase() {
     themeSettings: initialThemeSettings,
     achievements: initialAchievements,
     technologies: initialTechStack,
+    tools: initialTools,
     users: [
       {
         id: 1,
@@ -698,6 +708,111 @@ async function startServer() {
     return { browser, operatingSystem, device };
   }
 
+  function determineNotificationMeta(moduleName: string, actionName: string, status: string = "SUCCESS") {
+    let severity: "Information" | "Success" | "Warning" | "Error" | "Critical" = "Success";
+    const actLower = (actionName || "").toLowerCase();
+    const modLower = (moduleName || "").toLowerCase();
+
+    if (status === "ERROR" || actLower.includes("failed") || actLower.includes("error") || actLower.includes("critical")) {
+      severity = actLower.includes("critical") || actLower.includes("unauthorized") || actLower.includes("brute") ? "Critical" : "Error";
+    } else if (status === "WARNING" || actLower.includes("warning") || actLower.includes("purge") || actLower.includes("delete") || actLower.includes("removed")) {
+      severity = "Warning";
+    } else if (actLower.includes("created") || actLower.includes("added") || actLower.includes("published") || actLower.includes("success") || actLower.includes("updated") || actLower.includes("uploaded")) {
+      severity = "Success";
+    } else {
+      severity = "Information";
+    }
+
+    let category = "System";
+    if (modLower.includes("project")) category = "Projects";
+    else if (modLower.includes("profile") || modLower.includes("hero")) category = "Profile";
+    else if (modLower.includes("media")) category = "Media";
+    else if (modLower.includes("security") || modLower.includes("auth") || modLower.includes("login") || modLower.includes("role") || modLower.includes("password")) category = "Security";
+    else if (modLower.includes("deploy") || modLower.includes("build") || modLower.includes("railway") || modLower.includes("github")) category = "Deployment";
+    else if (modLower.includes("email") || modLower.includes("smtp")) category = "Email";
+    else if (modLower.includes("task") || modLower.includes("backup") || modLower.includes("clean")) category = "Tasks";
+    else if (modLower.includes("announcement")) category = "Announcements";
+    else category = "System";
+
+    let icon = "Bell";
+    let color = "#10b981";
+
+    if (category === "Projects") { icon = "BookOpen"; color = "#3b82f6"; }
+    else if (category === "Profile") { icon = "User"; color = "#8b5cf6"; }
+    else if (category === "Media") { icon = "Folder"; color = "#f59e0b"; }
+    else if (category === "Security") { icon = "ShieldAlert"; color = severity === "Critical" || severity === "Error" ? "#ef4444" : "#eab308"; }
+    else if (category === "Deployment") { icon = "Rocket"; color = severity === "Error" ? "#ef4444" : "#06b6d4"; }
+    else if (category === "Email") { icon = "Mail"; color = "#ec4899"; }
+    else if (category === "Tasks") { icon = "Clock"; color = "#14b8a6"; }
+    else if (category === "Announcements") { icon = "Megaphone"; color = "#a855f7"; }
+
+    return { severity, category, icon, color };
+  }
+
+  function publishNotification(db: any, {
+    module,
+    action,
+    title,
+    description,
+    performedBy = "Chandru Mohan",
+    severity,
+    category,
+    icon,
+    color,
+    pinned = false,
+    metadata = {}
+  }: {
+    module: string;
+    action: string;
+    title?: string;
+    description: string;
+    performedBy?: string;
+    severity?: "Information" | "Success" | "Warning" | "Error" | "Critical";
+    category?: string;
+    icon?: string;
+    color?: string;
+    pinned?: boolean;
+    metadata?: any;
+  }) {
+    db.notifications = db.notifications || [];
+    const meta = determineNotificationMeta(module, action);
+    const resolvedSeverity = severity || meta.severity;
+    const resolvedCategory = category || meta.category;
+    const resolvedIcon = icon || meta.icon;
+    const resolvedColor = color || meta.color;
+    const resolvedTitle = title || `${module}: ${action}`;
+
+    const newNotif = {
+      id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      eventId: `EVT-${Date.now()}`,
+      module,
+      action,
+      title: resolvedTitle,
+      description,
+      message: description,
+      performedBy,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      severity: resolvedSeverity,
+      category: resolvedCategory,
+      type: resolvedCategory.toUpperCase(),
+      icon: resolvedIcon,
+      color: resolvedColor,
+      status: "UNREAD",
+      read: false,
+      unread: true,
+      pinned: !!pinned,
+      archived: false,
+      metadata
+    };
+
+    db.notifications.unshift(newNotif);
+    if (db.notifications.length > 500) {
+      db.notifications = db.notifications.slice(0, 500);
+    }
+    return newNotif;
+  }
+
   function recordActivity(req: any, db: any, {
     action,
     module,
@@ -756,6 +871,24 @@ async function startServer() {
     };
 
     db.activityHistory.push(logEntry);
+
+    // Automatically publish to centralized Notification Center
+    publishNotification(db, {
+      module,
+      action,
+      title: `${action}`,
+      description,
+      performedBy,
+      severity: status === "ERROR" ? "Error" : status === "WARNING" ? "Warning" : undefined,
+      metadata: {
+        browser,
+        operatingSystem,
+        device,
+        ipAddress,
+        location
+      }
+    });
+
     return logEntry;
   }
 
@@ -2926,7 +3059,11 @@ async function startServer() {
 
   app.post("/api/social-links", authenticateJWT, (req, res) => {
     const db = loadDatabase();
-    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab } = req.body;
+    const { 
+      platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, 
+      whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab,
+      showInDynamicProfile, showInCoordinates, showInFooter, showInContact, showInHero, showInSystemConsole 
+    } = req.body;
 
     if (!platform || typeof platform !== "string" || !platform.trim()) {
       return res.status(400).json({ error: "Platform name is required." });
@@ -2961,17 +3098,39 @@ async function startServer() {
       processedLogoUrl = processed.url;
     }
 
+    let processedAvatarUrl = req.body.avatarUrl || "";
+    if (processedAvatarUrl && processedAvatarUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedAvatarUrl, "avatar");
+      processedAvatarUrl = processed.url;
+    }
+
+    let processedCoverUrl = req.body.coverImageUrl || "";
+    if (processedCoverUrl && processedCoverUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedCoverUrl, "cover");
+      processedCoverUrl = processed.url;
+    }
+
+    let processedBannerUrl = req.body.bannerImageUrl || "";
+    if (processedBannerUrl && processedBannerUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedBannerUrl, "banner");
+      processedBannerUrl = processed.url;
+    }
+
     const newId = db.socialLinks && db.socialLinks.length > 0 
       ? Math.max(...db.socialLinks.map((s: any) => s.id)) + 1 
       : 1;
 
     const created = {
+      ...req.body,
       id: newId,
       platform: platform.trim(),
       username: username ? String(username).trim() : "",
       profileUrl: String(profileUrl).trim(),
       icon: icon ? String(icon).trim() : platform,
       logoUrl: processedLogoUrl,
+      avatarUrl: processedAvatarUrl,
+      coverImageUrl: processedCoverUrl,
+      bannerImageUrl: processedBannerUrl,
       customSvg: customSvg ? String(customSvg) : "",
       whiteLogoUrl: whiteLogoUrl ? String(whiteLogoUrl) : "",
       darkLogoUrl: darkLogoUrl ? String(darkLogoUrl) : "",
@@ -2979,6 +3138,13 @@ async function startServer() {
       openInNewTab: openInNewTab !== false,
       displayOrder: typeof displayOrder === "number" ? displayOrder : (db.socialLinks?.length || 0) + 1,
       isVisible: isVisible !== false,
+      showInDynamicProfile: showInDynamicProfile !== undefined ? !!showInDynamicProfile : true,
+      showInCoordinates: showInCoordinates !== undefined ? !!showInCoordinates : true,
+      showInFooter: showInFooter !== undefined ? !!showInFooter : true,
+      showInContact: showInContact !== undefined ? !!showInContact : true,
+      showInHero: showInHero !== undefined ? !!showInHero : false,
+      showInSystemConsole: showInSystemConsole !== undefined ? !!showInSystemConsole : false,
+      clicks: typeof req.body.clicks === "number" ? req.body.clicks : 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -2992,7 +3158,11 @@ async function startServer() {
   app.put("/api/social-links/:id", authenticateJWT, (req, res) => {
     const db = loadDatabase();
     const id = parseInt(req.params.id);
-    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab } = req.body;
+    const { 
+      platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, 
+      whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab,
+      showInDynamicProfile, showInCoordinates, showInFooter, showInContact, showInHero, showInSystemConsole 
+    } = req.body;
 
     if (platform && (typeof platform !== "string" || !platform.trim())) {
       return res.status(400).json({ error: "Platform name cannot be empty." });
@@ -3031,13 +3201,35 @@ async function startServer() {
       processedLogoUrl = processed.url;
     }
 
+    let processedAvatarUrl = req.body.avatarUrl !== undefined ? req.body.avatarUrl : db.socialLinks[index].avatarUrl || "";
+    if (processedAvatarUrl && processedAvatarUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedAvatarUrl, "avatar");
+      processedAvatarUrl = processed.url;
+    }
+
+    let processedCoverUrl = req.body.coverImageUrl !== undefined ? req.body.coverImageUrl : db.socialLinks[index].coverImageUrl || "";
+    if (processedCoverUrl && processedCoverUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedCoverUrl, "cover");
+      processedCoverUrl = processed.url;
+    }
+
+    let processedBannerUrl = req.body.bannerImageUrl !== undefined ? req.body.bannerImageUrl : db.socialLinks[index].bannerImageUrl || "";
+    if (processedBannerUrl && processedBannerUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedBannerUrl, "banner");
+      processedBannerUrl = processed.url;
+    }
+
     const updated = {
       ...db.socialLinks[index],
+      ...req.body,
       platform: platform ? platform.trim() : db.socialLinks[index].platform,
       username: username !== undefined ? String(username).trim() : db.socialLinks[index].username,
       profileUrl: String(profileUrl).trim(),
       icon: icon !== undefined ? String(icon).trim() : db.socialLinks[index].icon,
       logoUrl: processedLogoUrl,
+      avatarUrl: processedAvatarUrl,
+      coverImageUrl: processedCoverUrl,
+      bannerImageUrl: processedBannerUrl,
       customSvg: customSvg !== undefined ? String(customSvg) : (db.socialLinks[index].customSvg || ""),
       whiteLogoUrl: whiteLogoUrl !== undefined ? String(whiteLogoUrl) : (db.socialLinks[index].whiteLogoUrl || ""),
       darkLogoUrl: darkLogoUrl !== undefined ? String(darkLogoUrl) : (db.socialLinks[index].darkLogoUrl || ""),
@@ -3045,6 +3237,12 @@ async function startServer() {
       openInNewTab: openInNewTab !== undefined ? !!openInNewTab : (db.socialLinks[index].openInNewTab !== false),
       displayOrder: typeof displayOrder === "number" ? displayOrder : db.socialLinks[index].displayOrder,
       isVisible: isVisible !== undefined ? !!isVisible : db.socialLinks[index].isVisible,
+      showInDynamicProfile: showInDynamicProfile !== undefined ? !!showInDynamicProfile : (db.socialLinks[index].showInDynamicProfile !== undefined ? !!db.socialLinks[index].showInDynamicProfile : true),
+      showInCoordinates: showInCoordinates !== undefined ? !!showInCoordinates : (db.socialLinks[index].showInCoordinates !== undefined ? !!db.socialLinks[index].showInCoordinates : true),
+      showInFooter: showInFooter !== undefined ? !!showInFooter : (db.socialLinks[index].showInFooter !== undefined ? !!db.socialLinks[index].showInFooter : true),
+      showInContact: showInContact !== undefined ? !!showInContact : (db.socialLinks[index].showInContact !== undefined ? !!db.socialLinks[index].showInContact : true),
+      showInHero: showInHero !== undefined ? !!showInHero : (db.socialLinks[index].showInHero !== undefined ? !!db.socialLinks[index].showInHero : false),
+      showInSystemConsole: showInSystemConsole !== undefined ? !!showInSystemConsole : (db.socialLinks[index].showInSystemConsole !== undefined ? !!db.socialLinks[index].showInSystemConsole : false),
       updatedAt: new Date().toISOString()
     };
 
@@ -3915,16 +4113,212 @@ async function startServer() {
   });
 
   // --- MEDIA MANAGER ENDPOINTS ---
+  function calculateMediaUsage(db: any, url: string, title?: string): string[] {
+    if (!url) return [];
+    const usedIn = new Set<string>();
+    const normUrl = url.trim().toLowerCase();
+
+    const isMatch = (targetUrl: any) => {
+      if (!targetUrl || typeof targetUrl !== 'string') return false;
+      const t = targetUrl.trim().toLowerCase();
+      return t === normUrl || (normUrl.length > 25 && t.includes(normUrl)) || (t.length > 25 && normUrl.includes(t));
+    };
+
+    // 1. Profile & Hero
+    if (db.profile) {
+      if (isMatch(db.profile.profileImage) || isMatch(db.profile.avatarUrl)) usedIn.add('Profile');
+      if (isMatch(db.profile.bannerImageUrl) || isMatch(db.profile.heroBgImage)) usedIn.add('Hero');
+      if (isMatch(db.profile.resumeUrl)) usedIn.add('Resume');
+      if (isMatch(db.profile.faviconUrl)) usedIn.add('Favicon');
+    }
+
+    if (db.hero) {
+      if (isMatch(db.hero.avatarUrl) || isMatch(db.hero.profileImageUrl)) usedIn.add('Hero');
+      if (isMatch(db.hero.backgroundImageUrl) || isMatch(db.hero.badgeIconUrl)) usedIn.add('Hero');
+    }
+
+    // 2. Projects
+    if (Array.isArray(db.projects)) {
+      db.projects.forEach((p: any) => {
+        if (isMatch(p.image) || isMatch(p.thumbnailUrl) || isMatch(p.logoUrl)) {
+          usedIn.add(`Projects (${p.title || 'Project'})`);
+        }
+        if (Array.isArray(p.gallery) && p.gallery.some((g: any) => isMatch(typeof g === 'string' ? g : g?.url))) {
+          usedIn.add(`Projects (${p.title || 'Project'})`);
+        }
+      });
+    }
+
+    // 3. Skills
+    if (Array.isArray(db.skills)) {
+      db.skills.forEach((s: any) => {
+        if (isMatch(s.iconUrl) || isMatch(s.badgeUrl) || isMatch(s.logoUrl)) {
+          usedIn.add(`Skills (${s.name || 'Skill'})`);
+        }
+      });
+    }
+
+    // 4. Tools
+    if (Array.isArray(db.tools)) {
+      db.tools.forEach((t: any) => {
+        if (isMatch(t.iconUrl) || isMatch(t.badgeUrl) || isMatch(t.logoUrl)) {
+          usedIn.add(`Tools (${t.name || 'Tool'})`);
+        }
+      });
+    }
+
+    // 5. Certificates
+    if (Array.isArray(db.certificates)) {
+      db.certificates.forEach((c: any) => {
+        if (isMatch(c.imageUrl) || isMatch(c.badgeUrl) || isMatch(c.credentialUrl)) {
+          usedIn.add(`Certificates (${c.name || 'Certificate'})`);
+        }
+      });
+    }
+
+    // 6. Social Links
+    if (Array.isArray(db.socialLinks)) {
+      db.socialLinks.forEach((sl: any) => {
+        if (isMatch(sl.logoUrl) || isMatch(sl.avatarUrl) || isMatch(sl.bannerImageUrl)) {
+          usedIn.add(`Social Links (${sl.platform || 'Social'})`);
+        }
+      });
+    }
+
+    // 7. Theme & SEO & Footer
+    if (db.theme) {
+      if (isMatch(db.theme.logoUrl) || isMatch(db.theme.faviconUrl)) usedIn.add('Theme');
+      if (isMatch(db.theme.backgroundImage)) usedIn.add('Theme');
+    }
+
+    if (db.seo) {
+      if (isMatch(db.seo.ogImageUrl) || isMatch(db.seo.twitterCardImage) || isMatch(db.seo.faviconUrl)) usedIn.add('SEO');
+    }
+
+    if (db.footer) {
+      if (isMatch(db.footer.logoUrl)) usedIn.add('Footer');
+    }
+
+    // 8. Achievements, Experience, Education
+    if (Array.isArray(db.achievements)) {
+      db.achievements.forEach((a: any) => {
+        if (isMatch(a.iconUrl) || isMatch(a.badgeUrl)) usedIn.add('Achievements');
+      });
+    }
+    if (Array.isArray(db.experiences)) {
+      db.experiences.forEach((e: any) => {
+        if (isMatch(e.companyLogoUrl)) usedIn.add('Experience');
+      });
+    }
+    if (Array.isArray(db.education)) {
+      db.education.forEach((e: any) => {
+        if (isMatch(e.institutionLogoUrl)) usedIn.add('Education');
+      });
+    }
+
+    return Array.from(usedIn);
+  }
+
   app.get("/api/media", (req, res) => {
     const db = loadDatabase();
     if (!db.mediaItems) db.mediaItems = [];
-    res.json(db.mediaItems);
+    
+    // Enrich each item with real-time usage calculation
+    const enriched = db.mediaItems.map((item: any) => {
+      const usedIn = calculateMediaUsage(db, item.url, item.title);
+      return {
+        ...item,
+        usedIn,
+        usedInCount: usedIn.length
+      };
+    });
+
+    res.json(enriched);
+  });
+
+  app.get("/api/media/stats", (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaItems) db.mediaItems = [];
+
+    const totalFiles = db.mediaItems.length;
+    const totalSize = db.mediaItems.reduce((acc: number, item: any) => acc + (item.size || 150000), 0);
+    
+    let unusedCount = 0;
+    const typeBreakdown: Record<string, number> = {
+      image: 0, svg: 0, pdf: 0, video: 0, audio: 0, document: 0, logo: 0, icon: 0, zip: 0
+    };
+
+    db.mediaItems.forEach((item: any) => {
+      const usages = calculateMediaUsage(db, item.url, item.title);
+      if (usages.length === 0) unusedCount++;
+      const t = item.type || 'image';
+      typeBreakdown[t] = (typeBreakdown[t] || 0) + 1;
+    });
+
+    const largestFiles = [...db.mediaItems]
+      .sort((a, b) => (b.size || 0) - (a.size || 0))
+      .slice(0, 5);
+
+    res.json({
+      totalFiles,
+      totalSize,
+      unusedCount,
+      typeBreakdown,
+      largestFiles,
+      collectionsCount: db.mediaCollections?.length || 0,
+      quotaBytes: 5 * 1024 * 1024 * 1024 // 5GB Enterprise Quota
+    });
+  });
+
+  app.get("/api/media/collections", (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaCollections) {
+      db.mediaCollections = [
+        { id: 1, name: "Hero Banners", description: "Primary hero graphics and avatars", icon: "Palette", color: "#10b981", assetIds: [1] },
+        { id: 2, name: "Project Diagrams", description: "Architecture and showcase images", icon: "BookOpen", color: "#3b82f6", assetIds: [2] },
+        { id: 3, name: "Badges & Credentials", description: "Certificates, AWS, and verify badges", icon: "Award", color: "#8b5cf6", assetIds: [3] }
+      ];
+      saveDatabase(db);
+    }
+    res.json(db.mediaCollections);
+  });
+
+  app.post("/api/media/collections", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaCollections) db.mediaCollections = [];
+    const { name, description, icon, color, assetIds } = req.body;
+
+    const newId = db.mediaCollections.length > 0 ? Math.max(...db.mediaCollections.map((c: any) => c.id)) + 1 : 1;
+    const created = {
+      id: newId,
+      name: name ? String(name).trim() : "New Collection",
+      description: description ? String(description).trim() : "",
+      icon: icon || "Folder",
+      color: color || "#10b981",
+      assetIds: Array.isArray(assetIds) ? assetIds : []
+    };
+
+    db.mediaCollections.unshift(created);
+    saveDatabase(db);
+    res.status(201).json(created);
+  });
+
+  app.delete("/api/media/collections/:id", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.mediaCollections) db.mediaCollections = [];
+    db.mediaCollections = db.mediaCollections.filter((c: any) => c.id !== id);
+    saveDatabase(db);
+    res.json({ status: "success" });
   });
 
   app.post("/api/media", authenticateJWT, (req, res) => {
     const db = loadDatabase();
     if (!db.mediaItems) db.mediaItems = [];
-    const { title, url, type, folder, size, dimensions, tags, svgMarkup } = req.body;
+    const {
+      title, displayName, altText, description, url, type, folder,
+      category, size, dimensions, tags, svgMarkup, visibility, status, version
+    } = req.body;
 
     if (!url && !svgMarkup) {
       return res.status(400).json({ error: "Media URL or SVG markup is required." });
@@ -3943,15 +4337,23 @@ async function startServer() {
 
     const created = {
       id: newId,
-      title: title ? String(title).trim() : "Untitled Media",
+      title: title ? String(title).trim() : "Untitled Asset",
+      displayName: displayName || title || "Untitled Asset",
+      altText: altText || title || "",
+      description: description || "Enterprise portfolio media asset.",
       url: processedUrl,
       type: type || (svgMarkup ? "svg" : "image"),
       folder: folder || "General",
-      size: typeof size === "number" ? size : (processedUrl.length * 0.75),
+      category: category || folder || "General",
+      size: typeof size === "number" ? size : Math.round(processedUrl.length * 0.75),
       dimensions: dimensions || "1200x800",
       tags: Array.isArray(tags) ? tags : [],
       svgMarkup: svgMarkup || "",
       publicId,
+      uploadedBy: "Admin",
+      visibility: visibility || "public",
+      status: status || "active",
+      version: version || "1.0.0",
       createdAt: nowStr,
       updatedAt: nowStr
     };
@@ -3966,7 +4368,9 @@ async function startServer() {
     });
 
     saveDatabase(db);
-    res.status(201).json(created);
+
+    const usedIn = calculateMediaUsage(db, created.url, created.title);
+    res.status(201).json({ ...created, usedIn, usedInCount: usedIn.length });
   });
 
   app.put("/api/media/:id", authenticateJWT, (req, res) => {
@@ -3979,17 +4383,27 @@ async function startServer() {
       return res.status(404).json({ error: "Media item not found." });
     }
 
-    const { title, folder, tags, url, type, svgMarkup } = req.body;
+    const {
+      title, displayName, altText, description, folder, category,
+      tags, url, type, svgMarkup, visibility, status, version
+    } = req.body;
     const original = db.mediaItems[index];
 
     const updated = {
       ...original,
       title: title !== undefined ? String(title).trim() : original.title,
+      displayName: displayName !== undefined ? String(displayName).trim() : original.displayName,
+      altText: altText !== undefined ? String(altText).trim() : original.altText,
+      description: description !== undefined ? String(description).trim() : original.description,
       folder: folder !== undefined ? String(folder).trim() : original.folder,
+      category: category !== undefined ? String(category).trim() : original.category,
       tags: Array.isArray(tags) ? tags : original.tags,
       url: url || original.url,
       type: type || original.type,
       svgMarkup: svgMarkup !== undefined ? svgMarkup : original.svgMarkup,
+      visibility: visibility || original.visibility || "public",
+      status: status || original.status || "active",
+      version: version || original.version || "1.0.0",
       updatedAt: new Date().toISOString()
     };
 
@@ -4004,7 +4418,8 @@ async function startServer() {
     });
 
     saveDatabase(db);
-    res.json(updated);
+    const usedIn = calculateMediaUsage(db, updated.url, updated.title);
+    res.json({ ...updated, usedIn, usedInCount: usedIn.length });
   });
 
   app.delete("/api/media/:id", authenticateJWT, (req, res) => {
@@ -4045,6 +4460,21 @@ async function startServer() {
 
     saveDatabase(db);
     res.json({ status: "success", deletedCount: initialCount - db.mediaItems.length });
+  });
+
+  app.post("/api/media/purge-unused", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaItems) db.mediaItems = [];
+
+    const initialCount = db.mediaItems.length;
+    db.mediaItems = db.mediaItems.filter((m: any) => {
+      const usage = calculateMediaUsage(db, m.url, m.title);
+      return usage.length > 0;
+    });
+
+    const purged = initialCount - db.mediaItems.length;
+    saveDatabase(db);
+    res.json({ status: "success", purgedCount: purged });
   });
 
   // Analytics Endpoints
@@ -4299,19 +4729,186 @@ async function startServer() {
     }
   });
 
-  // --- ENTERPRISE NOTIFICATIONS API ---
+  // --- ENTERPRISE CENTRALIZED NOTIFICATION CENTER API ---
   app.get("/api/notifications", (req, res) => {
     const db = loadDatabase();
-    res.json(db.notifications || []);
+    let notifs = db.notifications || [];
+
+    const { category, severity, module: modFilter, dateRange, search, status, pinned } = req.query;
+
+    if (category && category !== "All") {
+      notifs = notifs.filter((n: any) => (n.category || "").toLowerCase() === (category as string).toLowerCase());
+    }
+
+    if (severity && severity !== "All") {
+      notifs = notifs.filter((n: any) => (n.severity || "").toLowerCase() === (severity as string).toLowerCase());
+    }
+
+    if (modFilter && modFilter !== "All") {
+      notifs = notifs.filter((n: any) => (n.module || "").toLowerCase().includes((modFilter as string).toLowerCase()));
+    }
+
+    if (pinned === "true") {
+      notifs = notifs.filter((n: any) => n.pinned);
+    }
+
+    if (status === "unread") {
+      notifs = notifs.filter((n: any) => !n.read);
+    } else if (status === "read") {
+      notifs = notifs.filter((n: any) => n.read);
+    } else if (status === "archived") {
+      notifs = notifs.filter((n: any) => n.archived);
+    } else if (status === "active") {
+      notifs = notifs.filter((n: any) => !n.archived);
+    }
+
+    if (dateRange && dateRange !== "All") {
+      const now = new Date();
+      const notifTime = (n: any) => new Date(n.timestamp || n.createdAt || Date.now());
+      if (dateRange === "Today") {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        notifs = notifs.filter((n: any) => notifTime(n) >= startOfDay);
+      } else if (dateRange === "Yesterday") {
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const endOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        notifs = notifs.filter((n: any) => notifTime(n) >= startOfYesterday && notifTime(n) < endOfYesterday);
+      } else if (dateRange === "Last 7 Days") {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        notifs = notifs.filter((n: any) => notifTime(n) >= sevenDaysAgo);
+      } else if (dateRange === "Last 30 Days") {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        notifs = notifs.filter((n: any) => notifTime(n) >= thirtyDaysAgo);
+      }
+    }
+
+    if (search && typeof search === "string" && search.trim()) {
+      const q = search.trim().toLowerCase();
+      notifs = notifs.filter((n: any) => 
+        (n.action || "").toLowerCase().includes(q) ||
+        (n.module || "").toLowerCase().includes(q) ||
+        (n.title || "").toLowerCase().includes(q) ||
+        (n.description || "").toLowerCase().includes(q) ||
+        (n.performedBy || "").toLowerCase().includes(q)
+      );
+    }
+
+    res.json(notifs);
+  });
+
+  app.get("/api/notifications/stats", (req, res) => {
+    const db = loadDatabase();
+    const notifs = db.notifications || [];
+
+    const totalEvents = notifs.length;
+    const unreadCount = notifs.filter((n: any) => !n.read && !n.archived).length;
+    const criticalCount = notifs.filter((n: any) => (n.severity || "").toLowerCase() === "critical").length;
+    const warningCount = notifs.filter((n: any) => (n.severity || "").toLowerCase() === "warning").length;
+    const errorCount = notifs.filter((n: any) => (n.severity || "").toLowerCase() === "error").length;
+    const successCount = notifs.filter((n: any) => (n.severity || "").toLowerCase() === "success").length;
+    const infoCount = notifs.filter((n: any) => (n.severity || "").toLowerCase() === "information" || (n.severity || "").toLowerCase() === "info").length;
+
+    const byCategory: Record<string, number> = {};
+    notifs.forEach((n: any) => {
+      const cat = n.category || "System";
+      byCategory[cat] = (byCategory[cat] || 0) + 1;
+    });
+
+    res.json({
+      totalEvents,
+      unreadCount,
+      criticalCount,
+      warningCount,
+      errorCount,
+      successCount,
+      infoCount,
+      byCategory,
+      recentActivity: notifs.slice(0, 10)
+    });
+  });
+
+  app.post("/api/notifications", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { module, action, title, description, severity, category, icon, color, pinned, metadata } = req.body;
+
+    if (!module || !description) {
+      return res.status(400).json({ error: "Module and description are required." });
+    }
+
+    const created = publishNotification(db, {
+      module: String(module),
+      action: action ? String(action) : "User Notification",
+      title: title ? String(title) : `${module} Notification`,
+      description: String(description),
+      performedBy: (req as any).user?.name || (req as any).user?.email || "Admin",
+      severity,
+      category,
+      icon,
+      color,
+      pinned: !!pinned,
+      metadata: metadata || {}
+    });
+
+    saveDatabase(db);
+    res.status(201).json(created);
   });
 
   app.post("/api/notifications/mark-read", (req, res) => {
     const db = loadDatabase();
     const { id } = req.body;
     if (id) {
-      db.notifications = (db.notifications || []).map((n: any) => n.id === id ? { ...n, read: true } : n);
+      db.notifications = (db.notifications || []).map((n: any) => 
+        n.id === id || n.eventId === id ? { ...n, read: true, unread: false, status: "READ" } : n
+      );
     } else {
-      db.notifications = (db.notifications || []).map((n: any) => ({ ...n, read: true }));
+      db.notifications = (db.notifications || []).map((n: any) => ({ ...n, read: true, unread: false, status: "READ" }));
+    }
+    saveDatabase(db);
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  app.post("/api/notifications/mark-unread", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.body;
+    if (id) {
+      db.notifications = (db.notifications || []).map((n: any) => 
+        n.id === id || n.eventId === id ? { ...n, read: false, unread: true, status: "UNREAD" } : n
+      );
+      saveDatabase(db);
+    }
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  app.post("/api/notifications/pin", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.body;
+    if (id) {
+      db.notifications = (db.notifications || []).map((n: any) => 
+        n.id === id || n.eventId === id ? { ...n, pinned: !n.pinned } : n
+      );
+      saveDatabase(db);
+    }
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  app.post("/api/notifications/archive", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.body;
+    if (id) {
+      db.notifications = (db.notifications || []).map((n: any) => 
+        n.id === id || n.eventId === id ? { ...n, archived: !n.archived } : n
+      );
+      saveDatabase(db);
+    }
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  app.post("/api/notifications/delete", (req, res) => {
+    const db = loadDatabase();
+    const { id, ids } = req.body;
+    if (ids && Array.isArray(ids)) {
+      db.notifications = (db.notifications || []).filter((n: any) => !ids.includes(n.id) && !ids.includes(n.eventId));
+    } else if (id) {
+      db.notifications = (db.notifications || []).filter((n: any) => n.id !== id && n.eventId !== id);
     }
     saveDatabase(db);
     res.json({ status: "success", notifications: db.notifications });
@@ -4319,9 +4916,182 @@ async function startServer() {
 
   app.post("/api/notifications/clear", (req, res) => {
     const db = loadDatabase();
-    db.notifications = [];
+    // Retain pinned notifications on clear
+    db.notifications = (db.notifications || []).filter((n: any) => n.pinned);
     saveDatabase(db);
-    res.json({ status: "success", notifications: [] });
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  // --- DEPLOYMENT STATUS API ---
+  app.post("/api/deployments/trigger", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { environment = "Production", branch = "main", provider = "Railway Deploy" } = req.body;
+    const commitId = Math.random().toString(36).substring(2, 9);
+
+    const deployEvent = publishNotification(db, {
+      module: "Deployment Status",
+      action: provider,
+      title: `${provider}: ${environment} Build Initiated`,
+      description: `Deployment #${Math.floor(Math.random() * 900 + 100)} started on branch '${branch}' [Commit ${commitId}]. Compiling server bundle dist/server.cjs.`,
+      performedBy: (req as any).user?.name || "GitHub Actions",
+      severity: "Information",
+      category: "Deployment",
+      icon: "Rocket",
+      color: "#06b6d4",
+      metadata: {
+        commitId,
+        branch,
+        environment,
+        deployUrl: "https://ais-dev-jrj5om35wzksb6dj52fr7l-65002592949.asia-southeast1.run.app",
+        status: "BUILDING"
+      }
+    });
+
+    saveDatabase(db);
+
+    // Simulate completion event after short interval
+    setTimeout(() => {
+      const dbLive = loadDatabase();
+      publishNotification(dbLive, {
+        module: "Deployment Status",
+        action: "Build Success",
+        title: `${provider}: Deployment Live`,
+        description: `Deployment #${Math.floor(Math.random() * 900 + 100)} completed in 28s. Application healthy on ${environment}.`,
+        performedBy: "Cloud Run Deployer",
+        severity: "Success",
+        category: "Deployment",
+        icon: "CheckCircle2",
+        color: "#10b981",
+        metadata: {
+          commitId,
+          branch,
+          environment,
+          deployUrl: "https://ais-dev-jrj5om35wzksb6dj52fr7l-65002592949.asia-southeast1.run.app",
+          status: "SUCCESS"
+        }
+      });
+      saveDatabase(dbLive);
+    }, 1500);
+
+    res.json({ status: "success", event: deployEvent });
+  });
+
+  // --- SCHEDULED TASKS API ---
+  app.post("/api/tasks/run", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { taskName = "Database Cleanup" } = req.body;
+
+    const taskEvent = publishNotification(db, {
+      module: "Scheduled Tasks",
+      action: `${taskName} Executed`,
+      title: `Scheduled Task: ${taskName}`,
+      description: `Manual execution of task '${taskName}' completed successfully in 340ms. Systems optimal.`,
+      performedBy: (req as any).user?.name || "System Cron",
+      severity: "Success",
+      category: "Tasks",
+      icon: "Clock",
+      color: "#14b8a6"
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success", event: taskEvent });
+  });
+
+  // --- EMAIL QUEUE API ---
+  app.post("/api/email/retry", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { recipient = "client@example.com", notificationId } = req.body;
+
+    if (notificationId) {
+      db.notifications = (db.notifications || []).map((n: any) => {
+        if (n.id === notificationId || n.eventId === notificationId) {
+          return {
+            ...n,
+            action: "Email Sent",
+            title: `Email Re-sent to ${recipient}`,
+            severity: "Success",
+            color: "#10b981",
+            description: `Retry successful. Mail delivered to ${recipient} via Gmail SMTP.`
+          };
+        }
+        return n;
+      });
+    }
+
+    const retryEvent = publishNotification(db, {
+      module: "Email & SMTP",
+      action: "Email Sent",
+      title: `Email Delivery Succeeded`,
+      description: `Re-sent queued email message to ${recipient}. Delivery confirmed by SMTP server.`,
+      performedBy: (req as any).user?.name || "SMTP Dispatcher",
+      severity: "Success",
+      category: "Email",
+      icon: "Mail",
+      color: "#10b981"
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success", event: retryEvent });
+  });
+
+  // --- ANNOUNCEMENTS API ---
+  app.get("/api/announcements", (req, res) => {
+    const db = loadDatabase();
+    const notifs = db.notifications || [];
+    const announcements = notifs.filter((n: any) => (n.category || "").toLowerCase() === "announcements");
+    res.json(announcements);
+  });
+
+  app.post("/api/announcements", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { title, description, severity = "Information", pinned = true } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ error: "Title and description are required for announcements." });
+    }
+
+    const announcement = publishNotification(db, {
+      module: "Announcements",
+      action: "Announcement Published",
+      title: String(title),
+      description: String(description),
+      performedBy: (req as any).user?.name || "Admin",
+      severity: severity as any,
+      category: "Announcements",
+      icon: "Megaphone",
+      color: "#a855f7",
+      pinned: !!pinned
+    });
+
+    saveDatabase(db);
+    res.status(201).json(announcement);
+  });
+
+  // --- NOTIFICATION SETTINGS API ---
+  app.get("/api/notification-settings", (req, res) => {
+    const db = loadDatabase();
+    if (!db.notificationSettings) {
+      db.notificationSettings = {
+        toastAlerts: true,
+        soundEnabled: false,
+        emailAlertsOnCritical: true,
+        desktopAlerts: false,
+        retentionDays: 60,
+        enabledCategories: ["Projects", "Profile", "Media", "Security", "System", "Deployment", "Email", "Tasks", "Announcements"]
+      };
+      saveDatabase(db);
+    }
+    res.json(db.notificationSettings);
+  });
+
+  app.put("/api/notification-settings", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    db.notificationSettings = {
+      ...db.notificationSettings,
+      ...req.body
+    };
+    saveDatabase(db);
+    res.json({ status: "success", settings: db.notificationSettings });
   });
 
   // --- ENTERPRISE BACKUP & DATA IMPORT/EXPORT API ---

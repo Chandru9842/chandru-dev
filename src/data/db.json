@@ -252,16 +252,11 @@
     }
   ],
   "analytics": {
-    "pageViews": 12872,
+    "pageViews": 12898,
     "uniqueVisitors": 4145,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
     "viewsHistory": [
-      {
-        "date": "Jul 03",
-        "views": 1200,
-        "visitors": 390
-      },
       {
         "date": "Jul 04",
         "views": 1450,
@@ -306,18 +301,23 @@
         "date": "Jul 22",
         "views": 345,
         "visitors": 2
+      },
+      {
+        "date": "Jul 23",
+        "views": 26,
+        "visitors": 0
       }
     ],
     "referrals": [
       {
         "source": "GitHub",
         "count": 4890,
-        "percentage": 38
+        "percentage": 37.9
       },
       {
         "source": "LinkedIn",
         "count": 3240,
-        "percentage": 25.2
+        "percentage": 25.1
       },
       {
         "source": "Direct Traffic",
@@ -326,8 +326,8 @@
       },
       {
         "source": "Google / SEO",
-        "count": 1517,
-        "percentage": 11.8
+        "count": 1543,
+        "percentage": 12
       },
       {
         "source": "Twitter / X",
@@ -342,7 +342,7 @@
       },
       {
         "country": "India",
-        "count": 2542
+        "count": 2568
       },
       {
         "country": "Germany",
@@ -364,7 +364,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7872
+        "count": 7898
       },
       {
         "browser": "Safari",
@@ -386,7 +386,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 9012
+        "count": 9038
       },
       {
         "device": "Mobile",
@@ -453,464 +453,474 @@
         "elementId": "resume_view_hero",
         "label": "View Resume",
         "count": 1
+      },
+      {
+        "elementId": "social_herodock_discord",
+        "label": "Discord",
+        "count": 1
+      },
+      {
+        "elementId": "social_hero_discord",
+        "label": "Discord",
+        "count": 1
       }
     ],
     "resumeDownloads": 345,
     "apiMetrics": {
-      "totalRequests": 1037,
-      "failedRequests": 0,
+      "totalRequests": 1849,
+      "failedRequests": 1,
       "slowRequests": 37,
-      "avgResponseTimeMs": 34.73,
+      "avgResponseTimeMs": 20.82,
       "history": [
         {
-          "method": "POST",
-          "path": "/api/analytics/track",
+          "method": "GET",
+          "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 13.18,
+          "durationMs": 1.83,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:48.087Z"
+          "timestamp": "2026-07-23T09:13:48.004Z"
         },
         {
-          "method": "POST",
-          "path": "/api/analytics/track",
+          "method": "GET",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 9.1,
+          "durationMs": 0.92,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:48.117Z"
+          "timestamp": "2026-07-23T09:13:48.074Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.74,
+          "durationMs": 2.11,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.331Z"
+          "timestamp": "2026-07-23T09:14:17.969Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 0.88,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:14:18.043Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.34,
+          "durationMs": 1.9,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.338Z"
+          "timestamp": "2026-07-23T09:14:47.956Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 14.96,
+          "durationMs": 1,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.341Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 9.69,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.346Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 8.88,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.367Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 7.87,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:49.382Z"
+          "timestamp": "2026-07-23T09:14:48.055Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 2.28,
+          "durationMs": 2.8,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.480Z"
+          "timestamp": "2026-07-23T09:15:18.048Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 0.83,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:15:18.120Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.54,
+          "durationMs": 2.07,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.487Z"
+          "timestamp": "2026-07-23T09:15:47.993Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 16.07,
+          "durationMs": 0.85,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.491Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 12.54,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.497Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 8.56,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.527Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 9.64,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:50.531Z"
+          "timestamp": "2026-07-23T09:15:48.209Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.06,
+          "durationMs": 4.71,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.657Z"
+          "timestamp": "2026-07-23T09:16:17.973Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 4.5,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:18.114Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.47,
+          "durationMs": 2.21,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.665Z"
+          "timestamp": "2026-07-23T09:16:19.359Z"
         },
         {
           "method": "GET",
           "path": "/api/portfolio-combined",
           "status": 200,
-          "durationMs": 8.04,
+          "durationMs": 2.31,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.669Z"
+          "timestamp": "2026-07-23T09:16:19.365Z"
         },
         {
           "method": "GET",
           "path": "/api/portfolio-combined",
           "status": 200,
-          "durationMs": 17.31,
+          "durationMs": 2.12,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.672Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 5.04,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.703Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 11.07,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:51.719Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 2.89,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:52.637Z"
+          "timestamp": "2026-07-23T09:16:19.370Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.32,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:19.431Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.28,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:19.458Z"
+        },
+        {
+          "method": "POST",
+          "path": "/api/analytics/track",
+          "status": 200,
+          "durationMs": 20.11,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:19.494Z"
+        },
+        {
+          "method": "POST",
+          "path": "/api/analytics/track",
+          "status": 200,
+          "durationMs": 3.35,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:19.501Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.3,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:19.918Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.5,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:49.987Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:16:50.057Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.01,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:17:19.973Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.63,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:17:20.060Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.47,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:17:49.963Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.43,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:17:50.038Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.97,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:18:19.976Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.01,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:18:20.049Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.29,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:18:50.012Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.17,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:18:50.083Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.81,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:19:19.993Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
           "status": 200,
           "durationMs": 2.06,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:52.662Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 4.29,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:52.672Z"
+          "timestamp": "2026-07-23T09:19:20.069Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.6,
+          "durationMs": 1.88,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:52.688Z"
+          "timestamp": "2026-07-23T09:20:02.117Z"
         },
         {
-          "method": "POST",
-          "path": "/api/analytics/track",
+          "method": "GET",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 12.15,
+          "durationMs": 1.19,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:52.784Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 8.61,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:53.145Z"
+          "timestamp": "2026-07-23T09:20:02.208Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.51,
+          "durationMs": 2.26,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.532Z"
+          "timestamp": "2026-07-23T09:21:02.043Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:21:02.170Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.33,
+          "durationMs": 1.85,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.540Z"
+          "timestamp": "2026-07-23T09:22:03.573Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 19.11,
+          "durationMs": 0.98,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.547Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 15.97,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.551Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 16.33,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.584Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 10.55,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:54.600Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 3.1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.838Z"
+          "timestamp": "2026-07-23T09:22:03.649Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 4.39,
+          "durationMs": 2.93,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.891Z"
+          "timestamp": "2026-07-23T09:22:36.621Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.02,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:22:37.776Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.46,
+          "durationMs": 2.1,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.899Z"
+          "timestamp": "2026-07-23T09:22:49.268Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 20.99,
+          "durationMs": 0.93,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.916Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 22.27,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.929Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 11,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:55.961Z"
+          "timestamp": "2026-07-23T09:22:49.339Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 2.28,
+          "durationMs": 2.03,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.522Z"
+          "timestamp": "2026-07-23T09:23:20.044Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 0.9,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:23:20.123Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.73,
+          "durationMs": 2.31,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.531Z"
+          "timestamp": "2026-07-23T09:23:49.951Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 17.58,
+          "durationMs": 0.93,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.536Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 12.83,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.540Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 23.81,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.585Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 25.1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:57.593Z"
+          "timestamp": "2026-07-23T09:23:50.028Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.49,
+          "durationMs": 3.03,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.421Z"
+          "timestamp": "2026-07-23T09:25:02.049Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/verify",
+          "status": 200,
+          "durationMs": 1.14,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-07-23T09:25:02.127Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.42,
+          "durationMs": 1.85,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.430Z"
+          "timestamp": "2026-07-23T09:25:19.947Z"
         },
         {
           "method": "GET",
-          "path": "/api/portfolio-combined",
+          "path": "/api/auth/verify",
           "status": 200,
-          "durationMs": 23.25,
+          "durationMs": 1.65,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.440Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 18.6,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.446Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 9.01,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.489Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 19.87,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-21T19:24:59.516Z"
+          "timestamp": "2026-07-23T09:25:20.028Z"
         }
       ]
     }
@@ -934,7 +944,19 @@
       "displayOrder": 1,
       "isVisible": true,
       "createdAt": "2026-07-09T04:40:00.000Z",
-      "updatedAt": "2026-07-09T04:40:00.000Z"
+      "updatedAt": "2026-07-23T07:15:04.593Z",
+      "showInDynamicProfile": false,
+      "showInCoordinates": true,
+      "showInFooter": true,
+      "showInContact": true,
+      "showInHero": false,
+      "showInSystemConsole": false,
+      "logoUrl": "",
+      "customSvg": "",
+      "whiteLogoUrl": "",
+      "darkLogoUrl": "",
+      "tooltip": "",
+      "openInNewTab": true
     },
     {
       "id": 2,
@@ -945,7 +967,13 @@
       "displayOrder": 2,
       "isVisible": true,
       "createdAt": "2026-07-09T04:40:00.000Z",
-      "updatedAt": "2026-07-09T04:40:00.000Z"
+      "updatedAt": "2026-07-09T04:40:00.000Z",
+      "showInDynamicProfile": true,
+      "showInCoordinates": true,
+      "showInFooter": true,
+      "showInContact": true,
+      "showInHero": false,
+      "showInSystemConsole": false
     },
     {
       "id": 3,
@@ -956,7 +984,13 @@
       "displayOrder": 3,
       "isVisible": true,
       "createdAt": "2026-07-09T04:40:00.000Z",
-      "updatedAt": "2026-07-09T04:40:00.000Z"
+      "updatedAt": "2026-07-09T04:40:00.000Z",
+      "showInDynamicProfile": true,
+      "showInCoordinates": true,
+      "showInFooter": true,
+      "showInContact": true,
+      "showInHero": false,
+      "showInSystemConsole": false
     },
     {
       "id": 4,
@@ -967,7 +1001,100 @@
       "displayOrder": 4,
       "isVisible": true,
       "createdAt": "2026-07-09T04:40:00.000Z",
-      "updatedAt": "2026-07-09T04:40:00.000Z"
+      "updatedAt": "2026-07-09T04:40:00.000Z",
+      "showInDynamicProfile": true,
+      "showInCoordinates": true,
+      "showInFooter": true,
+      "showInContact": true,
+      "showInHero": false,
+      "showInSystemConsole": false
+    },
+    {
+      "platform": "Discord",
+      "username": "",
+      "profileUrl": "https://chatgpt.com/c/6a5f485a-d154-83ee-b776-99714d50626a",
+      "icon": "Discord",
+      "logoUrl": "data:image/png;base64,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",
+      "darkLogoUrl": "",
+      "lightLogoUrl": "",
+      "monochromeLogoUrl": "",
+      "customSvg": "",
+      "tooltip": "Discord Profile",
+      "openInNewTab": true,
+      "displayOrder": 5,
+      "isVisible": true,
+      "displayName": "Discord",
+      "profileName": "",
+      "profileTitle": "",
+      "shortDescription": "",
+      "category": "Developer",
+      "status": "Active",
+      "verifiedBadge": true,
+      "followers": "12.5k",
+      "following": "450",
+      "repositories": "84",
+      "stars": "1.2k",
+      "customStats": [
+        {
+          "label": "Contributions",
+          "value": "2,450"
+        }
+      ],
+      "brandColor": "#10b981",
+      "backgroundColor": "#020617",
+      "borderColor": "#1e293b",
+      "hoverColor": "#059669",
+      "textColor": "#f8fafc",
+      "accentColor": "#34d399",
+      "avatarUrl": "data:image/png;base64,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",
+      "coverImageUrl": "",
+      "bannerImageUrl": "data:image/png;base64,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",
+      "showInCoordinates": true,
+      "showInDynamicProfile": true,
+      "showInContact": true,
+      "showInFooter": false,
+      "showInNavigation": false,
+      "showInHeroCard": false,
+      "showInAbout": false,
+      "showInProjects": false,
+      "showInResume": false,
+      "showInSystemConsole": true,
+      "showInHero": false,
+      "enableProfileCard": true,
+      "cardTitle": "Discord",
+      "cardSubtitle": "",
+      "cardDescription": "",
+      "ctaButtonText": "Connect",
+      "profileBadge": "Official Channel",
+      "statusIndicator": "Active",
+      "onlineIndicator": true,
+      "featuredBadge": true,
+      "secondaryUrl": "",
+      "documentationUrl": "",
+      "communityUrl": "",
+      "supportUrl": "",
+      "blogUrl": "",
+      "portfolioUrl": "",
+      "buttonText": "Visit Profile",
+      "buttonIcon": "ExternalLink",
+      "buttonStyle": "filled",
+      "hoverEffect": "glow",
+      "animationEffect": "fade",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoKeywords": "",
+      "ogImageUrl": "",
+      "twitterImageUrl": "",
+      "clicks": 0,
+      "ctr": 0,
+      "visitors": 0,
+      "lastClicked": "Never",
+      "topReferrer": "Direct",
+      "isArchived": false,
+      "id": 5,
+      "whiteLogoUrl": "",
+      "createdAt": "2026-07-23T09:07:41.560Z",
+      "updatedAt": "2026-07-23T09:13:15.279Z"
     }
   ],
   "resumes": [
@@ -2071,6 +2198,23 @@
       "location": "Chennai, India",
       "status": "SUCCESS",
       "createdAt": "2026-07-11T10:34:34.598Z"
+    },
+    {
+      "id": 36,
+      "action": "Tool Updated",
+      "module": "Tools & Technologies",
+      "description": "Updated configuration for tool \"VS Code\".",
+      "oldValue": "{\"id\":1,\"name\":\"VS Code\",\"slug\":\"vs-code\",\"category\":\"Development IDEs\",\"description\":\"Primary lightweight code editor equipped with rich extension ecosystem, custom keybindings, and debugger integration.\",\"officialWebsite\":\"https://code.visualstudio.com\",\"logoType\":\"icon\",\"iconLibrary\":\"lucide\",\"iconName\":\"Code2\",\"brandColor\":\"#007ACC\",\"backgroundColor\":\"#007ACC15\",\"borderColor\":\"#007ACC40\",\"hoverColor\":\"#007ACC\",\"logoSize\":28,\"logoPadding\":8,\"borderRadius\":\"0.75rem\",\"hasGlow\":true,\"hoverScale\":1.05,\"hoverRotation\":2,\"experienceLevel\":\"Expert\",\"yearsOfExperience\":8,\"isFeatured\":true,\"displayOrder\":1,\"isVisible\":true,\"createdAt\":\"2026-01-01T00:00:00Z\",\"updatedAt\":\"2026-01-01T00:00:00Z\"}",
+      "newValue": "{\"id\":1,\"name\":\"VS Code\",\"slug\":\"vs-code\",\"category\":\"Development IDEs\",\"description\":\"Primary lightweight code editor equipped with rich extension ecosystem, custom keybindings, and debugger integration.\",\"officialWebsite\":\"https://code.visualstudio.com\",\"logoType\":\"icon\",\"iconLibrary\":\"lucide\",\"iconName\":\"Code2\",\"brandColor\":\"#007ACC\",\"backgroundColor\":\"#007ACC15\",\"borderColor\":\"#007ACC40\",\"hoverColor\":\"#007ACC\",\"logoSize\":28,\"logoPadding\":8,\"borderRadius\":\"0.75rem\",\"hasGlow\":true,\"hoverScale\":1.05,\"hoverRotation\":2,\"experienceLevel\":\"Expert\",\"yearsOfExperience\":8,\"isFeatured\":true,\"displayOrder\":1,\"isVisible\":true,\"createdAt\":\"2026-01-01T00:00:00Z\",\"updatedAt\":\"2026-07-23T08:37:00.794Z\",\"logoUrl\":\"\",\"customSvg\":\"\"}",
+      "performedBy": "Chandru  Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Chennai, India",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-23T08:37:00.794Z"
     }
   ],
   "refreshTokens": [
@@ -2447,5 +2591,708 @@
       "order": 6
     }
   ],
-  "codingProfiles": []
+  "codingProfiles": [],
+  "tools": [
+    {
+      "id": 1,
+      "name": "VS Code",
+      "slug": "vs-code",
+      "category": "Development IDEs",
+      "description": "Primary lightweight code editor equipped with rich extension ecosystem, custom keybindings, and debugger integration.",
+      "officialWebsite": "https://code.visualstudio.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Code2",
+      "brandColor": "#007ACC",
+      "backgroundColor": "#007ACC15",
+      "borderColor": "#007ACC40",
+      "hoverColor": "#007ACC",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 2,
+      "experienceLevel": "Expert",
+      "yearsOfExperience": 8,
+      "isFeatured": true,
+      "displayOrder": 1,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-07-23T08:37:00.794Z",
+      "logoUrl": "",
+      "customSvg": ""
+    },
+    {
+      "id": 2,
+      "name": "TypeScript",
+      "slug": "typescript",
+      "category": "Programming Languages",
+      "description": "Strongly typed programming language built on JavaScript for scalable micro-architectures and enterprise frontends.",
+      "officialWebsite": "https://www.typescriptlang.org",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "FileCode",
+      "brandColor": "#3178C6",
+      "backgroundColor": "#3178C615",
+      "borderColor": "#3178C640",
+      "hoverColor": "#3178C6",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 0,
+      "experienceLevel": "Expert",
+      "yearsOfExperience": 6,
+      "isFeatured": true,
+      "displayOrder": 2,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "React",
+      "slug": "react",
+      "category": "Frontend",
+      "description": "Declarative component-driven UI library utilized for high-throughput single-page web applications.",
+      "officialWebsite": "https://react.dev",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Atom",
+      "brandColor": "#61DAFB",
+      "backgroundColor": "#61DAFB15",
+      "borderColor": "#61DAFB40",
+      "hoverColor": "#61DAFB",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 4,
+      "experienceLevel": "Expert",
+      "yearsOfExperience": 7,
+      "isFeatured": true,
+      "displayOrder": 3,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "Node.js",
+      "slug": "nodejs",
+      "category": "Backend",
+      "description": "Asynchronous event-driven JavaScript runtime built on Chrome V8 engine for high-concurrency API servers.",
+      "officialWebsite": "https://nodejs.org",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Server",
+      "brandColor": "#5FA04E",
+      "backgroundColor": "#5FA04E15",
+      "borderColor": "#5FA04E40",
+      "hoverColor": "#5FA04E",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": -2,
+      "experienceLevel": "Expert",
+      "yearsOfExperience": 7,
+      "isFeatured": true,
+      "displayOrder": 4,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "PostgreSQL",
+      "slug": "postgresql",
+      "category": "Databases",
+      "description": "Advanced open-source object-relational database system with high ACID compliance and JSON query indexing.",
+      "officialWebsite": "https://www.postgresql.org",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Database",
+      "brandColor": "#4169E1",
+      "backgroundColor": "#4169E115",
+      "borderColor": "#4169E140",
+      "hoverColor": "#4169E1",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": false,
+      "hoverScale": 1.05,
+      "hoverRotation": 0,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 5,
+      "isFeatured": false,
+      "displayOrder": 5,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "name": "Docker",
+      "slug": "docker",
+      "category": "DevOps",
+      "description": "Containerization engine used to package applications with system dependencies for reproducible cloud deployments.",
+      "officialWebsite": "https://www.docker.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Box",
+      "brandColor": "#2496ED",
+      "backgroundColor": "#2496ED15",
+      "borderColor": "#2496ED40",
+      "hoverColor": "#2496ED",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 3,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 5,
+      "isFeatured": true,
+      "displayOrder": 6,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 7,
+      "name": "AWS",
+      "slug": "aws",
+      "category": "Cloud & Deployment",
+      "description": "Comprehensive cloud platform supplying serverless computing, S3 object buckets, IAM, and VPC infrastructure.",
+      "officialWebsite": "https://aws.amazon.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Cloud",
+      "brandColor": "#FF9900",
+      "backgroundColor": "#FF990015",
+      "borderColor": "#FF990040",
+      "hoverColor": "#FF9900",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 0,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 5,
+      "isFeatured": true,
+      "displayOrder": 7,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 8,
+      "name": "Git",
+      "slug": "git",
+      "category": "Version Control",
+      "description": "Distributed version control system for tracking changes in source code during collaborative software development.",
+      "officialWebsite": "https://git-scm.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "GitBranch",
+      "brandColor": "#F05032",
+      "backgroundColor": "#F0503215",
+      "borderColor": "#F0503240",
+      "hoverColor": "#F05032",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": false,
+      "hoverScale": 1.05,
+      "hoverRotation": -3,
+      "experienceLevel": "Expert",
+      "yearsOfExperience": 8,
+      "isFeatured": false,
+      "displayOrder": 8,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 9,
+      "name": "Postman",
+      "slug": "postman",
+      "category": "API Tools",
+      "description": "API platform for building, testing, documenting, and automating REST & GraphQL HTTP endpoint calls.",
+      "officialWebsite": "https://www.postman.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Send",
+      "brandColor": "#FF6C37",
+      "backgroundColor": "#FF6C3715",
+      "borderColor": "#FF6C3740",
+      "hoverColor": "#FF6C37",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": false,
+      "hoverScale": 1.05,
+      "hoverRotation": 0,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 6,
+      "isFeatured": false,
+      "displayOrder": 9,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 10,
+      "name": "Figma",
+      "slug": "figma",
+      "category": "Design",
+      "description": "Collaborative interface design tool for wireframing, prototyping, and establishing component design tokens.",
+      "officialWebsite": "https://www.figma.com",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Figma",
+      "brandColor": "#F24E1E",
+      "backgroundColor": "#F24E1E15",
+      "borderColor": "#F24E1E40",
+      "hoverColor": "#F24E1E",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 2,
+      "experienceLevel": "Intermediate",
+      "yearsOfExperience": 4,
+      "isFeatured": false,
+      "displayOrder": 10,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 11,
+      "name": "Gemini AI",
+      "slug": "gemini-ai",
+      "category": "AI Tools",
+      "description": "Google multimodal AI platform used for automated code synthesis, intelligence agent prompts, and LLM orchestration.",
+      "officialWebsite": "https://deepmind.google/technologies/gemini/",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Sparkles",
+      "brandColor": "#10B981",
+      "backgroundColor": "#10B98115",
+      "borderColor": "#10B98140",
+      "hoverColor": "#10B981",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": true,
+      "hoverScale": 1.05,
+      "hoverRotation": 4,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 3,
+      "isFeatured": true,
+      "displayOrder": 11,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 12,
+      "name": "Linux",
+      "slug": "linux",
+      "category": "Operating Systems",
+      "description": "Unix-like open-source operating system kernel providing high stability, bash scripting, and container host environments.",
+      "officialWebsite": "https://www.kernel.org",
+      "logoType": "icon",
+      "iconLibrary": "lucide",
+      "iconName": "Terminal",
+      "brandColor": "#FCC624",
+      "backgroundColor": "#FCC62415",
+      "borderColor": "#FCC62440",
+      "hoverColor": "#FCC624",
+      "logoSize": 28,
+      "logoPadding": 8,
+      "borderRadius": "0.75rem",
+      "hasGlow": false,
+      "hoverScale": 1.05,
+      "hoverRotation": 0,
+      "experienceLevel": "Advanced",
+      "yearsOfExperience": 7,
+      "isFeatured": false,
+      "displayOrder": 12,
+      "isVisible": true,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "mediaItems": [
+    {
+      "id": 1,
+      "title": "Hero Profile Portrait",
+      "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+      "type": "image",
+      "folder": "Hero & Profile",
+      "size": 145000,
+      "dimensions": "600x600",
+      "tags": [
+        "hero",
+        "profile",
+        "avatar"
+      ],
+      "createdAt": "2026-07-23T07:15:01.260Z",
+      "updatedAt": "2026-07-23T07:15:01.260Z"
+    },
+    {
+      "id": 2,
+      "title": "Distributed Microservices Architecture Diagram",
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+      "type": "image",
+      "folder": "Projects",
+      "size": 320000,
+      "dimensions": "800x500",
+      "tags": [
+        "project",
+        "microservices",
+        "architecture"
+      ],
+      "createdAt": "2026-07-23T07:15:01.260Z",
+      "updatedAt": "2026-07-23T07:15:01.260Z"
+    },
+    {
+      "id": 3,
+      "title": "AWS Certified Solutions Architect Badge",
+      "url": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=400&auto=format&fit=crop",
+      "type": "image",
+      "folder": "Certificates & Badges",
+      "size": 98000,
+      "dimensions": "400x400",
+      "tags": [
+        "aws",
+        "badge",
+        "certified"
+      ],
+      "createdAt": "2026-07-23T07:15:01.260Z",
+      "updatedAt": "2026-07-23T07:15:01.260Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "evt-101",
+      "eventId": "EVT-1001",
+      "module": "Projects",
+      "action": "Project Created",
+      "title": "New High-Scale AI Engine Project Added",
+      "description": "Created new enterprise project 'HyperScale Distributed LLM Orchestrator' with tech tags React, Node.js, and Docker.",
+      "message": "Created new enterprise project 'HyperScale Distributed LLM Orchestrator'.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-07-23T02:10:00.000Z",
+      "createdAt": "2026-07-23T02:10:00.000Z",
+      "severity": "Success",
+      "category": "Projects",
+      "type": "PROJECTS",
+      "icon": "BookOpen",
+      "color": "#3b82f6",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": true,
+      "archived": false,
+      "metadata": { "projectId": 101, "slug": "hyperscale-llm" }
+    },
+    {
+      "id": "evt-102",
+      "eventId": "EVT-1002",
+      "module": "Deployment",
+      "action": "Railway Deploy",
+      "title": "Cloud Run & Railway Production Build Success",
+      "description": "Deployment #892 completed successfully in 28s. Artifact dist/server.cjs compiled cleanly.",
+      "message": "Deployment #892 completed successfully in 28s.",
+      "performedBy": "GitHub Actions",
+      "timestamp": "2026-07-23T01:50:00.000Z",
+      "createdAt": "2026-07-23T01:50:00.000Z",
+      "severity": "Success",
+      "category": "Deployment",
+      "type": "DEPLOYMENT",
+      "icon": "Rocket",
+      "color": "#06b6d4",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": { "commitId": "8f3a91c", "deployUrl": "https://ais-dev-jrj5om35wzksb6dj52fr7l-65002592949.asia-southeast1.run.app" }
+    },
+    {
+      "id": "evt-103",
+      "eventId": "EVT-1003",
+      "module": "Security",
+      "action": "Failed Login",
+      "title": "Security Alert: 3 Failed Admin Login Attempts",
+      "description": "Unrecognized IP 198.51.100.42 attempted password authentication 3 times. Rate limiter engaged.",
+      "message": "Unrecognized IP 198.51.100.42 attempted password authentication 3 times.",
+      "performedBy": "Unknown / Visitor",
+      "timestamp": "2026-07-23T01:30:00.000Z",
+      "createdAt": "2026-07-23T01:30:00.000Z",
+      "severity": "Warning",
+      "category": "Security",
+      "type": "SECURITY",
+      "icon": "ShieldAlert",
+      "color": "#eab308",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": true,
+      "archived": false,
+      "metadata": { "ip": "198.51.100.42", "location": "Frankfurt, Germany" }
+    },
+    {
+      "id": "evt-104",
+      "eventId": "EVT-1004",
+      "module": "Tools & Technologies",
+      "action": "Tool Added",
+      "title": "Tech Stack Updated: Added Docker Containerization",
+      "description": "Added 'Docker' technology asset to Hero Tech Stack and assigned Category 'DevOps & Infrastructure'.",
+      "message": "Added 'Docker' technology asset to Hero Tech Stack.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-07-23T01:00:00.000Z",
+      "createdAt": "2026-07-23T01:00:00.000Z",
+      "severity": "Information",
+      "category": "System",
+      "type": "SYSTEM",
+      "icon": "Cpu",
+      "color": "#10b981",
+      "status": "READ",
+      "read": true,
+      "unread": false,
+      "pinned": false,
+      "archived": false
+    },
+    {
+      "id": "evt-105",
+      "eventId": "EVT-1005",
+      "module": "Email & SMTP",
+      "action": "Email Failed",
+      "title": "Email Queue Warning: SMTP Timeout on Auto-Reply",
+      "description": "Failed to dispatch auto-reply email to client@example.com via Gmail SMTP. Socket timeout on port 587.",
+      "message": "Failed to dispatch auto-reply email to client@example.com.",
+      "performedBy": "SMTP Dispatcher",
+      "timestamp": "2026-07-22T23:15:00.000Z",
+      "createdAt": "2026-07-22T23:15:00.000Z",
+      "severity": "Error",
+      "category": "Email",
+      "type": "EMAIL",
+      "icon": "Mail",
+      "color": "#ef4444",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": { "recipient": "client@example.com", "subject": "Inquiry Receipt" }
+    },
+    {
+      "id": "evt-106",
+      "eventId": "EVT-1006",
+      "module": "Scheduled Tasks",
+      "action": "Backup Completed",
+      "title": "Scheduled Automated JSON Database Backup",
+      "description": "Database snapshot portfolio_backup_20260723.json generated successfully. Snapshot size: 148 KB.",
+      "message": "Database snapshot created successfully.",
+      "performedBy": "System Cron",
+      "timestamp": "2026-07-22T22:00:00.000Z",
+      "createdAt": "2026-07-22T22:00:00.000Z",
+      "severity": "Information",
+      "category": "Tasks",
+      "type": "TASKS",
+      "icon": "Clock",
+      "color": "#14b8a6",
+      "status": "READ",
+      "read": true,
+      "unread": false,
+      "pinned": false,
+      "archived": false
+    },
+    {
+      "id": "evt-107",
+      "eventId": "EVT-1007",
+      "module": "Media Library",
+      "action": "Media Uploaded",
+      "title": "New Media Asset Added: Hero Avatar Banner",
+      "description": "Uploaded high-resolution image asset 'profile_hero_3d_avatar.png' (1.2 MB) to folder 'Hero Banners'.",
+      "message": "Uploaded image asset 'profile_hero_3d_avatar.png'.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-07-22T20:30:00.000Z",
+      "createdAt": "2026-07-22T20:30:00.000Z",
+      "severity": "Success",
+      "category": "Media",
+      "type": "MEDIA",
+      "icon": "Folder",
+      "color": "#f59e0b",
+      "status": "READ",
+      "read": true,
+      "unread": false,
+      "pinned": false,
+      "archived": false
+    },
+    {
+      "id": "evt-108",
+      "eventId": "EVT-1008",
+      "module": "Announcements",
+      "action": "Announcement Published",
+      "title": "System Announcement: CMS v2.5 Enterprise Upgrade",
+      "description": "Centralized Notification Center & Security Audit logging enabled across all administrative modules.",
+      "message": "Centralized Notification Center enabled.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-07-22T18:00:00.000Z",
+      "createdAt": "2026-07-22T18:00:00.000Z",
+      "severity": "Information",
+      "category": "Announcements",
+      "type": "ANNOUNCEMENTS",
+      "icon": "Megaphone",
+      "color": "#a855f7",
+      "status": "READ",
+      "read": true,
+      "unread": false,
+      "pinned": true,
+      "archived": false
+    }
+  ],
+  "backups": [
+    {
+      "id": "backup-initial-1",
+      "filename": "portfolio_backup_initial.json",
+      "size": "142 KB",
+      "createdAt": "2026-07-23T07:15:01.260Z",
+      "type": "Automatic",
+      "status": "Completed",
+      "recordsCount": 48
+    }
+  ],
+  "emailSettings": {
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": 587,
+    "smtpUser": "notifications@alexdev.io",
+    "smtpPass": "••••••••••••",
+    "secure": true,
+    "preset": "Gmail SMTP",
+    "autoReplyEnabled": true,
+    "contactAlertsEnabled": true,
+    "adminNotificationsEnabled": true,
+    "autoReplyTemplate": "Hello {{name}},\n\nThank you for getting in touch! I have received your message regarding \"{{subject}}\" and will review it shortly.\n\nBest regards,\nAlex Dev",
+    "contactAlertTemplate": "New Contact Message Received!\nName: {{name}}\nEmail: {{email}}\nSubject: {{subject}}\nMessage: {{message}}"
+  },
+  "roles": [
+    {
+      "id": "role-founder",
+      "name": "Founder",
+      "description": "Full unchecked administrative control over system, security, databases, and users.",
+      "permissions": [
+        "MANAGE_PROJECTS",
+        "MANAGE_SKILLS",
+        "MANAGE_MESSAGES",
+        "VIEW_ANALYTICS",
+        "MANAGE_USERS",
+        "SYSTEM_BACKUP",
+        "SECURITY_AUDIT",
+        "ROLE_MANAGEMENT"
+      ],
+      "userCount": 1,
+      "isSystem": true
+    },
+    {
+      "id": "role-admin",
+      "name": "Admin",
+      "description": "Manage CMS portfolio content, themes, settings, and view visitor analytics.",
+      "permissions": [
+        "MANAGE_PROJECTS",
+        "MANAGE_SKILLS",
+        "MANAGE_MESSAGES",
+        "VIEW_ANALYTICS",
+        "SYSTEM_BACKUP"
+      ],
+      "userCount": 0,
+      "isSystem": true
+    },
+    {
+      "id": "role-editor",
+      "name": "Editor",
+      "description": "Create, edit, and update portfolio projects, experience, and media assets.",
+      "permissions": [
+        "MANAGE_PROJECTS",
+        "MANAGE_SKILLS",
+        "MANAGE_MESSAGES"
+      ],
+      "userCount": 0,
+      "isSystem": false
+    },
+    {
+      "id": "role-viewer",
+      "name": "Viewer",
+      "description": "Read-only access to CMS preview and analytics reports.",
+      "permissions": [
+        "VIEW_ANALYTICS"
+      ],
+      "userCount": 0,
+      "isSystem": false
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1",
+      "timestamp": "2026-07-23T07:15:01.261Z",
+      "category": "API",
+      "level": "INFO",
+      "message": "API Route GET /api/projects executed successfully (200 OK)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log-2",
+      "timestamp": "2026-07-23T06:45:01.261Z",
+      "category": "AUTH",
+      "level": "INFO",
+      "message": "Administrator login session authenticated for chandrumohan550@gmail.com",
+      "ip": "127.0.0.1"
+    }
+  ],
+  "adminTasks": [
+    {
+      "id": "task-1",
+      "title": "Review new project descriptions with AI Copilot",
+      "completed": false,
+      "priority": "High"
+    },
+    {
+      "id": "task-2",
+      "title": "Verify SEO metadata & Sitemap generation",
+      "completed": true,
+      "priority": "Medium"
+    },
+    {
+      "id": "task-3",
+      "title": "Export weekly database backup snapshot",
+      "completed": false,
+      "priority": "Medium"
+    }
+  ],
+  "seoConfig": {
+    "metaTitle": "Alex Dev | Senior Full Stack Architect & Systems Engineer",
+    "metaDescription": "Enterprise portfolio of Alex Dev featuring high-scale distributed systems, microservices, cloud infrastructure, and AI applications.",
+    "keywords": "Software Engineer, Full Stack Architect, React, Node.js, Cloud, Microservices, TypeScript",
+    "ogTitle": "Alex Dev - Enterprise Portfolio CMS",
+    "ogDescription": "Architecting high-performance cloud applications & resilient enterprise platforms.",
+    "ogImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+    "twitterCard": "summary_large_image",
+    "twitterSite": "@alex_dev_arch",
+    "robotsTxt": "User-agent: *\nAllow: /\nSitemap: https://alexdev.io/sitemap.xml",
+    "pwaEnabled": true,
+    "offlineMode": true,
+    "highContrastMode": false
+  }
 }

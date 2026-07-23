@@ -142,8 +142,18 @@ export default function NotificationsDrawer({
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-800 bg-slate-950/80 text-[10px] font-mono text-slate-500 text-center">
-            Enterprise Security Notification System Active
+          <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between gap-3 text-xs font-mono">
+            <span className="text-[10px] text-slate-500">Enterprise Event System Active</span>
+            <button
+              onClick={() => {
+                onNavigateTab('Notifications');
+                onClose();
+              }}
+              className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <span>Full Notification Center</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </motion.div>
       </div>

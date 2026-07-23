@@ -191,10 +191,98 @@ export interface SocialLinkItem {
   customSvg?: string;
   whiteLogoUrl?: string;
   darkLogoUrl?: string;
+  lightLogoUrl?: string;
+  monochromeLogoUrl?: string;
   tooltip?: string;
   openInNewTab?: boolean;
   displayOrder: number;
   isVisible: boolean;
+
+  // Profile Information
+  displayName?: string;
+  profileName?: string;
+  profileTitle?: string;
+  shortDescription?: string;
+  category?: string;
+  status?: 'Active' | 'Beta' | 'VIP' | 'Featured' | 'Archived' | 'Offline' | string;
+  verifiedBadge?: boolean;
+  followers?: string | number;
+  following?: string | number;
+  repositories?: string | number;
+  stars?: string | number;
+  customStats?: { label: string; value: string }[];
+
+  // Branding Colors
+  brandColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  hoverColor?: string;
+  textColor?: string;
+  accentColor?: string;
+
+  // Images & Media
+  avatarUrl?: string;
+  coverImageUrl?: string;
+  bannerImageUrl?: string;
+
+  // Independent Section Visibility
+  showInCoordinates?: boolean;
+  showInDynamicProfile?: boolean;
+  showInContact?: boolean;
+  showInFooter?: boolean;
+  showInNavigation?: boolean;
+  showInHeroCard?: boolean;
+  showInAbout?: boolean;
+  showInProjects?: boolean;
+  showInResume?: boolean;
+  showInSystemConsole?: boolean;
+  showInHero?: boolean;
+
+  // Profile Card Configuration
+  enableProfileCard?: boolean;
+  cardTitle?: string;
+  cardSubtitle?: string;
+  cardDescription?: string;
+  ctaButtonText?: string;
+  profileBadge?: string;
+  statusIndicator?: string;
+  onlineIndicator?: boolean;
+  featuredBadge?: boolean;
+
+  // Additional URLs
+  secondaryUrl?: string;
+  documentationUrl?: string;
+  communityUrl?: string;
+  supportUrl?: string;
+  blogUrl?: string;
+  portfolioUrl?: string;
+
+  // Button Customization
+  buttonText?: string;
+  buttonIcon?: string;
+  buttonStyle?: 'filled' | 'outline' | 'ghost' | 'gradient' | 'glass';
+
+  // FX & Animations
+  hoverEffect?: 'glow' | 'lift' | 'scale' | 'rotate' | 'shadow' | 'glass' | 'border';
+  animationEffect?: 'fade' | 'slide' | 'zoom' | 'bounce' | 'framer';
+
+  // SEO
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  ogImageUrl?: string;
+  twitterImageUrl?: string;
+
+  // Analytics
+  clicks?: number;
+  ctr?: number;
+  visitors?: number;
+  lastClicked?: string;
+  topReferrer?: string;
+
+  // Status Meta
+  isArchived?: boolean;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -708,6 +796,12 @@ export const initialSocialLinks: SocialLinkItem[] = [
     icon: "GitHub",
     displayOrder: 1,
     isVisible: true,
+    showInDynamicProfile: true,
+    showInCoordinates: true,
+    showInFooter: true,
+    showInContact: true,
+    showInHero: false,
+    showInSystemConsole: false,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
   },
@@ -719,6 +813,12 @@ export const initialSocialLinks: SocialLinkItem[] = [
     icon: "LinkedIn",
     displayOrder: 2,
     isVisible: true,
+    showInDynamicProfile: true,
+    showInCoordinates: true,
+    showInFooter: true,
+    showInContact: true,
+    showInHero: false,
+    showInSystemConsole: false,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
   },
@@ -730,6 +830,12 @@ export const initialSocialLinks: SocialLinkItem[] = [
     icon: "X (Twitter)",
     displayOrder: 3,
     isVisible: true,
+    showInDynamicProfile: true,
+    showInCoordinates: true,
+    showInFooter: true,
+    showInContact: true,
+    showInHero: false,
+    showInSystemConsole: false,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
   },
@@ -737,10 +843,16 @@ export const initialSocialLinks: SocialLinkItem[] = [
     id: 4,
     platform: "Email",
     username: "chandrumohan550@gmail.com",
-  profileUrl: "mailto:chandrumohan550@gmail.com",
+    profileUrl: "mailto:chandrumohan550@gmail.com",
     icon: "Email",
     displayOrder: 4,
     isVisible: true,
+    showInDynamicProfile: true,
+    showInCoordinates: true,
+    showInFooter: true,
+    showInContact: true,
+    showInHero: false,
+    showInSystemConsole: false,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
   }

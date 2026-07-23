@@ -36,6 +36,7 @@ import LivePreviewModal from './admin/LivePreviewModal';
 import AIAssistantModal from './admin/AIAssistantModal';
 import GlobalSearchModal from './admin/GlobalSearchModal';
 import NotificationsDrawer, { NotificationItem } from './admin/NotificationsDrawer';
+import NotificationCenterPage from './admin/NotificationCenterPage';
 import BackupPage from './admin/BackupPage';
 import EmailSettingsPage from './admin/EmailSettingsPage';
 import RoleManagementPage from './admin/RoleManagementPage';
@@ -1132,6 +1133,7 @@ const handleDeleteAchievement = async (id: number) => {
   // Navigation config
   const navItems = [
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
+    { name: 'Notification Center', icon: <Bell className="w-4 h-4 text-emerald-400" /> },
     { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
     { name: 'Hero Management', icon: <Palette className="w-4 h-4 text-emerald-400" /> },
     { name: 'Tech Stack', icon: <Cpu className="w-4 h-4 text-emerald-400" /> },
@@ -1337,6 +1339,12 @@ const handleDeleteAchievement = async (id: number) => {
                     {messages.filter(m => !m.isRead).length}
                   </span>
                 )}
+
+                {(item.name === 'Notification Center' || item.name === 'Notifications') && notifications.filter(n => !n.read).length > 0 && (
+                  <span className="ml-auto bg-emerald-500 text-slate-950 font-mono text-[9px] px-1.5 py-0.2 rounded-full font-bold shadow-sm">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -1371,6 +1379,13 @@ const handleDeleteAchievement = async (id: number) => {
             onNavigate={(page) => setActiveTab(page)}
             onRefresh={handleRefreshStats}
             isRefreshing={isRefreshing}
+          />
+        )}
+
+        {(activeTab === 'Notification Center' || activeTab === 'Notifications') && (
+          <NotificationCenterPage
+            onTriggerToast={triggerToast}
+            onNavigateTab={(tab) => setActiveTab(tab)}
           />
         )}
 

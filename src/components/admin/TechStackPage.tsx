@@ -27,6 +27,7 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   const [technologies, setTechnologies] = useState<TechnologyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [newTechName, setNewTechName] = useState('');
   const [editingTechId, setEditingTechId] = useState<number | null>(null);
   const [editingTechName, setEditingTechName] = useState('');
@@ -61,8 +62,18 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
     fetchTechnologies();
   }, []);
 
-  const handleAddTechnology = async () => {
-    const trimmed = newTechName.trim();
+  const handleAddTechnology = async (e?: React.SyntheticEvent | string) => {
+    if (e && typeof e === 'object' && 'preventDefault' in e) {
+      e.preventDefault();
+    }
+    if (isAdding) return;
+
+    let targetName = newTechName;
+    if (typeof e === 'string' && e.trim()) {
+      targetName = e;
+    }
+
+    const trimmed = targetName.trim();
     if (!trimmed) {
       onTriggerToast("Technology name cannot be empty.", "error");
       return;
@@ -74,6 +85,7 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
       return;
     }
 
+    setIsAdding(true);
     try {
       const maxOrder = technologies.length > 0
         ? Math.max(...technologies.map(t => (t.order ?? t.displayOrder) || 0))
@@ -120,6 +132,8 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
       }
     } catch (err) {
       onTriggerToast("Gateway connection error.", "error");
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -289,16 +303,23 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
               placeholder="Enter tech name (e.g. Java, Spring Boot, React, Kubernetes)..."
               value={newTechName}
               onChange={(e) => setNewTechName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTechnology()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTechnology(e);
+                }
+              }}
               className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-100 transition focus:outline-none"
             />
           </div>
           <button
+            type="button"
             onClick={handleAddTechnology}
-            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            disabled={isAdding}
+            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 disabled:opacity-50 text-slate-950 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
-            <span>Add to Universe</span>
+            <span>{isAdding ? "Adding..." : "Add to Universe"}</span>
           </button>
         </div>
       </div>
