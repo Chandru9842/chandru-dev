@@ -3,16 +3,31 @@ import {
   Plus, Edit2, Trash2, Search, ExternalLink, GitBranch, ArrowLeft, 
   ArrowRight, Sparkles, AlertCircle, Check, Loader2, Image as ImageIcon,
   Film, Layout, Eye, Cpu, Calendar, Clock, ListFilter, ArrowUp, ArrowDown,
-  ChevronLeft, ChevronRight, UploadCloud, X
+  ChevronLeft, ChevronRight, UploadCloud, X, Folder
 } from 'lucide-react';
 import { ProjectItem } from '../../data/cmsMockData';
 import ImageUploader from '../ImageUploader';
+import MediaLibraryModal from './MediaLibraryModal';
 
 interface ProjectsPageProps {
   projects: ProjectItem[];
   onAdd: (project: Omit<ProjectItem, 'id'>) => Promise<void>;
   onUpdate: (project: ProjectItem) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+}
+
+// Lightweight, non-blocking URL validator using native URL parser (prevents ReDoS freezes)
+function isValidUrl(urlStr: string): boolean {
+  if (!urlStr || !urlStr.trim()) return true;
+  const trimmed = urlStr.trim();
+  if (trimmed.length > 2000) return false;
+  try {
+    const toTest = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const parsed = new URL(toTest);
+    return Boolean(parsed.hostname && parsed.hostname.includes('.') && parsed.hostname.length > 3);
+  } catch {
+    return false;
+  }
 }
 
 export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: ProjectsPageProps) {
@@ -58,6 +73,9 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
   const [galleryUploading, setGalleryUploading] = useState(false);
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Media modal picker target
+  const [mediaModalTarget, setMediaModalTarget] = useState<'primary' | 'gallery' | null>(null);
+  
   // Validation state
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -186,9 +204,8 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
     else if (description.length < 15) tempErrors.description = "Description should be at least 15 characters.";
     
     // URL validations
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-    if (liveUrl && !urlPattern.test(liveUrl)) tempErrors.liveUrl = "Enter a valid URL.";
-    if (githubUrl && !urlPattern.test(githubUrl)) tempErrors.githubUrl = "Enter a valid GitHub URL.";
+    if (liveUrl && !isValidUrl(liveUrl)) tempErrors.liveUrl = "Enter a valid URL.";
+    if (githubUrl && !isValidUrl(githubUrl)) tempErrors.githubUrl = "Enter a valid GitHub URL.";
 
     if (!startDate) tempErrors.startDate = "Start date is required.";
     if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
@@ -563,10 +580,20 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
 
             {/* Cloudinary Compressed Primary Image */}
             <div className="bg-slate-950/30 border border-slate-800/60 rounded-xl p-4 space-y-4">
-              <h4 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-emerald-400" />
-                Primary Thumbnail (Auto-compressed)
-              </h4>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-emerald-400" />
+                  Primary Thumbnail
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setMediaModalTarget('primary')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Folder className="w-3.5 h-3.5" />
+                  Select from Media Library
+                </button>
+              </div>
               <ImageUploader 
                 currentUrl={imageUrl}
                 onUploadComplete={(url) => setImageUrl(url)}
@@ -582,11 +609,21 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
                     <Film className="w-4 h-4 text-emerald-400" />
                     Project Media Gallery
                   </h4>
-                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">Drag-and-drop multiple screenshots. Canvas compression scales them down automatically.</p>
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">Drag-and-drop multiple screenshots or select from centralized media repository.</p>
                 </div>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">
-                  {gallery.length} Images Committed
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMediaModalTarget('gallery')}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Folder className="w-3.5 h-3.5" />
+                    Pick from Library
+                  </button>
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">
+                    {gallery.length} Images Committed
+                  </span>
+                </div>
               </div>
 
               {/* Gallery Drag & Drop Box */}
@@ -1014,6 +1051,21 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
 
         </div>
       )}
+
+      {/* Centralized Media Picker Modal */}
+      <MediaLibraryModal
+        isOpen={mediaModalTarget !== null}
+        onClose={() => setMediaModalTarget(null)}
+        onSelectMedia={(media) => {
+          if (mediaModalTarget === 'primary') {
+            setImageUrl(media.url);
+          } else if (mediaModalTarget === 'gallery') {
+            setGallery(prev => [...prev, media.url]);
+          }
+          setMediaModalTarget(null);
+        }}
+        allowedTypes={['image', 'svg']}
+      />
     </div>
   );
 }

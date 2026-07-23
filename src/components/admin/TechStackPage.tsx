@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Edit2, Trash2, Check, RefreshCw, Sliders, ChevronUp, ChevronDown, 
-  Cpu, Trash, Settings, ShieldAlert, Sparkles, LayoutGrid
+  Plus, Edit2, Trash2, Check, RefreshCw, ChevronUp, ChevronDown, 
+  Cpu, ShieldAlert, Eye, EyeOff
 } from 'lucide-react';
+import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 
 interface TechnologyItem {
   id: number;
   name: string;
- category: string;
-proficiency: number;
-iconUrl?: string;
-displayOrder: number;
+  enabled?: boolean;
+  order?: number;
+  displayOrder?: number;
+  category?: string;
+  proficiency?: number;
+  iconUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -27,7 +30,8 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   const [newTechName, setNewTechName] = useState('');
   const [editingTechId, setEditingTechId] = useState<number | null>(null);
   const [editingTechName, setEditingTechName] = useState('');
-const getJwtToken = () =>
+
+  const getJwtToken = () =>
     localStorage.getItem("alex_dev_jwt_token") ||
     localStorage.getItem("admin_token") ||
     sessionStorage.getItem("admin_token");
@@ -36,13 +40,12 @@ const getJwtToken = () =>
     setLoading(true);
     try {
       const cacheBuster = `t=${Date.now()}`;
-      const res = await fetch(`/api/skills?${cacheBuster}`);
+      const res = await fetch(`/api/technologies?${cacheBuster}`);
       if (res.ok) {
         const data = await res.json();
-        // Sort by order ascending
-       const sorted = (data || []).sort(
-    (a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)
-);
+        const sorted = (data || []).sort(
+          (a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0)
+        );
         setTechnologies(sorted);
       } else {
         onTriggerToast("Failed to fetch tech stack list.", "error");
@@ -59,41 +62,56 @@ const getJwtToken = () =>
   }, []);
 
   const handleAddTechnology = async () => {
-    if (!newTechName.trim()) {
+    const trimmed = newTechName.trim();
+    if (!trimmed) {
       onTriggerToast("Technology name cannot be empty.", "error");
       return;
     }
 
-  const token = getJwtToken();
+    const token = getJwtToken();
+    if (!token) {
+      onTriggerToast("Administrative privileges locked. Log in first.", "error");
+      return;
+    }
 
-if (!token) {
-    onTriggerToast("Administrative privileges locked. Log in first.", "error");
-    return;
-}
-
-   try {
-    const maxOrder = technologies.length > 0
-        ? Math.max(...technologies.map(t => t.displayOrder || 0))
+    try {
+      const maxOrder = technologies.length > 0
+        ? Math.max(...technologies.map(t => (t.order ?? t.displayOrder) || 0))
         : 0;
 
-    const res = await fetch('/api/skills', {
+      const payload = {
+        name: trimmed,
+        techName: trimmed,
+        technologyName: trimmed,
+        enabled: true,
+        order: maxOrder + 1,
+        displayOrder: maxOrder + 1
+      };
+
+      let res = await fetch('/api/technologies', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        res = await fetch('/api/tech-stack', {
+          method: 'POST',
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            name: newTechName.trim(),
-            category: "Frontend",
-            proficiency: 80,
-            iconUrl: "",
-            displayOrder: maxOrder + 1
-        })
-    });
+          },
+          body: JSON.stringify(payload)
+        });
+      }
 
       if (res.ok) {
         setNewTechName('');
-        onTriggerToast(`Added "${newTechName}" to Hero Tech Stack database.`, "success");
+        onTriggerToast(`Added "${trimmed}" to Hero Tech Stack database.`, "success");
+        notifyCmsUpdate();
         await fetchTechnologies();
         if (onTechStackUpdated) onTechStackUpdated();
       } else {
@@ -107,14 +125,18 @@ if (!token) {
 
   const handleUpdateTechnology = async (id: number, payload: Partial<TechnologyItem>) => {
     const token = getJwtToken();
+    if (!token) {
+      onTriggerToast("Administrative session locked. Please re-login.", "error");
+      return;
+    }
 
-if (!token) {
-    onTriggerToast("Administrative session locked. Please re-login.", "error");
-    return;
-}
+    if (payload.name !== undefined && !payload.name.trim()) {
+      onTriggerToast("Technology name cannot be empty.", "error");
+      return;
+    }
 
     try {
-      const res = await fetch(`/api/skills/${id}`, {
+      const res = await fetch(`/api/technologies/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -126,6 +148,7 @@ if (!token) {
       if (res.ok) {
         setEditingTechId(null);
         onTriggerToast("Saved technology adjustments successfully.", "success");
+        notifyCmsUpdate();
         await fetchTechnologies();
         if (onTechStackUpdated) onTechStackUpdated();
       } else {
@@ -137,20 +160,25 @@ if (!token) {
     }
   };
 
-  const handleDeleteTechnology = async (id: number, name: string) => {
-   const token = getJwtToken();
+  const handleToggleEnabled = async (tech: TechnologyItem) => {
+    await handleUpdateTechnology(tech.id, {
+      enabled: tech.enabled === false ? true : false
+    });
+  };
 
-if (!token) {
+  const handleDeleteTechnology = async (id: number, name: string) => {
+    const token = getJwtToken();
+    if (!token) {
       onTriggerToast("Administrative privileges locked.", "error");
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to completely purge "${name}" from the technology indices?`)) {
+    if (!window.confirm(`Are you sure you want to purge "${name}" from the tech stack?`)) {
       return;
     }
 
     try {
-      const res = await fetch(`/api/skills/${id}`, {
+      const res = await fetch(`/api/technologies/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -159,6 +187,7 @@ if (!token) {
 
       if (res.ok) {
         onTriggerToast(`Purged "${name}" from Hero Tech Stack.`, "success");
+        notifyCmsUpdate();
         await fetchTechnologies();
         if (onTechStackUpdated) onTechStackUpdated();
       } else {
@@ -184,28 +213,29 @@ if (!token) {
     // Optimistic local state update
     setTechnologies(newList);
 
-   const token = getJwtToken();
-
-if (!token) return;
+    const token = getJwtToken();
+    if (!token) return;
 
     setSavingOrder(true);
     try {
-      // Send bulk reorder request to server
-     const updatedOrders = newList.map((item, idx) => ({
-    id: item.id,
-    displayOrder: idx + 1
-}));
-      const res =await fetch("/api/skills/reorder", {
-    method: "PATCH",
-    headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedOrders),
-});
+      const updatedOrders = newList.map((item, idx) => ({
+        id: item.id,
+        order: idx + 1,
+        displayOrder: idx + 1
+      }));
+
+      const res = await fetch("/api/technologies/reorder", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orders: updatedOrders }),
+      });
 
       if (res.ok) {
         onTriggerToast("Tech stack rendering hierarchy saved.", "success");
+        notifyCmsUpdate();
         if (onTechStackUpdated) onTechStackUpdated();
       } else {
         onTriggerToast("Failed to sync hierarchy order with database.", "error");
@@ -285,10 +315,13 @@ if (!token) return;
           <div className="divide-y divide-slate-900/60">
             {technologies.map((tech, idx) => {
               const isEditing = editingTechId === tech.id;
+              const isEnabled = tech.enabled !== false;
               return (
                 <div 
                   key={tech.id} 
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all hover:bg-slate-950/10"
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all hover:bg-slate-950/10 ${
+                    !isEnabled ? 'opacity-60' : ''
+                  }`}
                 >
                   
                   {/* Left Name Info */}
@@ -303,28 +336,15 @@ if (!token) return;
                           type="text" 
                           value={editingTechName}
                           onChange={(e) => setEditingTechName(e.target.value)}
-onKeyDown={(e) =>
-    e.key === "Enter" &&
-    handleUpdateTechnology(tech.id, {
-        name: editingTechName,
-        category: tech.category,
-        proficiency: tech.proficiency,
-        iconUrl: tech.iconUrl,
-        displayOrder: tech.displayOrder
-    })
-}                          className="bg-slate-950 border border-emerald-500 text-slate-100 text-xs font-mono rounded-xl px-3.5 py-1.5 w-full focus:outline-none"
+                          onKeyDown={(e) =>
+                            e.key === "Enter" &&
+                            handleUpdateTechnology(tech.id, { name: editingTechName })
+                          }
+                          className="bg-slate-950 border border-emerald-500 text-slate-100 text-xs font-mono rounded-xl px-3.5 py-1.5 w-full focus:outline-none"
                           autoFocus
                         />
                         <button
-                          onClick={() =>
-    handleUpdateTechnology(tech.id, {
-        name: editingTechName,
-        category: tech.category,
-        proficiency: tech.proficiency,
-        iconUrl: tech.iconUrl,
-        displayOrder: tech.displayOrder
-    })
-}
+                          onClick={() => handleUpdateTechnology(tech.id, { name: editingTechName })}
                           className="p-2 text-emerald-400 hover:text-emerald-300 rounded-xl hover:bg-emerald-500/10 cursor-pointer shrink-0"
                           title="Save Name"
                         >
@@ -343,6 +363,11 @@ onKeyDown={(e) =>
                         <span className="text-xs font-mono font-bold text-slate-200 truncate">
                           {tech.name}
                         </span>
+                        {!isEnabled && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                            Hidden
+                          </span>
+                        )}
                         <button
                           onClick={() => {
                             setEditingTechId(tech.id);
@@ -361,7 +386,18 @@ onKeyDown={(e) =>
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     
                     {/* Status Pill Toggle */}
-                  
+                    <button
+                      onClick={() => handleToggleEnabled(tech)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                        isEnabled 
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' 
+                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+                      }`}
+                      title={isEnabled ? "Disable technology in Hero" : "Enable technology in Hero"}
+                    >
+                      {isEnabled ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      <span>{isEnabled ? 'Active' : 'Hidden'}</span>
+                    </button>
 
                     {/* Hierarchy Display Reorder up */}
                     <button

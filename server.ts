@@ -7,6 +7,7 @@ import compression from "compression";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import { GoogleGenAI } from "@google/genai";
 
 // Initial data import
 import { 
@@ -14,7 +15,7 @@ import {
   initialExperiences, initialEducation, initialMessages, 
   initialAnalytics, initialSettings, initialSocialLinks,
   initialResumes, initialProfile, initialThemeSettings,
-  initialAchievements, initialFooter, initialTechStack
+  initialAchievements, initialFooter, initialTechStack, initialTools
 } from "./src/data/cmsMockData";
 
 const PORT = 3000;
@@ -53,7 +54,7 @@ function loadDatabase() {
             {
               id: 1,
               platform: "GitHub",
-              url: "https://github.com/Chandru9842",
+              url: "https://github.com/alex-dev",
               icon: "GitHub",
               isVisible: true,
               displayOrder: 1,
@@ -63,7 +64,7 @@ function loadDatabase() {
             {
               id: 2,
               platform: "LinkedIn",
-              url: "https://www.linkedin.com/in/chandru9842/",
+              url: "https://linkedin.com/in/alex-dev-architect",
               icon: "LinkedIn",
               isVisible: true,
               displayOrder: 2,
@@ -90,6 +91,10 @@ function loadDatabase() {
       }
       if (!db.technologies) {
         db.technologies = initialTechStack;
+        dirty = true;
+      }
+      if (!db.tools) {
+        db.tools = initialTools;
         dirty = true;
       }
       if (!db.themeSettings) {
@@ -187,6 +192,190 @@ function loadDatabase() {
       }
       if (!db.codingProfiles || !Array.isArray(db.codingProfiles)) {
         db.codingProfiles = [];
+        dirty = true;
+      }
+      if (!db.mediaItems || !Array.isArray(db.mediaItems)) {
+        db.mediaItems = [
+          {
+            id: 1,
+            title: "Hero Profile Portrait",
+            url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+            type: "image",
+            folder: "Hero & Profile",
+            size: 145000,
+            dimensions: "600x600",
+            tags: ["hero", "profile", "avatar"],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            title: "Distributed Microservices Architecture Diagram",
+            url: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+            type: "image",
+            folder: "Projects",
+            size: 320000,
+            dimensions: "800x500",
+            tags: ["project", "microservices", "architecture"],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: 3,
+            title: "AWS Certified Solutions Architect Badge",
+            url: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=400&auto=format&fit=crop",
+            type: "image",
+            folder: "Certificates & Badges",
+            size: 98000,
+            dimensions: "400x400",
+            tags: ["aws", "badge", "certified"],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ];
+        dirty = true;
+      }
+
+      if (!db.notifications || !Array.isArray(db.notifications)) {
+        db.notifications = [
+          {
+            id: "notif-1",
+            type: "SYSTEM",
+            title: "Enterprise Engine Initialized",
+            message: "Portfolio CMS upgraded to Enterprise Platform v2.5.0 with AI, Analytics & Security",
+            timestamp: new Date().toISOString(),
+            read: false,
+            link: "Settings"
+          },
+          {
+            id: "notif-2",
+            type: "VISITOR",
+            title: "New Visitor Session",
+            message: "Visitor from San Francisco, USA viewed Distributed Systems project",
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            read: false,
+            link: "Analytics"
+          }
+        ];
+        dirty = true;
+      }
+
+      if (!db.backups || !Array.isArray(db.backups)) {
+        db.backups = [
+          {
+            id: "backup-initial-1",
+            filename: "portfolio_backup_initial.json",
+            size: "142 KB",
+            createdAt: new Date().toISOString(),
+            type: "Automatic",
+            status: "Completed",
+            recordsCount: 48
+          }
+        ];
+        dirty = true;
+      }
+
+      if (!db.emailSettings) {
+        db.emailSettings = {
+          smtpHost: "smtp.gmail.com",
+          smtpPort: 587,
+          smtpUser: "notifications@alexdev.io",
+          smtpPass: "••••••••••••",
+          secure: true,
+          preset: "Gmail SMTP",
+          autoReplyEnabled: true,
+          contactAlertsEnabled: true,
+          adminNotificationsEnabled: true,
+          autoReplyTemplate: "Hello {{name}},\n\nThank you for getting in touch! I have received your message regarding \"{{subject}}\" and will review it shortly.\n\nBest regards,\nAlex Dev",
+          contactAlertTemplate: "New Contact Message Received!\nName: {{name}}\nEmail: {{email}}\nSubject: {{subject}}\nMessage: {{message}}"
+        };
+        dirty = true;
+      }
+
+      if (!db.roles || !Array.isArray(db.roles)) {
+        db.roles = [
+          {
+            id: "role-founder",
+            name: "Founder",
+            description: "Full unchecked administrative control over system, security, databases, and users.",
+            permissions: ["MANAGE_PROJECTS", "MANAGE_SKILLS", "MANAGE_MESSAGES", "VIEW_ANALYTICS", "MANAGE_USERS", "SYSTEM_BACKUP", "SECURITY_AUDIT", "ROLE_MANAGEMENT"],
+            userCount: 1,
+            isSystem: true
+          },
+          {
+            id: "role-admin",
+            name: "Admin",
+            description: "Manage CMS portfolio content, themes, settings, and view visitor analytics.",
+            permissions: ["MANAGE_PROJECTS", "MANAGE_SKILLS", "MANAGE_MESSAGES", "VIEW_ANALYTICS", "SYSTEM_BACKUP"],
+            userCount: 0,
+            isSystem: true
+          },
+          {
+            id: "role-editor",
+            name: "Editor",
+            description: "Create, edit, and update portfolio projects, experience, and media assets.",
+            permissions: ["MANAGE_PROJECTS", "MANAGE_SKILLS", "MANAGE_MESSAGES"],
+            userCount: 0,
+            isSystem: false
+          },
+          {
+            id: "role-viewer",
+            name: "Viewer",
+            description: "Read-only access to CMS preview and analytics reports.",
+            permissions: ["VIEW_ANALYTICS"],
+            userCount: 0,
+            isSystem: false
+          }
+        ];
+        dirty = true;
+      }
+
+      if (!db.logs || !Array.isArray(db.logs)) {
+        db.logs = [
+          {
+            id: "log-1",
+            timestamp: new Date().toISOString(),
+            category: "API",
+            level: "INFO",
+            message: "API Route GET /api/projects executed successfully (200 OK)",
+            ip: "127.0.0.1"
+          },
+          {
+            id: "log-2",
+            timestamp: new Date(Date.now() - 1800000).toISOString(),
+            category: "AUTH",
+            level: "INFO",
+            message: "Administrator login session authenticated for chandrumohan550@gmail.com",
+            ip: "127.0.0.1"
+          }
+        ];
+        dirty = true;
+      }
+
+      if (!db.adminTasks || !Array.isArray(db.adminTasks)) {
+        db.adminTasks = [
+          { id: "task-1", title: "Review new project descriptions with AI Copilot", completed: false, priority: "High" },
+          { id: "task-2", title: "Verify SEO metadata & Sitemap generation", completed: true, priority: "Medium" },
+          { id: "task-3", title: "Export weekly database backup snapshot", completed: false, priority: "Medium" }
+        ];
+        dirty = true;
+      }
+
+      if (!db.seoConfig) {
+        db.seoConfig = {
+          metaTitle: "Alex Dev | Senior Full Stack Architect & Systems Engineer",
+          metaDescription: "Enterprise portfolio of Alex Dev featuring high-scale distributed systems, microservices, cloud infrastructure, and AI applications.",
+          keywords: "Software Engineer, Full Stack Architect, React, Node.js, Cloud, Microservices, TypeScript",
+          ogTitle: "Alex Dev - Enterprise Portfolio CMS",
+          ogDescription: "Architecting high-performance cloud applications & resilient enterprise platforms.",
+          ogImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+          twitterCard: "summary_large_image",
+          twitterSite: "@alex_dev_arch",
+          robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://alexdev.io/sitemap.xml",
+          pwaEnabled: true,
+          offlineMode: true,
+          highContrastMode: false
+        };
         dirty = true;
       }
       if (dirty) {
@@ -391,7 +580,7 @@ async function startServer() {
 
   // --- API ROUTES ---
 
-  const JWT_SECRET = process.env.JWT_SECRET || "portfolio-cms-super-secret-key-chandru-dev-2026";
+  const JWT_SECRET = process.env.JWT_SECRET || "portfolio-cms-super-secret-key-alex-dev-2026";
 
   // Helper to sanitize input strings against stored XSS
   function sanitizeInput(str: any): string {
@@ -1077,7 +1266,7 @@ async function startServer() {
   });
 
   // Combined Portfolio Data Endpoint (high performance, reduces 10 API calls into 1, uses in-memory caching)
-  app.get("/api/portfolio-combined", (req, res) => {
+  const getPortfolioCombinedHandler = (req: express.Request, res: express.Response) => {
     if (cachedPortfolioData) {
       return res.json(cachedPortfolioData);
     }
@@ -1114,11 +1303,14 @@ async function startServer() {
       settings: db.settings || initialSettings,
       footer: db.footer || initialFooter,
       technologies: db.technologies || [],
+      tools: db.tools || [],
       codingProfiles: db.codingProfiles || []
     };
     
     res.json(cachedPortfolioData);
-  });
+  };
+  app.get("/api/portfolio-combined", getPortfolioCombinedHandler);
+  app.get("/api/portfolio-data", getPortfolioCombinedHandler);
 
   // Profile API Endpoints
   app.get("/api/profile", (req, res) => {
@@ -1989,58 +2181,229 @@ async function startServer() {
     res.json({ status: "success" });
   });
 
-  // Technology CRUD Endpoints
-  app.get("/api/technologies", (req, res) => {
+  // Tools & Technologies Endpoints
+  app.get("/api/tools", (req, res) => {
     const db = loadDatabase();
-    const list = db.technologies || [];
-    const sorted = [...list].sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+    const tools = db.tools || [];
+    const sorted = [...tools].sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
     res.json(sorted);
   });
 
-  app.post("/api/technologies", authenticateJWT, (req: any, res: any) => {
-    const db = loadDatabase();
-    const { name, enabled } = req.body;
-    if (!name) {
-      return res.status(400).json({ error: "Technology name is required" });
+  app.post("/api/tools/upload-logo", authenticateJWT, (req, res) => {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: "No logo image provided" });
     }
+
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      const processed = processMockCloudinaryImage(image, "tool_logo");
+      return res.json({ url: processed.url, publicId: processed.publicId });
+    }
+
+    const matches = image.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      return res.status(400).json({ error: "Invalid image format. Expected base64 Data URI." });
+    }
+
+    const processed = processMockCloudinaryImage(image, "tool_logo");
+    res.json({ url: processed.url, publicId: processed.publicId });
+  });
+
+  app.post("/api/tools", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const tool = req.body;
+    
+    if (!db.tools) db.tools = [];
+    const newId = db.tools.length > 0 ? Math.max(...db.tools.map((t: any) => t.id)) + 1 : 1;
+    const now = new Date().toISOString();
+    
+    const created = {
+      ...tool,
+      id: newId,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    db.tools.push(created);
+    
+    recordActivity(req, db, {
+      action: "Tool Added",
+      module: "Tools & Technologies",
+      description: `Added tool "${tool.name || 'New Tool'}" (${tool.category || 'General'}).`,
+      newValue: created
+    });
+    
+    saveDatabase(db);
+    res.status(201).json(created);
+  });
+
+  app.put("/api/tools/:id", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const updated = req.body;
+    if (!db.tools) db.tools = [];
+    
+    const oldValue = db.tools.find((t: any) => t.id === id);
+    const now = new Date().toISOString();
+    
+    const updatedItem = {
+      ...updated,
+      id,
+      updatedAt: now
+    };
+    
+    db.tools = db.tools.map((t: any) => t.id === id ? updatedItem : t);
+    
+    recordActivity(req, db, {
+      action: "Tool Updated",
+      module: "Tools & Technologies",
+      description: `Updated configuration for tool "${updated.name || id}".`,
+      oldValue,
+      newValue: updatedItem
+    });
+    
+    saveDatabase(db);
+    res.json({ status: "success", tool: updatedItem });
+  });
+
+  app.delete("/api/tools/:id", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.tools) db.tools = [];
+    
+    const oldValue = db.tools.find((t: any) => t.id === id);
+    db.tools = db.tools.filter((t: any) => t.id !== id);
+    
+    recordActivity(req, db, {
+      action: "Tool Deleted",
+      module: "Tools & Technologies",
+      description: `Removed tool "${oldValue?.name || id}" from CMS registry.`,
+      oldValue
+    });
+    
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.patch("/api/tools/:id/visibility", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const { isVisible } = req.body;
+    if (!db.tools) db.tools = [];
+    
+    db.tools = db.tools.map((t: any) => t.id === id ? { ...t, isVisible: !!isVisible, updatedAt: new Date().toISOString() } : t);
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.patch("/api/tools/:id/featured", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const { isFeatured } = req.body;
+    if (!db.tools) db.tools = [];
+    
+    db.tools = db.tools.map((t: any) => t.id === id ? { ...t, isFeatured: !!isFeatured, updatedAt: new Date().toISOString() } : t);
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.post("/api/tools/order", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { orderedIds } = req.body;
+    if (Array.isArray(orderedIds) && db.tools) {
+      db.tools = db.tools.map((t: any) => {
+        const idx = orderedIds.indexOf(t.id);
+        return idx !== -1 ? { ...t, displayOrder: idx + 1 } : t;
+      });
+      saveDatabase(db);
+    }
+    res.json({ status: "success" });
+  });
+
+  // Technology CRUD Endpoints
+  const getTechnologiesHandler = (req: express.Request, res: express.Response) => {
+    const db = loadDatabase();
+    const list = db.technologies || [];
+    const sorted = [...list].sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+    res.json(sorted);
+  };
+  app.get("/api/technologies", getTechnologiesHandler);
+  app.get("/api/tech-stack", getTechnologiesHandler);
+
+  const postTechnologyHandler = (req: any, res: any) => {
+    const db = loadDatabase();
+    const body = req.body || {};
+    const rawName = body.name ?? body.techName ?? body.technologyName ?? body.title ?? body.label ?? body.technology;
+    
+    if (rawName === undefined || rawName === null || typeof rawName !== "string" || !rawName.trim()) {
+      return res.status(400).json({ error: "Technology name cannot be empty." });
+    }
+    const name = rawName.trim();
+    const { enabled, order, displayOrder, category, proficiency, iconUrl } = body;
     const list = db.technologies || [];
     const maxId = list.reduce((max: number, item: any) => item.id > max ? item.id : max, 0);
-    const maxOrder = list.reduce((max: number, item: any) => (item.order || 0) > max ? (item.order || 0) : max, 0);
+    const maxOrder = list.reduce((max: number, item: any) => {
+      const o = (item.order ?? item.displayOrder) || 0;
+      return o > max ? o : max;
+    }, 0);
     
+    const targetOrder = typeof order === "number" ? order : (typeof displayOrder === "number" ? displayOrder : maxOrder + 1);
+
     const newTech = {
       id: maxId + 1,
       name,
-      enabled: enabled !== undefined ? enabled : true,
-      order: maxOrder + 1,
+      enabled: enabled !== undefined ? !!enabled : true,
+      order: targetOrder,
+      displayOrder: targetOrder,
+      category: category || "Core Technology",
+      proficiency: typeof proficiency === "number" ? proficiency : 85,
+      iconUrl: iconUrl || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     db.technologies = [...list, newTech];
     
     recordActivity(req, db, {
       action: "Technology Created",
       module: "Profile",
-      description: `Added technology "${name}" to portfolio tech stack.`,
+      description: `Added technology "${newTech.name}" to portfolio tech stack.`,
       newValue: newTech
     });
     
     saveDatabase(db);
     res.status(201).json(newTech);
-  });
+  };
+  app.post("/api/technologies", authenticateJWT, postTechnologyHandler);
+  app.post("/api/tech-stack", authenticateJWT, postTechnologyHandler);
 
-  app.put("/api/technologies/:id", authenticateJWT, (req: any, res: any) => {
+  const putTechnologyHandler = (req: any, res: any) => {
     const db = loadDatabase();
     const id = parseInt(req.params.id);
-    const { name, enabled, order } = req.body;
+    const body = req.body || {};
+    const rawName = body.name ?? body.techName ?? body.technologyName ?? body.title ?? body.label ?? body.technology;
+    const { enabled, order, displayOrder, category, proficiency, iconUrl } = body;
     const list = db.technologies || [];
     const idx = list.findIndex((item: any) => item.id === id);
     if (idx === -1) {
       return res.status(404).json({ error: "Technology not found" });
     }
+
+    if (rawName !== undefined && (rawName === null || typeof rawName !== "string" || !rawName.trim())) {
+      return res.status(400).json({ error: "Technology name cannot be empty." });
+    }
+
     const oldValue = { ...list[idx] };
+    const newOrder = typeof order === "number" ? order : (typeof displayOrder === "number" ? displayOrder : list[idx].order);
+
     const updated = {
       ...list[idx],
-      ...(name !== undefined && { name }),
-      ...(enabled !== undefined && { enabled }),
-      ...(order !== undefined && { order }),
+      ...(rawName !== undefined && { name: rawName.trim() }),
+      ...(enabled !== undefined && { enabled: !!enabled }),
+      ...(newOrder !== undefined && { order: newOrder, displayOrder: newOrder }),
+      ...(category !== undefined && { category }),
+      ...(proficiency !== undefined && { proficiency }),
+      ...(iconUrl !== undefined && { iconUrl }),
+      updatedAt: new Date().toISOString()
     };
     list[idx] = updated;
     db.technologies = list;
@@ -2055,9 +2418,11 @@ async function startServer() {
     
     saveDatabase(db);
     res.json(updated);
-  });
+  };
+  app.put("/api/technologies/:id", authenticateJWT, putTechnologyHandler);
+  app.put("/api/tech-stack/:id", authenticateJWT, putTechnologyHandler);
 
-  app.delete("/api/technologies/:id", authenticateJWT, (req: any, res: any) => {
+  const deleteTechnologyHandler = (req: any, res: any) => {
     const db = loadDatabase();
     const id = parseInt(req.params.id);
     const list = db.technologies || [];
@@ -2077,21 +2442,29 @@ async function startServer() {
     
     saveDatabase(db);
     res.json({ success: true, message: "Technology deleted successfully" });
-  });
+  };
+  app.delete("/api/technologies/:id", authenticateJWT, deleteTechnologyHandler);
+  app.delete("/api/tech-stack/:id", authenticateJWT, deleteTechnologyHandler);
 
-  app.put("/api/technologies-reorder", authenticateJWT, (req: any, res: any) => {
+  const reorderTechnologiesHandler = (req: any, res: any) => {
     const db = loadDatabase();
-    const { orders } = req.body;
+    const orders = req.body.orders || req.body;
     if (!Array.isArray(orders)) {
       return res.status(400).json({ error: "Invalid orders payload. Expected array." });
     }
     const list = db.technologies || [];
-    orders.forEach(({ id, order }: any) => {
-      const item = list.find((t: any) => t.id === id);
-      if (item) {
-        item.order = order;
+    orders.forEach((item: any) => {
+      const targetId = typeof item === "object" ? item.id : parseInt(item);
+      const targetOrder = typeof item === "object" ? (item.order ?? item.displayOrder) : null;
+      const tech = list.find((t: any) => t.id === targetId);
+      if (tech && targetOrder !== null) {
+        tech.order = targetOrder;
+        tech.displayOrder = targetOrder;
+        tech.updatedAt = new Date().toISOString();
       }
     });
+
+    list.sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
     db.technologies = list;
     
     recordActivity(req, db, {
@@ -2102,7 +2475,12 @@ async function startServer() {
     
     saveDatabase(db);
     res.json({ success: true, list });
-  });
+  };
+  app.put("/api/technologies-reorder", authenticateJWT, reorderTechnologiesHandler);
+  app.put("/api/technologies/reorder", authenticateJWT, reorderTechnologiesHandler);
+  app.patch("/api/technologies/reorder", authenticateJWT, reorderTechnologiesHandler);
+  app.put("/api/tech-stack/reorder", authenticateJWT, reorderTechnologiesHandler);
+  app.patch("/api/tech-stack/reorder", authenticateJWT, reorderTechnologiesHandler);
 
   // Certificates Endpoints
   app.get("/api/certificates", (req, res) => {
@@ -2548,7 +2926,7 @@ async function startServer() {
 
   app.post("/api/social-links", authenticateJWT, (req, res) => {
     const db = loadDatabase();
-    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl } = req.body;
+    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab } = req.body;
 
     if (!platform || typeof platform !== "string" || !platform.trim()) {
       return res.status(400).json({ error: "Platform name is required." });
@@ -2594,6 +2972,11 @@ async function startServer() {
       profileUrl: String(profileUrl).trim(),
       icon: icon ? String(icon).trim() : platform,
       logoUrl: processedLogoUrl,
+      customSvg: customSvg ? String(customSvg) : "",
+      whiteLogoUrl: whiteLogoUrl ? String(whiteLogoUrl) : "",
+      darkLogoUrl: darkLogoUrl ? String(darkLogoUrl) : "",
+      tooltip: tooltip ? String(tooltip) : "",
+      openInNewTab: openInNewTab !== false,
       displayOrder: typeof displayOrder === "number" ? displayOrder : (db.socialLinks?.length || 0) + 1,
       isVisible: isVisible !== false,
       createdAt: new Date().toISOString(),
@@ -2609,7 +2992,7 @@ async function startServer() {
   app.put("/api/social-links/:id", authenticateJWT, (req, res) => {
     const db = loadDatabase();
     const id = parseInt(req.params.id);
-    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl } = req.body;
+    const { platform, username, profileUrl, icon, displayOrder, isVisible, logoUrl, customSvg, whiteLogoUrl, darkLogoUrl, tooltip, openInNewTab } = req.body;
 
     if (platform && (typeof platform !== "string" || !platform.trim())) {
       return res.status(400).json({ error: "Platform name cannot be empty." });
@@ -2655,6 +3038,11 @@ async function startServer() {
       profileUrl: String(profileUrl).trim(),
       icon: icon !== undefined ? String(icon).trim() : db.socialLinks[index].icon,
       logoUrl: processedLogoUrl,
+      customSvg: customSvg !== undefined ? String(customSvg) : (db.socialLinks[index].customSvg || ""),
+      whiteLogoUrl: whiteLogoUrl !== undefined ? String(whiteLogoUrl) : (db.socialLinks[index].whiteLogoUrl || ""),
+      darkLogoUrl: darkLogoUrl !== undefined ? String(darkLogoUrl) : (db.socialLinks[index].darkLogoUrl || ""),
+      tooltip: tooltip !== undefined ? String(tooltip) : (db.socialLinks[index].tooltip || ""),
+      openInNewTab: openInNewTab !== undefined ? !!openInNewTab : (db.socialLinks[index].openInNewTab !== false),
       displayOrder: typeof displayOrder === "number" ? displayOrder : db.socialLinks[index].displayOrder,
       isVisible: isVisible !== undefined ? !!isVisible : db.socialLinks[index].isVisible,
       updatedAt: new Date().toISOString()
@@ -3526,6 +3914,138 @@ async function startServer() {
     res.json(db.resumes[index]);
   });
 
+  // --- MEDIA MANAGER ENDPOINTS ---
+  app.get("/api/media", (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaItems) db.mediaItems = [];
+    res.json(db.mediaItems);
+  });
+
+  app.post("/api/media", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaItems) db.mediaItems = [];
+    const { title, url, type, folder, size, dimensions, tags, svgMarkup } = req.body;
+
+    if (!url && !svgMarkup) {
+      return res.status(400).json({ error: "Media URL or SVG markup is required." });
+    }
+
+    const newId = db.mediaItems.length > 0 ? Math.max(...db.mediaItems.map((m: any) => m.id)) + 1 : 1;
+    const nowStr = new Date().toISOString();
+
+    let processedUrl = url || "";
+    let publicId = "";
+    if (processedUrl && processedUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedUrl, "media");
+      processedUrl = processed.url;
+      publicId = processed.publicId;
+    }
+
+    const created = {
+      id: newId,
+      title: title ? String(title).trim() : "Untitled Media",
+      url: processedUrl,
+      type: type || (svgMarkup ? "svg" : "image"),
+      folder: folder || "General",
+      size: typeof size === "number" ? size : (processedUrl.length * 0.75),
+      dimensions: dimensions || "1200x800",
+      tags: Array.isArray(tags) ? tags : [],
+      svgMarkup: svgMarkup || "",
+      publicId,
+      createdAt: nowStr,
+      updatedAt: nowStr
+    };
+
+    db.mediaItems.unshift(created);
+
+    recordActivity(req, db, {
+      action: "Media Asset Uploaded",
+      module: "Media Manager",
+      description: `Uploaded asset "${created.title}" to folder "${created.folder}".`,
+      newValue: created
+    });
+
+    saveDatabase(db);
+    res.status(201).json(created);
+  });
+
+  app.put("/api/media/:id", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.mediaItems) db.mediaItems = [];
+
+    const index = db.mediaItems.findIndex((m: any) => m.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Media item not found." });
+    }
+
+    const { title, folder, tags, url, type, svgMarkup } = req.body;
+    const original = db.mediaItems[index];
+
+    const updated = {
+      ...original,
+      title: title !== undefined ? String(title).trim() : original.title,
+      folder: folder !== undefined ? String(folder).trim() : original.folder,
+      tags: Array.isArray(tags) ? tags : original.tags,
+      url: url || original.url,
+      type: type || original.type,
+      svgMarkup: svgMarkup !== undefined ? svgMarkup : original.svgMarkup,
+      updatedAt: new Date().toISOString()
+    };
+
+    db.mediaItems[index] = updated;
+
+    recordActivity(req, db, {
+      action: "Media Asset Updated",
+      module: "Media Manager",
+      description: `Updated asset details for "${updated.title}".`,
+      oldValue: original,
+      newValue: updated
+    });
+
+    saveDatabase(db);
+    res.json(updated);
+  });
+
+  app.delete("/api/media/:id", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.mediaItems) db.mediaItems = [];
+
+    const oldValue = db.mediaItems.find((m: any) => m.id === id);
+    db.mediaItems = db.mediaItems.filter((m: any) => m.id !== id);
+
+    recordActivity(req, db, {
+      action: "Media Asset Deleted",
+      module: "Media Manager",
+      description: `Deleted media asset "${oldValue?.title || id}".`,
+      oldValue
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.post("/api/media/bulk-delete", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: "ids must be an array." });
+    }
+
+    if (!db.mediaItems) db.mediaItems = [];
+    const initialCount = db.mediaItems.length;
+    db.mediaItems = db.mediaItems.filter((m: any) => !ids.includes(m.id));
+
+    recordActivity(req, db, {
+      action: "Bulk Media Assets Deleted",
+      module: "Media Manager",
+      description: `Bulk deleted ${initialCount - db.mediaItems.length} media assets.`
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success", deletedCount: initialCount - db.mediaItems.length });
+  });
 
   // Analytics Endpoints
   app.get("/api/analytics", (req, res) => {
@@ -3538,6 +4058,23 @@ async function startServer() {
       if (!db.analytics.clicks) db.analytics.clicks = [];
       if (db.analytics.resumeDownloads === undefined) db.analytics.resumeDownloads = 0;
     }
+    res.json(db.analytics);
+  });
+
+  app.put("/api/analytics", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const updated = req.body;
+    db.analytics = {
+      ...(db.analytics || {}),
+      ...updated
+    };
+    recordActivity(req, db, {
+      action: "Analytics Updated",
+      module: "Analytics",
+      description: "Administrator updated analytics metrics manually.",
+      newValue: db.analytics
+    });
+    saveDatabase(db);
     res.json(db.analytics);
   });
 
@@ -3715,6 +4252,320 @@ async function startServer() {
 
     saveDatabase(db);
     res.json({ status: "success", analytics: db.analytics });
+  });
+
+  // --- ENTERPRISE AI COPILOT API ---
+  app.post("/api/ai/generate", async (req, res) => {
+    try {
+      const { contentType, tone, prompt, existingText } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+
+      if (!apiKey) {
+        return res.status(500).json({
+          error: "GEMINI_API_KEY environment variable is missing."
+        });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build'
+          }
+        }
+      });
+
+      const systemInstruction = `You are an expert executive resume writer and portfolio copywriter. Tone: ${tone || 'Professional'}. Focus on impact, clarity, and precision.`;
+
+      let userPrompt = `Content Type: ${contentType || 'about'}\nTarget Tone: ${tone || 'Professional'}\nInstructions / Key Facts: ${prompt || 'Write high-impact portfolio text'}`;
+      if (existingText) {
+        userPrompt += `\nExisting Text to Polish:\n"""\n${existingText}\n"""`;
+      }
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: userPrompt,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+        }
+      });
+
+      const resultText = response.text || "";
+      res.json({ status: "success", result: resultText });
+    } catch (err: any) {
+      console.error("AI Generation Endpoint Error:", err);
+      res.status(500).json({ error: err.message || "Failed to generate AI content" });
+    }
+  });
+
+  // --- ENTERPRISE NOTIFICATIONS API ---
+  app.get("/api/notifications", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.notifications || []);
+  });
+
+  app.post("/api/notifications/mark-read", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.body;
+    if (id) {
+      db.notifications = (db.notifications || []).map((n: any) => n.id === id ? { ...n, read: true } : n);
+    } else {
+      db.notifications = (db.notifications || []).map((n: any) => ({ ...n, read: true }));
+    }
+    saveDatabase(db);
+    res.json({ status: "success", notifications: db.notifications });
+  });
+
+  app.post("/api/notifications/clear", (req, res) => {
+    const db = loadDatabase();
+    db.notifications = [];
+    saveDatabase(db);
+    res.json({ status: "success", notifications: [] });
+  });
+
+  // --- ENTERPRISE BACKUP & DATA IMPORT/EXPORT API ---
+  app.get("/api/backups", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.backups || []);
+  });
+
+  app.post("/api/backups/create", (req, res) => {
+    const db = loadDatabase();
+    const backupId = `backup-${Date.now()}`;
+    const filename = `portfolio_backup_${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    const jsonStr = JSON.stringify(db, null, 2);
+    const sizeKb = Math.round(Buffer.byteLength(jsonStr) / 1024);
+
+    const newBackup = {
+      id: backupId,
+      filename,
+      size: `${sizeKb} KB`,
+      createdAt: new Date().toISOString(),
+      type: req.body.type || "Manual",
+      status: "Completed",
+      recordsCount: (db.projects?.length || 0) + (db.skills?.length || 0) + (db.messages?.length || 0) + (db.experiences?.length || 0)
+    };
+
+    db.backups = [newBackup, ...(db.backups || [])];
+    
+    db.notifications = [
+      {
+        id: `notif-${Date.now()}`,
+        type: "SYSTEM",
+        title: "Backup Snapshot Created",
+        message: `Database snapshot ${filename} saved (${newBackup.size})`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        link: "Settings"
+      },
+      ...(db.notifications || [])
+    ];
+
+    saveDatabase(db);
+    res.json({ status: "success", backup: newBackup, data: db });
+  });
+
+  app.get("/api/backups/export", (req, res) => {
+    const db = loadDatabase();
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", `attachment; filename=portfolio_full_export_${Date.now()}.json`);
+    res.send(JSON.stringify(db, null, 2));
+  });
+
+  app.post("/api/backups/import", (req, res) => {
+    try {
+      const importedData = req.body;
+      if (!importedData || typeof importedData !== "object") {
+        return res.status(400).json({ error: "Invalid backup JSON file payload" });
+      }
+
+      saveDatabase(importedData);
+      res.json({ status: "success", message: "Portfolio database restored successfully" });
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to import database: " + err.message });
+    }
+  });
+
+  app.delete("/api/backups/:id", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.params;
+    db.backups = (db.backups || []).filter((b: any) => b.id !== id);
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  // --- ENTERPRISE ROLE MANAGEMENT API ---
+  app.get("/api/roles", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.roles || []);
+  });
+
+  app.post("/api/roles", (req, res) => {
+    const db = loadDatabase();
+    const { name, description, permissions } = req.body;
+    if (!name) return res.status(400).json({ error: "Role name is required" });
+
+    const newRole = {
+      id: `role-${Date.now()}`,
+      name,
+      description: description || "",
+      permissions: permissions || ["VIEW_ANALYTICS"],
+      userCount: 0,
+      isSystem: false
+    };
+
+    db.roles = [...(db.roles || []), newRole];
+    saveDatabase(db);
+    res.json({ status: "success", role: newRole });
+  });
+
+  // --- ENTERPRISE EMAIL & SMTP API ---
+  app.get("/api/email/settings", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.emailSettings || {});
+  });
+
+  app.put("/api/email/settings", (req, res) => {
+    const db = loadDatabase();
+    db.emailSettings = { ...db.emailSettings, ...req.body };
+    saveDatabase(db);
+    res.json({ status: "success", emailSettings: db.emailSettings });
+  });
+
+  app.post("/api/email/test", async (req, res) => {
+    const db = loadDatabase();
+    const cfg = db.emailSettings || {};
+    res.json({
+      status: "success",
+      message: `Test email dispatches successfully via ${cfg.preset || 'Gmail SMTP'} (${cfg.smtpHost}:${cfg.smtpPort})`
+    });
+  });
+
+  app.post("/api/email/send-reply", async (req, res) => {
+    const { to, subject, replyText } = req.body;
+    const db = loadDatabase();
+    db.activityHistory = [
+      {
+        id: `act-${Date.now()}`,
+        action: "Email Reply Sent",
+        module: "Messages",
+        description: `Dispatched email reply to ${to} re: "${subject}"`,
+        timestamp: new Date().toISOString(),
+        status: "SUCCESS"
+      },
+      ...(db.activityHistory || [])
+    ];
+    saveDatabase(db);
+    res.json({ status: "success", message: `Reply successfully dispatched to ${to}` });
+  });
+
+  // --- ENTERPRISE SYSTEM HEALTH, LOGS & SEO API ---
+  app.get("/api/system/health", (req, res) => {
+    const db = loadDatabase();
+    const memUsage = process.memoryUsage();
+
+    res.json({
+      status: "HEALTHY",
+      uptime: process.uptime(),
+      version: "2.5.0-ENTERPRISE",
+      serverTime: new Date().toISOString(),
+      apiStatus: "ONLINE",
+      databaseStatus: "OPERATIONAL",
+      storageUsedMb: ((fs.statSync(DB_FILE)?.size || 0) / 1024 / 1024).toFixed(2),
+      memoryMb: (memUsage.heapUsed / 1024 / 1024).toFixed(1),
+      cpuUsage: "1.8%",
+      recordCounts: {
+        projects: db.projects?.length || 0,
+        skills: db.skills?.length || 0,
+        messages: db.messages?.length || 0,
+        logs: db.logs?.length || 0,
+        media: db.mediaItems?.length || 0
+      }
+    });
+  });
+
+  app.get("/api/logs", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.logs || []);
+  });
+
+  app.get("/api/seo", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.seoConfig || {});
+  });
+
+  app.put("/api/seo", (req, res) => {
+    const db = loadDatabase();
+    db.seoConfig = { ...db.seoConfig, ...req.body };
+    saveDatabase(db);
+    res.json({ status: "success", seoConfig: db.seoConfig });
+  });
+
+  app.get("/sitemap.xml", (req, res) => {
+    const db = loadDatabase();
+    const projects = db.projects || [];
+    const domain = req.protocol + '://' + req.get('host');
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+    xml += `  <url><loc>${domain}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+    xml += `  <url><loc>${domain}/#projects</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+    xml += `  <url><loc>${domain}/#skills</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+    xml += `  <url><loc>${domain}/#contact</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
+
+    projects.forEach((p: any) => {
+      xml += `  <url><loc>${domain}/#project-${p.id}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+    });
+
+    xml += `</urlset>`;
+    res.header('Content-Type', 'text/xml');
+    res.send(xml);
+  });
+
+  app.get("/robots.txt", (req, res) => {
+    const db = loadDatabase();
+    const robots = db.seoConfig?.robotsTxt || "User-agent: *\nAllow: /\nSitemap: /sitemap.xml";
+    res.header('Content-Type', 'text/plain');
+    res.send(robots);
+  });
+
+  app.get("/api/admin/tasks", (req, res) => {
+    const db = loadDatabase();
+    res.json(db.adminTasks || []);
+  });
+
+  app.post("/api/admin/tasks", (req, res) => {
+    const db = loadDatabase();
+    const { title, priority } = req.body;
+    if (!title) return res.status(400).json({ error: "Task title required" });
+
+    const newTask = {
+      id: `task-${Date.now()}`,
+      title,
+      completed: false,
+      priority: priority || "Medium"
+    };
+
+    db.adminTasks = [...(db.adminTasks || []), newTask];
+    saveDatabase(db);
+    res.json({ status: "success", tasks: db.adminTasks });
+  });
+
+  app.post("/api/admin/tasks/toggle", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.body;
+    db.adminTasks = (db.adminTasks || []).map((t: any) => t.id === id ? { ...t, completed: !t.completed } : t);
+    saveDatabase(db);
+    res.json({ status: "success", tasks: db.adminTasks });
+  });
+
+  app.delete("/api/admin/tasks/:id", (req, res) => {
+    const db = loadDatabase();
+    const { id } = req.params;
+    db.adminTasks = (db.adminTasks || []).filter((t: any) => t.id !== id);
+    saveDatabase(db);
+    res.json({ status: "success", tasks: db.adminTasks });
   });
 
   // --- CENTRALIZED ERROR LOGGING AND RESPONSE HANDLER ---

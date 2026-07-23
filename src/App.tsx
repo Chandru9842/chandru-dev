@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Layers, Database, Code2, ShieldAlert, ArrowRight, BookOpen, GitFork, RefreshCw, Terminal, CheckCircle2, ShieldCheck, Home } from 'lucide-react';
-const ArchitectureDiagram = React.lazy(() => import('./components/ArchitectureDiagram'));
-const DatabaseERD = React.lazy(() => import('./components/DatabaseERD'));
-const CodeExplorer = React.lazy(() => import('./components/CodeExplorer'));
+import ArchitectureDiagram from './components/ArchitectureDiagram';
+import DatabaseERD from './components/DatabaseERD';
+import CodeExplorer from './components/CodeExplorer';
 import StatusCard from './components/StatusCard';
-const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+import AdminDashboard from './components/AdminDashboard';
 import PortfolioFrontend from './components/PortfolioFrontend';
-const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
+import AdminLogin from './components/AdminLogin';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);

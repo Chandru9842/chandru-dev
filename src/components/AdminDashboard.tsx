@@ -4,7 +4,7 @@ import {
   Layout, BookOpen, Cpu, Award, Briefcase, GraduationCap, 
   BarChart3, Mail, Settings, RefreshCw, Terminal, LogOut, Code2, Database, ShieldAlert,
   Share2, FileText, User, Palette, AlertTriangle, Trophy, Shield, History,
-  Menu, X
+  Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe
 } from 'lucide-react';
 
 // Subpages
@@ -28,12 +28,25 @@ import SecuritySettingsPage from './admin/SecuritySettingsPage';
 import HeroManagementPage from './admin/HeroManagementPage';
 import TechStackPage from './admin/TechStackPage';
 import CodingProfilesPage from './admin/CodingProfilesPage';
+import MediaManagerPage from './admin/MediaManagerPage';
+import ToolsPage from './admin/ToolsPage';
+import LivePreviewModal from './admin/LivePreviewModal';
+
+// Enterprise Platform Subpages & Modals
+import AIAssistantModal from './admin/AIAssistantModal';
+import GlobalSearchModal from './admin/GlobalSearchModal';
+import NotificationsDrawer, { NotificationItem } from './admin/NotificationsDrawer';
+import BackupPage from './admin/BackupPage';
+import EmailSettingsPage from './admin/EmailSettingsPage';
+import RoleManagementPage from './admin/RoleManagementPage';
+import SystemHealthPage from './admin/SystemHealthPage';
+import SEOManagerPage from './admin/SEOManagerPage';
 
 // Seed lists
 import { 
   ProjectItem, SkillItem,
   CertificateItem, ExperienceItem, EducationItem, MessageItem, SettingsConfig, SocialLinkItem,
-  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem
+  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem
 } from '../data/cmsMockData';
 
 import Toast, { ToastProps } from './Toast';
@@ -47,6 +60,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(false);
+
+  // Enterprise Modals & Drawer State
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // Database lists
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -62,6 +82,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   const [footerSocialLinks, setFooterSocialLinks] = useState<FooterSocialLinkItem[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>([]);
+  const [tools, setTools] = useState<ToolItem[]>([]);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
@@ -94,7 +115,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     try {
       const cacheBuster = `t=${Date.now()}`;
       const authHeader = getAuthHeader();
-      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes] = await Promise.all([
+      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes, toolsRes] = await Promise.all([
         fetch(`/api/projects?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/skills?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/certificates?${cacheBuster}`, { headers: authHeader }),
@@ -109,7 +130,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         fetch(`/api/theme?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/profile?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/footer/social-links?${cacheBuster}`, { headers: authHeader }),
-        fetch(`/api/coding-profiles?${cacheBuster}`, { headers: authHeader })
+        fetch(`/api/coding-profiles?${cacheBuster}`, { headers: authHeader }),
+        fetch(`/api/tools?${cacheBuster}`, { headers: authHeader })
       ]);
 
       setProjects(await projectsRes.json());
@@ -127,6 +149,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (codingProfilesRes.ok) {
         setCodingProfiles(await codingProfilesRes.json());
       }
+      if (toolsRes.ok) {
+        setTools(await toolsRes.json());
+      }
       if (profileRes.ok) {
         setProfile(await profileRes.json());
       }
@@ -141,7 +166,47 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   useEffect(() => {
     fetchAllData();
+    fetchNotifications();
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data || []);
+      }
+    } catch (e) {
+      // transient
+    }
+  };
+
+  const handleMarkNotificationsRead = async () => {
+    try {
+      const res = await fetch('/api/notifications/mark-read', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({}) 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (e) {
+      triggerToast('Error updating notifications', 'error');
+    }
+  };
+
+  const handleClearNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications/clear', { method: 'POST' });
+      if (res.ok) {
+        setNotifications([]);
+      }
+    } catch (e) {
+      triggerToast('Error clearing notifications', 'error');
+    }
+  };
 
   // --- CRUD HANDLERS WITH REST APIs ---
 
@@ -295,7 +360,107 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  // Achievements CRUD
+  // Tools & Technologies CRUD
+  const handleAddTool = async (tool: Omit<ToolItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const res = await fetch('/api/tools', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(tool)
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setTools(prev => [...prev, created]);
+        triggerToast(`Added tool "${tool.name}" to database.`, 'success');
+      } else {
+        triggerToast('Failed to save tool.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error saving tool.', 'error');
+    }
+  };
+
+  const handleUpdateTool = async (tool: ToolItem) => {
+    try {
+      const res = await fetch(`/api/tools/${tool.id}`, {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(tool)
+      });
+      if (res.ok) {
+        setTools(prev => prev.map(t => t.id === tool.id ? tool : t));
+        triggerToast(`Updated tool "${tool.name}" successfully.`, 'success');
+      } else {
+        triggerToast('Failed to update tool.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error updating tool.', 'error');
+    }
+  };
+
+  const handleDeleteTool = async (id: number) => {
+    try {
+      const res = await fetch(`/api/tools/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeader()
+      });
+      if (res.ok) {
+        const target = tools.find(t => t.id === id);
+        setTools(prev => prev.filter(t => t.id !== id));
+        triggerToast(`Deleted tool "${target?.name || id}".`, 'success');
+      } else {
+        triggerToast('Failed to delete tool.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error deleting tool.', 'error');
+    }
+  };
+
+  const handleToggleToolVisibility = async (id: number, isVisible: boolean) => {
+    try {
+      const res = await fetch(`/api/tools/${id}/visibility`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ isVisible })
+      });
+      if (res.ok) {
+        setTools(prev => prev.map(t => t.id === id ? { ...t, isVisible } : t));
+        triggerToast(`Tool visibility toggled.`, 'success');
+      }
+    } catch (e) {
+      triggerToast('Error toggling visibility.', 'error');
+    }
+  };
+
+  const handleToggleToolFeatured = async (id: number, isFeatured: boolean) => {
+    try {
+      const res = await fetch(`/api/tools/${id}/featured`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ isFeatured })
+      });
+      if (res.ok) {
+        setTools(prev => prev.map(t => t.id === id ? { ...t, isFeatured } : t));
+        triggerToast(`Tool featured status toggled.`, 'success');
+      }
+    } catch (e) {
+      triggerToast('Error toggling featured status.', 'error');
+    }
+  };
+
+  const handleReorderTools = async (reordered: ToolItem[]) => {
+    setTools(reordered);
+    try {
+      await fetch('/api/tools/order', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ orderedIds: reordered.map(t => t.id) })
+      });
+      triggerToast('Tools display order saved.', 'success');
+    } catch (e) {
+      triggerToast('Error saving tool order.', 'error');
+    }
+  };
   const handleAddAchievement = async (achievement: Omit<AchievementItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
    const res = await fetch('/api/achievements', {
@@ -967,21 +1132,29 @@ const handleDeleteAchievement = async (id: number) => {
   // Navigation config
   const navItems = [
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
+    { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
     { name: 'Hero Management', icon: <Palette className="w-4 h-4 text-emerald-400" /> },
     { name: 'Tech Stack', icon: <Cpu className="w-4 h-4 text-emerald-400" /> },
     { name: 'Profile', icon: <User className="w-4 h-4" /> },
-    { name: 'Theme & Appearance', icon: <Palette className="w-4 h-4" /> },
     { name: 'Projects', icon: <BookOpen className="w-4 h-4" /> },
     { name: 'Skills', icon: <Cpu className="w-4 h-4" /> },
+    { name: 'Tools & Technologies', icon: <Terminal className="w-4 h-4 text-emerald-400" /> },
     { name: 'Certificates', icon: <Award className="w-4 h-4" /> },
     { name: 'Achievements', icon: <Trophy className="w-4 h-4" /> },
     { name: 'Experience', icon: <Briefcase className="w-4 h-4" /> },
     { name: 'Education', icon: <GraduationCap className="w-4 h-4" /> },
     { name: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
     { name: 'Messages', icon: <Mail className="w-4 h-4" /> },
+    { name: 'Email & SMTP', icon: <Mail className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Backup Manager', icon: <HardDrive className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Role Matrix', icon: <ShieldCheck className="w-4 h-4 text-emerald-400" /> },
+    { name: 'System Health', icon: <Activity className="w-4 h-4 text-emerald-400" /> },
+    { name: 'SEO & PWA', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
     { name: 'Footer Management', icon: <Share2 className="w-4 h-4" /> },
     { name: 'Coding Profiles', icon: <Code2 className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Social Links', icon: <Share2 className="w-4 h-4 text-emerald-400" /> },
     { name: 'Resumes', icon: <FileText className="w-4 h-4" /> },
+    { name: 'Theme & Appearance', icon: <Palette className="w-4 h-4" /> },
     { name: 'Settings', icon: <Settings className="w-4 h-4" /> },
     { name: 'Security Settings', icon: <Shield className="w-4 h-4 text-emerald-400" /> },
     { name: 'Activity History', icon: <History className="w-4 h-4 text-slate-400" /> }
@@ -1106,6 +1279,45 @@ const handleDeleteAchievement = async (id: number) => {
             </div>
           </div>
 
+          {/* Enterprise Action Bar: Search, AI, Notifications */}
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800/80 rounded-xl">
+            <button
+              onClick={() => setShowGlobalSearch(true)}
+              className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
+              title="Global Search (Ctrl+K)"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setShowAIAssistant(true)}
+              className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition flex items-center justify-center cursor-pointer relative group"
+              title="AI Writing Copilot"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setShowNotificationsDrawer(true)}
+              className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
+              title="System Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950" />
+              )}
+            </button>
+          </div>
+
+          {/* Live Preview Button */}
+          <button
+            onClick={() => setShowLivePreview(true)}
+            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/20 hover:from-emerald-500 hover:to-emerald-400 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-500/5 group"
+          >
+            <Eye className="w-4 h-4 text-emerald-400 group-hover:text-slate-950" />
+            <span>Launch Live Preview</span>
+          </button>
+
           <nav className="space-y-1">
             {navItems.map((item) => (
               <button
@@ -1162,6 +1374,10 @@ const handleDeleteAchievement = async (id: number) => {
           />
         )}
 
+        {activeTab === 'Media Manager' && (
+          <MediaManagerPage />
+        )}
+
         {activeTab === 'Hero Management' && (
           <HeroManagementPage 
             onTriggerToast={triggerToast}
@@ -1206,6 +1422,18 @@ const handleDeleteAchievement = async (id: number) => {
             onAdd={handleAddSkill}
             onUpdate={handleUpdateSkill}
             onDelete={handleDeleteSkill}
+          />
+        )}
+
+        {activeTab === 'Tools & Technologies' && (
+          <ToolsPage
+            tools={tools}
+            onAdd={handleAddTool}
+            onUpdate={handleUpdateTool}
+            onDelete={handleDeleteTool}
+            onToggleVisibility={handleToggleToolVisibility}
+            onToggleFeatured={handleToggleToolFeatured}
+            onReorder={handleReorderTools}
           />
         )}
 
@@ -1261,6 +1489,26 @@ const handleDeleteAchievement = async (id: number) => {
           />
         )}
 
+        {activeTab === 'Email & SMTP' && (
+          <EmailSettingsPage triggerToast={triggerToast} />
+        )}
+
+        {activeTab === 'Backup Manager' && (
+          <BackupPage triggerToast={triggerToast} />
+        )}
+
+        {activeTab === 'Role Matrix' && (
+          <RoleManagementPage triggerToast={triggerToast} />
+        )}
+
+        {activeTab === 'System Health' && (
+          <SystemHealthPage triggerToast={triggerToast} />
+        )}
+
+        {activeTab === 'SEO & PWA' && (
+          <SEOManagerPage triggerToast={triggerToast} />
+        )}
+
         {activeTab === 'Footer Management' && (
           <FooterManagementPage 
             footer={footer}
@@ -1283,6 +1531,17 @@ const handleDeleteAchievement = async (id: number) => {
             onDelete={handleDeleteCodingProfile}
             onToggleVisibility={handleToggleCodingProfileVisibility}
             onReorder={handleReorderCodingProfiles}
+          />
+        )}
+
+        {activeTab === 'Social Links' && (
+          <SocialLinksPage
+            socialLinks={socialLinks}
+            onAdd={handleAddSocialLink}
+            onUpdate={handleUpdateSocialLink}
+            onDelete={handleDeleteSocialLink}
+            onToggleVisibility={handleToggleSocialLinkVisibility}
+            onReorder={handleReorderSocialLinks}
           />
         )}
 
@@ -1380,6 +1639,47 @@ const handleDeleteAchievement = async (id: number) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Live Preview Modal */}
+      <LivePreviewModal 
+        isOpen={showLivePreview} 
+        onClose={() => setShowLivePreview(false)} 
+      />
+
+      {/* Enterprise AI Assistant Copilot Modal */}
+      <AIAssistantModal
+        isOpen={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        onApplyText={(text) => {
+          navigator.clipboard.writeText(text);
+          triggerToast('AI generated text copied to clipboard!', 'success');
+        }}
+      />
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal
+        isOpen={showGlobalSearch}
+        onClose={() => setShowGlobalSearch(false)}
+        onNavigateTab={(tab) => setActiveTab(tab)}
+        allData={{
+          projects,
+          skills,
+          certificates,
+          experiences,
+          education,
+          messages
+        }}
+      />
+
+      {/* Notifications Drawer */}
+      <NotificationsDrawer
+        isOpen={showNotificationsDrawer}
+        onClose={() => setShowNotificationsDrawer(false)}
+        notifications={notifications}
+        onMarkAllRead={handleMarkNotificationsRead}
+        onClearAll={handleClearNotifications}
+        onNavigateTab={(tab) => setActiveTab(tab)}
+      />
     </div>
   );
 }

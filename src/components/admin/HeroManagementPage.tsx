@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, User, Image as ImageIcon, FileText, Share2, Edit2, Check, RefreshCw, 
   Trash2, UploadCloud, Sliders, CheckCircle2, AlertTriangle, Save, 
-  RotateCcw, Eye, Download, Info, Globe, Mail, EyeOff, Plus
+  RotateCcw, Eye, Download, Info, Globe, Mail, EyeOff, Plus, Folder
 } from 'lucide-react';
+import MediaLibraryModal from './MediaLibraryModal';
+import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 
 interface HeroProfileData {
   id: number;
@@ -55,6 +57,9 @@ const getJwtToken = () =>
   // History state for Undo Changes
   const [history, setHistory] = useState<HeroProfileData[]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
+
+  // Media picker modal target
+  const [mediaModalTarget, setMediaModalTarget] = useState<'avatar' | 'background' | null>(null);
 
   // Load hero and profile data
   const fetchHeroData = async () => {
@@ -234,6 +239,7 @@ if (!token) {
         setHistory([JSON.parse(JSON.stringify(savedData))]);
         setCurrentHistoryIndex(0);
         onTriggerToast("Hero configuration successfully published to database!", "success");
+        notifyCmsUpdate();
         if (onHeroUpdated) {
           onHeroUpdated();
         }
@@ -456,21 +462,32 @@ if (!token) {
                       </button>
                     </div>
                   ) : (
-                    <div className="relative">
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        id="hero-avatar-file-input"
-                        onChange={(e) => handleImageFileChange(e, 'avatar')}
-                        className="hidden"
-                      />
-                      <label 
-                        htmlFor="hero-avatar-file-input"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-xl transition cursor-pointer hover:text-emerald-400"
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          id="hero-avatar-file-input"
+                          onChange={(e) => handleImageFileChange(e, 'avatar')}
+                          className="hidden"
+                        />
+                        <label 
+                          htmlFor="hero-avatar-file-input"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-xl transition cursor-pointer hover:text-emerald-400"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload Avatar</span>
+                        </label>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalTarget('avatar')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-xl transition cursor-pointer"
                       >
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        <span>Upload Avatar</span>
-                      </label>
+                        <Folder className="w-3.5 h-3.5" />
+                        <span>Media Library</span>
+                      </button>
                     </div>
                   )}
                   <p className="text-[9px] text-slate-500 font-mono truncate">{profile.heroAvatar || "No avatar loaded"}</p>
@@ -499,6 +516,7 @@ if (!token) {
                         Delete Background
                       </button>
                     ) : (
+                    <div className="flex flex-wrap items-center gap-2">
                       <div className="relative">
                         <input 
                           type="file" 
@@ -515,6 +533,16 @@ if (!token) {
                           <span>Upload Background</span>
                         </label>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalTarget('background')}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-xl transition cursor-pointer"
+                      >
+                        <Folder className="w-3.5 h-3.5" />
+                        <span>Media Library</span>
+                      </button>
+                    </div>
                     )}
                   </div>
                   <span className="text-[9px] text-slate-500 font-mono truncate max-w-[150px]">{profile.heroBackground ? "Custom Background" : "Default Wallpaper"}</span>
@@ -769,6 +797,22 @@ if (!token) {
         </div>
 
       </div>
+
+      {/* Media Picker Modal */}
+      <MediaLibraryModal
+        isOpen={mediaModalTarget !== null}
+        onClose={() => setMediaModalTarget(null)}
+        onSelectMedia={(media) => {
+          if (mediaModalTarget === 'avatar') {
+            updateProfileWithHistory({ ...profile, heroAvatar: media.url });
+          } else if (mediaModalTarget === 'background') {
+            updateProfileWithHistory({ ...profile, heroBackground: media.url });
+          }
+          setMediaModalTarget(null);
+          onTriggerToast(`Selected "${media.title}" from Media Library`, 'success');
+        }}
+        allowedTypes={['image', 'svg']}
+      />
 
     </div>
   );

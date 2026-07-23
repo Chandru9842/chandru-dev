@@ -36,6 +36,38 @@ export interface CodingProfileItem {
   updatedAt?: string;
 }
 
+export interface ToolItem {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  officialWebsite?: string;
+  logoType: 'upload' | 'url' | 'icon' | 'svg';
+  logoUrl?: string;
+  customSvg?: string;
+  iconLibrary?: 'lucide' | 'simple' | 'fontawesome';
+  iconName?: string;
+  brandColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  hoverColor?: string;
+  logoSize?: number;
+  logoPadding?: number;
+  borderRadius?: string;
+  shadow?: string;
+  hasGlow?: boolean;
+  hoverScale?: number;
+  hoverRotation?: number;
+  experienceLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  yearsOfExperience?: number;
+  isFeatured: boolean;
+  displayOrder: number;
+  isVisible: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SkillItem {
   id: number;
   name: string;
@@ -156,6 +188,11 @@ export interface SocialLinkItem {
   profileUrl: string;
   icon: string;
   logoUrl?: string;
+  customSvg?: string;
+  whiteLogoUrl?: string;
+  darkLogoUrl?: string;
+  tooltip?: string;
+  openInNewTab?: boolean;
   displayOrder: number;
   isVisible: boolean;
   createdAt: string;
@@ -239,8 +276,26 @@ export interface ProfileItem {
   seoKeywords?: string;
   primaryCtaText?: string;
   primaryCtaUrl?: string;
+  primaryCtaIcon?: string;
+  primaryCtaVisible?: boolean;
   secondaryCtaText?: string;
   secondaryCtaUrl?: string;
+  secondaryCtaIcon?: string;
+  secondaryCtaVisible?: boolean;
+  resumeCtaText?: string;
+  resumeCtaVisible?: boolean;
+  downloadCtaText?: string;
+  downloadCtaVisible?: boolean;
+  versionText?: string;
+  updateText?: string;
+  floatingIconsVisible?: boolean;
+  heroVisibility?: boolean;
+  contactHeading?: string;
+  contactDescription?: string;
+  contactSectionVisible?: boolean;
+  apiStatusCardVisible?: boolean;
+  apiStatusText?: string;
+  dynamicChannelsVisible?: boolean;
   email: string;
   phone: string;
   whatsapp?: string;
@@ -317,8 +372,26 @@ export const initialProfile: ProfileItem = {
   seoKeywords: "Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard",
   primaryCtaText: "Explore Engineering",
   primaryCtaUrl: "#projects",
+  primaryCtaIcon: "ChevronRight",
+  primaryCtaVisible: true,
   secondaryCtaText: "Get in Touch",
   secondaryCtaUrl: "#contact",
+  secondaryCtaIcon: "Mail",
+  secondaryCtaVisible: true,
+  resumeCtaText: "View Resume",
+  resumeCtaVisible: true,
+  downloadCtaText: "Download CV",
+  downloadCtaVisible: true,
+  versionText: "Version 2.4.0",
+  updateText: "Updated Recently",
+  floatingIconsVisible: true,
+  heroVisibility: true,
+  contactHeading: "Let's coordinate on new paradigms",
+  contactDescription: "Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry.",
+  contactSectionVisible: true,
+  apiStatusCardVisible: true,
+  apiStatusText: "REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED",
+  dynamicChannelsVisible: true,
   email: "alex.dev@example.com",
   phone: "+1 (555) 019-2834",
   whatsapp: "+1 (555) 019-2834",
@@ -641,7 +714,7 @@ export const initialSocialLinks: SocialLinkItem[] = [
   {
     id: 2,
     platform: "LinkedIn",
-    username: "chandru9842",
+   username: "chandru9842",
     profileUrl: "https://www.linkedin.com/in/chandru9842/",
     icon: "LinkedIn",
     displayOrder: 2,
@@ -660,19 +733,17 @@ export const initialSocialLinks: SocialLinkItem[] = [
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
   },
-  
-{
+  {
     id: 4,
     platform: "Email",
     username: "chandrumohan550@gmail.com",
-    profileUrl: "mailto:chandrumohan550@gmail.com",
+  profileUrl: "mailto:chandrumohan550@gmail.com",
     icon: "Email",
     displayOrder: 4,
     isVisible: true,
     createdAt: "2026-07-09T04:40:00.000Z",
     updatedAt: "2026-07-09T04:40:00.000Z"
-}
-  
+  }
 ];
 
 export const initialResumes: ResumeItem[] = [
@@ -971,5 +1042,345 @@ export const initialAchievements: AchievementItem[] = [
     updatedAt: "2025-11-06T09:00:00Z"
   }
 ];
+
+export const initialTools: ToolItem[] = [
+  {
+    id: 1,
+    name: "VS Code",
+    slug: "vs-code",
+    category: "Development IDEs",
+    description: "Primary lightweight code editor equipped with rich extension ecosystem, custom keybindings, and debugger integration.",
+    officialWebsite: "https://code.visualstudio.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Code2",
+    brandColor: "#007ACC",
+    backgroundColor: "#007ACC15",
+    borderColor: "#007ACC40",
+    hoverColor: "#007ACC",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 2,
+    experienceLevel: "Expert",
+    yearsOfExperience: 8,
+    isFeatured: true,
+    displayOrder: 1,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 2,
+    name: "TypeScript",
+    slug: "typescript",
+    category: "Programming Languages",
+    description: "Strongly typed programming language built on JavaScript for scalable micro-architectures and enterprise frontends.",
+    officialWebsite: "https://www.typescriptlang.org",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "FileCode",
+    brandColor: "#3178C6",
+    backgroundColor: "#3178C615",
+    borderColor: "#3178C640",
+    hoverColor: "#3178C6",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 0,
+    experienceLevel: "Expert",
+    yearsOfExperience: 6,
+    isFeatured: true,
+    displayOrder: 2,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 3,
+    name: "React",
+    slug: "react",
+    category: "Frontend",
+    description: "Declarative component-driven UI library utilized for high-throughput single-page web applications.",
+    officialWebsite: "https://react.dev",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Atom",
+    brandColor: "#61DAFB",
+    backgroundColor: "#61DAFB15",
+    borderColor: "#61DAFB40",
+    hoverColor: "#61DAFB",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 4,
+    experienceLevel: "Expert",
+    yearsOfExperience: 7,
+    isFeatured: true,
+    displayOrder: 3,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 4,
+    name: "Node.js",
+    slug: "nodejs",
+    category: "Backend",
+    description: "Asynchronous event-driven JavaScript runtime built on Chrome V8 engine for high-concurrency API servers.",
+    officialWebsite: "https://nodejs.org",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Server",
+    brandColor: "#5FA04E",
+    backgroundColor: "#5FA04E15",
+    borderColor: "#5FA04E40",
+    hoverColor: "#5FA04E",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: -2,
+    experienceLevel: "Expert",
+    yearsOfExperience: 7,
+    isFeatured: true,
+    displayOrder: 4,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 5,
+    name: "PostgreSQL",
+    slug: "postgresql",
+    category: "Databases",
+    description: "Advanced open-source object-relational database system with high ACID compliance and JSON query indexing.",
+    officialWebsite: "https://www.postgresql.org",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Database",
+    brandColor: "#4169E1",
+    backgroundColor: "#4169E115",
+    borderColor: "#4169E140",
+    hoverColor: "#4169E1",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: false,
+    hoverScale: 1.05,
+    hoverRotation: 0,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 5,
+    isFeatured: false,
+    displayOrder: 5,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 6,
+    name: "Docker",
+    slug: "docker",
+    category: "DevOps",
+    description: "Containerization engine used to package applications with system dependencies for reproducible cloud deployments.",
+    officialWebsite: "https://www.docker.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Box",
+    brandColor: "#2496ED",
+    backgroundColor: "#2496ED15",
+    borderColor: "#2496ED40",
+    hoverColor: "#2496ED",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 3,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 5,
+    isFeatured: true,
+    displayOrder: 6,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 7,
+    name: "AWS",
+    slug: "aws",
+    category: "Cloud & Deployment",
+    description: "Comprehensive cloud platform supplying serverless computing, S3 object buckets, IAM, and VPC infrastructure.",
+    officialWebsite: "https://aws.amazon.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Cloud",
+    brandColor: "#FF9900",
+    backgroundColor: "#FF990015",
+    borderColor: "#FF990040",
+    hoverColor: "#FF9900",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 0,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 5,
+    isFeatured: true,
+    displayOrder: 7,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 8,
+    name: "Git",
+    slug: "git",
+    category: "Version Control",
+    description: "Distributed version control system for tracking changes in source code during collaborative software development.",
+    officialWebsite: "https://git-scm.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "GitBranch",
+    brandColor: "#F05032",
+    backgroundColor: "#F0503215",
+    borderColor: "#F0503240",
+    hoverColor: "#F05032",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: false,
+    hoverScale: 1.05,
+    hoverRotation: -3,
+    experienceLevel: "Expert",
+    yearsOfExperience: 8,
+    isFeatured: false,
+    displayOrder: 8,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 9,
+    name: "Postman",
+    slug: "postman",
+    category: "API Tools",
+    description: "API platform for building, testing, documenting, and automating REST & GraphQL HTTP endpoint calls.",
+    officialWebsite: "https://www.postman.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Send",
+    brandColor: "#FF6C37",
+    backgroundColor: "#FF6C3715",
+    borderColor: "#FF6C3740",
+    hoverColor: "#FF6C37",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: false,
+    hoverScale: 1.05,
+    hoverRotation: 0,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 6,
+    isFeatured: false,
+    displayOrder: 9,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 10,
+    name: "Figma",
+    slug: "figma",
+    category: "Design",
+    description: "Collaborative interface design tool for wireframing, prototyping, and establishing component design tokens.",
+    officialWebsite: "https://www.figma.com",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Figma",
+    brandColor: "#F24E1E",
+    backgroundColor: "#F24E1E15",
+    borderColor: "#F24E1E40",
+    hoverColor: "#F24E1E",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 2,
+    experienceLevel: "Intermediate",
+    yearsOfExperience: 4,
+    isFeatured: false,
+    displayOrder: 10,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 11,
+    name: "Gemini AI",
+    slug: "gemini-ai",
+    category: "AI Tools",
+    description: "Google multimodal AI platform used for automated code synthesis, intelligence agent prompts, and LLM orchestration.",
+    officialWebsite: "https://deepmind.google/technologies/gemini/",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Sparkles",
+    brandColor: "#10B981",
+    backgroundColor: "#10B98115",
+    borderColor: "#10B98140",
+    hoverColor: "#10B981",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: true,
+    hoverScale: 1.05,
+    hoverRotation: 4,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 3,
+    isFeatured: true,
+    displayOrder: 11,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 12,
+    name: "Linux",
+    slug: "linux",
+    category: "Operating Systems",
+    description: "Unix-like open-source operating system kernel providing high stability, bash scripting, and container host environments.",
+    officialWebsite: "https://www.kernel.org",
+    logoType: "icon",
+    iconLibrary: "lucide",
+    iconName: "Terminal",
+    brandColor: "#FCC624",
+    backgroundColor: "#FCC62415",
+    borderColor: "#FCC62440",
+    hoverColor: "#FCC624",
+    logoSize: 28,
+    logoPadding: 8,
+    borderRadius: "0.75rem",
+    hasGlow: false,
+    hoverScale: 1.05,
+    hoverRotation: 0,
+    experienceLevel: "Advanced",
+    yearsOfExperience: 7,
+    isFeatured: false,
+    displayOrder: 12,
+    isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  }
+];
+
 
 

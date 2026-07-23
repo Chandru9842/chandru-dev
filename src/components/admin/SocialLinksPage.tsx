@@ -66,15 +66,17 @@ export default function SocialLinksPage({
 }: SocialLinksPageProps) {
   // Platforms Enum
   const platformsList = [
-    'LinkedIn', 'GitHub', 'Instagram', 'X (Twitter)', 'YouTube', 'Email',
-    'LeetCode', 'HackerRank', 'CodeChef', 'Codeforces', 'Medium', 'Dev.to',
-    'Portfolio', 'Custom Platform'
+    'LinkedIn', 'GitHub', 'LeetCode', 'HackerRank', 'CodeChef', 'Codeforces',
+    'GeeksforGeeks', 'Twitter/X', 'Instagram', 'Facebook', 'YouTube', 'Discord',
+    'Dev.to', 'Medium', 'Hashnode', 'Portfolio', 'Resume', 'Email', 'WhatsApp',
+    'Telegram', 'Custom Platform'
   ];
 
   const standardPlatforms = [
-    'LinkedIn', 'GitHub', 'Instagram', 'X (Twitter)', 'YouTube', 'Email',
-    'LeetCode', 'HackerRank', 'CodeChef', 'Codeforces', 'Medium', 'Dev.to',
-    'Portfolio'
+    'LinkedIn', 'GitHub', 'LeetCode', 'HackerRank', 'CodeChef', 'Codeforces',
+    'GeeksforGeeks', 'Twitter/X', 'Instagram', 'Facebook', 'YouTube', 'Discord',
+    'Dev.to', 'Medium', 'Hashnode', 'Portfolio', 'Resume', 'Email', 'WhatsApp',
+    'Telegram'
   ];
 
   // Component States
@@ -85,6 +87,11 @@ export default function SocialLinksPage({
   const [username, setUsername] = useState<string>('');
   const [profileUrl, setProfileUrl] = useState<string>('');
   const [logoUrl, setLogoUrl] = useState<string>('');
+  const [customSvg, setCustomSvg] = useState<string>('');
+  const [whiteLogoUrl, setWhiteLogoUrl] = useState<string>('');
+  const [darkLogoUrl, setDarkLogoUrl] = useState<string>('');
+  const [tooltip, setTooltip] = useState<string>('');
+  const [openInNewTab, setOpenInNewTab] = useState<boolean>(true);
   const [customIcon, setCustomIcon] = useState<string>('');
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [isVisible, setIsVisible] = useState<boolean>(true);
@@ -107,6 +114,11 @@ export default function SocialLinksPage({
     setUsername('');
     setProfileUrl('');
     setLogoUrl('');
+    setCustomSvg('');
+    setWhiteLogoUrl('');
+    setDarkLogoUrl('');
+    setTooltip('');
+    setOpenInNewTab(true);
     setCustomIcon('');
     setDisplayOrder((socialLinks?.length || 0) + 1);
     setIsVisible(true);
@@ -206,6 +218,11 @@ export default function SocialLinksPage({
             profileUrl: finalUrl,
             icon: platform, 
             logoUrl: logoUrl,
+            customSvg: customSvg,
+            whiteLogoUrl: whiteLogoUrl,
+            darkLogoUrl: darkLogoUrl,
+            tooltip: tooltip,
+            openInNewTab: openInNewTab,
             displayOrder: Number(displayOrder) || original.displayOrder,
             isVisible,
             updatedAt: new Date().toISOString()
@@ -218,6 +235,11 @@ export default function SocialLinksPage({
           profileUrl: finalUrl,
           icon: platform,
           logoUrl: logoUrl,
+          customSvg: customSvg,
+          whiteLogoUrl: whiteLogoUrl,
+          darkLogoUrl: darkLogoUrl,
+          tooltip: tooltip,
+          openInNewTab: openInNewTab,
           displayOrder: socialLinks.length + 1,
           isVisible
         });
@@ -250,6 +272,11 @@ export default function SocialLinksPage({
       setProfileUrl(link.profileUrl);
     }
     setLogoUrl(link.logoUrl || '');
+    setCustomSvg(link.customSvg || '');
+    setWhiteLogoUrl(link.whiteLogoUrl || '');
+    setDarkLogoUrl(link.darkLogoUrl || '');
+    setTooltip(link.tooltip || '');
+    setOpenInNewTab(link.openInNewTab !== false);
     setDisplayOrder(link.displayOrder);
     setIsVisible(link.isVisible);
     setFormErrors({});
@@ -589,26 +616,77 @@ export default function SocialLinksPage({
                 )}
               </div>
 
+              {/* Tooltip Hover Input */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
+                  Custom Hover Tooltip (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={tooltip}
+                  onChange={(e) => setTooltip(e.target.value)}
+                  placeholder="e.g. Connect with me on LinkedIn"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/40 transition-colors font-sans"
+                />
+              </div>
+
+              {/* Custom SVG Code Input */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
+                  Custom Inline SVG Markup (Optional)
+                </label>
+                <textarea
+                  value={customSvg}
+                  onChange={(e) => setCustomSvg(e.target.value)}
+                  placeholder='<svg viewBox="0 0 24 24" ...> ... </svg>'
+                  rows={2}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-700 focus:outline-none focus:border-emerald-500/40 transition-colors font-mono text-[11px]"
+                />
+              </div>
+
               {/* Switch options */}
-              <div className="flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5 text-slate-500" />
-                  <div>
-                    <span className="block text-[10px] font-bold text-slate-300">Live Visibility</span>
-                    <span className="text-[9px] text-slate-500">Enable to render link in frontend grids.</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-3.5 h-3.5 text-slate-500" />
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-300">Live Visibility</span>
+                      <span className="text-[9px] text-slate-500">Enable to render link in frontend grids.</span>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsVisible(!isVisible)}
+                    className={`w-10 h-5.5 rounded-full p-0.5 transition-colors cursor-pointer focus:outline-none ${
+                      isVisible ? 'bg-emerald-500' : 'bg-slate-800'
+                    }`}
+                  >
+                    <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform duration-200 ${
+                      isVisible ? 'translate-x-4.5' : 'translate-x-0'
+                    }`} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsVisible(!isVisible)}
-                  className={`w-10 h-5.5 rounded-full p-0.5 transition-colors cursor-pointer focus:outline-none ${
-                    isVisible ? 'bg-emerald-500' : 'bg-slate-800'
-                  }`}
-                >
-                  <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform duration-200 ${
-                    isVisible ? 'translate-x-4.5' : 'translate-x-0'
-                  }`} />
-                </button>
+
+                <div className="flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                    <div>
+                      <span className="block text-[10px] font-bold text-slate-300">Open In New Tab</span>
+                      <span className="text-[9px] text-slate-500">Add target="_blank" rel="noopener noreferrer"</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenInNewTab(!openInNewTab)}
+                    className={`w-10 h-5.5 rounded-full p-0.5 transition-colors cursor-pointer focus:outline-none ${
+                      openInNewTab ? 'bg-emerald-500' : 'bg-slate-800'
+                    }`}
+                  >
+                    <div className={`w-4.5 h-4.5 rounded-full bg-white transition-transform duration-200 ${
+                      openInNewTab ? 'translate-x-4.5' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
               </div>
 
               {/* Form buttons */}

@@ -33,6 +33,20 @@ const CATEGORIES = [
   'Other'
 ];
 
+// Lightweight, non-blocking URL validator using native URL parser (prevents ReDoS/exponential backtracking freezes)
+function isValidUrl(urlStr: string): boolean {
+  if (!urlStr || !urlStr.trim()) return true;
+  const trimmed = urlStr.trim();
+  if (trimmed.length > 2000) return false;
+  try {
+    const toTest = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const parsed = new URL(toTest);
+    return Boolean(parsed.hostname && parsed.hostname.includes('.') && parsed.hostname.length > 3);
+  } catch {
+    return false;
+  }
+}
+
 export default function AchievementsPage({ 
   achievements, 
   onAdd, 
@@ -190,6 +204,30 @@ export default function AchievementsPage({
     setIsEditing(true);
   };
 
+  // Memoized tag splitters for card preview (avoids repetitive string parsing on every keystroke)
+  const parsedSkillsPreview = useMemo(() => {
+    if (!skillsString.trim()) return ["Architecture", "Engineering"];
+    return skillsString.split(',').map(s => s.trim()).filter(Boolean);
+  }, [skillsString]);
+
+  const parsedTechPreview = useMemo(() => {
+    if (!techString.trim()) return ["React", "AWS"];
+    return techString.split(',').map(t => t.trim()).filter(Boolean);
+  }, [techString]);
+
+  // Single field URL validator (triggered onBlur for instant feedback without keystroke lag)
+  const validateUrlField = (fieldName: string, value: string) => {
+    if (value && !isValidUrl(value)) {
+      setErrors(prev => ({ ...prev, [fieldName]: 'Invalid URL format.' }));
+    } else {
+      setErrors(prev => {
+        const copy = { ...prev };
+        delete copy[fieldName];
+        return copy;
+      });
+    }
+  };
+
   const validateForm = () => {
     const tempErrors: { [key: string]: string } = {};
     if (!title.trim()) tempErrors.title = 'Achievement title is required.';
@@ -197,17 +235,16 @@ export default function AchievementsPage({
     if (!achievementDate) tempErrors.achievementDate = 'Date of achievement is required.';
     if (!shortDescription.trim()) tempErrors.shortDescription = 'A brief summary description is required.';
 
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-    if (credentialUrl && !urlPattern.test(credentialUrl)) {
+    if (credentialUrl && !isValidUrl(credentialUrl)) {
       tempErrors.credentialUrl = 'Invalid URL format.';
     }
-    if (projectUrl && !urlPattern.test(projectUrl)) {
+    if (projectUrl && !isValidUrl(projectUrl)) {
       tempErrors.projectUrl = 'Invalid URL format.';
     }
-    if (githubUrl && !urlPattern.test(githubUrl)) {
+    if (githubUrl && !isValidUrl(githubUrl)) {
       tempErrors.githubUrl = 'Invalid URL format.';
     }
-    if (demoUrl && !urlPattern.test(demoUrl)) {
+    if (demoUrl && !isValidUrl(demoUrl)) {
       tempErrors.demoUrl = 'Invalid URL format.';
     }
 
@@ -510,8 +547,10 @@ export default function AchievementsPage({
                       placeholder="https://verify.com/credential/..."
                       value={credentialUrl}
                       onChange={(e) => setCredentialUrl(e.target.value)}
-                      className="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all"
+                      onBlur={() => validateUrlField('credentialUrl', credentialUrl)}
+                      className={`w-full bg-slate-950/60 border ${errors.credentialUrl ? 'border-rose-500/80 focus:border-rose-500' : 'border-slate-800 focus:border-emerald-500/50'} rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all`}
                     />
+                    {errors.credentialUrl && <p className="text-[10px] text-rose-400 font-mono mt-0.5">{errors.credentialUrl}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -521,8 +560,10 @@ export default function AchievementsPage({
                       placeholder="https://myportfolio.com/project/..."
                       value={projectUrl}
                       onChange={(e) => setProjectUrl(e.target.value)}
-                      className="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all"
+                      onBlur={() => validateUrlField('projectUrl', projectUrl)}
+                      className={`w-full bg-slate-950/60 border ${errors.projectUrl ? 'border-rose-500/80 focus:border-rose-500' : 'border-slate-800 focus:border-emerald-500/50'} rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all`}
                     />
+                    {errors.projectUrl && <p className="text-[10px] text-rose-400 font-mono mt-0.5">{errors.projectUrl}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -532,8 +573,10 @@ export default function AchievementsPage({
                       placeholder="https://github.com/admin/..."
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
-                      className="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all"
+                      onBlur={() => validateUrlField('githubUrl', githubUrl)}
+                      className={`w-full bg-slate-950/60 border ${errors.githubUrl ? 'border-rose-500/80 focus:border-rose-500' : 'border-slate-800 focus:border-emerald-500/50'} rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all`}
                     />
+                    {errors.githubUrl && <p className="text-[10px] text-rose-400 font-mono mt-0.5">{errors.githubUrl}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -543,8 +586,10 @@ export default function AchievementsPage({
                       placeholder="https://youtube.com/watch?..."
                       value={demoUrl}
                       onChange={(e) => setDemoUrl(e.target.value)}
-                      className="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500/50 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all"
+                      onBlur={() => validateUrlField('demoUrl', demoUrl)}
+                      className={`w-full bg-slate-950/60 border ${errors.demoUrl ? 'border-rose-500/80 focus:border-rose-500' : 'border-slate-800 focus:border-emerald-500/50'} rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none transition-all`}
                     />
+                    {errors.demoUrl && <p className="text-[10px] text-rose-400 font-mono mt-0.5">{errors.demoUrl}</p>}
                   </div>
                 </div>
               </div>
@@ -761,7 +806,7 @@ export default function AchievementsPage({
 
                   {/* Skills capsule lists */}
                   <div className="flex flex-wrap gap-1">
-                    {(skillsString ? skillsString.split(',').map(s => s.trim()).filter(Boolean) : ["Architecture", "Engineering"]).map((skill, i) => (
+                    {parsedSkillsPreview.map((skill, i) => (
                       <span key={i} className="text-[8px] bg-slate-900 text-slate-400 border border-slate-800/80 px-1.5 py-0.5 rounded font-mono">
                         {skill}
                       </span>
@@ -771,7 +816,7 @@ export default function AchievementsPage({
                   {/* Tech stack capsules */}
                   <div className="flex flex-wrap gap-1 border-t border-slate-800/40 pt-2 text-[8px] text-slate-500 font-mono">
                     <span className="text-slate-600">Tech:</span>
-                    {(techString ? techString.split(',').map(t => t.trim()).filter(Boolean) : ["React", "AWS"]).map((tech, i) => (
+                    {parsedTechPreview.map((tech, i) => (
                       <span key={i} className="text-slate-400 bg-slate-900 border border-slate-800/40 px-1 py-0.2 rounded">
                         {tech}
                       </span>

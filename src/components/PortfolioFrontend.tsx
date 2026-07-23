@@ -12,6 +12,32 @@ import {
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
+
+class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any) {
+    console.warn("3D Canvas rendering handled cleanly:", error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 rounded-2xl border border-slate-800/50 p-4 text-center">
+          <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-2">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+          </div>
+          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">3D Experience Mode</span>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem } from '../data/cmsMockData';
 import { getPlatformIconComponent } from './admin/SocialLinksPage';
 import { getPlatformIconComponent as getCodingPlatformIconComponent } from './admin/CodingProfilesPage';
@@ -37,18 +63,25 @@ const SocialLinkAnchor = ({ link, className, childrenClassName, onClick, isFoote
   const [imgError, setImgError] = React.useState(false);
   const IconComponent = isFooter ? getFooterPlatformIconComponent(link.platform) : getPlatformIconComponent(link.platform);
   const url = link.profileUrl || link.url;
-  
+  const tooltipText = link.tooltip || `${link.platform}${link.username ? `: ${link.username}` : ''}`;
+  const openInNewTab = link.openInNewTab !== false;
+
   return (
     <a
       href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`${link.platform}${link.username ? `: ${link.username}` : ''}`}
+      target={openInNewTab ? "_blank" : "_self"}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
+      title={tooltipText}
       aria-label={`${link.platform} profile`}
       onClick={onClick}
       className={className}
     >
-      {link.logoUrl && !imgError ? (
+      {link.customSvg ? (
+        <span 
+          className={childrenClassName || "w-4 h-4 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"}
+          dangerouslySetInnerHTML={{ __html: link.customSvg }} 
+        />
+      ) : link.logoUrl && !imgError ? (
         <img 
           src={link.logoUrl} 
           alt={link.platform} 
@@ -59,9 +92,9 @@ const SocialLinkAnchor = ({ link, className, childrenClassName, onClick, isFoote
       ) : (
         <IconComponent className={childrenClassName || "w-4 h-4 stroke-[2]"} />
       )}
-      {link.username && !isFooter && (
+      {tooltipText && !isFooter && (
         <span className="absolute bottom-full mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none">
-          {link.username}
+          {tooltipText}
         </span>
       )}
     </a>
@@ -426,8 +459,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const techString = useMemo(() => {
     return (technologies || [])
-      .filter((t: any) => t.enabled)
-      .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+      .filter((t: any) => t.enabled !== false)
+      .sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0))
       .map((t: any) => t.name)
       .join(" • ");
   }, [technologies]);
@@ -570,162 +603,226 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   };
 
   // Fetch all resources on mount from backend APIs
-  useEffect(() => {
-    const fetchAllDataWithRetry = async (attempt = 1) => {
-      try {
+  const fetchAllDataWithRetry = async (attempt = 1, showLoading = true) => {
+    try {
+      if (showLoading) {
         setIsLoading(true);
-        setIsBackendOffline(false);
-        if (attempt > 1) {
-          setIsRetrying(true);
-        }
+      }
+      setIsBackendOffline(false);
+      if (attempt > 1) {
+        setIsRetrying(true);
+      }
 
-        const cacheBuster = `t=${Date.now()}`;
+      const cacheBuster = `t=${Date.now()}`;
 
-        // Fetch everything from a single cached endpoint
-        const response = await fetch(`/api/portfolio-combined?${cacheBuster}`);
-        if (!response.ok) {
-          throw new Error('Combined portfolio API response was not ok');
-        }
-        const data = await response.json();
+      // Fetch everything from a single cached endpoint
+      const response = await fetch(`/api/portfolio-combined?${cacheBuster}`);
+      if (!response.ok) {
+        throw new Error('Combined portfolio API response was not ok');
+      }
+      const data = await response.json();
 
-        // Configure document properties and title (SEO)
-        const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Alex Rivera Portfolio"));
-        document.title = seoTitle;
+      // Configure document properties and title (SEO)
+      const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Alex Rivera Portfolio"));
+      document.title = seoTitle;
 
-        // Dynamic Meta Description
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-          metaDesc = document.createElement('meta');
-          metaDesc.setAttribute('name', 'description');
-          document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute('content', data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
+      // Dynamic Meta Description
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.setAttribute('content', data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
 
-        // Dynamic Meta Keywords
-        let metaKeywords = document.querySelector('meta[name="keywords"]');
-        if (!metaKeywords) {
-          metaKeywords = document.createElement('meta');
-          metaKeywords.setAttribute('name', 'keywords');
-          document.head.appendChild(metaKeywords);
-        }
-        metaKeywords.setAttribute('content', data.profile?.seoKeywords || "portfolio, systems architect, full-stack, developer");
+      // Dynamic Meta Keywords
+      let metaKeywords = document.querySelector('meta[name="keywords"]');
+      if (!metaKeywords) {
+        metaKeywords = document.createElement('meta');
+        metaKeywords.setAttribute('name', 'keywords');
+        document.head.appendChild(metaKeywords);
+      }
+      metaKeywords.setAttribute('content', data.profile?.seoKeywords || "portfolio, systems architect, full-stack, developer");
 
-        // Dynamic Open Graph Tags
-        let ogTitle = document.querySelector('meta[property="og:title"]');
-        if (!ogTitle) {
-          ogTitle = document.createElement('meta');
-          ogTitle.setAttribute('property', 'og:title');
-          document.head.appendChild(ogTitle);
-        }
-        ogTitle.setAttribute('content', seoTitle);
+      // Dynamic Open Graph Tags
+      let ogTitle = document.querySelector('meta[property="og:title"]');
+      if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+      }
+      ogTitle.setAttribute('content', seoTitle);
 
-        let ogDesc = document.querySelector('meta[property="og:description"]');
-        if (!ogDesc) {
-          ogDesc = document.createElement('meta');
-          ogDesc.setAttribute('property', 'og:description');
-          document.head.appendChild(ogDesc);
-        }
-        ogDesc.setAttribute('content', data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
+      let ogDesc = document.querySelector('meta[property="og:description"]');
+      if (!ogDesc) {
+        ogDesc = document.createElement('meta');
+        ogDesc.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDesc);
+      }
+      ogDesc.setAttribute('content', data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
 
-        let ogImage = document.querySelector('meta[property="og:image"]');
-        if (!ogImage) {
-          ogImage = document.createElement('meta');
-          ogImage.setAttribute('property', 'og:image');
-          document.head.appendChild(ogImage);
-        }
-        ogImage.setAttribute('content', data.profile?.profileImage || "");
+      let ogImage = document.querySelector('meta[property="og:image"]');
+      if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+      }
+      ogImage.setAttribute('content', data.profile?.profileImage || "");
 
-        setSettings(data.settings);
+      setSettings(data.settings);
 
-        // Sort data by order fields if available
-        setProjects((data.projects || []).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)));
-        setSkills((data.skills || []).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)));
-        setCertificates(data.certificates || []);
-        setAchievements(data.achievements || []);
-        setExperiences(data.experiences || []);
-        setEducation(data.education || []);
-        setAnalytics(data.analytics);
-        setSocialLinks((data.socialLinks || []).filter((s: any) => s.isVisible));
-        
-        const visibleFooterLinks = (data.footerSocialLinks || [])
-          .filter((s: any) => s.isVisible)
-          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
-        setFooterSocialLinks(visibleFooterLinks);
+      // Sort data by order fields if available
+      setProjects((data.projects || []).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)));
+      setSkills((data.skills || []).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)));
+      setCertificates(data.certificates || []);
+      setAchievements(data.achievements || []);
+      setExperiences(data.experiences || []);
+      setEducation(data.education || []);
+      setAnalytics(data.analytics);
+      setSocialLinks((data.socialLinks || []).filter((s: any) => s.isVisible));
+      
+      const visibleFooterLinks = (data.footerSocialLinks || [])
+        .filter((s: any) => s.isVisible)
+        .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      setFooterSocialLinks(visibleFooterLinks);
 
-        const visibleCodingProfiles = (data.codingProfiles || [])
-          .filter((p: any) => p.visible)
-          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
-        setCodingProfiles(visibleCodingProfiles);
+      const visibleCodingProfiles = (data.codingProfiles || [])
+        .filter((p: any) => p.visible)
+        .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      setCodingProfiles(visibleCodingProfiles);
 
-        setActiveResume(data.activeResume);
-        setProfile(data.profile);
-        setTheme(data.theme);
-        setFooter(data.footer);
-        setTechnologies(data.technologies || []);
+      setActiveResume(data.activeResume);
+      setProfile(data.profile);
 
-        // Track standard page view details dynamically
-        const sessionKey = 'alex_dev_session_active';
-        const isNewSession = !sessionStorage.getItem(sessionKey);
-        if (isNewSession) {
-          sessionStorage.setItem(sessionKey, 'true');
-        }
+      // Read URL Query Params for theme mode or section jump
+      const searchParams = new URLSearchParams(window.location.search);
+      const themeParam = searchParams.get('theme');
+      const sectionParam = searchParams.get('section');
 
-        const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct Traffic';
-        let referralSource = 'Direct Traffic';
-        if (referrer.includes('github.com')) referralSource = 'GitHub';
-        else if (referrer.includes('linkedin.com')) referralSource = 'LinkedIn';
-        else if (referrer.includes('twitter.com') || referrer.includes('t.co')) referralSource = 'Twitter / X';
-        else if (referrer.includes('google.com')) referralSource = 'Google / SEO';
-
-        let clientCountry = 'United States';
-        try {
-          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          if (tz.includes('Asia/Calcutta') || tz.includes('Asia/Kolkata')) clientCountry = 'India';
-          else if (tz.includes('Europe/London') || tz.includes('GB')) clientCountry = 'United Kingdom';
-          else if (tz.includes('Europe/Berlin') || tz.includes('DE')) clientCountry = 'Germany';
-          else if (tz.includes('America/Toronto') || tz.includes('CA')) clientCountry = 'Canada';
-          else if (tz.includes('Asia/Tokyo')) clientCountry = 'Japan';
-          else if (tz.includes('Australia')) clientCountry = 'Australia';
-          else if (tz.includes('Europe/Paris')) clientCountry = 'France';
-        } catch (e) {}
-
-        const visitRes = await fetch('/api/analytics/track', { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'pageview',
-            metadata: {
-              isNewSession,
-              referral: referralSource,
-              country: clientCountry
-            }
-          })
+      if (themeParam === 'light') {
+        setTheme({
+          ...(data.theme || {}),
+          backgroundColor: '#0f172a',
+          textColor: '#f8fafc',
+          cardColor: '#1e293b'
         });
-        const trackData = await visitRes.json();
-        if (trackData?.status === 'success') {
-          setAnalytics(trackData.analytics);
-        }
+      } else {
+        setTheme(data.theme);
+      }
 
+      setFooter(data.footer);
+      setTechnologies(data.technologies || []);
+
+      // Complete main page loading immediately
+      setIsLoading(false);
+      setIsRetrying(false);
+      setRetryCount(0);
+
+      // Handle section auto-scroll if section parameter is provided
+      if (sectionParam) {
+        setTimeout(() => {
+          const el = document.getElementById(sectionParam) || document.getElementById(`section-${sectionParam}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
+
+      // Track standard page view details dynamically in background (non-blocking)
+      (async () => {
+        try {
+          const sessionKey = 'alex_dev_session_active';
+          const isNewSession = !sessionStorage.getItem(sessionKey);
+          if (isNewSession) {
+            sessionStorage.setItem(sessionKey, 'true');
+          }
+
+          let referralSource = 'Direct Traffic';
+          try {
+            const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct Traffic';
+            if (referrer.includes('github.com')) referralSource = 'GitHub';
+            else if (referrer.includes('linkedin.com')) referralSource = 'LinkedIn';
+            else if (referrer.includes('twitter.com') || referrer.includes('t.co')) referralSource = 'Twitter / X';
+            else if (referrer.includes('google.com')) referralSource = 'Google / SEO';
+          } catch (e) {}
+
+          let clientCountry = 'United States';
+          try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (tz.includes('Asia/Calcutta') || tz.includes('Asia/Kolkata')) clientCountry = 'India';
+            else if (tz.includes('Europe/London') || tz.includes('GB')) clientCountry = 'United Kingdom';
+            else if (tz.includes('Europe/Berlin') || tz.includes('DE')) clientCountry = 'Germany';
+            else if (tz.includes('America/Toronto') || tz.includes('CA')) clientCountry = 'Canada';
+            else if (tz.includes('Asia/Tokyo')) clientCountry = 'Japan';
+            else if (tz.includes('Australia')) clientCountry = 'Australia';
+            else if (tz.includes('Europe/Paris')) clientCountry = 'France';
+          } catch (e) {}
+
+          const visitRes = await fetch('/api/analytics/track', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'pageview',
+              metadata: {
+                isNewSession,
+                referral: referralSource,
+                country: clientCountry
+              }
+            })
+          });
+          if (visitRes.ok) {
+            const trackData = await visitRes.json();
+            if (trackData?.status === 'success') {
+              setAnalytics(trackData.analytics);
+            }
+          }
+        } catch (e) {
+          // Ignore analytics background tracking errors
+        }
+      })();
+
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed to load portfolio database from Express API:`, error);
+      if (attempt < 3) {
+        setRetryCount(attempt);
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s...
+        setTimeout(() => {
+          fetchAllDataWithRetry(attempt + 1);
+        }, delay);
+      } else {
+        setIsBackendOffline(true);
         setIsLoading(false);
         setIsRetrying(false);
-        setRetryCount(0);
-      } catch (error) {
-        console.error(`Attempt ${attempt} failed to load portfolio database from Express API:`, error);
-        if (attempt < 3) {
-          setRetryCount(attempt);
-          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s...
-          setTimeout(() => {
-            fetchAllDataWithRetry(attempt + 1);
-          }, delay);
-        } else {
-          setIsBackendOffline(true);
-          setIsLoading(false);
-          setIsRetrying(false);
-        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchAllDataWithRetry(1, true);
+
+    // Active synchronization listener for CMS updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cms_update_timestamp') {
+        fetchAllDataWithRetry(1, false);
       }
     };
+    window.addEventListener('storage', handleStorageChange);
 
-    fetchAllDataWithRetry();
+    // Real-time polling when iframe live preview mode is active
+    let pollInterval: any = null;
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('preview') === 'true') {
+        pollInterval = setInterval(() => {
+          fetchAllDataWithRetry(1, false);
+        }, 3000);
+      }
+    } catch (e) {}
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, []);
 
   // Form Submission
@@ -1009,8 +1106,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       )}
 
       {/* Glassmorphic Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.04] bg-[#030712]/50 backdrop-blur-xl px-4 sm:px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 w-full border-b border-white/[0.04] bg-[#030712]/50 backdrop-blur-xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-4">
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto flex items-center justify-between gap-4">
           
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0">
@@ -1131,27 +1228,29 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full min-h-[90vh] flex flex-col md:flex-row md:items-center px-6 pt-24 pb-20 md:pt-12 md:pb-24 overflow-x-hidden overflow-y-visible border-b border-white/[0.02]" id="home">
+      <section className="relative w-full min-h-[90vh] flex flex-col md:flex-row md:items-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-24 pb-20 md:pt-12 md:pb-24 overflow-x-hidden overflow-y-visible border-b border-white/[0.02]" id="hero">
         
         {theme?.heroBackground?.enabled && (
           <DynamicBackground bg={theme.heroBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
         )}
         
         {/* 3D Canvas Background (Top of mobile flow, right side of desktop grid) */}
-        <div className="relative md:absolute md:inset-y-0 md:right-0 w-full md:w-1/2 h-[280px] sm:h-[350px] md:h-full pointer-events-none md:pointer-events-auto z-0 shrink-0 mb-6 md:mb-0">
-          <React.Suspense fallback={
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/20 backdrop-blur-sm">
-              <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-[9px] font-mono uppercase tracking-widest text-slate-500">Initializing 3D Universe...</p>
-            </div>
-          }>
-            <ThreeDHero techString={techString} />
-          </React.Suspense>
+        <div className="relative md:absolute md:inset-y-0 md:right-0 w-full md:w-1/2 lg:w-[50%] xl:w-[48%] h-[280px] sm:h-[350px] md:h-full pointer-events-none md:pointer-events-auto z-0 shrink-0 mb-6 md:mb-0">
+          <CanvasErrorBoundary>
+            <React.Suspense fallback={
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/20 backdrop-blur-sm">
+                <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-[9px] font-mono uppercase tracking-widest text-slate-500">Initializing 3D Universe...</p>
+              </div>
+            }>
+              <ThreeDHero techString={techString} />
+            </React.Suspense>
+          </CanvasErrorBoundary>
         </div>
 
         {/* Textual Overlays */}
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 items-center gap-12 relative z-10">
-          <div className="space-y-6 md:pr-4 flex flex-col items-center text-center md:items-start md:text-left w-full">
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-8 lg:gap-12 xl:gap-16 relative z-10">
+          <div className="md:col-span-7 lg:col-span-7 xl:col-span-6 space-y-6 flex flex-col items-center text-center md:items-start md:text-left w-full">
             
             {/* Technology marquee/ticker for Mobile only, placed ABOVE the badge */}
             <div className="w-full md:hidden py-2.5 overflow-hidden select-none bg-emerald-500/5 border-y border-emerald-500/10 mb-2 rounded-xl">
@@ -1202,7 +1301,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </h2>
             </div>
 
-            <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-md">
+            <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
               {profile?.heroDescription || profile?.shortIntroduction || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."}
             </p>
 
@@ -1278,7 +1377,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
             {/* Dynamic Social Links in Hero Section */}
             {socialLinks.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-5 border-t border-white/[0.04] w-full max-w-md relative z-30">
+              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-5 border-t border-white/[0.04] w-full max-w-lg lg:max-w-xl relative z-30">
                 <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-semibold">Coordinates:</span>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {socialLinks.map((link) => (
@@ -1296,7 +1395,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
             {/* Quick stats grid inside Hero overlaying data loaded from Analytics API */}
             {analytics && (
-              <div className="grid grid-cols-3 gap-4 pt-10 border-t border-white/[0.05] w-full max-w-md text-center md:text-left mx-auto md:mx-0">
+              <div className="grid grid-cols-3 gap-4 pt-10 border-t border-white/[0.05] w-full max-w-lg lg:max-w-xl text-center md:text-left mx-auto md:mx-0">
                 <div className="flex flex-col items-center md:items-start">
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Page Views</span>
                   <div className="flex items-center justify-center md:justify-start gap-1 mt-1">
@@ -1325,7 +1424,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-6 py-20 space-y-32">
+      <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-16 pb-10 space-y-20 lg:space-y-24">
 
           {/* About Section */}
           <motion.section 
@@ -1655,12 +1754,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           {/* Skill Matrix Section */}
           <motion.section 
             id="skills" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-12 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
+            <div id="techstack" className="absolute -top-24" />
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
               <div className="space-y-2.5">
                 <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Competency Ledger</span>
@@ -1762,13 +1862,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           {/* Timeline (Experience + Education) Section */}
           <motion.section 
-            id="timeline" 
-            className="space-y-12 scroll-mt-24"
+            id="experience" 
+            className="space-y-12 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
+            <div id="timeline" className="absolute -top-24" />
             <div className="space-y-2.5">
               <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
               <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Professional Timeline</h2>
@@ -2072,8 +2173,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             variants={sectionVariants}
           >
             <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Establish Connection</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Write to Node Core</h2>
+              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">{profile?.contactSubheading || "Establish Connection"}</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">{profile?.contactHeading || "Write to Node Core"}</h2>
               <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
             </div>
 
@@ -2081,10 +2182,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               
               {/* Info panel */}
               <div className="lg:col-span-5 glass-card rounded-2xl p-8 border border-white/[0.04] space-y-6">
-                <h3 className="text-lg font-bold font-display text-white">Let's coordinate on new paradigms</h3>
+                <h3 className="text-lg font-bold font-display text-white">{profile?.contactFormTitle || "Let's coordinate on new paradigms"}</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? 
-                  Send an inquiry. Submitting the form writes directly to the Express server-side schema database and updates the CMS panel.
+                  {profile?.contactDescription || "Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry."}
                 </p>
 
                 <div className="space-y-4 pt-4 border-t border-white/[0.05] text-xs font-mono">
@@ -2265,7 +2365,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           : socialLinks.map(l => ({ id: l.id, platform: l.platform, url: l.profileUrl, logoUrl: l.logoUrl }));
         return (
           <footer 
-            className={`border-t border-white/[0.04] py-12 md:py-16 px-6 text-[10px] font-mono text-slate-500 relative overflow-hidden transition-all duration-500 ${
+            className={`border-t border-white/[0.04] py-8 lg:py-10 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 text-[10px] font-mono text-slate-500 relative overflow-hidden transition-all duration-500 ${
               footer?.backgroundType === 'gradient' 
                 ? 'bg-gradient-to-b from-slate-950 to-slate-900' 
                 : 'bg-slate-950'
@@ -2279,33 +2379,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             {theme?.footerBackground?.enabled && (
               <DynamicBackground bg={theme.footerBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
             )}
-            <div className="max-w-[1400px] mx-auto relative z-10 space-y-10">
-              {/* Top Section - 3 columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-12 text-left items-start">
+            <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto relative z-10 space-y-10 sm:space-y-12">
+              {/* Top Section - 3 balanced columns */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 xl:gap-16 text-left items-start">
                 
                 {/* Column 1 - Profile / Identity */}
-                <div className="md:col-span-2 lg:col-span-6 flex flex-col items-start space-y-5">
-                  {profile?.profileImage ? (
-                    <img 
-                      src={profile.profileImage} 
-                      alt={profile?.fullName || "Avatar"} 
-                      className="w-14 h-14 rounded-full object-cover border border-white/[0.08] shadow-md shadow-emerald-500/5" 
-                      referrerPolicy="no-referrer" 
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-luxury font-bold text-emerald-400 text-lg">
-                      {(profile?.fullName || "Alex Rivera")[0]}
+                <div className="md:col-span-12 lg:col-span-5 xl:col-span-5 flex flex-col items-start space-y-4">
+                  <div className="flex items-center gap-3">
+                    {profile?.profileImage ? (
+                      <img 
+                        src={profile.profileImage} 
+                        alt={profile?.fullName || "Avatar"} 
+                        className="w-12 h-12 rounded-full object-cover border border-white/[0.08] shadow-md shadow-emerald-500/5 shrink-0" 
+                        referrerPolicy="no-referrer" 
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-luxury font-bold text-emerald-400 text-base shrink-0">
+                        {(profile?.fullName || "Alex Rivera")[0]}
+                      </div>
+                    )}
+                    
+                    <div className="space-y-0.5">
+                      <h4 className="text-base font-sans font-extrabold text-slate-100 tracking-tight">
+                        {profile?.fullName || "Alex Rivera"}
+                      </h4>
+                      <span className="text-[11px] font-mono text-emerald-400 font-semibold uppercase tracking-wider block">
+                        {profile?.title || "Systems Architect"}
+                      </span>
                     </div>
-                  )}
-                  
-                  <div className="space-y-1">
-                    <h4 className="text-base font-sans font-extrabold text-slate-100 tracking-tight">
-                      {profile?.fullName || "Alex Rivera"}
-                    </h4>
-                    <span className="text-xs font-mono text-emerald-400 font-semibold uppercase tracking-wider block">
-                      {profile?.title || "Systems Architect"}
-                    </span>
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-md">
@@ -2325,26 +2427,44 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
 
                 {/* Column 2 - Quick Links */}
-                <div className="md:col-span-1 lg:col-span-3 flex flex-col items-start space-y-4">
-                  <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest">
+                <div className="md:col-span-6 lg:col-span-3 xl:col-span-3 flex flex-col items-start space-y-4">
+                  <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     Quick Links
                   </h5>
-                  <nav className="flex flex-col gap-2.5 text-xs font-medium text-slate-400">
-                    <a href="#about" className="hover:text-emerald-400 transition-colors w-fit">About</a>
-                    <a href="#projects" className="hover:text-emerald-400 transition-colors w-fit">Projects</a>
-                    <a href="#skills" className="hover:text-emerald-400 transition-colors w-fit">Skills</a>
-                    <a href="#timeline" className="hover:text-emerald-400 transition-colors w-fit">Experience</a>
-                    <a href="#credentials" className="hover:text-emerald-400 transition-colors w-fit">Certificates</a>
-                    <a href="#contact" className="hover:text-emerald-400 transition-colors w-fit">Contact</a>
+                  <nav className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 text-xs font-medium text-slate-400 w-full">
+                    <a href="#about" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> About
+                    </a>
+                    <a href="#projects" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> Projects
+                    </a>
+                    <a href="#skills" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> Skills
+                    </a>
+                    <a href="#experience" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> Experience
+                    </a>
+                    <a href="#credentials" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> Certificates
+                    </a>
+                    <a href="#contact" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                      <span className="text-slate-600 text-[10px]">→</span> Contact
+                    </a>
                   </nav>
                 </div>
 
-                {/* Column 3 - Connect */}
-                <div className="md:col-span-1 lg:col-span-3 flex flex-col items-start space-y-4">
-                  <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest">
-                    Connect
+                {/* Column 3 - Connect & Resume */}
+                <div className="md:col-span-6 lg:col-span-4 xl:col-span-4 flex flex-col items-start space-y-4">
+                  <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Connect & Resume
                   </h5>
-                  <div className="space-y-5 w-full">
+                  
+                  <div className="w-full bg-white/[0.015] border border-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-4 backdrop-blur-sm shadow-xl shadow-black/20">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-semibold">
+                      Social Channels
+                    </span>
                     {linksToRender.length > 0 && (
                       <div className="flex flex-wrap items-center gap-2 relative z-30">
                         {linksToRender.map((link) => (
@@ -2353,37 +2473,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             link={link}
                             isFooter={true}
                             onClick={() => trackClick('social_footer_' + link.platform.toLowerCase(), link.platform)}
-                            className={`w-9 h-9 rounded-full border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-md ${themeCls.bgHover} hover:text-white`}
+                            className={`w-9 h-9 rounded-xl border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-md ${themeCls.bgHover} hover:text-white`}
                             childrenClassName="w-4.5 h-4.5 object-contain"
                           />
                         ))}
                       </div>
                     )}
 
-                    {!isValidResumeUrl(profile?.resumeUrl) ? (
-                      <div className="pt-1">
+                    <div className="border-t border-white/[0.05] pt-3">
+                      {!isValidResumeUrl(profile?.resumeUrl) ? (
                         <button 
                           disabled
-                          className="inline-flex px-4 py-2 border border-white/[0.04] bg-white/[0.01] text-slate-600 font-sans text-xs rounded-xl items-center gap-2 cursor-not-allowed opacity-40"
+                          className="w-full justify-center inline-flex px-4 py-2.5 border border-white/[0.04] bg-white/[0.01] text-slate-600 font-sans text-xs rounded-xl items-center gap-2 cursor-not-allowed opacity-40"
                         >
                           <XCircle className="w-3.5 h-3.5" />
                           <span>Resume not available</span>
                         </button>
-                      </div>
-                    ) : (
-                      <div className="pt-1">
+                      ) : (
                         <a 
                           href={profile?.resumeUrl || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => handleViewResume(e, 'resume_view_footer', 'View Resume Footer')}
-                          className={`inline-flex px-4 py-2 border border-white/[0.06] bg-white/[0.01] text-slate-400 font-sans text-xs rounded-xl transition-all items-center gap-2 cursor-pointer hover:text-white ${themeCls.bgHover}`}
+                          className={`w-full justify-center inline-flex px-4 py-2.5 border border-white/[0.08] bg-white/[0.02] text-slate-200 font-sans text-xs rounded-xl transition-all items-center gap-2 cursor-pointer hover:text-white hover:border-emerald-500/30 ${themeCls.bgHover} shadow-sm`}
                         >
                           <Download className={`w-3.5 h-3.5 ${themeCls.icon}`} />
-                          <span>{footer?.resumeText || "View Resume"}</span>
+                          <span className="font-semibold">{footer?.resumeText || "View Resume"}</span>
                         </a>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -2392,41 +2510,43 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               {/* Divider */}
               <div className="border-t border-white/[0.06] w-full" />
 
-              {/* Bottom Footer Bar */}
-              <div className="flex flex-col md:flex-row items-center md:justify-between gap-6">
+              {/* Bottom Footer Information Bar */}
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 pt-2">
                 
-                {/* Copyright + Technical Information */}
-                <div className="flex flex-col gap-1.5 text-center md:text-left order-1 md:order-none">
-                  <p className="text-[10px] text-slate-500 font-mono">
+                {/* Copyright + Technical Details */}
+                <div className="flex flex-col gap-1 text-center lg:text-left">
+                  <p className="text-[11px] text-slate-400 font-mono">
                     {footer?.copyrightText || `© 2026 ${profile?.fullName || "Alex Rivera"} Portfolio. All database relations mapped to 3NF standards.`}
                   </p>
                   <p className="text-[10px] text-slate-600 font-mono">
                     {footer?.builtWithText || "Securely served from local sandbox cache. Admin actions synchronized with backend."}
                   </p>
-                  
-                  {/* Dynamic Metrics */}
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-1.5 text-[10px] text-slate-500 font-mono">
-                    <div className="flex items-center gap-1.5 bg-white/[0.01] border border-white/[0.04] px-2.5 py-1 rounded">
-                      <Eye className={`w-3 h-3 ${themeCls.icon}`} />
-                      <span>Session views: {analytics?.pageViews ? analytics.pageViews.toLocaleString() : '12,450'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-white/[0.01] border border-white/[0.04] px-2.5 py-1 rounded">
-                      <Users className={`w-3 h-3 ${themeCls.icon}`} />
-                      <span>Unique visitors: {analytics?.uniqueVisitors ? analytics.uniqueVisitors.toLocaleString() : '4,120'}</span>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Lock Icon */}
-                <div className="flex items-center shrink-0 order-2 md:order-none">
+                {/* Right side: Analytics badges bar + Admin lock icon */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 sm:gap-4">
+                  {/* Dedicated Analytics Badges Bar */}
+                  <div className="flex items-center gap-2.5 bg-white/[0.02] border border-white/[0.05] px-3 py-1.5 rounded-xl shadow-inner text-[10px] text-slate-400 font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className={`w-3.5 h-3.5 ${themeCls.icon}`} />
+                      <span>Views: <strong className="text-slate-200 font-semibold">{analytics?.pageViews ? analytics.pageViews.toLocaleString() : '12,450'}</strong></span>
+                    </div>
+                    <span className="text-white/10">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <Users className={`w-3.5 h-3.5 ${themeCls.icon}`} />
+                      <span>Visitors: <strong className="text-slate-200 font-semibold">{analytics?.uniqueVisitors ? analytics.uniqueVisitors.toLocaleString() : '4,120'}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Admin Lock Button */}
                   <button 
                     onClick={onEnterCMS} 
-                    className="group relative p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
+                    className="group relative p-2 rounded-xl border border-white/[0.06] bg-white/[0.02] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
                     title="Admin Access"
                     aria-label="Admin Access"
                   >
                     <Lock className="w-4 h-4" />
-                    <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                    <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
                       Admin Access
                     </span>
                   </button>
