@@ -36,6 +36,25 @@ export interface CodingProfileItem {
   updatedAt?: string;
 }
 
+export interface PortfolioMetricItem {
+  id: number;
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon?: string;
+  iconType?: 'lucide' | 'url' | 'svg';
+  customSvg?: string;
+  displayOrder: number;
+  visible: boolean;
+  animationEnabled?: boolean;
+  counterAnimationToggle?: boolean;
+  color?: string;
+  sourceType?: 'manual' | 'google_analytics' | 'github_api' | 'leetcode_api' | 'cloudflare' | 'plausible' | 'umami' | 'clarity' | 'custom_api';
+  tooltip?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ToolItem {
   id: number;
   name: string;
@@ -1155,6 +1174,45 @@ export const initialAchievements: AchievementItem[] = [
   }
 ];
 
+export const initialCodingProfiles: CodingProfileItem[] = [
+  {
+    id: 1,
+    platformType: "GitHub",
+    displayName: "GitHub Developer",
+    username: "alex-rivera-dev",
+    profileUrl: "https://github.com",
+    description: "Open-source contributor, maintaining distributed microservices and systems tools.",
+    displayOrder: 1,
+    visible: true,
+    featured: true,
+    openInNewTab: true
+  },
+  {
+    id: 2,
+    platformType: "LeetCode",
+    displayName: "LeetCode Algorithm Ledger",
+    username: "alex_architect",
+    profileUrl: "https://leetcode.com",
+    description: "Knight Badge (Rating 2150+) | 1,200+ Data Structures & Algorithms Problems Solved.",
+    displayOrder: 2,
+    visible: true,
+    featured: true,
+    openInNewTab: true
+  },
+  {
+    id: 3,
+    platformType: "GeeksforGeeks",
+    displayName: "GeeksforGeeks Profile",
+    username: "alex_systems",
+    profileUrl: "https://geeksforgeeks.org",
+    description: "Top 1% Campus Rank | Problem Solving & Core Computer Science.",
+    displayOrder: 3,
+    visible: true,
+    featured: false,
+    openInNewTab: true
+  }
+];
+
 export const initialTools: ToolItem[] = [
   {
     id: 1,
@@ -1489,6 +1547,111 @@ export const initialTools: ToolItem[] = [
     isFeatured: false,
     displayOrder: 12,
     isVisible: true,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  }
+];
+
+export const initialPortfolioMetrics: PortfolioMetricItem[] = [
+  {
+    id: 1,
+    title: "Page Views",
+    value: "12,450",
+    subtitle: "Live Impressions",
+    icon: "Eye",
+    iconType: "lucide",
+    displayOrder: 1,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "emerald",
+    sourceType: "manual",
+    tooltip: "Total portfolio page views recorded across user sessions",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Unique Visitors",
+    value: "4,820",
+    subtitle: "Distinct Clients",
+    icon: "Users",
+    iconType: "lucide",
+    displayOrder: 2,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "blue",
+    sourceType: "manual",
+    tooltip: "Unique visitor footprint verified via client SHA-256 hashes",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Projects Delivered",
+    value: "15+",
+    subtitle: "Production Grade",
+    icon: "Briefcase",
+    iconType: "lucide",
+    displayOrder: 3,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "purple",
+    sourceType: "manual",
+    tooltip: "Full-stack enterprise applications built and deployed",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 4,
+    title: "LeetCode Solved",
+    value: "350+",
+    subtitle: "Knight Rating 2150+",
+    icon: "Code2",
+    iconType: "lucide",
+    displayOrder: 4,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "amber",
+    sourceType: "leetcode_api",
+    tooltip: "Algorithmic problems solved across Data Structures & Algorithms",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 5,
+    title: "GitHub Repositories",
+    value: "28",
+    subtitle: "Open Source",
+    icon: "GitBranch",
+    iconType: "lucide",
+    displayOrder: 5,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "cyan",
+    sourceType: "github_api",
+    tooltip: "Public source control repositories and open-source packages",
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z"
+  },
+  {
+    id: 6,
+    title: "Certifications",
+    value: "12+",
+    subtitle: "AWS & Kubernetes",
+    icon: "Award",
+    iconType: "lucide",
+    displayOrder: 6,
+    visible: true,
+    animationEnabled: true,
+    counterAnimationToggle: true,
+    color: "indigo",
+    sourceType: "manual",
+    tooltip: "Verified professional cloud, security, and DevOps certifications",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z"
   }

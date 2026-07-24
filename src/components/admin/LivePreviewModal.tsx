@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Monitor, Tablet, Smartphone, Moon, Sun, RefreshCw, X, 
   ExternalLink, Layers, Sparkles, CheckCircle2, ShieldCheck, Maximize2, Minimize2
@@ -12,21 +12,35 @@ interface LivePreviewModalProps {
 export default function LivePreviewModal({ isOpen, onClose }: LivePreviewModalProps) {
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
-  const [activeSection, setActiveSection] = useState('hero');
+  const [activeSection, setActiveSection] = useState('all');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'PREVIEW_ACTIVE_SECTION') {
+        if (event.data.sectionId) {
+          setActiveSection(event.data.sectionId);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   if (!isOpen) return null;
 
   const getWidthClass = () => {
     switch (deviceMode) {
-      case 'mobile': return 'w-[390px] max-w-full h-[720px] max-h-full border-[10px] border-slate-800 rounded-[38px] shadow-2xl my-auto shrink-0';
-      case 'tablet': return 'w-[768px] max-w-full h-[800px] max-h-full border-[8px] border-slate-800 rounded-[28px] shadow-2xl my-auto shrink-0';
+      case 'mobile': return 'w-[406px] max-w-full h-[740px] max-h-full border-[8px] border-slate-800 rounded-[38px] shadow-2xl my-auto shrink-0';
+      case 'tablet': return 'w-[784px] max-w-full h-[840px] max-h-full border-[8px] border-slate-800 rounded-[28px] shadow-2xl my-auto shrink-0';
       case 'desktop': return 'w-full h-full rounded-xl border border-slate-800/80';
     }
   };
 
   const sections = [
+    { id: 'all', label: 'All' },
     { id: 'hero', label: 'Hero' },
     { id: 'about', label: 'About' },
     { id: 'techstack', label: 'Tech Stack' },
@@ -37,7 +51,30 @@ export default function LivePreviewModal({ isOpen, onClose }: LivePreviewModalPr
     { id: 'contact', label: 'Contact' }
   ];
 
-  const previewUrl = `/?preview=true&theme=${themeMode}&section=${activeSection}&t=${refreshKey}`;
+  const previewUrl = `/?preview=iframe&theme=${themeMode}&t=${refreshKey}`;
+
+  const getNewTabUrl = () => {
+    return `/?preview=${deviceMode}&theme=${themeMode}`;
+  };
+
+  const handleSectionJump = (sectionId: string) => {
+    setActiveSection(sectionId);
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'PREVIEW_SCROLL_TO',
+        sectionId
+      }, '*');
+    }
+  };
+
+  const handleIframeLoad = () => {
+    if (activeSection !== 'all' && iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'PREVIEW_SCROLL_TO',
+        sectionId: activeSection
+      }, '*');
+    }
+  };
 
   return (
     <div className={`fixed inset-0 z-[130] flex flex-col bg-slate-950/95 backdrop-blur-xl ${
@@ -120,13 +157,13 @@ export default function LivePreviewModal({ isOpen, onClose }: LivePreviewModalPr
 
           {/* Open in new tab */}
           <a
-            href="/"
+            href={getNewTabUrl()}
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 bg-slate-950 border border-slate-800 text-slate-300 hover:text-white rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold transition-all"
           >
             <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-            <span className="hidden sm:inline">New Tab</span>
+            <span className="hidden sm:inline">New Tab ({deviceMode})</span>
           </a>
 
           {/* Fullscreen toggle */}
@@ -156,7 +193,7 @@ export default function LivePreviewModal({ isOpen, onClose }: LivePreviewModalPr
           <button
             key={s.id}
             type="button"
-            onClick={() => setActiveSection(s.id)}
+            onClick={() => handleSectionJump(s.id)}
             className={`px-2.5 py-1 rounded-lg text-[11px] transition-colors shrink-0 ${
               activeSection === s.id ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'
             }`}
@@ -170,8 +207,10 @@ export default function LivePreviewModal({ isOpen, onClose }: LivePreviewModalPr
       <div className="flex-1 bg-slate-950 border border-slate-900 rounded-2xl flex items-center justify-center p-2 sm:p-4 overflow-auto relative min-h-0">
         <div className={`transition-all duration-300 relative overflow-hidden bg-slate-950 ${getWidthClass()}`}>
           <iframe
+            ref={iframeRef}
             key={refreshKey}
             src={previewUrl}
+            onLoad={handleIframeLoad}
             title="Portfolio Live Preview"
             className="w-full h-full rounded-xl bg-slate-950 border-0"
           />

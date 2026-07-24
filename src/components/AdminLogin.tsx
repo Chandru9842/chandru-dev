@@ -49,7 +49,7 @@ export default function AdminLogin({ onLoginSuccess, onBackToPortfolio, initialM
           });
         }
       } catch (error) {
-        console.error('Error loading login configuration:', error);
+        // Silent fallback for login configuration
       }
     };
     loadLoginConfig();

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Layers, Cpu, Database, Award, Briefcase, GraduationCap, 
   Mail, Github, ExternalLink, ShieldAlert, Activity, ChevronRight, 
-  Send, Check, MapPin, Calendar, ArrowDown, Globe, Eye, Users, ShieldCheck,
+  Send, Check, MapPin, Calendar, ArrowDown, ArrowUp, Globe, Eye, Users, ShieldCheck,
   Code2, Sparkles, MessageSquare, Terminal, X, ChevronLeft, Video, Play, Film,
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
@@ -38,10 +38,11 @@ class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode },
     return this.props.children;
   }
 }
-import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem, ToolItem, initialTools } from '../data/cmsMockData';
+import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem, initialTools, initialProfile, initialProjects, initialSkills, initialCertificates, initialAchievements, initialExperiences, initialEducation, initialSettings, initialFooter, initialSocialLinks, initialThemeSettings, initialAnalytics, initialResumes, initialCodingProfiles, initialPortfolioMetrics } from '../data/cmsMockData';
 import { getPlatformIconComponent } from './admin/SocialLinksPage';
 import { getPlatformIconComponent as getCodingPlatformIconComponent } from './admin/CodingProfilesPage';
 import { ToolIconRenderer } from './admin/ToolsPage';
+import { MetricIconRenderer, COLOR_ACCENTS } from './admin/PortfolioMetricsPage';
 
 const getFooterPlatformIconComponent = (platform: string) => {
   switch (platform) {
@@ -170,13 +171,28 @@ interface PortfolioFrontendProps {
   onEnterCMS: () => void;
 }
 
-const navItems = [
+const desktopNavItems = [
+  { id: "about", label: "About" },
+  { id: "projects", label: "Projects" },
+  { id: "coding-profiles", label: "Coding Profiles" },
+  { id: "skills", label: "Skills" },
+  { id: "tools", label: "Tools" },
+  { id: "timeline", label: "Experience" },
+  { id: "education", label: "Education" },
+  { id: "credentials", label: "Certificates" },
+  { id: "achievements", label: "Achievements" },
+  { id: "contact", label: "Contact" },
+];
+
+const mobileNavItems = [
+  { id: "hero", label: "Hero" },
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools & Technologies" },
   { id: "timeline", label: "Experience" },
+  { id: "education", label: "Education" },
   { id: "credentials", label: "Certificates" },
   { id: "achievements", label: "Achievements" },
   { id: "contact", label: "Contact" },
@@ -352,30 +368,218 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
   );
 }
 
+const ScrollProgressBar = React.memo(function ScrollProgressBar() {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+          if (totalHeight > 0 && barRef.current) {
+            const progress = Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100));
+            barRef.current.style.width = `${progress}%`;
+            barRef.current.setAttribute('aria-valuenow', Math.round(progress).toString());
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="absolute top-0 left-0 right-0 h-0.5 sm:h-1 bg-slate-950/40 overflow-hidden pointer-events-none">
+      <div 
+        ref={barRef}
+        className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 transition-all duration-150 ease-out shadow-[0_0_10px_rgba(52,211,153,0.8)]"
+        style={{ width: '0%' }}
+        role="progressbar"
+        aria-valuenow={0}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Reading progress"
+      />
+    </div>
+  );
+});
+
 export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps) {
-  // Dynamic API Loaded States
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [skills, setSkills] = useState<SkillItem[]>([]);
-  const [certificates, setCertificates] = useState<CertificateItem[]>([]);
-  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
-  const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
-  const [education, setEducation] = useState<EducationItem[]>([]);
-  const [settings, setSettings] = useState<SettingsConfig | null>(null);
-  const [footer, setFooter] = useState<any>(null);
-  const [analytics, setAnalytics] = useState<AnalyticsMetric | null>(null);
-  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
-  const [footerSocialLinks, setFooterSocialLinks] = useState<any[]>([]);
-  const [activeResume, setActiveResume] = useState<ResumeItem | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [theme, setTheme] = useState<any>(null);
+  // Dynamic API Loaded States - Initialized with cmsMockData defaults for instant zero-latency first paint
+  const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
+  const [skills, setSkills] = useState<SkillItem[]>(initialSkills);
+  const [certificates, setCertificates] = useState<CertificateItem[]>(initialCertificates);
+  const [achievements, setAchievements] = useState<AchievementItem[]>(initialAchievements);
+  const [experiences, setExperiences] = useState<ExperienceItem[]>(initialExperiences);
+  const [education, setEducation] = useState<EducationItem[]>(initialEducation);
+  const [settings, setSettings] = useState<SettingsConfig | null>(initialSettings);
+  const [footer, setFooter] = useState<any>(initialFooter);
+  const [analytics, setAnalytics] = useState<AnalyticsMetric | null>(initialAnalytics);
+  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>(initialSocialLinks);
+  const [footerSocialLinks, setFooterSocialLinks] = useState<any[]>(initialSocialLinks);
+  const [activeResume, setActiveResume] = useState<ResumeItem | null>(initialResumes[0] || null);
+  const [profile, setProfile] = useState<any>(initialProfile);
+  const [theme, setTheme] = useState<any>(initialThemeSettings);
   const [technologies, setTechnologies] = useState<any[]>([]);
-  const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>([]);
-  const [tools, setTools] = useState<ToolItem[]>([]);
+  const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>(initialCodingProfiles);
+  const [tools, setTools] = useState<ToolItem[]>(initialTools);
+  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>(initialPortfolioMetrics);
   const [selectedToolCategory, setSelectedToolCategory] = useState<string>('All');
   const [toolSearchQuery, setToolSearchQuery] = useState<string>('');
 
   const [activeSection, setActiveSection] = useState<string>("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [render3D, setRender3D] = useState<boolean>(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
+  const hasInitialAutoScrolledRef = React.useRef(false);
+  const hasLoadedOnceRef = React.useRef(false);
+
+  // Hero Loading Priority: Defer 3D Canvas initialization slightly until Navbar, Hero text, CTAs, and Analytics load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRender3D(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Tablet Navigation state & ref for horizontal drag and auto-centering
+  const tabletNavRef = useRef<HTMLDivElement>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!tabletNavRef.current) return;
+    setIsMouseDown(true);
+    setStartX(e.pageX - tabletNavRef.current.offsetLeft);
+    setScrollLeft(tabletNavRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || !tabletNavRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tabletNavRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    tabletNavRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  // Center active section item in tablet navigation bar whenever activeSection changes
+  useEffect(() => {
+    if (tabletNavRef.current) {
+      const activeEl = tabletNavRef.current.querySelector<HTMLElement>('[data-active="true"]');
+      if (activeEl) {
+        const nav = tabletNavRef.current;
+        const navWidth = nav.clientWidth;
+        const elLeft = activeEl.offsetLeft;
+        const elWidth = activeEl.clientWidth;
+        const targetScrollLeft = elLeft - (navWidth / 2) + (elWidth / 2);
+        nav.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeSection]);
+
+  // Enterprise Navigation System: Centralized Throttled Scroll Observer for ScrollToTop and Parent Frame Preview
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      const currentScrollY = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement.scrollTop || 0,
+        document.body.scrollTop || 0
+      );
+      const shouldShow = currentScrollY > 150;
+
+      setShowScrollTop((prev) => (prev !== shouldShow ? shouldShow : prev));
+
+      // Permanent Sticky Header: Always visible across entire scroll
+      setIsHeaderVisible(true);
+
+      // Notify parent window when scrolling near top
+      if (window.parent && window.parent !== window && currentScrollY < 50) {
+        window.parent.postMessage({
+          type: 'PREVIEW_ACTIVE_SECTION',
+          sectionId: 'all'
+        }, '*');
+      }
+
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(handleScroll);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('touchmove', onScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll);
+      window.removeEventListener('touchmove', onScroll);
+    };
+  }, []);
+
+  // Hovering mouse near top edge (clientY <= 60) reveals navbar smoothly when scrolling
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= 60) {
+        setIsHeaderVisible(true);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Listen for PREVIEW_SCROLL_TO messages from parent LivePreviewModal frame
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'PREVIEW_SCROLL_TO') {
+        const targetSection = event.data.sectionId;
+        if (targetSection === 'all') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          const targetId = targetSection === 'techstack' ? 'techstack' :
+                           targetSection === 'experience' ? 'experience' :
+                           targetSection;
+          const el = document.getElementById(targetId) || 
+                     document.getElementById(`section-${targetId}`) ||
+                     (targetId === 'experience' ? document.getElementById('timeline') : null) ||
+                     (targetId === 'hero' ? document.getElementById('home') : null);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -386,7 +590,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, []);
 
   useEffect(() => {
-    const sections = ["home", "about", "projects", "coding-profiles", "skills", "tools", "timeline", "credentials", "achievements", "contact"];
+    const sections = ["hero", "home", "about", "projects", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "contact"];
     const observers = sections.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -402,7 +606,23 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       const intersectingEntries = entries.filter(e => e.isIntersecting);
       if (intersectingEntries.length > 0) {
-        setActiveSection(intersectingEntries[0].target.id);
+        const currentId = intersectingEntries[0].target.id;
+        setActiveSection(currentId);
+
+        if (window.parent && window.parent !== window) {
+          let mappedId = currentId;
+          if (currentId === 'home') mappedId = 'hero';
+          if (currentId === 'timeline') mappedId = 'experience';
+
+          if (window.scrollY < 80) {
+            mappedId = 'all';
+          }
+
+          window.parent.postMessage({
+            type: 'PREVIEW_ACTIVE_SECTION',
+            sectionId: mappedId
+          }, '*');
+        }
       }
     };
 
@@ -414,18 +634,110 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     };
   }, [projects, skills, certificates, achievements, experiences, education, tools]);
 
-  const handleNavLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
-    e.preventDefault();
-    const element = document.getElementById(targetId);
-    if (element) {
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.history.pushState(null, '', `#${targetId}`);
-      setActiveSection(targetId);
-      element.scrollIntoView({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-        block: 'start'
-      });
+  // Prevent body scrolling when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
+  // Accessibility: Close mobile menu on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  const isNavItemActive = (itemId: string, currentActive: string) => {
+    if (itemId === currentActive) return true;
+    if (itemId === 'hero' && (currentActive === 'hero' || currentActive === 'home')) return true;
+    if (itemId === 'timeline' && (currentActive === 'experience' || currentActive === 'timeline')) return true;
+    if (itemId === 'credentials' && (currentActive === 'credentials' || currentActive === 'certificates')) return true;
+    if (itemId === 'skills' && (currentActive === 'skills' || currentActive === 'techstack')) return true;
+    return false;
+  };
+
+  const scrollToSection = (targetId: string, e?: React.SyntheticEvent) => {
+    if (e) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
+
+    setMobileMenuOpen(false);
+    document.body.style.overflow = 'unset';
+
+    const normalizedId = 
+      targetId === 'home' ? 'hero' :
+      targetId === 'experience' ? 'timeline' :
+      targetId === 'certificates' ? 'credentials' :
+      targetId === 'techstack' ? 'skills' :
+      targetId;
+
+    const findTargetElement = () => {
+      return (
+        document.getElementById(normalizedId) || 
+        document.getElementById(`section-${normalizedId}`) ||
+        (normalizedId === 'timeline' ? (document.getElementById('timeline') || document.getElementById('experience')) : null) ||
+        (normalizedId === 'experience' ? (document.getElementById('experience') || document.getElementById('timeline')) : null) ||
+        (normalizedId === 'hero' ? (document.getElementById('hero') || document.getElementById('home')) : null) ||
+        (normalizedId === 'home' ? (document.getElementById('home') || document.getElementById('hero')) : null) ||
+        (normalizedId === 'credentials' ? (document.getElementById('credentials') || document.getElementById('certificates')) : null) ||
+        (normalizedId === 'certificates' ? (document.getElementById('certificates') || document.getElementById('credentials')) : null) ||
+        (normalizedId === 'skills' ? (document.getElementById('skills') || document.getElementById('techstack')) : null) ||
+        (normalizedId === 'techstack' ? (document.getElementById('techstack') || document.getElementById('skills')) : null) ||
+        (normalizedId === 'education' ? document.getElementById('education') : null) ||
+        (normalizedId === 'coding-profiles' ? document.getElementById('coding-profiles') : null) ||
+        (normalizedId === 'tools' ? document.getElementById('tools') : null) ||
+        (normalizedId === 'achievements' ? document.getElementById('achievements') : null) ||
+        (normalizedId === 'about' ? document.getElementById('about') : null) ||
+        (normalizedId === 'projects' ? document.getElementById('projects') : null) ||
+        (normalizedId === 'contact' ? document.getElementById('contact') : null)
+      );
+    };
+
+    const performScroll = () => {
+      const element = findTargetElement();
+
+      if (element) {
+        setActiveSection(normalizedId);
+
+        if (window.history && window.history.replaceState) {
+          try {
+            window.history.replaceState(null, '', `#${normalizedId}`);
+          } catch (err) {
+            // Ignore state mutation errors in sandboxed iframes
+          }
+        }
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const headerOffset = 76;
+        const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = Math.max(0, elementTop - headerOffset);
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: prefersReducedMotion ? 'auto' : 'smooth'
+        });
+      }
+    };
+
+    performScroll();
+    requestAnimationFrame(performScroll);
+    setTimeout(performScroll, 50);
+    setTimeout(performScroll, 150);
+  };
+
+  const handleNavLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    scrollToSection(targetId, e);
   };
 
   const sectionVariants = {
@@ -494,11 +806,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     });
   }, [displayTools, selectedToolCategory, toolSearchQuery]);
   const [selectedAchievementCategory, setSelectedAchievementCategory] = useState<string>('All');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isBackendOffline, setIsBackendOffline] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // Expanded Project Details Modal State
   const [selectedProjectForModal, setSelectedProjectForModal] = useState<ProjectItem | null>(null);
@@ -631,7 +942,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   // Fetch all resources on mount from backend APIs
   const fetchAllDataWithRetry = async (attempt = 1, showLoading = true) => {
     try {
-      if (showLoading) {
+      if (showLoading && !hasLoadedOnceRef.current) {
         setIsLoading(true);
       }
       setIsBackendOffline(false);
@@ -712,8 +1023,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setFooterSocialLinks(visibleFooterLinks);
 
-      const visibleCodingProfiles = (data.codingProfiles || [])
-        .filter((p: any) => p.visible)
+      const rawProfiles = (data.codingProfiles && data.codingProfiles.length > 0) ? data.codingProfiles : initialCodingProfiles;
+      const visibleCodingProfiles = rawProfiles
+        .filter((p: any) => p.visible !== false)
         .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setCodingProfiles(visibleCodingProfiles);
 
@@ -721,6 +1033,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         .filter((t: any) => t.isVisible !== false)
         .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setTools(visibleTools);
+
+      if (data.portfolioMetrics && Array.isArray(data.portfolioMetrics)) {
+        const visibleMetrics = data.portfolioMetrics
+          .filter((m: any) => m.visible !== false)
+          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        setPortfolioMetrics(visibleMetrics);
+      }
 
       setActiveResume(data.activeResume);
       setProfile(data.profile);
@@ -745,12 +1064,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       setTechnologies(data.technologies || []);
 
       // Complete main page loading immediately
+      hasLoadedOnceRef.current = true;
       setIsLoading(false);
       setIsRetrying(false);
       setRetryCount(0);
 
-      // Handle section auto-scroll if section parameter is provided
-      if (sectionParam) {
+      // Handle section auto-scroll if section parameter is provided (only once on initial load)
+      if (sectionParam && !hasInitialAutoScrolledRef.current) {
+        hasInitialAutoScrolledRef.current = true;
         setTimeout(() => {
           const el = document.getElementById(sectionParam) || document.getElementById(`section-${sectionParam}`);
           if (el) {
@@ -829,7 +1150,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   };
 
   useEffect(() => {
-    fetchAllDataWithRetry(1, true);
+    fetchAllDataWithRetry(1, false);
 
     // Active synchronization listener for CMS updates
     const handleStorageChange = (e: StorageEvent) => {
@@ -837,7 +1158,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         fetchAllDataWithRetry(1, false);
       }
     };
+    const handleCustomCmsUpdate = () => {
+      fetchAllDataWithRetry(1, false);
+    };
+    const handleMessageUpdate = (e: MessageEvent) => {
+      if (e.data?.type === 'CMS_DATA_UPDATED') {
+        fetchAllDataWithRetry(1, false);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cms-data-updated', handleCustomCmsUpdate);
+    window.addEventListener('message', handleMessageUpdate);
 
     // Real-time polling when iframe live preview mode is active
     let pollInterval: any = null;
@@ -852,6 +1184,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cms-data-updated', handleCustomCmsUpdate);
+      window.removeEventListener('message', handleMessageUpdate);
       if (pollInterval) clearInterval(pollInterval);
     };
   }, []);
@@ -1016,7 +1350,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     );
   }
 
-  if (isLoading) {
+  if (isLoading && !profile) {
     return (
       <div className="min-h-screen bg-[#030712] text-slate-100 font-sans flex flex-col items-center justify-center relative overflow-hidden">
         {/* Background radial atmosphere */}
@@ -1136,46 +1470,56 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         </div>
       )}
 
-      {/* Glassmorphic Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.04] bg-[#030712]/50 backdrop-blur-xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-4">
-        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+      {/* Permanent Sticky Glassmorphic Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/[0.06] bg-[#030712]/90 backdrop-blur-xl translate-y-0 shadow-lg shadow-black/20">
+        {/* Top Scroll Reading Progress Bar */}
+        <ScrollProgressBar />
+
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-3.5 flex items-center justify-between gap-3 sm:gap-4">
           
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0">
+          {/* Logo / Personal Branding (Fixed Left) */}
+          <a 
+            href="#hero"
+            onClick={(e) => handleNavLinkClick(e, 'hero')}
+            className="flex items-center gap-2.5 min-w-0 shrink-0 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg p-0.5"
+          >
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-emerald-500/60 transition-colors">
               {profile?.profileImage ? (
                 <img src={profile.profileImage} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <span className="font-luxury font-bold text-emerald-400 text-lg">A</span>
               )}
             </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold tracking-tight text-white uppercase font-display truncate">
+            <div className="min-w-0 max-w-[150px] xs:max-w-[200px] sm:max-w-[130px] md:max-w-[150px] lg:max-w-none">
+              <h2 className="text-[11px] xs:text-xs sm:text-sm font-bold tracking-tight text-white uppercase font-display truncate group-hover:text-emerald-400 transition-colors">
                 {profile?.displayName || (settings?.siteName ? settings.siteName.split('|')[0].trim() : "Alex Dev")}
               </h2>
-              <span className="text-[9px] font-mono tracking-widest text-emerald-400/80 block uppercase font-bold truncate">
+              <span className="text-[8px] xs:text-[9px] font-mono tracking-widest text-emerald-400/80 block uppercase font-bold truncate">
                 {profile?.title || "Systems Architect"}
               </span>
             </div>
-          </div>
+          </a>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-400 shrink-0">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.id;
+          {/* Desktop Navigation Links (Large Desktop Screens xl+) */}
+          <nav className="hidden xl:flex items-center gap-1 xl:gap-3 2xl:gap-4 text-xs font-medium text-slate-400 shrink-0" aria-label="Desktop Navigation">
+            {desktopNavItems.map((item) => {
+              const isActive = isNavItemActive(item.id, activeSection);
               return (
                 <a
                   key={item.id}
                   href={`#${item.id}`}
                   onClick={(e) => handleNavLinkClick(e, item.id)}
-                  className={`relative py-1.5 transition-colors ${
-                    isActive ? "text-emerald-400 font-semibold" : "hover:text-emerald-400"
+                  className={`relative py-1.5 px-2.5 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 whitespace-nowrap ${
+                    isActive 
+                      ? "text-emerald-400 font-bold drop-shadow-[0_0_8px_rgba(52,211,153,0.3)] bg-emerald-500/5 border border-emerald-500/20" 
+                      : "text-slate-400 hover:text-emerald-300 hover:bg-white/[0.02]"
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="activeNavIndicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400 rounded-full"
+                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-300 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -1184,7 +1528,37 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             })}
           </nav>
 
-          {/* Buttons Area */}
+          {/* Tablet Navigation Container (Horizontally Swipeable/Scrollable, md to xl) */}
+          <div 
+            ref={tabletNavRef}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            className="hidden md:flex xl:hidden items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-2 touch-pan-x min-w-0 flex-1 select-none cursor-grab active:cursor-grabbing border-x border-white/[0.04] mx-2"
+            aria-label="Tablet Swipeable Navigation"
+          >
+            {desktopNavItems.map((item) => {
+              const isActive = isNavItemActive(item.id, activeSection);
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  data-active={isActive ? "true" : "false"}
+                  onClick={(e) => handleNavLinkClick(e, item.id)}
+                  className={`shrink-0 py-1.5 px-3 rounded-lg text-xs font-mono uppercase tracking-wider transition-all duration-200 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                    isActive
+                      ? "text-emerald-400 font-bold bg-emerald-500/10 border-emerald-500/30 shadow-md shadow-emerald-500/10"
+                      : "text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Action Buttons Area (Fixed Right) */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Header Navigation Social Links */}
             {socialLinks.filter(l => l.showInNavigation === true && l.isVisible !== false).map((link) => (
@@ -1192,15 +1566,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 key={link.id}
                 link={link}
                 onClick={() => trackClick('social_nav_' + link.platform.toLowerCase(), link.platform)}
-                className="hidden lg:flex p-2 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-sm"
+                className="hidden lg:flex p-2 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                 childrenClassName="w-4 h-4 object-contain"
               />
             ))}
 
-            {/* Desktop Dashboard Button */}
+            {/* Desktop Dashboard Access Button */}
             <button
               onClick={onEnterCMS}
-              className="group relative hidden md:flex p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
+              className="group relative hidden md:flex p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
               title="Admin Access"
               aria-label="Admin Access"
               id="btn-access-cms-terminal"
@@ -1211,208 +1585,216 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </span>
             </button>
 
-            {/* Mobile Menu & Dashboard Toggle Button */}
+            {/* Mobile Menu Toggle Button */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-slate-400 hover:text-emerald-400 bg-slate-900/40 rounded-lg border border-slate-800 transition-all cursor-pointer"
-              aria-label="Toggle Menu"
+              className="md:hidden p-2 text-slate-400 hover:text-emerald-400 bg-slate-900/60 rounded-lg border border-slate-800 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
+              aria-label="Toggle Navigation Menu"
+              aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X className="w-4.5 h-4.5" /> : <Menu className="w-4.5 h-4.5" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
 
         </div>
 
         {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-white/[0.04] space-y-4">
-            <nav className="flex flex-col gap-3.5 text-xs font-medium text-slate-400">
-              {navItems.map((item) => {
-                const isActive = activeSection === item.id;
-                return (
-                  <a
-                    key={item.id}
-                    href={`#${item.id}`}
-                    onClick={(e) => {
-                      setMobileMenuOpen(false);
-                      handleNavLinkClick(e, item.id);
-                    }}
-                    className={`relative py-1.5 px-2 rounded-lg transition-colors flex items-center justify-between ${
-                      isActive ? "text-emerald-400 font-semibold bg-emerald-500/5" : "hover:text-emerald-400 hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    )}
-                  </a>
-                );
-              })}
-            </nav>
-            <div className="pt-2 flex justify-center">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onEnterCMS();
-                }}
-                className="group relative p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
-                title="Admin Access"
-                aria-label="Admin Access"
-              >
-                <Lock className="w-4 h-4" />
-                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                  Admin Access
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden overflow-hidden border-t border-white/[0.06] bg-[#030712]/95 backdrop-blur-2xl px-4 sm:px-6 py-5 space-y-4 max-h-[82vh] overflow-y-auto"
+            >
+              <nav className="flex flex-col gap-1.5 font-medium text-slate-300" aria-label="Mobile Navigation">
+                {mobileNavItems.map((item) => {
+                  const isActive = isNavItemActive(item.id, activeSection);
+                  return (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleNavLinkClick(e, item.id);
+                      }}
+                      className={`relative py-2.5 px-3.5 rounded-xl transition-all duration-200 flex items-center justify-between text-xs font-mono uppercase tracking-wider ${
+                        isActive 
+                          ? "text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 shadow-lg shadow-emerald-500/5" 
+                          : "text-slate-400 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {isActive && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                      )}
+                    </a>
+                  );
+                })}
+              </nav>
+              <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Admin Control</span>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onEnterCMS();
+                  }}
+                  className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all flex items-center gap-2 text-xs font-mono cursor-pointer"
+                  title="Admin Access"
+                  aria-label="Admin Access"
+                >
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                  <span>Terminal CMS</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full min-h-[90vh] flex flex-col md:flex-row md:items-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-24 pb-20 md:pt-12 md:pb-24 overflow-x-hidden overflow-y-visible border-b border-white/[0.02]" id="hero">
+      <section className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" id="hero">
         
         {theme?.heroBackground?.enabled && (
           <DynamicBackground bg={theme.heroBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
         )}
-        
-        {/* 3D Canvas Background (Top of mobile flow, right side of desktop grid) */}
-        <div className="relative md:absolute md:inset-y-0 md:right-0 w-full md:w-1/2 lg:w-[50%] xl:w-[48%] h-[280px] sm:h-[350px] md:h-full pointer-events-none md:pointer-events-auto z-0 shrink-0 mb-6 md:mb-0">
-          <CanvasErrorBoundary>
-            <React.Suspense fallback={
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/20 backdrop-blur-sm">
-                <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-[9px] font-mono uppercase tracking-widest text-slate-500">Initializing 3D Universe...</p>
-              </div>
-            }>
-              <ThreeDHero techString={techString} />
-            </React.Suspense>
-          </CanvasErrorBoundary>
-        </div>
 
-        {/* Textual Overlays */}
-        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-8 lg:gap-12 xl:gap-16 relative z-10">
-          <div className="md:col-span-7 lg:col-span-7 xl:col-span-6 space-y-6 flex flex-col items-center text-center md:items-start md:text-left w-full">
-            
-            {/* Technology marquee/ticker for Mobile only, placed ABOVE the badge */}
-            <div className="w-full md:hidden py-2.5 overflow-hidden select-none bg-emerald-500/5 border-y border-emerald-500/10 mb-2 rounded-xl">
-              <div className="flex w-max animate-marquee gap-8">
-                <div className="flex shrink-0 items-center gap-8 text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase">
-                  <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS"}</span>
-                  <span className="text-slate-600">•</span>
-                </div>
-                <div className="flex shrink-0 items-center gap-8 text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase" aria-hidden="true">
-                  <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS"}</span>
-                  <span className="text-slate-600">•</span>
-                </div>
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-10 xl:gap-12 relative z-10">
+          
+          {/* Textual Overlays (Left column in Desktop grid) */}
+          <div className="lg:col-span-7 xl:col-span-6 flex flex-col items-center text-center lg:items-start lg:text-left w-full gap-4 sm:gap-5 lg:gap-6">
+
+            {/* Top Badges & Status Container */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3.5 shrink-0">
+              {/* Developer Badge */}
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-bold whitespace-nowrap">
+                  {profile?.heroBadge || "Full Stack Java Developer"}
+                </span>
               </div>
+
+              {/* Optional Avatar & Online Status */}
+              {profile?.heroAvatar && (
+                <div className="inline-flex items-center gap-2 bg-slate-900/80 border border-white/[0.08] px-3 py-1 rounded-full shadow-sm">
+                  <img
+                    src={profile.heroAvatar}
+                    alt={profile?.heroName || profile?.fullName || "Founder"}
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-emerald-500/40"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="text-left flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
+                      {profile?.statusBadgeText || "Founder Online"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">
-                {profile?.heroBadge || "Full Stack Java Developer"}
+            {/* Name, Professional Eyebrow, Title & Subtitle */}
+            <div className="flex flex-col gap-2 sm:gap-2.5 w-full">
+              <span className="text-[10px] sm:text-xs font-mono text-emerald-400/90 uppercase tracking-widest block font-bold">
+                {profile?.professionalLabel || "Systems Architect"}
               </span>
-            </div>
-
-            {profile?.heroAvatar && (
-              <div className="flex items-center gap-3">
-                <img
-                  src={profile.heroAvatar}
-                  alt={profile?.heroName || profile?.fullName || "Founder"}
-                  className="w-14 h-14 rounded-full object-cover border border-emerald-500/30 shadow-md shadow-emerald-500/5"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="text-left">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold block">Founder Online</span>
-                  <span className="text-[9px] text-slate-500 font-mono block">Node: {profile?.onlineStatus || "Online"}</span>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3 w-full">
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Systems Architect</span>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">
                 {profile?.heroName || profile?.fullName || "Alex Rivera"}
               </h1>
-              <p className="text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
+              <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
                 {profile?.heroTitle || profile?.title || "Principal Systems Architect"}
               </p>
-              <h2 className="text-lg sm:text-xl font-display font-medium text-slate-300">
+              <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug">
                 {profile?.heroSubtitle || profile?.shortTagline || "Ecosystem Architect & Product Pioneer"}
               </h2>
             </div>
 
-            <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
+            {/* Short Introduction */}
+            <p className="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
               {profile?.heroDescription || profile?.shortIntroduction || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."}
             </p>
 
-            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-4 pt-4 w-full">
+            {/* Primary Buttons */}
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-1 sm:pt-2 w-full">
               <a 
                 href={profile?.primaryCtaUrl || "#projects"} 
-                className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
-                onClick={() => trackClick('explore_btn_hero', 'Explore Projects Click')}
+                className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                onClick={(e) => {
+                  trackClick('explore_btn_hero', 'Explore Projects Click');
+                  const target = profile?.primaryCtaUrl || '#projects';
+                  if (target.startsWith('#')) {
+                    scrollToSection(target.replace('#', ''), e);
+                  }
+                }}
               >
                 <span>{profile?.primaryCtaText || "Explore Engineering"}</span>
                 <ChevronRight className="w-4 h-4" />
               </a>
               <a 
                 href={profile?.secondaryCtaUrl || "#contact"} 
-                className="w-full sm:w-auto px-6 py-3 glass-card hover:bg-white/[0.03] text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 border border-white/[0.08]"
-                onClick={() => trackClick('contact_btn_hero', 'Contact Click')}
+                className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 glass-card hover:bg-white/[0.03] text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 border border-white/[0.08]"
+                onClick={(e) => {
+                  trackClick('contact_btn_hero', 'Contact Click');
+                  const target = profile?.secondaryCtaUrl || '#contact';
+                  if (target.startsWith('#')) {
+                    scrollToSection(target.replace('#', ''), e);
+                  }
+                }}
               >
                 <Mail className="w-4 h-4 text-emerald-400" />
                 <span>{profile?.secondaryCtaText || "Get in Touch"}</span>
               </a>
 
               {!isValidResumeUrl(profile?.resumeUrl) ? (
-                <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-                    <button 
-                      disabled
-                      className="w-full sm:w-auto px-5 py-3 border border-white/[0.04] bg-white/[0.01] text-slate-500 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
-                    >
-                      <XCircle className="w-4 h-4 text-slate-500" />
-                      <span>Resume not available</span>
-                    </button>
-                  </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
+                  <button 
+                    disabled
+                    className="w-full sm:w-auto px-4 py-2.5 border border-white/[0.04] bg-white/[0.01] text-slate-500 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
+                  >
+                    <XCircle className="w-4 h-4 text-slate-500" />
+                    <span>Resume not available</span>
+                  </button>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full sm:w-auto">
                     {/* View Resume Button */}
                     <a 
                       href={profile?.resumeUrl || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => handleViewResume(e, 'resume_view_hero', 'View Resume')}
-                      className="w-full sm:w-auto px-5 py-3 border border-white/[0.08] hover:border-emerald-500/30 bg-white/[0.02] hover:bg-emerald-500/5 text-slate-300 hover:text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full sm:w-auto px-4 py-2.5 border border-white/[0.08] hover:border-emerald-500/30 bg-white/[0.02] hover:bg-emerald-500/5 text-slate-300 hover:text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Eye className="w-4 h-4 text-emerald-400" />
                       <span>View Resume</span>
                     </a>
 
-                    {/* Download Resume Button (Hidden if download is disabled) */}
+                    {/* Download Resume Button */}
                     {activeResume?.isDownloadEnabled && (
                       <a 
                         href={profile?.resumeUrl || '#'}
                         download={activeResume?.fileName || 'resume.pdf'}
                         onClick={(e) => handleDownloadResume(e, 'resume_download_hero', 'Download Resume')}
-                        className="w-full sm:w-auto px-5 py-3 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full sm:w-auto px-4 py-2.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Download className="w-4 h-4" />
-                        <span>Download CV</span>
+                        <span>{profile?.resumeDownloadText || profile?.downloadCtaText || "Download CV"}</span>
                       </a>
                     )}
                   </div>
                   
                   {/* Resume Last Updated & Version Metadata */}
-                  {activeResume && (
-                    <div className="flex flex-col text-[10px] font-mono text-slate-500 items-center sm:items-start pl-0 sm:pl-4 sm:border-l sm:border-white/[0.06] select-none shrink-0">
-                      <span className="text-emerald-400/80 font-bold">Version {activeResume.version}</span>
-                      <span className="mt-0.5 text-slate-600">Updated {new Date(activeResume.updatedAt).toLocaleDateString(undefined, {month: 'short', year: 'numeric'})}</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col text-[10px] font-mono text-slate-500 items-center sm:items-start pl-0 sm:pl-3 sm:border-l sm:border-white/[0.06] select-none shrink-0">
+                    <span className="text-emerald-400/80 font-bold">
+                      {profile?.versionText || (activeResume ? `Version ${activeResume.version}` : "Version 2.4.0")}
+                    </span>
+                    <span className="mt-0.5 text-slate-600">
+                      {profile?.updateText || (activeResume ? `Updated ${new Date(activeResume.updatedAt).toLocaleDateString(undefined, {month: 'short', year: 'numeric'})}` : "Updated Recently")}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1450,27 +1832,84 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
             )}
 
-            {/* Quick stats grid inside Hero overlaying data loaded from Analytics API */}
-            {analytics && (
-              <div className="grid grid-cols-3 gap-4 pt-10 border-t border-white/[0.05] w-full max-w-lg lg:max-w-xl text-center md:text-left mx-auto md:mx-0">
-                <div className="flex flex-col items-center md:items-start">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Page Views</span>
-                  <div className="flex items-center justify-center md:justify-start gap-1 mt-1">
-                    <span className="text-xl font-bold font-mono text-white">{analytics.pageViews.toLocaleString()}</span>
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
-                  </div>
-                </div>
-                <div className="flex flex-col items-center md:items-start">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Unique Visitors</span>
-                  <span className="text-xl font-bold font-mono text-white block mt-1">{analytics.uniqueVisitors.toLocaleString()}</span>
-                </div>
-                <div className="flex flex-col items-center md:items-start">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Inquiries Conversions</span>
-                  <span className="text-xl font-bold font-mono text-white block mt-1">{analytics.contactConversionRate}%</span>
-                </div>
-              </div>
-            )}
+          </div>
 
+          {/* Right Column: 3D Canvas Universe (Side-by-side on desktop, no text overlap!) */}
+          <div className="lg:col-span-5 xl:col-span-6 w-full h-[280px] sm:h-[340px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center my-2 lg:my-0 shadow-2xl shadow-emerald-500/5">
+            <CanvasErrorBoundary>
+              <React.Suspense fallback={
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+                  <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing 3D Universe...</p>
+                </div>
+              }>
+                {render3D ? (
+                  <ThreeDHero techString={techString} />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+                    <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
+                    <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing 3D Universe...</p>
+                  </div>
+                )}
+              </React.Suspense>
+            </CanvasErrorBoundary>
+          </div>
+
+          {/* Hero Analytics Grid (Spanning full width of Hero section) */}
+          {portfolioMetrics && portfolioMetrics.length > 0 && (
+            <div className="lg:col-span-12 w-full pt-8 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),280px))] justify-center justify-items-center gap-3.5 sm:gap-4 md:gap-5 w-full mx-auto">
+                {portfolioMetrics.map((metric) => {
+                  const colorConfig = COLOR_ACCENTS[metric.color || 'emerald'] || COLOR_ACCENTS.emerald;
+                  return (
+                    <motion.div 
+                      key={metric.id}
+                      initial={metric.animationEnabled ? { opacity: 0, y: 10 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`w-full max-w-[280px] min-w-[220px] p-3 sm:p-3.5 rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-3 shadow-lg group hover:scale-[1.02] transition-all`}
+                      title={metric.tooltip || undefined}
+                    >
+                      <div className={`w-9 h-9 rounded-xl ${colorConfig.bg} ${colorConfig.border} border flex items-center justify-center ${colorConfig.text} shrink-0 group-hover:rotate-6 transition-transform`}>
+                        <MetricIconRenderer metric={metric} className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base sm:text-lg font-bold font-mono text-white tracking-tight leading-none">
+                            {metric.value}
+                          </span>
+                          {metric.color === 'emerald' && (
+                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
+                          )}
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-200 block truncate mt-0.5">
+                          {metric.title}
+                        </span>
+                        {metric.subtitle && (
+                          <span className="text-[9px] font-mono text-slate-400 block truncate">
+                            {metric.subtitle}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Technology marquee/ticker for All Viewports */}
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto py-2.5 sm:py-3 overflow-hidden select-none bg-emerald-500/5 border-y border-emerald-500/10 mt-8 mb-2 rounded-2xl relative z-10">
+          <div className="flex w-max animate-marquee gap-8">
+            <div className="flex shrink-0 items-center gap-8 text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase">
+              <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS • KUBERNETES • REDIS • POSTGRESQL • GRAPHQL • NEXT.JS • TAILWIND"}</span>
+              <span className="text-slate-600">•</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-8 text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase" aria-hidden="true">
+              <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS • KUBERNETES • REDIS • POSTGRESQL • GRAPHQL • NEXT.JS • TAILWIND"}</span>
+              <span className="text-slate-600">•</span>
+            </div>
           </div>
         </div>
 
@@ -1709,15 +2148,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </motion.section>
 
           {/* Coding Profiles Section */}
-          {codingProfiles.length > 0 && (
-            <motion.section 
-              id="coding-profiles" 
-              className="space-y-12 scroll-mt-24"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={sectionVariants}
-            >
+          <motion.section 
+            id="coding-profiles" 
+            className="space-y-12 scroll-mt-24"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={sectionVariants}
+          >
               <div className="space-y-2.5">
                 <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES</span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">
@@ -1753,21 +2191,21 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   return (
                     <motion.div
                       key={p.id}
-                      className={`relative bg-slate-900/30 border rounded-2xl p-6 hover:bg-white/[0.02] transition-all duration-300 flex flex-col justify-between group shadow-lg ${platformBorderGlow} ${cardScale}`}
+                      className={`relative bg-slate-900/30 border rounded-2xl p-4 sm:p-5 lg:p-6 hover:bg-white/[0.02] transition-all duration-300 flex flex-col justify-between group shadow-lg ${platformBorderGlow} ${cardScale}`}
                       whileHover={{ y: -6, scale: p.featured ? 1.04 : 1.015 }}
                       transition={{ duration: 0.25, ease: "easeOut" }}
                     >
                       {/* Featured Badge */}
                       {p.featured && (
-                        <span className="absolute top-4 right-4 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[9px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm animate-pulse">
+                        <span className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[9px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm animate-pulse">
                           ★ Featured
                         </span>
                       )}
 
                       <div>
                         {/* Card Header */}
-                        <div className="flex items-start gap-4 mb-4">
-                          <div className="w-12 h-12 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-center p-2.5 shrink-0 transition-transform group-hover:scale-110 duration-300 shadow-inner">
+                        <div className="flex items-start gap-3 sm:gap-4 mb-2.5 sm:mb-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-center p-2 sm:p-2.5 shrink-0 transition-transform group-hover:scale-110 duration-300 shadow-inner">
                             {p.logoUrl ? (
                               <img 
                                 src={p.logoUrl} 
@@ -1777,32 +2215,32 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 loading="lazy"
                               />
                             ) : (
-                              <IconComponent className="w-6 h-6 text-emerald-400" />
+                              <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                             )}
                           </div>
-                          <div className="min-w-0 pr-16">
-                            <h3 className="text-base font-extrabold text-slate-100 font-luxury tracking-wide truncate group-hover:text-emerald-400 transition-colors duration-300">
+                          <div className="min-w-0 pr-12 sm:pr-16">
+                            <h3 className="text-sm sm:text-base font-extrabold text-slate-100 font-luxury tracking-wide truncate group-hover:text-emerald-400 transition-colors duration-300">
                               {p.displayName}
                             </h3>
-                            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest truncate">
+                            <p className="text-[9px] sm:text-[10px] font-mono text-slate-500 uppercase tracking-widest truncate">
                               {p.platformType}
                             </p>
                           </div>
                         </div>
 
                         {/* Username Display Box */}
-                        <div className="bg-slate-950/40 border border-white/[0.02] rounded-xl px-4 py-3 mb-4 font-mono text-center">
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1 font-bold">Handle / Username</p>
-                          <p className="text-sm font-bold text-slate-200 truncate tracking-wide group-hover:text-emerald-400 transition-colors duration-300">
+                        <div className="bg-slate-950/40 border border-white/[0.02] rounded-xl px-3 py-2 sm:px-4 sm:py-3 mb-2.5 sm:mb-4 font-mono text-center">
+                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">Handle / Username</p>
+                          <p className="text-xs sm:text-sm font-bold text-slate-200 truncate tracking-wide group-hover:text-emerald-400 transition-colors duration-300">
                             {p.username}
                           </p>
                         </div>
 
                         {/* Optional Description / Badge */}
                         {p.description && (
-                          <div className="mb-5 px-3 py-2 bg-white/[0.01] border border-white/[0.03] rounded-xl text-xs text-slate-400 font-sans leading-relaxed flex items-start gap-2">
+                          <div className="mb-3 sm:mb-5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/[0.01] border border-white/[0.03] rounded-xl text-xs text-slate-400 font-sans leading-relaxed flex items-start gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                            <p className="flex-1 font-mono text-[11px] font-medium tracking-wide">
+                            <p className="flex-1 font-mono text-[10px] sm:text-[11px] font-medium tracking-wide">
                               {p.description}
                             </p>
                           </div>
@@ -1814,7 +2252,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         href={p.profileUrl}
                         target={p.openInNewTab !== false ? "_blank" : "_self"}
                         rel="noopener noreferrer"
-                        className="w-full py-2.5 bg-white/[0.02] hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.04] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/10"
+                        className="w-full py-2 sm:py-2.5 bg-white/[0.02] hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.04] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/10"
                       >
                         <span>Visit Profile</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -1824,7 +2262,6 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 })}
               </div>
             </motion.section>
-          )}
 
           {/* Skill Matrix Section */}
           <motion.section 
@@ -2024,7 +2461,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
               ) : (
                 /* Tools Cards Grid */
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
                   {filteredTools.map((tool) => {
                     const brandColor = tool.brandColor || '#10B981';
                     const hoverScale = tool.hoverScale || 1.03;
@@ -2039,16 +2476,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           rotate: hoverRotation,
                           transition: { duration: 0.2, ease: "easeOut" } 
                         }}
-                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-3.5 sm:p-4 lg:p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
                         style={{
                           boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
                         }}
                       >
-                        <div className="space-y-3.5">
+                        <div className="space-y-2 sm:space-y-3.5">
                           {/* Header: Icon + Category Badge + Star if featured */}
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-2.5">
                             <div 
-                              className="p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
+                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
                               style={{ 
                                 backgroundColor: tool.backgroundColor || `${brandColor}15`,
                                 borderColor: tool.borderColor || `${brandColor}30`,
@@ -2057,14 +2494,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             >
                               <ToolIconRenderer tool={tool} />
                             </div>
-                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            <div className="flex items-center gap-1 flex-wrap justify-end">
                               {tool.isFeatured && (
                                 <span className="p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm" title="Featured Tool">
-                                  <Star className="w-3 h-3 fill-amber-400" />
+                                  <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400" />
                                 </span>
                               )}
                               {tool.category && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60">
+                                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60">
                                   {tool.category}
                                 </span>
                               )}
@@ -2073,11 +2510,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                           {/* Tool Name & Description */}
                           <div>
-                            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                               {tool.name}
                             </h3>
                             {tool.description && (
-                              <p className="text-xs text-slate-400 leading-relaxed mt-1.5 line-clamp-3">
+                              <p className="text-xs text-slate-400 leading-snug sm:leading-relaxed mt-1 sm:mt-1.5 line-clamp-2 sm:line-clamp-3">
                                 {tool.description}
                               </p>
                             )}
@@ -2085,8 +2522,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         </div>
 
                         {/* Footer Meta & Website Link */}
-                        <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <div className="pt-2.5 mt-2.5 sm:pt-4 sm:mt-3 border-t border-slate-800/80 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-400">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             {tool.experienceLevel && (
                               <span className="text-emerald-400 font-medium">
                                 {tool.experienceLevel}
@@ -2175,7 +2612,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
 
               {/* Academic Education column */}
-              <div className="lg:col-span-6 space-y-8">
+              <div className="lg:col-span-6 space-y-8 relative">
+                <div id="education" className="absolute -top-24" />
                 <div className="flex items-center gap-2.5 text-white mb-6">
                   <GraduationCap className="w-5 h-5 text-emerald-400" />
                   <h3 className="text-lg font-bold font-display">Academic Background</h3>
@@ -2708,23 +3146,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     Quick Links
                   </h5>
-                  <nav className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 text-xs font-medium text-slate-400 w-full">
-                    <a href="#about" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                  <nav className="grid grid-cols-2 lg:grid-cols-2 gap-2.5 text-xs font-medium text-slate-400 w-full">
+                    <a href="#about" onClick={(e) => handleNavLinkClick(e, 'about')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> About
                     </a>
-                    <a href="#projects" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                    <a href="#projects" onClick={(e) => handleNavLinkClick(e, 'projects')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Projects
                     </a>
-                    <a href="#skills" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                    <a href="#coding-profiles" onClick={(e) => handleNavLinkClick(e, 'coding-profiles')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Coding Profiles
+                    </a>
+                    <a href="#skills" onClick={(e) => handleNavLinkClick(e, 'skills')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Skills
                     </a>
-                    <a href="#experience" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                    <a href="#tools" onClick={(e) => handleNavLinkClick(e, 'tools')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Tools
+                    </a>
+                    <a href="#timeline" onClick={(e) => handleNavLinkClick(e, 'timeline')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Experience
                     </a>
-                    <a href="#credentials" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                    <a href="#education" onClick={(e) => handleNavLinkClick(e, 'education')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Education
+                    </a>
+                    <a href="#credentials" onClick={(e) => handleNavLinkClick(e, 'credentials')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Certificates
                     </a>
-                    <a href="#contact" className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5">
+                    <a href="#achievements" onClick={(e) => handleNavLinkClick(e, 'achievements')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Achievements
+                    </a>
+                    <a href="#contact" onClick={(e) => handleNavLinkClick(e, 'contact')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Contact
                     </a>
                   </nav>
@@ -3288,6 +3738,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </div>
         </div>
       )}
+
+      {/* Floating Scroll To Top Control */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => scrollToSection('hero', e)}
+            className="fixed bottom-6 right-6 z-[100] p-3 rounded-full bg-slate-900/90 border border-emerald-500/30 text-emerald-400 hover:text-white hover:bg-emerald-500 hover:border-emerald-400 shadow-xl shadow-emerald-500/10 backdrop-blur-md transition-all duration-300 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            aria-label="Scroll back to top"
+            title="Scroll to top"
+          >
+            <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -17,6 +17,7 @@ interface HeroProfileData {
   shortBio: string;
   aboutDescription: string;
   heroBadge?: string;
+  professionalLabel?: string;
   heroName?: string;
   heroTitle?: string;
   heroSubtitle?: string;
@@ -27,6 +28,10 @@ interface HeroProfileData {
   primaryCtaUrl?: string;
   secondaryCtaText?: string;
   secondaryCtaUrl?: string;
+  statusBadgeText?: string;
+  onlineStatus?: string;
+  versionText?: string;
+  updateText?: string;
   quickStats?: string;
   highlightTags?: string;
   heroVisibility?: boolean;
@@ -197,6 +202,42 @@ const getJwtToken = () =>
     if (profile) {
       updateProfileWithHistory(profile, updatedStats);
     }
+  };
+
+  // Reset to Baseline Defaults
+  const handleResetToBaseline = () => {
+    if (!profile) return;
+    const baseline: HeroProfileData = {
+      ...profile,
+      heroBadge: "Full Stack Java Developer",
+      professionalLabel: "SYSTEMS ARCHITECT",
+      heroName: "CHANDRU M",
+      heroTitle: "PRINCIPAL SYSTEMS ARCHITECT",
+      heroSubtitle: "Java Full Stack Developer",
+      heroDescription: "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
+      primaryCtaText: "Explore Engineering",
+      primaryCtaUrl: "#projects",
+      secondaryCtaText: "Get in Touch",
+      secondaryCtaUrl: "#contact",
+      resumeDownloadText: "Download CV",
+      statusBadgeText: "Founder Online",
+      onlineStatus: "Online",
+      versionText: "Version 2.4.0",
+      updateText: "Updated Recently",
+      typingText: "Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
+      highlightTags: "#CloudNative, #HighConcurrency, #ZeroDowntime",
+      quickStats: "8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written",
+      heroVisibility: true
+    };
+    const defaultStats = [
+      { value: "8+", label: "Years Exp" },
+      { value: "50+", label: "Projects Mapped" },
+      { value: "99.9%", label: "Core SLA Uptime" },
+      { value: "120k+", label: "Lines Written" }
+    ];
+    setStats(defaultStats);
+    updateProfileWithHistory(baseline, defaultStats);
+    onTriggerToast("Reset Hero values to default baseline.", "success");
   };
 
   // Save changes to database
@@ -378,6 +419,15 @@ if (!token) {
             title="Redo Change"
           >
             <RotateCcw className="w-4 h-4 transform scale-x-[-1]" />
+          </button>
+
+          <button
+            onClick={handleResetToBaseline}
+            className="px-3 py-2 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            title="Reset to Baseline Defaults"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reset Defaults</span>
           </button>
 
           <button
@@ -593,7 +643,19 @@ if (!token) {
                   value={profile.heroBadge || ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, heroBadge: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                  placeholder="e.g. Full Stack Java Developer"
+                  placeholder="e.g. FULL STACK JAVA DEVELOPER"
+                />
+              </div>
+
+              {/* Professional Label */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-mono text-slate-400">Professional Eyebrow Label</label>
+                <input 
+                  type="text" 
+                  value={profile.professionalLabel || ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, professionalLabel: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. SYSTEMS ARCHITECT"
                 />
               </div>
 
@@ -605,7 +667,55 @@ if (!token) {
                   value={profile.heroName || profile.fullName || ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, heroName: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                  placeholder="e.g. Alex Rivera"
+                  placeholder="e.g. CHANDRU M"
+                />
+              </div>
+
+              {/* Status Badge Label */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-mono text-slate-400">Status Badge Heading</label>
+                <input 
+                  type="text" 
+                  value={profile.statusBadgeText || ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, statusBadgeText: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. Founder Online / Available for Hire"
+                />
+              </div>
+
+              {/* Online Status Node */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-mono text-slate-400">Online Status Node Text</label>
+                <input 
+                  type="text" 
+                  value={profile.onlineStatus || ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, onlineStatus: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. Online / Open to Work"
+                />
+              </div>
+
+              {/* Version Text */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-mono text-slate-400">Portfolio Version Tag</label>
+                <input 
+                  type="text" 
+                  value={profile.versionText || ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, versionText: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. Version 2.4.0"
+                />
+              </div>
+
+              {/* Update Text */}
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="block text-[11px] font-mono text-slate-400">Updated Date Label</label>
+                <input 
+                  type="text" 
+                  value={profile.updateText || ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, updateText: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. Updated July 2026 / Updated Recently"
                 />
               </div>
 

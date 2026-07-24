@@ -15,7 +15,8 @@ import {
   initialExperiences, initialEducation, initialMessages, 
   initialAnalytics, initialSettings, initialSocialLinks,
   initialResumes, initialProfile, initialThemeSettings,
-  initialAchievements, initialFooter, initialTechStack, initialTools
+  initialAchievements, initialFooter, initialTechStack, initialTools,
+  initialPortfolioMetrics
 } from "./src/data/cmsMockData";
 
 const PORT = 3000;
@@ -104,6 +105,10 @@ function loadDatabase() {
       }
       if (!db.tools || !Array.isArray(db.tools) || db.tools.length === 0) {
         db.tools = initialTools;
+        dirty = true;
+      }
+      if (!db.portfolioMetrics || !Array.isArray(db.portfolioMetrics) || db.portfolioMetrics.length === 0) {
+        db.portfolioMetrics = initialPortfolioMetrics;
         dirty = true;
       }
       if (!db.themeSettings) {
@@ -1437,7 +1442,8 @@ async function startServer() {
       footer: db.footer || initialFooter,
       technologies: db.technologies || [],
       tools: db.tools || [],
-      codingProfiles: db.codingProfiles || []
+      codingProfiles: db.codingProfiles || [],
+      portfolioMetrics: db.portfolioMetrics || initialPortfolioMetrics
     };
     
     res.json(cachedPortfolioData);
@@ -3306,6 +3312,270 @@ async function startServer() {
     db.socialLinks.sort((a: any, b: any) => a.displayOrder - b.displayOrder);
     saveDatabase(db);
     res.json({ status: "success", socialLinks: db.socialLinks });
+  });
+
+  // --- PORTFOLIO METRICS ENDPOINTS ---
+  app.get("/api/portfolio-metrics", (req, res) => {
+    const db = loadDatabase();
+    const list = db.portfolioMetrics || [];
+    list.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    res.json(list);
+  });
+
+  app.post("/api/portfolio-metrics", (req, res) => {
+    const db = loadDatabase();
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const {
+      title, value, subtitle, icon, iconType, customSvg,
+      displayOrder, visible, animationEnabled, counterAnimationToggle,
+      color, sourceType, tooltip
+    } = req.body;
+
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ error: "Title is required." });
+    }
+
+    const maxId = db.portfolioMetrics.reduce((max: number, item: any) => (item.id > max ? item.id : max), 0);
+    const newMetric = {
+      id: maxId + 1,
+      title: title.trim(),
+      value: (value !== undefined && value !== null) ? String(value).trim() : "0",
+      subtitle: subtitle ? String(subtitle).trim() : "",
+      icon: icon || "BarChart3",
+      iconType: iconType || "lucide",
+      customSvg: customSvg || "",
+      displayOrder: typeof displayOrder === "number" ? displayOrder : db.portfolioMetrics.length + 1,
+      visible: visible !== undefined ? Boolean(visible) : true,
+      animationEnabled: animationEnabled !== undefined ? Boolean(animationEnabled) : true,
+      counterAnimationToggle: counterAnimationToggle !== undefined ? Boolean(counterAnimationToggle) : true,
+      color: color || "emerald",
+      sourceType: sourceType || "manual",
+      tooltip: tooltip ? String(tooltip).trim() : "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    db.portfolioMetrics.push(newMetric);
+    db.portfolioMetrics.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Portfolio Metric Created",
+      module: "Portfolio Metrics",
+      description: `Created metric "${newMetric.title}".`,
+      newValue: newMetric
+    });
+
+    saveDatabase(db);
+    res.status(201).json(newMetric);
+  });
+
+  app.put("/api/portfolio-metrics/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const index = db.portfolioMetrics.findIndex((m: any) => m.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Portfolio metric not found" });
+    }
+
+    const oldValue = { ...db.portfolioMetrics[index] };
+    const {
+      title, value, subtitle, icon, iconType, customSvg,
+      displayOrder, visible, animationEnabled, counterAnimationToggle,
+      color, sourceType, tooltip
+    } = req.body;
+
+    db.portfolioMetrics[index] = {
+      ...db.portfolioMetrics[index],
+      title: title !== undefined ? String(title).trim() : db.portfolioMetrics[index].title,
+      value: value !== undefined ? String(value).trim() : db.portfolioMetrics[index].value,
+      subtitle: subtitle !== undefined ? String(subtitle).trim() : db.portfolioMetrics[index].subtitle,
+      icon: icon !== undefined ? icon : db.portfolioMetrics[index].icon,
+      iconType: iconType !== undefined ? iconType : db.portfolioMetrics[index].iconType,
+      customSvg: customSvg !== undefined ? customSvg : db.portfolioMetrics[index].customSvg,
+      displayOrder: typeof displayOrder === "number" ? displayOrder : db.portfolioMetrics[index].displayOrder,
+      visible: visible !== undefined ? Boolean(visible) : db.portfolioMetrics[index].visible,
+      animationEnabled: animationEnabled !== undefined ? Boolean(animationEnabled) : db.portfolioMetrics[index].animationEnabled,
+      counterAnimationToggle: counterAnimationToggle !== undefined ? Boolean(counterAnimationToggle) : db.portfolioMetrics[index].counterAnimationToggle,
+      color: color !== undefined ? color : db.portfolioMetrics[index].color,
+      sourceType: sourceType !== undefined ? sourceType : db.portfolioMetrics[index].sourceType,
+      tooltip: tooltip !== undefined ? String(tooltip).trim() : db.portfolioMetrics[index].tooltip,
+      updatedAt: new Date().toISOString()
+    };
+
+    db.portfolioMetrics.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Portfolio Metric Updated",
+      module: "Portfolio Metrics",
+      description: `Updated metric "${db.portfolioMetrics[index].title}".`,
+      oldValue,
+      newValue: db.portfolioMetrics[index]
+    });
+
+    saveDatabase(db);
+    res.json(db.portfolioMetrics[index]);
+  });
+
+  app.delete("/api/portfolio-metrics/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const oldValue = db.portfolioMetrics.find((m: any) => m.id === id);
+    if (!oldValue) {
+      return res.status(404).json({ error: "Portfolio metric not found" });
+    }
+
+    db.portfolioMetrics = db.portfolioMetrics.filter((m: any) => m.id !== id);
+
+    recordActivity(req, db, {
+      action: "Portfolio Metric Deleted",
+      module: "Portfolio Metrics",
+      description: `Deleted metric "${oldValue.title}".`,
+      oldValue
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.post("/api/portfolio-metrics/bulk-delete", (req, res) => {
+    const db = loadDatabase();
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: "ids must be an array" });
+    }
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const initialCount = db.portfolioMetrics.length;
+    db.portfolioMetrics = db.portfolioMetrics.filter((m: any) => !ids.includes(m.id));
+    const deletedCount = initialCount - db.portfolioMetrics.length;
+
+    recordActivity(req, db, {
+      action: "Portfolio Metrics Bulk Deleted",
+      module: "Portfolio Metrics",
+      description: `Bulk deleted ${deletedCount} metrics.`
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success", deletedCount });
+  });
+
+  app.patch("/api/portfolio-metrics/bulk-visibility", (req, res) => {
+    const db = loadDatabase();
+    const { ids, visible } = req.body;
+    if (!Array.isArray(ids) || typeof visible !== "boolean") {
+      return res.status(400).json({ error: "Invalid parameters" });
+    }
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    db.portfolioMetrics.forEach((m: any) => {
+      if (ids.includes(m.id)) {
+        m.visible = visible;
+        m.updatedAt = new Date().toISOString();
+      }
+    });
+
+    recordActivity(req, db, {
+      action: "Portfolio Metrics Bulk Visibility Changed",
+      module: "Portfolio Metrics",
+      description: `Bulk changed visibility to ${visible} for ${ids.length} metrics.`
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.patch("/api/portfolio-metrics/:id/visibility", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const { visible } = req.body;
+    if (typeof visible !== "boolean") {
+      return res.status(400).json({ error: "visible must be a boolean" });
+    }
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const index = db.portfolioMetrics.findIndex((m: any) => m.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Portfolio metric not found" });
+    }
+
+    db.portfolioMetrics[index].visible = visible;
+    db.portfolioMetrics[index].updatedAt = new Date().toISOString();
+
+    recordActivity(req, db, {
+      action: "Portfolio Metric Visibility Toggled",
+      module: "Portfolio Metrics",
+      description: `Toggled visibility of "${db.portfolioMetrics[index].title}" to ${visible}.`
+    });
+
+    saveDatabase(db);
+    res.json(db.portfolioMetrics[index]);
+  });
+
+  app.patch("/api/portfolio-metrics/order", (req, res) => {
+    const db = loadDatabase();
+    const { order } = req.body;
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ error: "order must be an array" });
+    }
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    order.forEach((item: any) => {
+      const metric = db.portfolioMetrics.find((m: any) => m.id === item.id);
+      if (metric) {
+        metric.displayOrder = item.displayOrder;
+        metric.updatedAt = new Date().toISOString();
+      }
+    });
+
+    db.portfolioMetrics.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Portfolio Metrics Reordered",
+      module: "Portfolio Metrics",
+      description: "Reordered portfolio metrics list."
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success", portfolioMetrics: db.portfolioMetrics });
+  });
+
+  app.post("/api/portfolio-metrics/:id/duplicate", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.portfolioMetrics) db.portfolioMetrics = [];
+
+    const source = db.portfolioMetrics.find((m: any) => m.id === id);
+    if (!source) {
+      return res.status(404).json({ error: "Portfolio metric not found" });
+    }
+
+    const maxId = db.portfolioMetrics.reduce((max: number, item: any) => (item.id > max ? item.id : max), 0);
+    const duplicate = {
+      ...source,
+      id: maxId + 1,
+      title: `${source.title} (Copy)`,
+      displayOrder: source.displayOrder + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    db.portfolioMetrics.push(duplicate);
+    db.portfolioMetrics.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Portfolio Metric Duplicated",
+      module: "Portfolio Metrics",
+      description: `Duplicated metric "${source.title}".`,
+      newValue: duplicate
+    });
+
+    saveDatabase(db);
+    res.status(201).json(duplicate);
   });
 
   // --- CODING PROFILES ENDPOINTS ---

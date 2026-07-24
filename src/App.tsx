@@ -7,6 +7,7 @@ import CodeExplorer from './components/CodeExplorer';
 import StatusCard from './components/StatusCard';
 import AdminDashboard from './components/AdminDashboard';
 import PortfolioFrontend from './components/PortfolioFrontend';
+import PublicPreviewWrapper from './components/PublicPreviewWrapper';
 import AdminLogin from './components/AdminLogin';
 
 export default function App() {
@@ -43,7 +44,8 @@ export default function App() {
           setAlwaysRequireLogin(configAlwaysRequire);
         }
       } catch (e) {
-        console.error('Error fetching login config:', e);
+        // Handle transient network/boot errors silently with fallback defaults
+        setAlwaysRequireLogin(false);
       }
 
       if (isFirstCheck.current) {
@@ -82,42 +84,45 @@ export default function App() {
             'Authorization': `Bearer ${token}`
           }
         });
-        const data = await response.json();
-        
-        if (data.valid && data.user?.role === 'ROLE_ADMIN') {
-          setIsAuthenticated(true);
-        } else {
-          // Token invalid or expired. Attempt to execute refresh
-          const refreshToken = localStorage.getItem('admin_refresh_token') || sessionStorage.getItem('admin_refresh_token');
-          if (refreshToken && !configAlwaysRequire) {
-            const refreshResponse = await fetch('/api/auth/refresh', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ refreshToken })
-            });
-            if (refreshResponse.ok) {
-              const refreshData = await refreshResponse.json();
-              
-              // Decide storage mechanism based on where we found the token
-              const isLocal = !!localStorage.getItem('admin_token');
-              const storage = isLocal ? localStorage : sessionStorage;
-
-              storage.setItem('admin_token', refreshData.token);
-              storage.setItem('alex_dev_jwt_token', refreshData.token);
-              if (refreshData.refreshToken) {
-                storage.setItem('admin_refresh_token', refreshData.refreshToken);
-              }
-              setIsAuthenticated(true);
-              return;
-            }
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.valid && data.user?.role === 'ROLE_ADMIN') {
+            setIsAuthenticated(true);
+            return;
           }
-          // Clear session on fail
-          handleLogout();
         }
+        
+        // Token invalid, expired or not ok. Attempt to execute refresh
+        const refreshToken = localStorage.getItem('admin_refresh_token') || sessionStorage.getItem('admin_refresh_token');
+        if (refreshToken && !configAlwaysRequire) {
+          const refreshResponse = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ refreshToken })
+          });
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            
+            // Decide storage mechanism based on where we found the token
+            const isLocal = !!localStorage.getItem('admin_token');
+            const storage = isLocal ? localStorage : sessionStorage;
+
+            storage.setItem('admin_token', refreshData.token);
+            storage.setItem('alex_dev_jwt_token', refreshData.token);
+            if (refreshData.refreshToken) {
+              storage.setItem('admin_refresh_token', refreshData.refreshToken);
+            }
+            setIsAuthenticated(true);
+            return;
+          }
+        }
+        // Clear session on fail
+        handleLogout();
       } catch (error) {
-        console.error('Verification query failed:', error);
+        // Handle transient network issues gracefully
         setIsAuthenticated(false);
       }
     };
@@ -257,16 +262,13 @@ const handleEnterCMS = async () => {
 
 
 
-  // Treat any other path that is not exactly root or admin as root (portfolio view)
-  if (!isCurrentPathAdmin && currentPath !== '/' && currentPath !== '/admin/login') {
-    setTimeout(() => {
-      navigate('/');
-    }, 0);
-    return null;
-  }
-
-  if (currentPath === '/') {
-    return <PortfolioFrontend onEnterCMS={handleEnterCMS} />;
+  // Treat any non-admin route as the live portfolio view without unmounting/reloading
+  if (!isCurrentPathAdmin) {
+    return (
+      <PublicPreviewWrapper>
+        <PortfolioFrontend onEnterCMS={handleEnterCMS} />
+      </PublicPreviewWrapper>
+    );
   }
 
   return (

@@ -272,10 +272,10 @@ function PlanetEarth({ reducedMotion }: { reducedMotion: boolean }) {
   });
 
   return (
-    <group ref={earthRef} position={[2.5, 0.5, 0]}>
+    <group ref={earthRef} position={[1.25, 0.15, -0.1]}>
       {/* Dynamic Earth Sphere */}
       <mesh castShadow receiveShadow>
-        <sphereGeometry args={[1.5, 32, 32]} />
+        <sphereGeometry args={[1.1, 32, 32]} />
         <meshStandardMaterial
           map={earthTexture}
           roughness={0.4}
@@ -287,7 +287,7 @@ function PlanetEarth({ reducedMotion }: { reducedMotion: boolean }) {
 
       {/* Atmospheric Outer Glowing Ring */}
       <mesh>
-        <sphereGeometry args={[1.56, 16, 16]} />
+        <sphereGeometry args={[1.15, 16, 16]} />
         <meshBasicMaterial
           color="#10b981"
           transparent
@@ -299,13 +299,13 @@ function PlanetEarth({ reducedMotion }: { reducedMotion: boolean }) {
 
       {/* Cyber Satellite Wireframe orbit ring */}
       <mesh rotation={[Math.PI / 3, 0, Date.now() * 0.0001]}>
-        <torusGeometry args={[2.2, 0.012, 6, 32]} />
+        <torusGeometry args={[1.45, 0.012, 6, 32]} />
         <meshBasicMaterial color="#10b981" transparent opacity={0.3} />
       </mesh>
 
       {/* Beaming Satellite Signal Nodes */}
-      <mesh position={[2.2, 0, 0]}>
-        <sphereGeometry args={[0.06, 4, 4]} />
+      <mesh position={[1.45, 0, 0]}>
+        <sphereGeometry args={[0.05, 4, 4]} />
         <meshBasicMaterial color="#6ee7b7" />
       </mesh>
     </group>
@@ -346,7 +346,7 @@ function HolographicLaptop({ reducedMotion }: { reducedMotion: boolean }) {
   });
 
   return (
-    <group ref={laptopGroupRef} position={[-2.2, -0.2, 0.5]} scale={0.75}>
+    <group ref={laptopGroupRef} position={[-1.25, -0.2, 0.2]} scale={0.58}>
       
       {/* LAPTOP KEYBOARD BASE */}
       <mesh castShadow receiveShadow position={[0, -0.05, 0]}>
@@ -528,7 +528,7 @@ function CameraMouseController({ reducedMotion }: { reducedMotion: boolean }) {
       mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [reducedMotion]);
 
@@ -540,8 +540,8 @@ function CameraMouseController({ reducedMotion }: { reducedMotion: boolean }) {
       return;
     }
     // Smooth camera target lerp based on mouse position (Parallax effect)
-    const targetX = mouse.current.x * 1.5;
-    const targetY = mouse.current.y * 1.0;
+    const targetX = mouse.current.x * 0.5;
+    const targetY = mouse.current.y * 0.3;
     
     camera.position.x += (targetX - camera.position.x) * 0.05;
     camera.position.y += (targetY - camera.position.y) * 0.05;
@@ -554,10 +554,45 @@ function CameraMouseController({ reducedMotion }: { reducedMotion: boolean }) {
 }
 
 
+// Responsive Scene Container to scale composition based on canvas aspect ratio
+function ResponsiveSceneContainer({ children }: { children: React.ReactNode }) {
+  const { size } = useThree();
+  const aspect = size.width / (size.height || 1);
+
+  const scale = useMemo(() => {
+    if (aspect < 0.75) return 0.62;
+    if (aspect < 0.95) return 0.72;
+    if (aspect < 1.25) return 0.82;
+    if (aspect < 1.5) return 0.90;
+    return 0.95;
+  }, [aspect]);
+
+  return (
+    <group scale={[scale, scale, scale]} position={[0, -0.05, 0]}>
+      {children}
+    </group>
+  );
+}
+
 // --- MAIN 3D HERO CANVAS CONTAINER ---
 
 export default function ThreeDHero({ techString }: { techString?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -568,7 +603,7 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
   }, []);
 
   return (
-    <div className="absolute inset-0 w-full h-full pointer-events-auto" style={{ minHeight: '100%' }}>
+    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-auto" style={{ minHeight: '100%' }}>
       {/* High Performance Suspense Lazy loader fallback wrapper */}
       <Suspense fallback={
         <div className="absolute inset-0 flex items-center justify-center bg-[#030712] z-50">
@@ -581,8 +616,10 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
         </div>
       }>
         <Canvas
+          dpr={[1, 1.5]}
+          frameloop={isInView ? "always" : "never"}
           shadows
-          camera={{ position: [0, 0, 6.5], fov: 50 }}
+          camera={{ position: [0, 0, 7.2], fov: 46 }}
           gl={{ antialias: true, powerPreference: "high-performance" }}
           style={{ width: '100%', height: '100%', display: 'block' }}
           id="react-three-fiber-universe"
@@ -614,27 +651,29 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           {/* Secondary smaller dust particle swarm */}
           <Sparkles count={50} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
 
-          {/* Major components */}
-          <ParticleGalaxy reducedMotion={reducedMotion} />
-          <PlanetEarth reducedMotion={reducedMotion} />
-          <HolographicLaptop reducedMotion={reducedMotion} />
+          {/* Major components wrapped in Responsive Scene Container */}
+          <ResponsiveSceneContainer>
+            <ParticleGalaxy reducedMotion={reducedMotion} />
+            <PlanetEarth reducedMotion={reducedMotion} />
+            <HolographicLaptop reducedMotion={reducedMotion} />
 
-          {/* High-tech HTML floating telemetry display (Responsive billboard) */}
-          <Float speed={reducedMotion ? 0 : 1.8} rotationIntensity={reducedMotion ? 0 : 0.2} floatIntensity={reducedMotion ? 0 : 0.5}>
-            <Html
-              position={[0, 2.2, 0]}
-              center
-              distanceFactor={8}
-              className="pointer-events-none"
-            >
-              <div className="hidden md:flex glass-card border border-emerald-500/20 px-4 py-2.5 rounded-xl items-center gap-3 whitespace-nowrap opacity-90 select-none shadow-xl shadow-emerald-950/25">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <div className="font-mono text-[9px] uppercase tracking-wider text-slate-300">
-                  <span className="text-emerald-400 font-bold">{techString || "JAVA • SPRING BOOT • REACT • MYSQL"}</span>
+            {/* High-tech HTML floating telemetry display (Responsive billboard) */}
+            <Float speed={reducedMotion ? 0 : 1.8} rotationIntensity={reducedMotion ? 0 : 0.2} floatIntensity={reducedMotion ? 0 : 0.5}>
+              <Html
+                position={[0, 2.0, 0]}
+                center
+                distanceFactor={8}
+                className="pointer-events-none"
+              >
+                <div className="hidden md:flex glass-card border border-emerald-500/20 px-4 py-2.5 rounded-xl items-center gap-3 whitespace-nowrap opacity-90 select-none shadow-xl shadow-emerald-950/25">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-slate-300">
+                    <span className="text-emerald-400 font-bold">{techString || "JAVA • SPRING BOOT • REACT • MYSQL"}</span>
+                  </div>
                 </div>
-              </div>
-            </Html>
-          </Float>
+              </Html>
+            </Float>
+          </ResponsiveSceneContainer>
 
           {/* Mouse Parallax Tracking Camera Control */}
           <CameraMouseController reducedMotion={reducedMotion} />

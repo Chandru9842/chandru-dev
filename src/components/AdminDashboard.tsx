@@ -30,6 +30,7 @@ import TechStackPage from './admin/TechStackPage';
 import CodingProfilesPage from './admin/CodingProfilesPage';
 import MediaManagerPage from './admin/MediaManagerPage';
 import ToolsPage from './admin/ToolsPage';
+import PortfolioMetricsPage from './admin/PortfolioMetricsPage';
 import LivePreviewModal from './admin/LivePreviewModal';
 
 // Enterprise Platform Subpages & Modals
@@ -47,7 +48,7 @@ import SEOManagerPage from './admin/SEOManagerPage';
 import { 
   ProjectItem, SkillItem,
   CertificateItem, ExperienceItem, EducationItem, MessageItem, SettingsConfig, SocialLinkItem,
-  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem
+  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem
 } from '../data/cmsMockData';
 
 import Toast, { ToastProps } from './Toast';
@@ -84,6 +85,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>([]);
   const [tools, setTools] = useState<ToolItem[]>([]);
+  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>([]);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
@@ -116,7 +118,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     try {
       const cacheBuster = `t=${Date.now()}`;
       const authHeader = getAuthHeader();
-      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes, toolsRes] = await Promise.all([
+      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes, toolsRes, metricsRes] = await Promise.all([
         fetch(`/api/projects?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/skills?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/certificates?${cacheBuster}`, { headers: authHeader }),
@@ -132,7 +134,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         fetch(`/api/profile?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/footer/social-links?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/coding-profiles?${cacheBuster}`, { headers: authHeader }),
-        fetch(`/api/tools?${cacheBuster}`, { headers: authHeader })
+        fetch(`/api/tools?${cacheBuster}`, { headers: authHeader }),
+        fetch(`/api/portfolio-metrics?${cacheBuster}`, { headers: authHeader })
       ]);
 
       setProjects(await projectsRes.json());
@@ -152,6 +155,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       }
       if (toolsRes.ok) {
         setTools(await toolsRes.json());
+      }
+      if (metricsRes.ok) {
+        setPortfolioMetrics(await metricsRes.json());
       }
       if (profileRes.ok) {
         setProfile(await profileRes.json());
@@ -1130,12 +1136,151 @@ const handleDeleteAchievement = async (id: number) => {
     }
   };
 
+  // Portfolio Metrics CRUD Handlers
+  const handleAddPortfolioMetric = async (metric: Omit<PortfolioMetricItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const res = await fetch('/api/portfolio-metrics', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(metric)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      } else {
+        triggerToast('Failed to add metric', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error adding metric', 'error');
+    }
+  };
+
+  const handleUpdatePortfolioMetric = async (metric: PortfolioMetricItem) => {
+    try {
+      const res = await fetch(`/api/portfolio-metrics/${metric.id}`, {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(metric)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      } else {
+        triggerToast('Failed to update metric', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error updating metric', 'error');
+    }
+  };
+
+  const handleDeletePortfolioMetric = async (id: number) => {
+    try {
+      const res = await fetch(`/api/portfolio-metrics/${id}`, {
+        method: 'DELETE',
+        headers: getJsonHeaders()
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      } else {
+        triggerToast('Failed to delete metric', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error deleting metric', 'error');
+    }
+  };
+
+  const handleBulkDeletePortfolioMetrics = async (ids: number[]) => {
+    try {
+      const res = await fetch('/api/portfolio-metrics/bulk-delete', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ ids })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      }
+    } catch (e) {
+      triggerToast('Error bulk deleting metrics', 'error');
+    }
+  };
+
+  const handleBulkVisibilityPortfolioMetrics = async (ids: number[], visible: boolean) => {
+    try {
+      const res = await fetch('/api/portfolio-metrics/bulk-visibility', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ ids, visible })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      }
+    } catch (e) {
+      triggerToast('Error updating metrics visibility', 'error');
+    }
+  };
+
+  const handleToggleVisibilityPortfolioMetric = async (id: number, visible: boolean) => {
+    try {
+      const res = await fetch(`/api/portfolio-metrics/${id}/visibility`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ visible })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      } else {
+        triggerToast('Failed to toggle visibility', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error toggling visibility', 'error');
+    }
+  };
+
+  const handleReorderPortfolioMetrics = async (orderedMetrics: PortfolioMetricItem[]) => {
+    try {
+      setPortfolioMetrics(orderedMetrics);
+      const res = await fetch('/api/portfolio-metrics/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: orderedMetrics.map((m, idx) => ({ id: m.id, displayOrder: idx + 1 }))
+        })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      }
+    } catch (e) {
+      triggerToast('Error reordering metrics', 'error');
+    }
+  };
+
+  const handleDuplicatePortfolioMetric = async (id: number) => {
+    try {
+      const res = await fetch(`/api/portfolio-metrics/${id}/duplicate`, {
+        method: 'POST',
+        headers: getJsonHeaders()
+      });
+      if (res.ok) {
+        await fetchAllData();
+        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      }
+    } catch (e) {
+      triggerToast('Error duplicating metric', 'error');
+    }
+  };
+
   // Navigation config
   const navItems = [
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
     { name: 'Notification Center', icon: <Bell className="w-4 h-4 text-emerald-400" /> },
     { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
     { name: 'Hero Management', icon: <Palette className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Portfolio Metrics', icon: <BarChart3 className="w-4 h-4 text-emerald-400" /> },
     { name: 'Tech Stack', icon: <Cpu className="w-4 h-4 text-emerald-400" /> },
     { name: 'Profile', icon: <User className="w-4 h-4" /> },
     { name: 'Projects', icon: <BookOpen className="w-4 h-4" /> },
@@ -1397,6 +1542,21 @@ const handleDeleteAchievement = async (id: number) => {
           <HeroManagementPage 
             onTriggerToast={triggerToast}
             onHeroUpdated={fetchAllData}
+          />
+        )}
+
+        {activeTab === 'Portfolio Metrics' && (
+          <PortfolioMetricsPage
+            metrics={portfolioMetrics}
+            onAdd={handleAddPortfolioMetric}
+            onUpdate={handleUpdatePortfolioMetric}
+            onDelete={handleDeletePortfolioMetric}
+            onBulkDelete={handleBulkDeletePortfolioMetrics}
+            onBulkVisibility={handleBulkVisibilityPortfolioMetrics}
+            onToggleVisibility={handleToggleVisibilityPortfolioMetric}
+            onReorder={handleReorderPortfolioMetrics}
+            onDuplicate={handleDuplicatePortfolioMetric}
+            triggerToast={triggerToast}
           />
         )}
 
