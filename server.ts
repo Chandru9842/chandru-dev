@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 import compression from "compression";
 
 import jwt from "jsonwebtoken";
@@ -19,12 +18,23 @@ import {
   initialPortfolioMetrics
 } from "./src/data/cmsMockData";
 
-const PORT = 3000;
-const DB_FILE = path.join(process.cwd(), "src", "data", "db.json");
+const PORT = Number(process.env.PORT) || 3000;
+const DB_PATH_DEFAULT = path.join(process.cwd(), "src", "data", "db.json");
+const DB_FILE = process.env.VERCEL
+  ? path.join("/tmp", "db.json")
+  : DB_PATH_DEFAULT;
 
 // Helper to ensure database is loaded
 function loadDatabase() {
   try {
+    if (process.env.VERCEL && !fs.existsSync(DB_FILE) && fs.existsSync(DB_PATH_DEFAULT)) {
+      try {
+        const seedData = fs.readFileSync(DB_PATH_DEFAULT, "utf-8");
+        fs.writeFileSync(DB_FILE, seedData, "utf-8");
+      } catch (e) {
+        console.warn("Notice: Initializing db fallback in /tmp:", e);
+      }
+    }
     if (fs.existsSync(DB_FILE)) {
       const data = fs.readFileSync(DB_FILE, "utf-8");
       const db = JSON.parse(data);
@@ -477,11 +487,10 @@ function syncProfileActiveResume(db: any) {
   }
 }
 
-async function startServer() {
-  const app = express();
-  app.use(compression()); // Compress all dynamic/static HTTP responses
-  app.use(express.json({ limit: '15mb' }));
-  app.use(express.urlencoded({ limit: '15mb', extended: true }));
+export const app = express();
+app.use(compression()); // Compress all dynamic/static HTTP responses
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
   // --- PERFORMANCE MONITORING MIDDLEWARE ---
   app.use((req, res, next) => {
@@ -5638,7 +5647,9 @@ async function startServer() {
 
   // --- DEV & PRODUCTION BUILD STATIC ROUTING ---
 
+export async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -5660,4 +5671,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

@@ -467,47 +467,11 @@
     ],
     "resumeDownloads": 345,
     "apiMetrics": {
-      "totalRequests": 1849,
+      "totalRequests": 1853,
       "failedRequests": 1,
       "slowRequests": 37,
       "avgResponseTimeMs": 20.82,
       "history": [
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 1.83,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:13:48.004Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.92,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:13:48.074Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.11,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:14:17.969Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.88,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:14:18.043Z"
-        },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
@@ -921,6 +885,42 @@
           "isFailed": false,
           "isSlow": false,
           "timestamp": "2026-07-23T09:25:20.028Z"
+        },
+        {
+          "method": "HEAD",
+          "path": "/api/health",
+          "status": 200,
+          "durationMs": 52.79,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T14:57:43.061Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/health",
+          "status": 200,
+          "durationMs": 6.28,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T14:57:43.074Z"
+        },
+        {
+          "method": "HEAD",
+          "path": "/api/projects",
+          "status": 200,
+          "durationMs": 6.22,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T14:57:58.257Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "durationMs": 12.23,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T14:57:58.274Z"
         }
       ]
     }
@@ -3004,7 +3004,10 @@
       "unread": true,
       "pinned": true,
       "archived": false,
-      "metadata": { "projectId": 101, "slug": "hyperscale-llm" }
+      "metadata": {
+        "projectId": 101,
+        "slug": "hyperscale-llm"
+      }
     },
     {
       "id": "evt-102",
@@ -3027,7 +3030,10 @@
       "unread": true,
       "pinned": false,
       "archived": false,
-      "metadata": { "commitId": "8f3a91c", "deployUrl": "https://ais-dev-jrj5om35wzksb6dj52fr7l-65002592949.asia-southeast1.run.app" }
+      "metadata": {
+        "commitId": "8f3a91c",
+        "deployUrl": "https://ais-dev-jrj5om35wzksb6dj52fr7l-65002592949.asia-southeast1.run.app"
+      }
     },
     {
       "id": "evt-103",
@@ -3050,7 +3056,10 @@
       "unread": true,
       "pinned": true,
       "archived": false,
-      "metadata": { "ip": "198.51.100.42", "location": "Frankfurt, Germany" }
+      "metadata": {
+        "ip": "198.51.100.42",
+        "location": "Frankfurt, Germany"
+      }
     },
     {
       "id": "evt-104",
@@ -3095,7 +3104,10 @@
       "unread": true,
       "pinned": false,
       "archived": false,
-      "metadata": { "recipient": "client@example.com", "subject": "Inquiry Receipt" }
+      "metadata": {
+        "recipient": "client@example.com",
+        "subject": "Inquiry Receipt"
+      }
     },
     {
       "id": "evt-106",
@@ -3294,5 +3306,109 @@
     "pwaEnabled": true,
     "offlineMode": true,
     "highContrastMode": false
-  }
+  },
+  "portfolioMetrics": [
+    {
+      "id": 1,
+      "title": "Page Views",
+      "value": "12,450",
+      "subtitle": "Live Impressions",
+      "icon": "Eye",
+      "iconType": "lucide",
+      "displayOrder": 1,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "emerald",
+      "sourceType": "manual",
+      "tooltip": "Total portfolio page views recorded across user sessions",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Unique Visitors",
+      "value": "4,820",
+      "subtitle": "Distinct Clients",
+      "icon": "Users",
+      "iconType": "lucide",
+      "displayOrder": 2,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "blue",
+      "sourceType": "manual",
+      "tooltip": "Unique visitor footprint verified via client SHA-256 hashes",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "title": "Projects Delivered",
+      "value": "15+",
+      "subtitle": "Production Grade",
+      "icon": "Briefcase",
+      "iconType": "lucide",
+      "displayOrder": 3,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "purple",
+      "sourceType": "manual",
+      "tooltip": "Full-stack enterprise applications built and deployed",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "title": "LeetCode Solved",
+      "value": "350+",
+      "subtitle": "Knight Rating 2150+",
+      "icon": "Code2",
+      "iconType": "lucide",
+      "displayOrder": 4,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "amber",
+      "sourceType": "leetcode_api",
+      "tooltip": "Algorithmic problems solved across Data Structures & Algorithms",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "title": "GitHub Repositories",
+      "value": "28",
+      "subtitle": "Open Source",
+      "icon": "GitBranch",
+      "iconType": "lucide",
+      "displayOrder": 5,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "cyan",
+      "sourceType": "github_api",
+      "tooltip": "Public source control repositories and open-source packages",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "title": "Certifications",
+      "value": "12+",
+      "subtitle": "AWS & Kubernetes",
+      "icon": "Award",
+      "iconType": "lucide",
+      "displayOrder": 6,
+      "visible": true,
+      "animationEnabled": true,
+      "counterAnimationToggle": true,
+      "color": "indigo",
+      "sourceType": "manual",
+      "tooltip": "Verified professional cloud, security, and DevOps certifications",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
+    }
+  ]
 }
