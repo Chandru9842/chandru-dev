@@ -1,0 +1,16 @@
+# Chandru Mohan - Portfolio & CMS
+
+> Professional Full-Stack Systems Architect & Developer Portfolio
+
+## Overview
+- **Name**: Chandru Mohan (Alex Dev)
+- **Role**: Principal Systems Architect & Full-Stack Engineer
+- **Specialties**: Distributed Systems, React, TypeScript, Node.js, Express, Spring Boot, MySQL, Cloud Infrastructure, AI Systems
+- **Live Website**: [https://chandru-dev-lime.vercel.app/](https://chandru-dev-lime.vercel.app/)
+
+## Sections & Highlights
+- **Projects**: [Featured Engineering Projects](https://chandru-dev-lime.vercel.app/#projects)
+- **Skills & Technologies**: [Core Technical Competencies](https://chandru-dev-lime.vercel.app/#skills)
+- **Career & Experience**: [Professional Experience](https://chandru-dev-lime.vercel.app/#experience)
+- **Certifications**: [Cloud & Enterprise Credentials](https://chandru-dev-lime.vercel.app/#certificates)
+- **Contact**: [Get in touch](https://chandru-dev-lime.vercel.app/#contact)

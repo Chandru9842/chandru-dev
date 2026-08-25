@@ -114,7 +114,7 @@ var initialProjects = [
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     gallery: [
       "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
     ],
     createdAt: "2026-01-15T09:00:00Z",
     updatedAt: "2026-04-30T17:30:00Z"
@@ -131,12 +131,12 @@ var initialProjects = [
     isFeatured: true,
     displayOrder: 2,
     skills: ["React", "Node.js", "WebSocket", "TailwindCSS"],
-    imageUrl: "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
     category: "Frontend",
     status: "Maintained",
     videoUrl: "",
     gallery: [
-      "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
     ],
     createdAt: "2025-08-10T10:00:00Z",
     updatedAt: "2025-12-20T18:00:00Z"

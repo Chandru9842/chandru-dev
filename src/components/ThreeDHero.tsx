@@ -54,12 +54,12 @@ function createEarthCanvas(): HTMLCanvasElement {
 
   // City Lights (Glow points inside landmasses)
   ctx.fillStyle = '#6ee7b7';
-  for (let i = 0; i < 350; i++) {
+  const fullImgData = ctx.getImageData(0, 0, 1024, 512).data;
+  for (let i = 0; i < 200; i++) {
     const x = Math.floor(Math.random() * 1024);
     const y = Math.floor(Math.random() * 512);
-    // Only draw lights if pixel falls inside land (simplistic mask check)
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
-    if (pixel[1] > 100 && pixel[0] < 100) { // Green continent mask
+    const offset = (y * 1024 + x) * 4;
+    if (fullImgData[offset + 1] > 100 && fullImgData[offset] < 100) { // Green continent mask
       ctx.beginPath();
       ctx.arc(x, y, 0.8 + Math.random() * 1.5, 0, Math.PI * 2);
       ctx.fill();
@@ -602,6 +602,8 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-auto" style={{ minHeight: '100%' }}>
       {/* High Performance Suspense Lazy loader fallback wrapper */}
@@ -616,11 +618,11 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
         </div>
       }>
         <Canvas
-          dpr={[1, 1.5]}
+          dpr={isMobile ? [1, 1] : [1, 1.25]}
           frameloop={isInView ? "always" : "never"}
-          shadows
+          shadows={!isMobile}
           camera={{ position: [0, 0, 7.2], fov: 46 }}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
+          gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
           style={{ width: '100%', height: '100%', display: 'block' }}
           id="react-three-fiber-universe"
         >
@@ -632,11 +634,11 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           
           {/* Main spotlight on planet and laptop */}
           <directionalLight
-            castShadow
+            castShadow={!isMobile}
             position={[4, 5, 3]}
             intensity={1.2}
             color="#d1fae5"
-            shadow-mapSize={[512, 512]}
+            shadow-mapSize={isMobile ? [256, 256] : [512, 512]}
           />
 
           {/* Deep celestial ambient purple side fill */}
@@ -646,10 +648,10 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           <pointLight position={[0, 4, 2]} intensity={0.8} color="#10b981" />
 
           {/* Starfield galaxy background */}
-          <Stars radius={80} depth={50} count={500} factor={4} saturation={0.5} fade speed={1} />
+          <Stars radius={80} depth={50} count={isMobile ? 120 : 400} factor={4} saturation={0.5} fade speed={1} />
           
           {/* Secondary smaller dust particle swarm */}
-          <Sparkles count={50} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
+          <Sparkles count={isMobile ? 20 : 45} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
 
           {/* Major components wrapped in Responsive Scene Container */}
           <ResponsiveSceneContainer>

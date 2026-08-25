@@ -74,7 +74,7 @@ const SocialLinkAnchor = ({ link, className, childrenClassName, onClick, isFoote
       target={openInNewTab ? "_blank" : "_self"}
       rel={openInNewTab ? "noopener noreferrer" : undefined}
       title={tooltipText}
-      aria-label={`${link.platform} profile`}
+      aria-label={tooltipText || `${link.platform} profile`}
       onClick={onClick}
       className={className}
     >
@@ -344,7 +344,8 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1"
-                  title="Live Deployment"
+                  title={`Live Deployment of ${proj.title}`}
+                  aria-label={`Live site for ${proj.title}`}
                 >
                   <Globe className="w-3.5 h-3.5" />
                 </a>
@@ -355,7 +356,8 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-slate-400 hover:text-white transition-colors flex items-center gap-1"
-                  title="Source Repository"
+                  title={`Source Repository for ${proj.title}`}
+                  aria-label={`Source repository for ${proj.title}`}
                 >
                   <Github className="w-3.5 h-3.5" />
                 </a>
@@ -1664,6 +1666,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           )}
         </AnimatePresence>
       </header>
+
+      {/* Main Landmark Container */}
+      <main id="main-content" tabIndex={-1} className="focus:outline-none">
 
       {/* Hero Section */}
       <section className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" id="hero">
@@ -3081,6 +3086,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </motion.section>
 
         </div>
+      </main>
 
       {/* Modern micro-analytics footer */}
       {(!footer || footer.isVisible !== false) && (() => {
