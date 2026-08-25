@@ -499,6 +499,14 @@ app.use(compression()); // Compress all dynamic/static HTTP responses
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
+// Normalize URLs so serverless invocations match both /api/... and /...
+app.use((req, res, next) => {
+  if (req.url && !req.url.startsWith("/api") && !req.url.startsWith("/@") && !req.url.startsWith("/src") && !req.url.startsWith("/assets") && !req.url.includes(".")) {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
+  next();
+});
+
   // --- PERFORMANCE MONITORING MIDDLEWARE ---
   app.use((req, res, next) => {
     if (!req.url.startsWith("/api")) {
