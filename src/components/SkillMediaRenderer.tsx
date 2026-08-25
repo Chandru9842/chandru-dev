@@ -378,6 +378,8 @@ export default function SkillMediaRenderer({
         <img 
           src={src} 
           alt={alt} 
+          loading="lazy"
+          decoding="async"
           className={`${className} ${variant === 'cover' ? 'w-full h-full object-cover rounded-lg' : 'w-[88%] h-[88%] object-contain rounded-lg'}`} 
           referrerPolicy="no-referrer" 
         />

@@ -443,12 +443,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
 
-  // Hero Loading Priority: Defer 3D Canvas initialization slightly until Navbar, Hero text, CTAs, and Analytics load
+  // Hero Loading Priority: Defer 3D Canvas initialization until main thread is completely idle
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setRender3D(true);
-    }, 100);
-    return () => clearTimeout(timer);
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = (window as any).requestIdleCallback(() => {
+        setRender3D(true);
+      }, { timeout: 2000 });
+      return () => (window as any).cancelIdleCallback?.(handle);
+    } else {
+      const timer = setTimeout(() => {
+        setRender3D(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   // Tablet Navigation state & ref for horizontal drag and auto-centering
@@ -2268,6 +2275,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         href={p.profileUrl}
                         target={p.openInNewTab !== false ? "_blank" : "_self"}
                         rel="noopener noreferrer"
+                        aria-label={`Visit ${p.displayName || p.platformType || 'Coding'} Profile of ${p.username}`}
                         className="w-full py-2 sm:py-2.5 bg-white/[0.02] hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.04] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/10"
                       >
                         <span>Visit Profile</span>
@@ -2691,7 +2699,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       <span>{cert.issuingOrganization}</span>
                     </div>
 
-                    <h4 className="text-sm font-bold text-white">{cert.name}</h4>
+                    <h3 className="text-sm font-bold text-white">{cert.name}</h3>
                     
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-mono text-slate-500">
                       <span>Issued: {cert.issueDate}</span>
