@@ -440,8 +440,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile, { passive: true });
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Hero Loading Priority: Defer 3D Canvas initialization until main thread is completely idle
   useEffect(() => {
@@ -1857,21 +1867,43 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           </div>
 
-          {/* Right Column: 3D Canvas Universe (Side-by-side on desktop, no text overlap!) */}
+          {/* Right Column: 3D Canvas Universe / Mobile Celestial Visualizer */}
           <div className="lg:col-span-5 xl:col-span-6 w-full h-[280px] sm:h-[340px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center my-2 lg:my-0 shadow-2xl shadow-emerald-500/5">
             <CanvasErrorBoundary>
               <React.Suspense fallback={
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
                   <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing 3D Universe...</p>
+                  <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing Universe...</p>
                 </div>
               }>
-                {render3D ? (
+                {render3D && !isMobileScreen ? (
                   <ThreeDHero techString={techString} />
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-                    <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
-                    <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing 3D Universe...</p>
+                  <div className="relative w-full h-full flex flex-col items-center justify-center p-6 select-none overflow-hidden">
+                    {/* Background ambient glow */}
+                    <div className="absolute w-44 h-44 rounded-full bg-emerald-500/10 blur-2xl animate-pulse" />
+                    
+                    {/* Outer rotating orbit ring */}
+                    <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-emerald-500/20 flex items-center justify-center animate-[spin_20s_linear_infinite]">
+                      {/* Orbital node */}
+                      <div className="absolute -top-1.5 w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399]" />
+                      
+                      {/* Middle counter-rotating ring */}
+                      <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-dashed border-emerald-400/30 flex items-center justify-center animate-[spin_15s_linear_infinite_reverse]">
+                        {/* Inner core glowing planet */}
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-slate-950 via-emerald-950/80 to-emerald-500/20 border border-emerald-400/40 shadow-[0_0_30px_rgba(16,185,129,0.25)] flex items-center justify-center">
+                          <Sparkles className="w-8 h-8 text-emerald-400 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Futuristic telemetry pill */}
+                    <div className="mt-5 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-950/40 flex items-center gap-2 z-10">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
+                        {techString || "JAVA • SPRING BOOT • REACT • MYSQL"}
+                      </span>
+                    </div>
                   </div>
                 )}
               </React.Suspense>
