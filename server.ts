@@ -569,7 +569,16 @@ app.use((req, res, next) => {
     next();
   });
 
-  // --- HEALTH MONITORS ---
+  // --- ROOT & HEALTH MONITORS ---
+  app.get(["/", "/api"], (req, res) => {
+    res.json({
+      name: "Portfolio CMS API",
+      status: "ONLINE",
+      version: "1.0.0",
+      timestamp: new Date().toISOString()
+    });
+  });
+
   app.get(["/health", "/api/health"], (req, res) => {
     const uptime = process.uptime();
     const db = loadDatabase();
