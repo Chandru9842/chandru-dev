@@ -252,16 +252,11 @@
     }
   ],
   "analytics": {
-    "pageViews": 12898,
-    "uniqueVisitors": 4145,
+    "pageViews": 13622,
+    "uniqueVisitors": 4146,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
     "viewsHistory": [
-      {
-        "date": "Jul 04",
-        "views": 1450,
-        "visitors": 420
-      },
       {
         "date": "Jul 05",
         "views": 1100,
@@ -306,33 +301,38 @@
         "date": "Jul 23",
         "views": 26,
         "visitors": 0
+      },
+      {
+        "date": "Aug 25",
+        "views": 724,
+        "visitors": 1
       }
     ],
     "referrals": [
       {
         "source": "GitHub",
         "count": 4890,
-        "percentage": 37.9
+        "percentage": 35.9
+      },
+      {
+        "source": "Direct Traffic",
+        "count": 3249,
+        "percentage": 23.9
       },
       {
         "source": "LinkedIn",
         "count": 3240,
-        "percentage": 25.1
-      },
-      {
-        "source": "Direct Traffic",
-        "count": 2525,
-        "percentage": 19.6
+        "percentage": 23.8
       },
       {
         "source": "Google / SEO",
         "count": 1543,
-        "percentage": 12
+        "percentage": 11.3
       },
       {
         "source": "Twitter / X",
         "count": 700,
-        "percentage": 5.4
+        "percentage": 5.1
       }
     ],
     "countries": [
@@ -342,7 +342,7 @@
       },
       {
         "country": "India",
-        "count": 2568
+        "count": 3292
       },
       {
         "country": "Germany",
@@ -376,7 +376,7 @@
       },
       {
         "browser": "Edge",
-        "count": 710
+        "count": 1434
       },
       {
         "browser": "Other",
@@ -386,7 +386,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 9038
+        "count": 9762
       },
       {
         "device": "Mobile",
@@ -467,352 +467,19 @@
     ],
     "resumeDownloads": 345,
     "apiMetrics": {
-      "totalRequests": 1853,
+      "totalRequests": 6406,
       "failedRequests": 1,
-      "slowRequests": 37,
-      "avgResponseTimeMs": 20.82,
+      "slowRequests": 58,
+      "avgResponseTimeMs": 17.78,
       "history": [
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.9,
+          "durationMs": 3.2,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:14:47.956Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:14:48.055Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.8,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:15:18.048Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.83,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:15:18.120Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.07,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:15:47.993Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.85,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:15:48.209Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 4.71,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:17.973Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 4.5,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:18.114Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.21,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.359Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 2.31,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.365Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/portfolio-combined",
-          "status": 200,
-          "durationMs": 2.12,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.370Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.32,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.431Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.28,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.458Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 20.11,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.494Z"
-        },
-        {
-          "method": "POST",
-          "path": "/api/analytics/track",
-          "status": 200,
-          "durationMs": 3.35,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.501Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.3,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:19.918Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.5,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:49.987Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:16:50.057Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 3.01,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:17:19.973Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.63,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:17:20.060Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.47,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:17:49.963Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.43,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:17:50.038Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 1.97,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:18:19.976Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.01,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:18:20.049Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.29,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:18:50.012Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.17,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:18:50.083Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.81,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:19:19.993Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 2.06,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:19:20.069Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 1.88,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:20:02.117Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.19,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:20:02.208Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.26,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:21:02.043Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:21:02.170Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 1.85,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:03.573Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.98,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:03.649Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.93,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:36.621Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.02,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:37.776Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/login-config",
-          "status": 200,
-          "durationMs": 2.1,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:49.268Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.93,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:22:49.339Z"
+          "timestamp": "2026-08-25T15:25:08.007Z"
         },
         {
           "method": "GET",
@@ -821,106 +488,439 @@
           "durationMs": 2.03,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:23:20.044Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.9,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:23:20.123Z"
+          "timestamp": "2026-08-25T15:25:08.050Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 2.31,
+          "durationMs": 2.22,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:23:49.951Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 0.93,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:23:50.028Z"
+          "timestamp": "2026-08-25T15:25:08.080Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 3.03,
+          "durationMs": 1.99,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:25:02.049Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/auth/verify",
-          "status": 200,
-          "durationMs": 1.14,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-07-23T09:25:02.127Z"
+          "timestamp": "2026-08-25T15:25:08.102Z"
         },
         {
           "method": "GET",
           "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.85,
+          "durationMs": 1.75,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:25:19.947Z"
+          "timestamp": "2026-08-25T15:25:08.605Z"
         },
         {
           "method": "GET",
-          "path": "/api/auth/verify",
+          "path": "/api/auth/login-config",
           "status": 200,
-          "durationMs": 1.65,
+          "durationMs": 3.57,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-07-23T09:25:20.028Z"
+          "timestamp": "2026-08-25T15:25:08.612Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.4,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:08.620Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.02,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:08.630Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 14.6,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.079Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.17,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.085Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.11,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.094Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.17,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.104Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.03,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.536Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.79,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.541Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.56,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.550Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.45,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.559Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.98,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.990Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.8,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:09.997Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.07,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.004Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 6.95,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.019Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.57,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.525Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.34,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.533Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.33,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.539Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.95,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:10.551Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.86,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.085Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.23,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.106Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 5.6,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.137Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.03,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.181Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.96,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.841Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.66,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.850Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.04,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.858Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.97,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:11.870Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.15,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.413Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.84,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.421Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.17,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.429Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.43,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.440Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.68,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.959Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.83,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.965Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.72,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.972Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.96,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:12.983Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.18,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:13.685Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.06,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:13.811Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.57,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:13.821Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 8.58,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:13.867Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 2.14,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:14.551Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.92,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:14.650Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 1.76,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:14.657Z"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/login-config",
+          "status": 200,
+          "durationMs": 3.77,
+          "isFailed": false,
+          "isSlow": false,
+          "timestamp": "2026-08-25T15:25:14.673Z"
         },
         {
           "method": "HEAD",
-          "path": "/api/health",
+          "path": "/api/portfolio-combined",
           "status": 200,
-          "durationMs": 52.79,
+          "durationMs": 48.67,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-08-25T14:57:43.061Z"
+          "timestamp": "2026-08-25T15:35:02.416Z"
         },
         {
           "method": "GET",
-          "path": "/api/health",
+          "path": "/api/portfolio-combined",
           "status": 200,
-          "durationMs": 6.28,
+          "durationMs": 30.42,
           "isFailed": false,
           "isSlow": false,
-          "timestamp": "2026-08-25T14:57:43.074Z"
-        },
-        {
-          "method": "HEAD",
-          "path": "/api/projects",
-          "status": 200,
-          "durationMs": 6.22,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-08-25T14:57:58.257Z"
-        },
-        {
-          "method": "GET",
-          "path": "/api/projects",
-          "status": 200,
-          "durationMs": 12.23,
-          "isFailed": false,
-          "isSlow": false,
-          "timestamp": "2026-08-25T14:57:58.274Z"
+          "timestamp": "2026-08-25T15:35:02.455Z"
         }
       ]
     }

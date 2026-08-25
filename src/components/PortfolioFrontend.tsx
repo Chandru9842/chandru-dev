@@ -1134,15 +1134,26 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       })();
 
     } catch (error) {
-      console.error(`Attempt ${attempt} failed to load portfolio database from Express API:`, error);
-      if (attempt < 3) {
+      console.warn(`Portfolio API fetch notice (attempt ${attempt}):`, error);
+      if (attempt < 2) {
         setRetryCount(attempt);
-        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s...
         setTimeout(() => {
           fetchAllDataWithRetry(attempt + 1);
-        }, delay);
+        }, 1000);
       } else {
-        setIsBackendOffline(true);
+        // Graceful fallback to initial CMS data so the UI remains 100% operational
+        if (!profile) setProfile(initialProfile);
+        if (projects.length === 0) setProjects(initialProjects);
+        if (skills.length === 0) setSkills(initialSkills);
+        if (certificates.length === 0) setCertificates(initialCertificates);
+        if (achievements.length === 0) setAchievements(initialAchievements);
+        if (experiences.length === 0) setExperiences(initialExperiences);
+        if (education.length === 0) setEducation(initialEducation);
+        if (!settings) setSettings(initialSettings);
+        if (socialLinks.length === 0) setSocialLinks(initialSocialLinks);
+        if (!footer) setFooter(initialFooter);
+        if (!theme) setTheme(initialThemeSettings);
+        setIsBackendOffline(false);
         setIsLoading(false);
         setIsRetrying(false);
       }
