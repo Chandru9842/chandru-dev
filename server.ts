@@ -4100,15 +4100,131 @@ app.get(["/health", "/api/health"], (req, res) => {
   });
 
   // --- RESUME & CV MANAGEMENT ENDPOINTS ---
-  app.get("/api/resume/:id/file", (req, res) => {
-    const db = loadDatabase();
-    const id = parseInt(req.params.id);
-    const resume = (db.resumes || []).find((r: any) => r.id === id);
-    if (!resume) {
-      return res.status(404).send("Resume not found");
+  function escapePdfText(text: string): string {
+    return String(text || '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  }
+
+  function generateMinimalResumePdf(db: any): Buffer {
+    const profile = db.profile || {};
+    const name = profile.fullName || profile.displayName || "Chandru Mohan";
+    const title = profile.title || profile.heroTitle || "Principal Systems Architect / Full Stack Developer";
+    const email = profile.email || "chandrumohan550@gmail.com";
+    const phone = profile.phone || profile.phoneNumber || "9655384140";
+    const location = profile.location || "San Francisco, California / Bengaluru, India";
+    
+    const contentLines: string[] = [];
+    contentLines.push(`${title}`);
+    contentLines.push(`Email: ${email} | Phone: ${phone} | Location: ${location}`);
+    contentLines.push("");
+    contentLines.push("## PROFESSIONAL SUMMARY");
+    const bio = profile.shortBio || profile.aboutDescription || "High-throughput systems developer specializing in microservices, real-time architectures, React, and scalable cloud systems.";
+    contentLines.push(bio);
+    contentLines.push("");
+    
+    // Skills
+    if (Array.isArray(db.skills) && db.skills.length > 0) {
+      contentLines.push("## TECHNICAL SKILLS");
+      const skillList = db.skills.slice(0, 14).map((s: any) => s.name).join(", ");
+      contentLines.push(skillList);
+      contentLines.push("");
     }
     
-    let fileUrl = resume.fileUrl || "";
+    // Experience
+    if (Array.isArray(db.experiences) && db.experiences.length > 0) {
+      contentLines.push("## PROFESSIONAL EXPERIENCE");
+      db.experiences.slice(0, 3).forEach((exp: any) => {
+        contentLines.push(`${exp.role || exp.title} - ${exp.company} (${exp.startDate || ''} - ${exp.endDate || 'Present'})`);
+        if (exp.description) contentLines.push(exp.description.substring(0, 110) + "...");
+      });
+      contentLines.push("");
+    }
+    
+    // Projects
+    if (Array.isArray(db.projects) && db.projects.length > 0) {
+      contentLines.push("## KEY PROJECTS");
+      db.projects.slice(0, 3).forEach((proj: any) => {
+        contentLines.push(`${proj.title} - ${(proj.skills || []).slice(0, 4).join(', ')}`);
+        if (proj.description) contentLines.push(proj.description.substring(0, 110) + "...");
+      });
+      contentLines.push("");
+    }
+    
+    // Education
+    if (Array.isArray(db.education) && db.education.length > 0) {
+      contentLines.push("## EDUCATION");
+      db.education.slice(0, 2).forEach((edu: any) => {
+        contentLines.push(`${edu.degree || edu.fieldOfStudy || 'Bachelor of Engineering'} - ${edu.institution || edu.school}`);
+      });
+    }
+
+    // Construct valid PDF document structure
+    const objects: string[] = [];
+    objects.push('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj');
+    objects.push('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj');
+    objects.push('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>\nendobj');
+
+    let streamContent = 'BT\n';
+    streamContent += '/F2 18 Tf\n50 740 Td\n(' + escapePdfText(name) + ') Tj\n';
+    streamContent += '/F1 10 Tf\n0 -18 Td\n';
+
+    for (const line of contentLines) {
+      if (line.startsWith('## ')) {
+        streamContent += `0 -18 Td\n/F2 12 Tf\n(${escapePdfText(line.replace('## ', ''))}) Tj\n/F1 9.5 Tf\n0 -14 Td\n`;
+      } else if (line.trim() === '') {
+        streamContent += '0 -7 Td\n';
+      } else {
+        const maxLen = 80;
+        const chunks = line.match(new RegExp('.{1,' + maxLen + '}', 'g')) || [line];
+        for (const chunk of chunks) {
+          streamContent += `(${escapePdfText(chunk)}) Tj\n0 -13 Td\n`;
+        }
+      }
+    }
+    streamContent += 'ET';
+
+    const streamLength = Buffer.byteLength(streamContent, 'utf-8');
+    objects.push(`4 0 obj\n<< /Length ${streamLength} >>\nstream\n${streamContent}\nendstream\nendobj`);
+    objects.push('5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj');
+    objects.push('6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj');
+
+    let pdf = '%PDF-1.4\n';
+    const xrefOffsets: number[] = [0];
+
+    for (const obj of objects) {
+      xrefOffsets.push(Buffer.byteLength(pdf, 'utf-8'));
+      pdf += obj + '\n';
+    }
+
+    const xrefStart = Buffer.byteLength(pdf, 'utf-8');
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    for (let i = 1; i <= objects.length; i++) {
+      const offset = xrefOffsets[i].toString().padStart(10, '0');
+      pdf += `${offset} 00000 n \n`;
+    }
+
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+    return Buffer.from(pdf, 'utf-8');
+  }
+
+  async function serveResumeFile(req: express.Request, res: express.Response, isDownload: boolean) {
+    const db = loadDatabase();
+    const id = req.params.id ? parseInt(req.params.id) : (req.query.id ? parseInt(String(req.query.id)) : null);
+    const requestedUrl = req.query.url ? String(req.query.url) : null;
+    const requestedFileName = req.query.fileName ? String(req.query.fileName) : null;
+
+    let resume: any = null;
+    if (id) {
+      resume = (db.resumes || []).find((r: any) => r.id === id);
+    } else {
+      resume = (db.resumes || []).find((r: any) => r.isActive) || (db.resumes && db.resumes[0]) || null;
+    }
+
+    const profile = db.profile || {};
+    const candidateName = (profile.fullName || profile.displayName || "Chandru_Mohan").replace(/\s+/g, '_');
+    const fileName = requestedFileName || (resume?.fileName) || `${candidateName}_Resume.pdf`;
+    let fileUrl = requestedUrl || (resume?.fileUrl) || (profile.resumeUrl) || "";
+
+    // 1. If base64 data URI
     if (fileUrl.startsWith("data:")) {
       try {
         const commaIndex = fileUrl.indexOf(",");
@@ -4119,16 +4235,74 @@ app.get(["/health", "/api/health"], (req, res) => {
           const contentType = mimeMatch ? mimeMatch[1] : "application/pdf";
           const buffer = Buffer.from(base64Data, 'base64');
           res.setHeader('Content-Type', contentType);
-          res.setHeader('Content-Disposition', `inline; filename="${resume.fileName || 'resume.pdf'}"`);
+          res.setHeader('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${fileName}"`);
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
           return res.send(buffer);
         }
       } catch (err) {
         console.error("Error serving base64 resume:", err);
       }
     }
-    
-    res.redirect(fileUrl);
-  });
+
+    // 2. If it's a remote URL (Google Drive, AWS, Cloudinary, dummy.pdf, etc.)
+    if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+      let fetchUrl = fileUrl;
+      if (fileUrl.includes("drive.google.com/file/d/")) {
+        const match = fileUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          fetchUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        }
+      } else if (fileUrl.includes("drive.google.com/open?id=")) {
+        const match = fileUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          fetchUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        }
+      }
+
+      try {
+        const abortController = new AbortController();
+        const timeoutId = setTimeout(() => abortController.abort(), 6000);
+        const response = await fetch(fetchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
+          signal: abortController.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const arrayBuf = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuf);
+          const contentType = response.headers.get('content-type') || 'application/pdf';
+          
+          res.setHeader('Content-Type', contentType.includes('pdf') ? 'application/pdf' : contentType);
+          res.setHeader('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${fileName}"`);
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          return res.send(buffer);
+        }
+      } catch (fetchErr) {
+        console.warn("Could not fetch remote resume URL, falling back to generated PDF:", fetchErr);
+      }
+    }
+
+    // 3. Fallback: Generate valid professional PDF on the fly
+    try {
+      const pdfBuffer = generateMinimalResumePdf(db);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${fileName}"`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.send(pdfBuffer);
+    } catch (genErr) {
+      console.error("Error generating resume fallback PDF:", genErr);
+      return res.status(500).json({ error: "Failed to download resume" });
+    }
+  }
+
+  app.get("/api/resume/download", (req, res) => serveResumeFile(req, res, true));
+  app.get("/api/resume/view", (req, res) => serveResumeFile(req, res, false));
+  app.get("/api/resume/:id/download", (req, res) => serveResumeFile(req, res, true));
+  app.get("/api/resume/:id/file", (req, res) => serveResumeFile(req, res, false));
+  app.get("/api/download-file", (req, res) => serveResumeFile(req, res, true));
 
   app.get("/api/resume", (req, res) => {
     const db = loadDatabase();

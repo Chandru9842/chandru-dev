@@ -935,26 +935,31 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     }
   };
 
-  const handleViewResume = async (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
+  const handleViewResume = (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
     if (!isValidResumeUrl(profile?.resumeUrl)) return;
     trackClick(trackingKey, trackingLabel);
-    // Open resume URL directly in a new browser tab for viewing
-    window.open(profile.resumeUrl, '_blank', 'noopener,noreferrer');
+    
+    // Open in new tab: if valid direct URL use it, otherwise use backend view endpoint
+    const targetUrl = profile?.resumeUrl || '/api/resume/view';
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleDownloadResume = async (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
     if (!isValidResumeUrl(profile?.resumeUrl)) return;
     trackClick(trackingKey, trackingLabel);
-    const url = profile.resumeUrl;
-    const fileName = activeResume?.fileName || 'Chandru_Mohan_Resume.pdf';
+    trackResumeDownload();
+
+    const candidateName = (profile?.fullName || profile?.displayName || 'Chandru_Mohan').replace(/\s+/g, '_');
+    const fileName = activeResume?.fileName || `${candidateName}_Resume.pdf`;
+    const backendDownloadUrl = `/api/resume/download?fileName=${encodeURIComponent(fileName)}&url=${encodeURIComponent(profile?.resumeUrl || '')}&t=${Date.now()}`;
 
     try {
-      // Attempt fetch + blob approach to force real download
-      const response = await fetch(url, { mode: 'cors' });
-      if (response.ok) {
-        const blob = await response.blob();
+      // 1. Fetch via our same-origin backend download endpoint which always returns attachment headers
+      const res = await fetch(backendDownloadUrl);
+      if (res.ok) {
+        const blob = await res.blob();
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = blobUrl;
@@ -963,35 +968,27 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        trackResumeDownload();
-        setFeedbackToast('✅ CV resume downloaded successfully!');
-        setTimeout(() => setFeedbackToast(null), 3000);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+        
+        setFeedbackToast('✅ CV Resume downloaded successfully!');
+        setTimeout(() => setFeedbackToast(null), 3500);
         return;
       }
     } catch (err) {
-      console.warn("Blob download not supported for this URL, using fallback:", err);
+      console.warn("Direct blob fetch fallback:", err);
     }
 
-    // Fallback: use a hidden anchor with download attribute to force download
-    try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      trackResumeDownload();
-      setFeedbackToast('✅ CV resume download started!');
-      setTimeout(() => setFeedbackToast(null), 3000);
-    } catch (fallbackErr) {
-      console.error("Error downloading resume:", fallbackErr);
-      // Last resort: open in new tab
-      window.open(url, '_blank');
-    }
+    // 2. Direct browser navigation to download endpoint (guarantees browser download dialog)
+    const fallbackLink = document.createElement('a');
+    fallbackLink.href = backendDownloadUrl;
+    fallbackLink.download = fileName;
+    fallbackLink.style.display = 'none';
+    document.body.appendChild(fallbackLink);
+    fallbackLink.click();
+    document.body.removeChild(fallbackLink);
+
+    setFeedbackToast('✅ CV Resume download started!');
+    setTimeout(() => setFeedbackToast(null), 3500);
   };
 
   // Fetch all resources on mount from backend APIs
@@ -2192,13 +2189,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <div className="pt-4 flex flex-wrap gap-3">
                     <a 
                       href={profile?.resumeUrl || '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-5 py-2.5 border border-emerald-500/20 hover:border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer"
-                      onClick={(e) => handleViewResume(e, 'about_resume_btn', 'View Resume from About')}
+                      download={activeResume?.fileName || 'Chandru_Mohan_Resume.pdf'}
+                      className="px-5 py-2.5 border border-emerald-500/20 hover:border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/15"
+                      onClick={(e) => handleDownloadResume(e, 'about_resume_btn', 'Download Resume from About')}
                     >
-                      <FileText className="w-4 h-4" />
-                      <span>{profile?.resumeDownloadText || "Download Resume / Curriculum Vitae"}</span>
+                      <Download className="w-4 h-4" />
+                      <span>{profile?.resumeDownloadText || profile?.downloadCtaText || "Download Resume / Curriculum Vitae"}</span>
                     </a>
                   </div>
                 )}
