@@ -938,41 +938,59 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const handleViewResume = async (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
     if (!isValidResumeUrl(profile?.resumeUrl)) return;
-    try {
-      trackClick(trackingKey, trackingLabel);
-      const url = profile.resumeUrl;
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-    } catch (err) {
-      console.error("Error viewing resume:", err);
-      window.open(profile?.resumeUrl || '#', '_blank');
-    }
+    trackClick(trackingKey, trackingLabel);
+    // Open resume URL directly in a new browser tab for viewing
+    window.open(profile.resumeUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleDownloadResume = async (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
     if (!isValidResumeUrl(profile?.resumeUrl)) return;
+    trackClick(trackingKey, trackingLabel);
+    const url = profile.resumeUrl;
+    const fileName = activeResume?.fileName || 'Chandru_Mohan_Resume.pdf';
+
     try {
-      trackClick(trackingKey, trackingLabel);
-      const url = profile.resumeUrl;
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      // Attempt fetch + blob approach to force real download
+      const response = await fetch(url, { mode: 'cors' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        trackResumeDownload();
+        setFeedbackToast('✅ CV resume downloaded successfully!');
+        setTimeout(() => setFeedbackToast(null), 3000);
+        return;
+      }
+    } catch (err) {
+      console.warn("Blob download not supported for this URL, using fallback:", err);
+    }
+
+    // Fallback: use a hidden anchor with download attribute to force download
+    try {
       const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = activeResume?.fileName || 'resume.pdf';
+      link.href = url;
+      link.download = fileName;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
       trackResumeDownload();
-      setFeedbackToast('CV resume downloaded successfully!');
+      setFeedbackToast('✅ CV resume download started!');
       setTimeout(() => setFeedbackToast(null), 3000);
-    } catch (err) {
-      console.error("Error downloading resume:", err);
-      window.open(profile?.resumeUrl || '#', '_blank');
+    } catch (fallbackErr) {
+      console.error("Error downloading resume:", fallbackErr);
+      // Last resort: open in new tab
+      window.open(url, '_blank');
     }
   };
 

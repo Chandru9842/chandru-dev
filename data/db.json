@@ -381,8 +381,8 @@
     }
   ],
   "analytics": {
-    "pageViews": 13745,
-    "uniqueVisitors": 4165,
+    "pageViews": 13749,
+    "uniqueVisitors": 4166,
     "averageSessionSec": 184,
     "contactConversionRate": 0.3,
     "viewsHistory": [
@@ -433,8 +433,8 @@
       },
       {
         "date": "Aug 26",
-        "views": 114,
-        "visitors": 19
+        "views": 118,
+        "visitors": 20
       }
     ],
     "referrals": [
@@ -445,7 +445,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 3363,
+        "count": 3367,
         "percentage": 24.5
       },
       {
@@ -471,7 +471,7 @@
       },
       {
         "country": "India",
-        "count": 3406
+        "count": 3410
       },
       {
         "country": "Germany",
@@ -493,7 +493,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7898
+        "count": 7900
       },
       {
         "browser": "Safari",
@@ -505,7 +505,7 @@
       },
       {
         "browser": "Edge",
-        "count": 1548
+        "count": 1550
       },
       {
         "browser": "Other",
@@ -515,7 +515,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 9876
+        "count": 9880
       },
       {
         "device": "Mobile",
@@ -581,7 +581,7 @@
       {
         "elementId": "resume_view_hero",
         "label": "View Resume",
-        "count": 1
+        "count": 3
       },
       {
         "elementId": "social_herodock_discord",
@@ -596,6 +596,11 @@
       {
         "elementId": "explore_btn_hero",
         "label": "Explore Projects Click",
+        "count": 1
+      },
+      {
+        "elementId": "resume_download_hero",
+        "label": "Download Resume",
         "count": 1
       }
     ],
