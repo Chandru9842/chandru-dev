@@ -35,10 +35,13 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
 
   // Filter lists
   const filteredCerts = useMemo(() => {
-    return certificates.filter(c => 
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.issuingOrganization.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.credentialId.toLowerCase().includes(searchQuery.toLowerCase())
+    const list = Array.isArray(certificates) ? certificates : [];
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(c => 
+      (c?.name || '').toLowerCase().includes(q) ||
+      (c?.issuingOrganization || '').toLowerCase().includes(q) ||
+      (c?.credentialId || '').toLowerCase().includes(q)
     );
   }, [certificates, searchQuery]);
 

@@ -269,13 +269,14 @@ export default function PortfolioMetricsPage({
 
   // Filter & Sort
   const filteredMetrics = useMemo(() => {
-    return metrics
+    const q = searchQuery.toLowerCase();
+    return (Array.isArray(metrics) ? metrics : [])
       .filter(metric => {
         const matchesSearch = 
-          metric.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          metric.value.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (metric.subtitle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (metric.tooltip || '').toLowerCase().includes(searchQuery.toLowerCase());
+          (metric?.title || '').toLowerCase().includes(q) ||
+          (metric?.value || '').toLowerCase().includes(q) ||
+          (metric?.subtitle || '').toLowerCase().includes(q) ||
+          (metric?.tooltip || '').toLowerCase().includes(q);
 
         const matchesSource = sourceFilter === 'all' || metric.sourceType === sourceFilter;
         const matchesColor = colorFilter === 'all' || metric.color === colorFilter;

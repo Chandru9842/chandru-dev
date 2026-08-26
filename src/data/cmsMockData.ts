@@ -62,7 +62,7 @@ export interface ToolItem {
   category: string;
   description: string;
   officialWebsite?: string;
-  logoType: 'upload' | 'url' | 'icon' | 'svg';
+  logoType: 'upload' | 'url' | 'icon' | 'svg' | 'media';
   logoUrl?: string;
   customSvg?: string;
   iconLibrary?: 'lucide' | 'simple' | 'fontawesome';

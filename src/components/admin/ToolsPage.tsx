@@ -4,9 +4,10 @@ import {
   Plus, Search, Edit3, Trash2, Copy, Eye, EyeOff, Star, ArrowUp, ArrowDown, 
   ExternalLink, Code2, Upload, Link as LinkIcon, Palette, Wrench, Check, X, 
   Sparkles, Layers, Sliders, FileCode, Atom, Server, Database, Box, Cloud, 
-  GitBranch, Send, Figma, Terminal, Cpu, Shield, Globe, RefreshCw
+  GitBranch, Send, Figma, Terminal, Cpu, Shield, Globe, RefreshCw, Folder
 } from 'lucide-react';
 import { ToolItem } from '../../data/cmsMockData';
+import MediaLibraryModal from './MediaLibraryModal';
 
 interface ToolsPageProps {
   tools: ToolItem[];
@@ -153,6 +154,7 @@ export default function ToolsPage({
   });
 
   const [saving, setSaving] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
 
   // Extract list of all unique categories (defaults + existing items)
   const allCategories = Array.from(
@@ -160,12 +162,12 @@ export default function ToolsPage({
   );
 
   // Filter tools
-  const filteredTools = tools.filter(tool => {
+  const filteredTools = (Array.isArray(tools) ? tools : []).filter(tool => {
     const matchesSearch = 
-      tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tool.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tool.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || tool.category === selectedCategory;
+      (tool?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tool?.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tool?.category || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || tool?.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -764,10 +766,11 @@ export default function ToolsPage({
                     </div>
 
                     {/* Logo Type Selector */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {[
-                        { id: 'icon', label: 'Lucide Icon', icon: Code2 },
+                        { id: 'media', label: 'Media Manager', icon: Folder },
                         { id: 'upload', label: 'Upload File', icon: Upload },
+                        { id: 'icon', label: 'Lucide Icon', icon: Code2 },
                         { id: 'url', label: 'Paste URL', icon: LinkIcon },
                         { id: 'svg', label: 'Custom SVG', icon: FileCode }
                       ].map((opt) => {
@@ -777,10 +780,15 @@ export default function ToolsPage({
                           <button
                             key={opt.id}
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, logoType: opt.id as any }))}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, logoType: opt.id as any }));
+                              if (opt.id === 'media') {
+                                setIsMediaModalOpen(true);
+                              }
+                            }}
                             className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 text-[11px] font-bold cursor-pointer transition ${
                               active 
-                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' 
+                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm' 
                                 : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
                             }`}
                           >
@@ -790,6 +798,42 @@ export default function ToolsPage({
                         );
                       })}
                     </div>
+
+                    {/* Option 0: Media Manager Picker */}
+                    {formData.logoType === 'media' && (
+                      <div className="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                        {formData.logoUrl ? (
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-800 p-2 flex items-center justify-center overflow-hidden">
+                              <img src={formData.logoUrl} alt="Selected Logo" className="w-full h-full object-contain" />
+                            </div>
+                            <div className="text-xs font-mono text-emerald-400 font-bold truncate max-w-xs">
+                              Selected: {formData.logoUrl.split('/').pop() || 'Media Asset'}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsMediaModalOpen(true)}
+                              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Folder className="w-4 h-4" />
+                              Change Asset from Media Manager
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 py-2">
+                            <p className="text-xs text-slate-400 font-mono">No asset selected from Media Manager yet.</p>
+                            <button
+                              type="button"
+                              onClick={() => setIsMediaModalOpen(true)}
+                              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold inline-flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/10"
+                            >
+                              <Folder className="w-4 h-4" />
+                              Open Media Manager
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Option 1: Icon Selector */}
                     {formData.logoType === 'icon' && (
@@ -1075,6 +1119,21 @@ export default function ToolsPage({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Centralized Media Library Modal for Tool Logos */}
+      <MediaLibraryModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelectMedia={(media) => {
+          setFormData(prev => ({
+            ...prev,
+            logoType: 'media',
+            logoUrl: media.url
+          }));
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Tool Logo from Centralized Media Library"
+      />
     </div>
   );
 }

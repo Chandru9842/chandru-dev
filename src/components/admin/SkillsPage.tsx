@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   Plus, Edit2, Trash2, Search, ArrowLeft, ArrowRight, AlertCircle, 
   Check, Loader2, Cpu, Layout, Database, Terminal, ShieldCheck, Sliders,
   Palette, Layers, Globe, Smartphone, Network, Braces, Cloud, Lock, Settings,
   Activity, Sparkles, Code2, ArrowUp, ArrowDown, ListFilter, RotateCcw,
-  Eye, EyeOff, Upload
+  Eye, EyeOff, Upload, Folder
 } from 'lucide-react';
 import { SkillItem } from '../../data/cmsMockData';
 import SkillMediaRenderer from '../SkillMediaRenderer';
+import MediaLibraryModal from './MediaLibraryModal';
 
 interface SkillsPageProps {
   skills: SkillItem[];
@@ -48,9 +49,11 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
   const [isCustomCategoryActive, setIsCustomCategoryActive] = useState(false);
   const [customColor, setCustomColor] = useState('#10b981');
 
-  // Icon upload state
+  // Icon upload & Media Library state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Validation & async submit
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -175,15 +178,15 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
 
   // Filter & Sort skills dynamically
   const filteredSkills = useMemo(() => {
-    let list = [...skills];
+    let list = Array.isArray(skills) ? [...skills] : [];
 
     // 1. Search Query filter (matches Name, Category, or Description)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(s => 
-        s.name.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q) ||
-        (s.description && s.description.toLowerCase().includes(q))
+        (s?.name || '').toLowerCase().includes(q) ||
+        (s?.category || '').toLowerCase().includes(q) ||
+        ((s?.description || '') && s.description.toLowerCase().includes(q))
       );
     }
 
@@ -573,14 +576,14 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
                       setCustomColor(pc.hex);
                     }}
                     className={`w-9 h-9 rounded-full relative border transition-all ${
-                      color.toLowerCase() === pc.hex.toLowerCase()
+                      (color || '').toLowerCase() === (pc.hex || '').toLowerCase()
                         ? 'ring-2 ring-white/40 border-white scale-110'
                         : 'border-slate-800 hover:scale-105'
                     }`}
                     style={{ backgroundColor: pc.hex }}
                     title={pc.name}
                   >
-                    {color.toLowerCase() === pc.hex.toLowerCase() && (
+                    {(color || '').toLowerCase() === (pc.hex || '').toLowerCase() && (
                       <Check className="w-4 h-4 text-slate-950 absolute inset-0 m-auto stroke-[3]" />
                     )}
                   </button>
@@ -618,14 +621,48 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
 
             {/* Skill Icon Uploader and Management */}
             <div className="bg-slate-950/30 border border-slate-800/60 rounded-xl p-5 space-y-4">
-              <span className="text-xs font-mono font-semibold text-slate-300 flex items-center gap-2">
-                <Upload className="w-4 h-4 text-emerald-400" />
-                Skill Icon (SVG / Multi-format Media / Lottie)
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-mono font-semibold text-slate-300 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-emerald-400" />
+                  Skill Icon (SVG / Multi-format Media / Lottie)
+                </span>
+
+                {/* DUAL OPTIONS: Media Manager vs Local Computer */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMediaModalOpen(true)}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
+                  >
+                    <Folder className="w-3.5 h-3.5" />
+                    Select from Media Manager
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-[1.02]"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload from Computer
+                  </button>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Drag and Drop Zone or Preview area */}
                 <div className="border border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 bg-slate-950/50 flex flex-col items-center justify-center text-center gap-3 relative transition-all min-h-[160px]">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/svg+xml,image/png,image/webp,image/jpeg,image/gif,image/avif,video/mp4,video/webm,application/json,.tgs"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        handleIconFileSelected(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
+
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
@@ -633,55 +670,48 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
                     </div>
                   ) : iconUrl ? (
                     <div className="space-y-3 w-full flex flex-col items-center">
-                      <div className="w-16 h-16 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-center p-2 relative overflow-hidden">
+                      <div className="w-16 h-16 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-center p-2 relative overflow-hidden shadow-md">
                         <SkillMediaRenderer src={iconUrl} alt="Preview" />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/svg+xml,image/png,image/webp,image/jpeg,image/gif,image/avif,video/mp4,video/webm,application/json,.tgs';
-                            input.onchange = (e) => {
-                              const files = (e.target as HTMLInputElement).files;
-                              if (files && files[0]) handleIconFileSelected(files[0]);
-                            };
-                            input.click();
-                          }}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded text-[11px] font-mono hover:bg-slate-800 transition-colors"
+                          onClick={() => setIsMediaModalOpen(true)}
+                          className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 rounded text-[11px] font-mono transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          Replace Icon
+                          <Folder className="w-3 h-3" />
+                          Choose from Library
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded text-[11px] font-mono hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Upload className="w-3 h-3" />
+                          Replace from PC
                         </button>
                         <button
                           type="button"
                           onClick={() => setIconUrl('')}
-                          className="px-2.5 py-1 bg-slate-900/40 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded text-[11px] font-mono hover:bg-rose-950/20 transition-colors"
+                          className="px-2.5 py-1 bg-slate-900/40 border border-rose-500/20 text-rose-400 hover:text-rose-300 rounded text-[11px] font-mono hover:bg-rose-950/20 transition-colors cursor-pointer"
                         >
-                          Delete Icon
+                          Clear Icon
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-slate-900/80 border border-slate-800 flex items-center justify-center">
-                        <Plus className="w-5 h-5 text-slate-500" />
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="cursor-pointer space-y-2 flex flex-col items-center justify-center w-full"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-slate-900/80 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-colors">
+                        <Plus className="w-5 h-5" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs font-medium text-slate-300">Drag & drop or click to upload</p>
+                        <p className="text-xs font-medium text-slate-300">Drag & drop or click to upload from computer</p>
                         <p className="text-[10px] font-mono text-slate-500">Supports SVG, PNG, JPG, GIF, WebP, AVIF, MP4, WebM, Lottie up to 15MB</p>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/svg+xml,image/png,image/webp,image/jpeg,image/gif,image/avif,video/mp4,video/webm,application/json,.tgs"
-                        onChange={(e) => {
-                          if (e.target.files?.[0]) {
-                            handleIconFileSelected(e.target.files[0]);
-                          }
-                        }}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </>
+                    </div>
                   )}
                   {uploadError && <p className="text-[10px] font-mono text-rose-400 absolute bottom-2">{uploadError}</p>}
                 </div>
@@ -1020,6 +1050,17 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
 
         </div>
       )}
+
+      {/* Centralized Media Library Modal Picker */}
+      <MediaLibraryModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        onSelectMedia={(media) => {
+          setIconUrl(media.url);
+          setIsMediaModalOpen(false);
+        }}
+        title="Select Skill Icon from Centralized Media Library"
+      />
     </div>
   );
 }

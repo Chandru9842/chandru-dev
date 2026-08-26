@@ -36,10 +36,13 @@ export default function EducationPage({ education, onAdd, onUpdate, onDelete }: 
 
   // Filter
   const filteredEdus = useMemo(() => {
-    return education.filter(e => 
-      e.institution.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.degree.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.fieldOfStudy.toLowerCase().includes(searchQuery.toLowerCase())
+    const list = Array.isArray(education) ? education : [];
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(e => 
+      (e?.institution || '').toLowerCase().includes(q) ||
+      (e?.degree || '').toLowerCase().includes(q) ||
+      (e?.fieldOfStudy || '').toLowerCase().includes(q)
     );
   }, [education, searchQuery]);
 

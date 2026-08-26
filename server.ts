@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -19,7 +22,8 @@ import {
 } from "./src/data/cmsMockData";
 
 const PORT = Number(process.env.PORT) || 3000;
-const DB_PATH_DEFAULT = path.join(process.cwd(), "src", "data", "db.json");
+const DB_SEED_SOURCE = path.join(process.cwd(), "src", "data", "db.json");
+const DB_PATH_DEFAULT = path.join(process.cwd(), "data", "db.json");
 const DB_FILE = process.env.VERCEL
   ? path.join("/tmp", "db.json")
   : DB_PATH_DEFAULT;
@@ -32,12 +36,17 @@ function loadDatabase() {
     return memoryDb;
   }
   try {
-    if (process.env.VERCEL && !fs.existsSync(DB_FILE) && fs.existsSync(DB_PATH_DEFAULT)) {
+    if (!fs.existsSync(DB_FILE)) {
       try {
-        const seedData = fs.readFileSync(DB_PATH_DEFAULT, "utf-8");
-        fs.writeFileSync(DB_FILE, seedData, "utf-8");
+        const seedSource = fs.existsSync(DB_SEED_SOURCE) ? DB_SEED_SOURCE : (fs.existsSync(path.join(process.cwd(), "src", "data", "db.json")) ? path.join(process.cwd(), "src", "data", "db.json") : null);
+        if (seedSource) {
+          const dir = path.dirname(DB_FILE);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          const seedData = fs.readFileSync(seedSource, "utf-8");
+          fs.writeFileSync(DB_FILE, seedData, "utf-8");
+        }
       } catch (e) {
-        console.warn("Notice: Initializing db fallback in /tmp:", e);
+        console.warn("Notice: Initializing db file fallback:", e);
       }
     }
     if (fs.existsSync(DB_FILE)) {
@@ -496,90 +505,20 @@ function syncProfileActiveResume(db: any) {
 
 export const app = express();
 app.use(compression()); // Compress all dynamic/static HTTP responses
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ limit: '15mb', extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// Normalize URLs so serverless invocations match both /api/... and /...
-app.use((req, res, next) => {
-  if (req.url && !req.url.startsWith("/api") && !req.url.startsWith("/@") && !req.url.startsWith("/src") && !req.url.startsWith("/assets") && !req.url.includes(".")) {
-    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
-  }
-  next();
+// Limit API metadata to /api only so frontend SPA handles / and all page routes
+app.get("/api", (req, res) => {
+  res.json({
+    name: "Portfolio CMS API",
+    status: "ONLINE",
+    version: "1.0.0",
+    timestamp: new Date().toISOString()
+  });
 });
 
-  // --- PERFORMANCE MONITORING MIDDLEWARE ---
-  app.use((req, res, next) => {
-    if (!req.url.startsWith("/api")) {
-      return next();
-    }
-
-    const start = process.hrtime();
-
-    res.on("finish", () => {
-      const diff = process.hrtime(start);
-      const durationMs = parseFloat(((diff[0] * 1e9 + diff[1]) / 1e6).toFixed(2));
-      const statusCode = res.statusCode;
-      const isFailed = statusCode >= 400;
-
-      try {
-        const db = loadDatabase();
-        if (!db.analytics) {
-          db.analytics = {};
-        }
-        if (!db.analytics.apiMetrics) {
-          db.analytics.apiMetrics = {
-            totalRequests: 0,
-            failedRequests: 0,
-            slowRequests: 0,
-            avgResponseTimeMs: 0,
-            history: []
-          };
-        }
-
-        const metrics = db.analytics.apiMetrics;
-        metrics.totalRequests += 1;
-        if (isFailed) metrics.failedRequests += 1;
-        if (durationMs > 200) metrics.slowRequests += 1;
-
-        // Rolling average response time
-        metrics.avgResponseTimeMs = parseFloat(
-          ((metrics.avgResponseTimeMs * (metrics.totalRequests - 1) + durationMs) / metrics.totalRequests).toFixed(2)
-        );
-
-        metrics.history.push({
-          method: req.method,
-          path: req.path,
-          status: statusCode,
-          durationMs,
-          isFailed,
-          isSlow: durationMs > 200,
-          timestamp: new Date().toISOString()
-        });
-
-        if (metrics.history.length > 50) {
-          metrics.history.shift();
-        }
-
-        saveDatabase(db);
-      } catch (err) {
-        // Silent catch for absolute reliability
-      }
-    });
-
-    next();
-  });
-
-  // --- ROOT & HEALTH MONITORS ---
-  app.get(["/", "/api"], (req, res) => {
-    res.json({
-      name: "Portfolio CMS API",
-      status: "ONLINE",
-      version: "1.0.0",
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  app.get(["/health", "/api/health"], (req, res) => {
+app.get(["/health", "/api/health"], (req, res) => {
     const uptime = process.uptime();
     const db = loadDatabase();
     const dbStatus = db ? "UP" : "DEGRADED";
@@ -676,11 +615,43 @@ app.use((req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
+
+      // Allow demo guest tokens for recruiter read-only access
+      if (token.startsWith("demo_guest_token_")) {
+        req.user = {
+          id: 99999,
+          name: "Recruiter Guest",
+          email: "guest@recruiter.demo",
+          role: "ROLE_ADMIN",
+          username: "recruiter_guest",
+          isDemo: true
+        };
+        // Block write operations in demo mode
+        if (req.method !== "GET") {
+          return res.status(200).json({
+            status: "success",
+            isDemoSimulated: true,
+            message: "🛡️ Recruiter Demo Mode: Action was simulated in-session and your live production database remains 100% protected."
+          });
+        }
+        return next();
+      }
+
       jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
         if (err) {
           return res.status(403).json({ error: "Forbidden: Invalid or expired token" });
         }
         req.user = decoded;
+
+        // Sandboxed Recruiter Demo Guard: Block live database mutations on disk
+        if (req.user?.isDemo && req.method !== "GET") {
+          return res.status(200).json({
+            status: "success",
+            isDemoSimulated: true,
+            message: "🛡️ Recruiter Demo Mode: Action was simulated in-session and your live production database remains 100% protected."
+          });
+        }
+
         next();
       });
     } else {
@@ -1216,7 +1187,48 @@ app.use((req, res, next) => {
     }
   });
 
+  // Demo Login Endpoint for Recruiters & Guests
+  app.post("/api/auth/demo-login", (req, res) => {
+    const db = loadDatabase();
+    const token = jwt.sign(
+      {
+        id: 99999,
+        email: "guest@recruiter.demo",
+        role: "ROLE_ADMIN",
+        isDemo: true,
+        name: "Recruiter Guest"
+      },
+      JWT_SECRET,
+      { expiresIn: "4h" }
+    );
 
+    try {
+      recordActivity(req, db, {
+        action: "Guest Demo Tour",
+        module: "Authentication",
+        description: "Recruiter / Visitor entered CMS Admin Console in interactive Guest Demo Mode.",
+        status: "SUCCESS",
+        email: "guest@recruiter.demo"
+      });
+      saveDatabase(db);
+    } catch (e) {
+      // Safe fallback
+    }
+
+    res.json({
+      token,
+      accessToken: token,
+      refreshToken: "",
+      user: {
+        id: 99999,
+        name: "Recruiter Guest",
+        email: "guest@recruiter.demo",
+        role: "ROLE_ADMIN",
+        username: "recruiter_guest",
+        isDemo: true
+      }
+    });
+  });
 
   app.post("/api/auth/refresh", (req, res) => {
     const { refreshToken } = req.body;
@@ -2999,19 +3011,25 @@ app.use((req, res, next) => {
     res.json(db.messages);
   });
 
-  app.post("/api/messages", (req, res) => {
+  app.post("/api/messages", async (req, res) => {
     const db = loadDatabase();
     const msg = req.body;
     
     // Sanitize user inputs to mitigate Stored XSS vulnerabilities
+    const rawName = msg.name || msg.senderName || "Recruiter / Visitor";
+    const rawEmail = msg.email || msg.senderEmail || "visitor@example.com";
+    const rawSubject = msg.subject || "Interview Opportunity for Chandru";
+    const rawMessage = msg.message || msg.messageContent || "Hello Chandru, we are interested in discussing an engineering role with you.";
+
     const sanitizedMsg = {
-      name: sanitizeInput(msg.name),
-      email: sanitizeInput(msg.email),
-      phone: sanitizeInput(msg.phone),
-      subject: sanitizeInput(msg.subject),
-      message: sanitizeInput(msg.message)
+      name: sanitizeInput(rawName),
+      email: sanitizeInput(rawEmail),
+      phone: sanitizeInput(msg.phone || ""),
+      subject: sanitizeInput(rawSubject),
+      message: sanitizeInput(rawMessage)
     };
 
+    if (!db.messages) db.messages = [];
     const newId = db.messages.length > 0 ? Math.max(...db.messages.map((m: any) => m.id)) + 1 : 1;
     const created = {
       ...sanitizedMsg,
@@ -3020,15 +3038,76 @@ app.use((req, res, next) => {
       isStarred: false,
       createdAt: new Date().toISOString()
     };
-    db.messages.push(created);
+    db.messages.unshift(created);
     
-    // Also increment contact conversion metrics
-    db.analytics.pageViews += 1;
-    // Recalculate contact conversion rate: messages / unique visitors
+    // Increment contact conversion metrics
+    if (!db.analytics) db.analytics = { pageViews: 1, uniqueVisitors: 1, contactConversionRate: 100 };
+    db.analytics.pageViews = (db.analytics.pageViews || 0) + 1;
     const totalMessages = db.messages.length;
     const visitors = db.analytics.uniqueVisitors || 1;
     db.analytics.contactConversionRate = parseFloat(((totalMessages / visitors) * 100).toFixed(1));
     
+    // Publish in-app notification
+    if (!db.notifications) db.notifications = [];
+    db.notifications.unshift({
+      id: `notif-${Date.now()}`,
+      type: "MESSAGE",
+      title: `📬 New Recruiter Inquiry: ${sanitizedMsg.name}`,
+      message: `"${sanitizedMsg.subject}" from ${sanitizedMsg.email}`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      link: "Messages"
+    });
+
+    recordActivity(req, db, {
+      action: "New Message Received",
+      module: "Messages",
+      description: `Inquiry from ${sanitizedMsg.name} (${sanitizedMsg.email}) re: "${sanitizedMsg.subject}"`,
+      newValue: { id: newId, sender: sanitizedMsg.name, email: sanitizedMsg.email }
+    });
+
+    // Attempt real email dispatch via Nodemailer if credentials exist in .env
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL || 'chandrumohan550@gmail.com';
+    const smtpPass = (process.env.SMTP_PASS || process.env.APP_PASSWORD || '').trim();
+    
+    if (smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: smtpUser,
+            pass: smtpPass
+          }
+        });
+
+        const targetEmail = db.profile?.email || 'chandrumohan550@gmail.com';
+
+        const info = await transporter.sendMail({
+          from: `"${sanitizedMsg.name}" <${smtpUser}>`,
+          replyTo: sanitizedMsg.email,
+          to: targetEmail,
+          subject: `🚀 [Portfolio Inquiry] ${sanitizedMsg.subject} - from ${sanitizedMsg.name}`,
+          text: `New Inquiry via Portfolio:\n\nSender: ${sanitizedMsg.name}\nEmail: ${sanitizedMsg.email}\nPhone: ${sanitizedMsg.phone || 'N/A'}\nSubject: ${sanitizedMsg.subject}\n\nMessage:\n${sanitizedMsg.message}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; background-color: #0b0f19; padding: 25px; color: #f1f5f9; border-radius: 12px;">
+              <h2 style="color: #10b981; margin-top: 0;">📬 New Portfolio / Recruiter Inquiry</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+                <tr><td style="padding: 8px; color: #94a3b8; width: 120px;"><strong>Sender Name:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedMsg.name}</td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Work Email:</strong></td><td style="padding: 8px; color: #38bdf8;"><a href="mailto:${sanitizedMsg.email}" style="color: #38bdf8; text-decoration: underline;">${sanitizedMsg.email}</a></td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Subject:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedMsg.subject}</td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Date:</strong></td><td style="padding: 8px; color: #94a3b8;">${new Date().toLocaleString()}</td></tr>
+              </table>
+              <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${sanitizedMsg.message}</div>
+              <p style="font-size: 12px; color: #64748b; margin-top: 20px;">You can reply directly to this email to respond to ${sanitizedMsg.email}.</p>
+            </div>
+          `
+        });
+        console.log(`[SMTP Email Sent] Message #${newId} delivered to ${targetEmail}: ${info.messageId}`);
+      } catch (err: any) {
+        console.warn(`[SMTP Email Warning] Message saved to DB, but Gmail SMTP dispatch failed:`, err.message);
+      }
+    }
+
     saveDatabase(db);
     res.status(201).json(created);
   });
@@ -4646,6 +4725,157 @@ app.use((req, res, next) => {
     res.status(201).json({ ...created, usedIn, usedInCount: usedIn.length });
   });
 
+  // Dynamic Media Folders Management
+  app.get("/api/media/folders", (req, res) => {
+    const db = loadDatabase();
+    const defaultFolders = [
+      { name: 'Profile', description: 'Headshots, avatars, and profile assets', color: '#10b981' },
+      { name: 'Projects', description: 'Project screenshots, architectures, and UI demos', color: '#0ea5e9' },
+      { name: 'Skills', description: 'Technology badges, programming languages, and icons', color: '#a855f7' },
+      { name: 'Certificates', description: 'Cloud certifications and course credentials', color: '#f59e0b' },
+      { name: 'Tools', description: 'Developer tools, IDEs, and utilities', color: '#06b6d4' },
+      { name: 'Photos', description: 'Personal photos, gallery, and showcase pictures', color: '#ec4899' },
+      { name: 'Logos', description: 'Company logos, client seals, and brand vectors', color: '#8b5cf6' },
+      { name: 'Icons', description: 'SVG symbols and vector assets', color: '#14b8a6' },
+      { name: 'Backgrounds', description: 'Wallpapers, gradients, and section backdrops', color: '#6366f1' },
+      { name: 'Documents', description: 'PDF resumes, whitepapers, and reports', color: '#f43f5e' },
+      { name: 'SEO', description: 'OpenGraph preview banners and social cards', color: '#eab308' },
+      { name: 'General', description: 'Miscellaneous portfolio media', color: '#64748b' }
+    ];
+
+    if (!db.mediaFolders || !Array.isArray(db.mediaFolders) || db.mediaFolders.length === 0) {
+      db.mediaFolders = defaultFolders;
+      saveDatabase(db);
+    }
+
+    const items = db.mediaItems || [];
+    const enrichedFolders = db.mediaFolders.map((f: any) => {
+      const folderItems = items.filter((m: any) => m.folder?.toLowerCase() === f.name.toLowerCase());
+      const totalBytes = folderItems.reduce((acc: number, m: any) => acc + (m.size || 0), 0);
+      return {
+        ...f,
+        itemCount: folderItems.length,
+        totalBytes
+      };
+    });
+
+    res.json(enrichedFolders);
+  });
+
+  app.post("/api/media/folders", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaFolders) db.mediaFolders = [];
+    const { name, description, color } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: "Folder name is required." });
+    }
+
+    const cleanName = name.trim();
+    if (db.mediaFolders.some((f: any) => f.name.toLowerCase() === cleanName.toLowerCase())) {
+      return res.status(400).json({ error: `Folder "${cleanName}" already exists.` });
+    }
+
+    const newFolder = {
+      name: cleanName,
+      description: description ? String(description).trim() : `Custom media folder for ${cleanName}`,
+      color: color || '#10b981',
+      createdAt: new Date().toISOString()
+    };
+
+    db.mediaFolders.push(newFolder);
+    saveDatabase(db);
+    res.status(201).json({ status: "success", folder: newFolder });
+  });
+
+  app.delete("/api/media/folders/:name", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const folderName = req.params.name;
+    if (!db.mediaFolders) db.mediaFolders = [];
+
+    const index = db.mediaFolders.findIndex((f: any) => f.name.toLowerCase() === folderName.toLowerCase());
+    if (index === -1) {
+      return res.status(404).json({ error: "Folder not found." });
+    }
+
+    if (db.mediaItems) {
+      db.mediaItems.forEach((m: any) => {
+        if (m.folder?.toLowerCase() === folderName.toLowerCase()) {
+          m.folder = 'General';
+        }
+      });
+    }
+
+    db.mediaFolders.splice(index, 1);
+    saveDatabase(db);
+    res.json({ status: "success", message: `Folder "${folderName}" deleted.` });
+  });
+
+  // Bulk Upload Multiple Media Files
+  app.post("/api/media/bulk-upload", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    if (!db.mediaItems) db.mediaItems = [];
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "items array is required and must not be empty." });
+    }
+
+    const createdItems: any[] = [];
+    let currentMaxId = db.mediaItems.length > 0 ? Math.max(...db.mediaItems.map((m: any) => m.id)) : 0;
+    const nowStr = new Date().toISOString();
+
+    for (const raw of items) {
+      if (!raw.url && !raw.svgMarkup) continue;
+
+      currentMaxId += 1;
+      let processedUrl = raw.url || "";
+      let publicId = raw.publicId || "";
+      if (processedUrl && processedUrl.startsWith("data:")) {
+        const processed = processMockCloudinaryImage(processedUrl, "media");
+        processedUrl = processed.url;
+        publicId = processed.publicId;
+      }
+
+      const item = {
+        id: currentMaxId,
+        title: raw.title ? String(raw.title).trim() : "Untitled Asset",
+        displayName: raw.displayName || raw.title || "Untitled Asset",
+        altText: raw.altText || raw.title || "",
+        description: raw.description || "Enterprise portfolio media asset.",
+        url: processedUrl,
+        type: raw.type || (raw.svgMarkup ? "svg" : "image"),
+        folder: raw.folder || "General",
+        category: raw.category || raw.folder || "General",
+        size: typeof raw.size === "number" ? raw.size : Math.round(processedUrl.length * 0.75),
+        dimensions: raw.dimensions || "1200x800",
+        tags: Array.isArray(raw.tags) ? raw.tags : [],
+        svgMarkup: raw.svgMarkup || "",
+        publicId,
+        uploadedBy: "Admin",
+        visibility: raw.visibility || "public",
+        status: raw.status || "active",
+        version: raw.version || "1.0.0",
+        createdAt: nowStr,
+        updatedAt: nowStr
+      };
+
+      db.mediaItems.unshift(item);
+      const usedIn = calculateMediaUsage(db, item.url, item.title);
+      createdItems.push({ ...item, usedIn, usedInCount: usedIn.length });
+    }
+
+    recordActivity(req, db, {
+      action: "Bulk Media Upload",
+      module: "Media Manager",
+      description: `Bulk uploaded ${createdItems.length} media assets across folders.`,
+      newValue: { count: createdItems.length }
+    });
+
+    saveDatabase(db);
+    res.status(201).json({ status: "success", count: createdItems.length, items: createdItems });
+  });
+
   app.put("/api/media/:id", authenticateJWT, (req, res) => {
     const db = loadDatabase();
     const id = parseInt(req.params.id);
@@ -4999,6 +5229,164 @@ app.use((req, res, next) => {
     } catch (err: any) {
       console.error("AI Generation Endpoint Error:", err);
       res.status(500).json({ error: err.message || "Failed to generate AI content" });
+    }
+  });
+
+  // --- PUBLIC PORTFOLIO AI ASSISTANT CHATBOT API ---
+  app.post("/api/ai/portfolio-chat", async (req, res) => {
+    try {
+      const { message, messages = [] } = req.body;
+      const userQuery = (message || (messages.length > 0 ? messages[messages.length - 1].content : "") || "").trim();
+
+      if (!userQuery) {
+        return res.status(400).json({ error: "Query message is required." });
+      }
+
+      const db = loadDatabase();
+      const profile = db.profile || {};
+      const projects = (db.projects || []).map((p: any) => ({
+        title: p.title,
+        category: p.category,
+        description: p.description,
+        skills: p.skills,
+        status: p.status,
+        liveUrl: p.liveUrl,
+        githubUrl: p.githubUrl
+      }));
+      const skills = (db.skills || []).map((s: any) => `${s.name} (${s.category || 'Core'})`);
+      const experiences = (db.experiences || []).map((e: any) => ({
+        role: e.role,
+        company: e.company,
+        period: `${e.startDate || ''} - ${e.endDate || 'Present'}`,
+        description: e.description
+      }));
+      const education = (db.education || []).map((ed: any) => ({
+        degree: ed.degree,
+        institution: ed.institution,
+        year: ed.graduationYear || ed.year
+      }));
+      const tools = (db.tools || []).map((t: any) => t.name);
+      const codingProfiles = (db.codingProfiles || []).map((c: any) => ({
+        platform: c.platformType || c.displayName,
+        username: c.username,
+        url: c.profileUrl
+      }));
+      const metrics = (db.portfolioMetrics || []).map((m: any) => `${m.title}: ${m.value}`);
+
+      const systemInstruction = `You are Chandru Mohan's official AI Career & Portfolio Assistant.
+Your mission is to represent Chandru professionally, accurately, and enthusiastically to recruiters, engineering managers, clients, and visitors.
+
+Candidate Knowledge Context:
+- Full Name: Chandru Mohan
+- Role / Title: ${profile.heroTitle || 'Principal Systems Architect & Full-Stack Developer'}
+- Bio: ${profile.heroDescription || 'Specialist in full-stack web applications, distributed systems, cloud architecture, and high-performance engineering.'}
+- Primary Email: ${profile.email || 'chandrumohan550@gmail.com'}
+- Location: Bengaluru, India (Open to global remote and on-site opportunities)
+- Core Skills: ${skills.join(', ')}
+- Modern Tools & Tech Stack: ${tools.join(', ')}
+- Featured Projects: ${JSON.stringify(projects.slice(0, 8))}
+- Work Experience: ${JSON.stringify(experiences)}
+- Education Milestones: ${JSON.stringify(education)}
+- Competitive Coding Profiles: ${JSON.stringify(codingProfiles)}
+- Key Portfolio Metrics: ${metrics.join(', ')}
+
+Response Guidelines:
+1. Speak concisely, clearly, and enthusiastically in the first person plural as Chandru's representative ("Chandru has built...", "He specializes in...").
+2. Use markdown formatting with bullet points, bold key terms, and code style tags for readability.
+3. If asked about hiring or interviews, invite the visitor to reach out directly at chandrumohan550@gmail.com or explore his resume.
+4. Keep replies crisp and focused (2-4 paragraphs max).`;
+
+      // Check if Gemini API Key is configured
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const ai = new GoogleGenAI({
+            apiKey,
+            httpOptions: {
+              headers: { 'User-Agent': 'aistudio-build' }
+            }
+          });
+
+          // Build conversation contents
+          let contents: any[] = [];
+          if (messages && Array.isArray(messages) && messages.length > 0) {
+            contents = messages.slice(-6).map((m: any) => ({
+              role: m.role === 'user' ? 'user' : 'model',
+              parts: [{ text: m.content }]
+            }));
+          } else {
+            contents = [{ role: 'user', parts: [{ text: userQuery }] }];
+          }
+
+          const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+          for (const modelName of modelsToTry) {
+            try {
+              const response = await ai.models.generateContent({
+                model: modelName,
+                contents: userQuery,
+                config: {
+                  systemInstruction,
+                  temperature: 0.7,
+                }
+              });
+
+              if (response && response.text) {
+                return res.json({
+                  status: "success",
+                  reply: response.text,
+                  source: "gemini"
+                });
+              }
+            } catch (modelError: any) {
+              console.warn(`[AI Assistant] Model ${modelName} error:`, modelError?.message || modelError);
+            }
+          }
+        } catch (apiError: any) {
+          console.warn("[AI Assistant] Gemini API initialization fallback:", apiError?.message || apiError);
+        }
+      }
+
+      // --- INTELLIGENT LOCAL HEURISTIC FALLBACK (Guarantees 100% uptime without API key) ---
+      const qLower = userQuery.toLowerCase();
+      let fallbackReply = "";
+
+      if (qLower.includes("skill") || qLower.includes("stack") || qLower.includes("technology") || qLower.includes("tech") || qLower.includes("framework")) {
+        fallbackReply = `**Chandru's Core Technical Proficiencies:**\n\n` +
+          `* **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Next.js, Framer Motion, Three.js (WebGL)\n` +
+          `* **Backend & Systems:** Node.js, Express, Spring Boot (Java), RESTful APIs, JWT Auth, Microservices\n` +
+          `* **Databases & DevOps:** PostgreSQL, MySQL, Redis, Docker, Git CI/CD, Railway, Cloudflare\n\n` +
+          `He is experienced in building scalable, real-time web applications with clean architecture and robust database relationships.`;
+      } else if (qLower.includes("project") || qLower.includes("built") || qLower.includes("portfolio") || qLower.includes("work")) {
+        const topProjects = projects.slice(0, 3).map((p: any) => `* **${p.title}** (${p.category}): ${p.description}`).join('\n');
+        fallbackReply = `Here are some of Chandru's highlighted software engineering projects:\n\n${topProjects}\n\n` +
+          `You can browse live demos and repository code for each project directly on the interactive bento grid below!`;
+      } else if (qLower.includes("contact") || qLower.includes("hire") || qLower.includes("email") || qLower.includes("reach") || qLower.includes("interview") || qLower.includes("available")) {
+        fallbackReply = `**Chandru is actively open to software engineering opportunities and collaborations!**\n\n` +
+          `* **Direct Email:** [chandrumohan550@gmail.com](mailto:chandrumohan550@gmail.com)\n` +
+          `* **Location:** Bengaluru, India (Open to Remote & Global Relocation)\n` +
+          `* **Profiles:** Active on GitHub, LinkedIn, and LeetCode\n\n` +
+          `Feel free to send a message via the Contact Form on this page or download his latest PDF resume!`;
+      } else if (qLower.includes("experience") || qLower.includes("background") || qLower.includes("job") || qLower.includes("career")) {
+        fallbackReply = `**Career Background & Architecture Experience:**\n\n` +
+          `Chandru specializes as a **${profile.heroTitle || 'Systems Architect & Full-Stack Engineer'}**, engineering full-stack production platforms with end-to-end database design, JWT authentication, and high-performance WebGL graphics.\n\n` +
+          `Check out the interactive Career & Education timeline on this page for complete milestone details!`;
+      } else {
+        fallbackReply = `Hello! I'm **Chandru's AI Portfolio Assistant**.\n\n` +
+          `Chandru is a **${profile.heroTitle || 'Full-Stack Developer & Systems Architect'}** proficient in **React 19, TypeScript, Node.js/Express, Spring Boot, and Cloud Architectures**.\n\n` +
+          `Here are some things you can ask me:\n` +
+          `* *"What are Chandru's top projects?"*\n` +
+          `* *"Tell me about his backend & distributed systems skills"*\n` +
+          `* *"How can I contact or interview Chandru?"*`;
+      }
+
+      res.json({
+        status: "success",
+        reply: fallbackReply,
+        source: "portfolio_knowledge_base"
+      });
+    } catch (err: any) {
+      console.error("AI Portfolio Chat Error:", err);
+      res.status(500).json({ error: "Failed to process chat query" });
     }
   });
 
@@ -5611,6 +5999,238 @@ app.use((req, res, next) => {
     res.json({ status: "success", tasks: db.adminTasks });
   });
 
+  // --- REAL-TIME AI PORTFOLIO CHAT & CAREER ASSISTANT ENGINE ---
+
+  function buildDynamicPortfolioKnowledgeBase(db: any): string {
+    const profile = db.profile || {};
+    const projects = (db.projects || []).filter((p: any) => p.isVisible !== false);
+    const skills = (db.skills || []).filter((s: any) => s.isVisible !== false);
+    const tools = (db.tools || []).filter((t: any) => t.isVisible !== false);
+    const certificates = (db.certificates || []).filter((c: any) => c.isVisible !== false);
+    const experiences = (db.experiences || []).filter((e: any) => e.isVisible !== false);
+    const education = (db.education || []).filter((ed: any) => ed.isVisible !== false);
+    const achievements = (db.achievements || []).filter((a: any) => a.isVisible !== false);
+    const socialLinks = (db.socialLinks || []).filter((s: any) => s.isVisible !== false);
+
+    let doc = `=== CHANDRU'S OFFICIAL PORTFOLIO KNOWLEDGE BASE ===\n\n`;
+
+    doc += `[CANDIDATE INFORMATION]\n`;
+    doc += `Full Name: ${profile.fullName || 'Chandru'}\n`;
+    doc += `Headline / Professional Title: ${profile.headline || profile.title || 'Principal Systems Architect & Full-Stack Engineer'}\n`;
+    doc += `Tagline: ${profile.tagline || 'Building resilient distributed architectures and scalable modern web platforms.'}\n`;
+    doc += `Location: ${profile.location || 'India (Open to Remote / Global Relocation)'}\n`;
+    doc += `Email Contact: ${profile.email || 'chandrumohan550@gmail.com'}\n`;
+    doc += `Phone: ${profile.phone || '+91 98765 43210'}\n`;
+    doc += `Availability: ${profile.availabilityStatus || 'Actively exploring Senior/Staff/Principal Software Engineering roles'}\n`;
+    doc += `Years of Experience: ${profile.yearsExperience || '8+ Years'}\n`;
+    doc += `Summary / Bio: ${profile.aboutSummary || profile.bio || 'Seasoned developer specializing in scalable distributed microservices, React 19, TypeScript, Node.js, Spring Boot, Docker, and Cloud architectures.'}\n`;
+    if (profile.quickStats) doc += `Quick Stats: ${profile.quickStats}\n`;
+    doc += `\n`;
+
+    doc += `[PROJECTS PORTFOLIO (${projects.length} LIVE PROJECTS)]\n`;
+    projects.forEach((p: any, idx: number) => {
+      doc += `Project #${idx + 1}: ${p.title}\n`;
+      doc += `  • Category: ${p.category || 'Full-Stack Software'}\n`;
+      doc += `  • Pitch: ${p.shortDescription || p.description || ''}\n`;
+      if (p.longDescription) doc += `  • Details: ${p.longDescription}\n`;
+      doc += `  • Tech Stack: ${Array.isArray(p.techStack) ? p.techStack.join(', ') : (p.technologies || p.techStack || 'React, TypeScript, Node.js')}\n`;
+      if (p.liveUrl) doc += `  • Live Demo: ${p.liveUrl}\n`;
+      if (p.githubUrl) doc += `  • GitHub: ${p.githubUrl}\n`;
+      if (p.metrics) doc += `  • Metrics: ${p.metrics}\n`;
+      doc += `\n`;
+    });
+
+    doc += `[TECHNICAL SKILLS & COMPETENCIES (${skills.length} SKILLS)]\n`;
+    const skillsByCategory: Record<string, string[]> = {};
+    skills.forEach((s: any) => {
+      const cat = s.category || 'General';
+      if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+      skillsByCategory[cat].push(`${s.name} (${s.proficiency || 90}%)`);
+    });
+    for (const [cat, list] of Object.entries(skillsByCategory)) {
+      doc += `  • ${cat}: ${list.join(' | ')}\n`;
+    }
+    doc += `\n`;
+
+    doc += `[DEVELOPER TOOLS & INFRASTRUCTURE (${tools.length} TOOLS)]\n`;
+    doc += `  • Tools: ${tools.map((t: any) => t.name).join(', ')}\n\n`;
+
+    doc += `[WORK HISTORY & EXPERIENCE]\n`;
+    experiences.forEach((e: any) => {
+      doc += `  • ${e.title} at ${e.company} (${e.period || e.duration || ''})\n`;
+      if (e.description) doc += `    ${e.description}\n`;
+    });
+    doc += `\n`;
+
+    doc += `[CERTIFICATIONS & CREDENTIALS]\n`;
+    certificates.forEach((c: any) => {
+      doc += `  • ${c.title} by ${c.issuer || c.organization} (${c.issueDate || c.year || 'Certified'})\n`;
+    });
+    doc += `\n`;
+
+    doc += `[HONORS & ACHIEVEMENTS]\n`;
+    achievements.forEach((a: any) => {
+      doc += `  • ${a.title} - ${a.organization || a.issuer} (${a.year || ''}): ${a.description || ''}\n`;
+    });
+    doc += `\n`;
+
+    return doc;
+  }
+
+  // Smart Contextual Knowledge Synthesizer (Zero-failure engine)
+  function synthesizePortfolioAnswer(query: string, db: any): string {
+    const q = query.toLowerCase().trim();
+    const profile = db.profile || {};
+    const projects = (db.projects || []).filter((p: any) => p.isVisible !== false);
+    const skills = (db.skills || []).filter((s: any) => s.isVisible !== false);
+    const tools = (db.tools || []).filter((t: any) => t.isVisible !== false);
+    const experiences = (db.experiences || []).filter((e: any) => e.isVisible !== false);
+    const certificates = (db.certificates || []).filter((c: any) => c.isVisible !== false);
+
+    // 1. Projects Query
+    if (q.includes('project') || q.includes('build') || q.includes('work') || q.includes('portfolio') || q.includes('app') || q.includes('demo')) {
+      if (projects.length === 0) {
+        return `Chandru's portfolio currently features several enterprise full-stack and cloud projects. Reach out directly at **${profile.email || 'chandrumohan550@gmail.com'}** for confidential repositories!`;
+      }
+
+      let reply = `Here are **Chandru's featured software engineering projects** from his live portfolio:\n\n`;
+      projects.slice(0, 5).forEach((p: any, i: number) => {
+        const stack = Array.isArray(p.techStack) ? p.techStack.join(', ') : (p.technologies || p.techStack || 'React, TypeScript, Node.js');
+        reply += `${i + 1}. **${p.title}** (${p.category || 'Full-Stack'})\n`;
+        reply += `   * **Overview:** ${p.shortDescription || p.description || 'Enterprise software architecture'}\n`;
+        reply += `   * **Tech Stack:** \`${stack}\`\n`;
+        if (p.liveUrl) reply += `   * **Live Demo:** [Open Application](${p.liveUrl})\n`;
+        if (p.githubUrl) reply += `   * **Source Code:** [GitHub Repo](${p.githubUrl})\n`;
+        reply += `\n`;
+      });
+      reply += `💡 *You can click into any project card on the home page for interactive architecture diagrams, live metrics, and source code!*`;
+      return reply;
+    }
+
+    // 2. Tech Stack / Skills / Backend / Frontend Query
+    if (q.includes('skill') || q.includes('stack') || q.includes('tech') || q.includes('backend') || q.includes('frontend') || q.includes('cloud') || q.includes('database')) {
+      const topSkills = skills.slice(0, 12);
+      const topTools = tools.slice(0, 10);
+      let reply = `**Chandru's Engineering Stack & Technical Competencies:**\n\n`;
+
+      if (q.includes('backend')) {
+        const backendSkills = skills.filter((s: any) => (s.category || '').toLowerCase().includes('backend') || ['node', 'spring', 'java', 'go', 'python', 'express', 'sql', 'postgres', 'redis', 'kafka'].some(k => s.name.toLowerCase().includes(k)));
+        reply += `**Backend & Distributed Systems Focus:**\n`;
+        backendSkills.forEach((s: any) => {
+          reply += `* **${s.name}** — ${s.proficiency || 95}% proficiency\n`;
+        });
+      } else if (q.includes('frontend')) {
+        const frontendSkills = skills.filter((s: any) => (s.category || '').toLowerCase().includes('frontend') || ['react', 'next', 'type', 'tailwind', 'vue', 'html', 'css'].some(k => s.name.toLowerCase().includes(k)));
+        reply += `**Frontend Architecture Focus:**\n`;
+        frontendSkills.forEach((s: any) => {
+          reply += `* **${s.name}** — ${s.proficiency || 95}% proficiency\n`;
+        });
+      } else {
+        reply += `* **Core Technologies:** ${topSkills.map((s: any) => `**${s.name}** (${s.proficiency || 90}%)`).join(', ')}\n`;
+        reply += `* **Developer Tools:** ${topTools.map((t: any) => `\`${t.name}\``).join(', ')}\n`;
+      }
+
+      reply += `\nChandru specializes in **high-concurrency architectures, microservices, zero-downtime CI/CD, and low-latency API design**.`;
+      return reply;
+    }
+
+    // 3. Contact / Hire / Interview Query
+    if (q.includes('contact') || q.includes('hire') || q.includes('interview') || q.includes('email') || q.includes('reach') || q.includes('call') || q.includes('meeting') || q.includes('schedule')) {
+      return `**Get in Touch with Chandru:**\n\n* **Direct Email:** [${profile.email || 'chandrumohan550@gmail.com'}](mailto:${profile.email || 'chandrumohan550@gmail.com'})\n* **Location:** ${profile.location || 'India (Open to Global Remote Roles)'}\n* **Current Status:** **${profile.availabilityStatus || 'Actively exploring Senior/Staff/Principal Software Engineer opportunities'}**\n\nFeel free to scroll to the **Contact Section** on this page to send a direct message, or email Chandru directly!`;
+    }
+
+    // 4. Experience / Work History
+    if (q.includes('experience') || q.includes('history') || q.includes('career') || q.includes('company') || q.includes('role') || q.includes('background') || q.includes('years')) {
+      let reply = `**Chandru's Professional Journey & Career Experience (${profile.yearsExperience || '8+ Years'}):**\n\n`;
+      experiences.forEach((e: any) => {
+        reply += `* **${e.title}** @ **${e.company}** (${e.period || e.duration || ''})\n`;
+        if (e.description) reply += `  ${e.description}\n`;
+      });
+      if (certificates.length > 0) {
+        reply += `\n**Verified Certifications:**\n`;
+        certificates.slice(0, 3).forEach((c: any) => {
+          reply += `* **${c.title}** (${c.issuer || c.organization})\n`;
+        });
+      }
+      return reply;
+    }
+
+    // 5. Default / About Chandru Overview
+    let reply = `**Meet Chandru — ${profile.headline || profile.title || 'Principal Systems Architect & Full-Stack Engineer'}**\n\n`;
+    reply += `${profile.aboutSummary || profile.bio || 'Chandru is a software engineer dedicated to building resilient distributed systems, modern reactive web applications, and scalable cloud infrastructure.'}\n\n`;
+    reply += `**Key Highlights:**\n`;
+    reply += `* **Featured Projects:** ${projects.slice(0, 3).map((p: any) => `*${p.title}*`).join(', ')}\n`;
+    reply += `* **Primary Stack:** React 19, TypeScript, Node.js, Spring Boot, PostgreSQL, Docker, Kubernetes\n`;
+    reply += `* **Email:** [${profile.email || 'chandrumohan550@gmail.com'}](mailto:${profile.email || 'chandrumohan550@gmail.com'})\n\n`;
+    reply += `What specific project or technical skill would you like to explore?`;
+    return reply;
+  }
+
+  // POST /api/ai/portfolio-chat
+  app.post("/api/ai/portfolio-chat", async (req, res) => {
+    try {
+      const db = loadDatabase();
+      const { message, messages } = req.body;
+      const userQuery = message || (Array.isArray(messages) && messages[messages.length - 1]?.content) || "Tell me about Chandru";
+
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+      if (apiKey) {
+        try {
+          const knowledgeContext = buildDynamicPortfolioKnowledgeBase(db);
+          const systemPrompt = `You are Chandru's AI Career Assistant and Representative.
+Answer questions from recruiters, hiring managers, and visitors about Chandru's projects, skills, tools, experience, and contact info.
+Always use Chandru's live real-time knowledge base below:
+${knowledgeContext}
+
+Rules:
+1. Always be concise, highly professional, articulate, and welcoming.
+2. Use markdown formatting with bullet points and bold tech names.
+3. If asked about projects, mention the specific projects Chandru built and their tech stacks.
+4. If asked about contact/hiring, provide ${db.profile?.email || 'chandrumohan550@gmail.com'}.`;
+
+          const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+          const aiRes = await fetch(geminiEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: `${systemPrompt}\n\nUser Question: ${userQuery}` }]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.4,
+                maxOutputTokens: 600
+              }
+            })
+          });
+
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              return res.json({ reply: text, source: "gemini" });
+            }
+          }
+        } catch (geminiErr) {
+          console.warn('[AI Chat] Gemini API call fallback to Knowledge Engine:', geminiErr);
+        }
+      }
+
+      // Live Knowledge Base Synthesizer Engine
+      const reply = synthesizePortfolioAnswer(userQuery, db);
+      res.json({ reply, source: "knowledge_base" });
+
+    } catch (err: any) {
+      console.error('[AI Chat Error]:', err);
+      const db = loadDatabase();
+      const fallbackReply = synthesizePortfolioAnswer("Tell me about Chandru", db);
+      res.json({ reply: fallbackReply, source: "fallback" });
+    }
+  });
+
   // --- CENTRALIZED ERROR LOGGING AND RESPONSE HANDLER ---
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(`[CRITICAL EXCEPTION CAUGHT]`, err);
@@ -5645,7 +6265,20 @@ export async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        watch: {
+          ignored: [
+            '**/src/data/db.json',
+            '**/src/data/*.json',
+            '**/data/**',
+            '**/db.json',
+            '**/api/**',
+            '**/dist/**',
+            '**/logs/**'
+          ]
+        }
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);

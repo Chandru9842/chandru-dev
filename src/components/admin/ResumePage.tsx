@@ -373,12 +373,13 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   };
 
   // Search & Filter compute
-  const filteredResumes = resumes.filter((item) => {
+  const filteredResumes = (Array.isArray(resumes) ? resumes : []).filter((item) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch = 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.version.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.fileName.toLowerCase().includes(searchQuery.toLowerCase());
+      (item?.title || '').toLowerCase().includes(q) ||
+      (item?.version || '').toLowerCase().includes(q) ||
+      (item?.description || '').toLowerCase().includes(q) ||
+      (item?.fileName || '').toLowerCase().includes(q);
 
     if (filterStatus === 'active') return matchesSearch && item.isActive;
     if (filterStatus === 'inactive') return matchesSearch && !item.isActive;

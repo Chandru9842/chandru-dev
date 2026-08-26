@@ -1,14 +1,36 @@
-import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, Loader2, CheckCircle, Trash2, Cpu } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  UploadCloud, Image as ImageIcon, Loader2, CheckCircle, Trash2, Cpu, 
+  Folder, Link as LinkIcon, Search, Check, RefreshCw 
+} from 'lucide-react';
 import SkillMediaRenderer from './SkillMediaRenderer';
+
+interface MediaLibraryItem {
+  id: number;
+  title: string;
+  url: string;
+  type: string;
+  folder: string;
+  tags?: string[];
+  size?: number;
+}
 
 interface ImageUploaderProps {
   currentUrl: string;
   onUploadComplete: (url: string) => void;
   onClear: () => void;
+  defaultFolder?: string;
+  label?: string;
 }
 
-export default function ImageUploader({ currentUrl, onUploadComplete, onClear }: ImageUploaderProps) {
+export default function ImageUploader({ 
+  currentUrl, 
+  onUploadComplete, 
+  onClear,
+  defaultFolder,
+  label = "Media/Thumbnail Asset"
+}: ImageUploaderProps) {
+  const [sourceMode, setSourceMode] = useState<'computer' | 'media' | 'url'>('computer');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -19,6 +41,44 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
     percentSaved: number;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Direct URL state
+  const [manualUrl, setManualUrl] = useState('');
+
+  // Media Library state
+  const [mediaItems, setMediaItems] = useState<MediaLibraryItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<string>(defaultFolder || 'All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const folders = [
+    'All', 'Profile', 'Projects', 'Skills', 'Certificates', 
+    'Tools', 'Logos', 'Icons', 'SEO', 'Backgrounds', 'Documents', 'General'
+  ];
+
+  const fetchMediaItems = async () => {
+    setMediaLoading(true);
+    try {
+      const token = localStorage.getItem('alex_dev_jwt_token') || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
+      const res = await fetch('/api/media', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMediaItems(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch media library items:', e);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (sourceMode === 'media' && mediaItems.length === 0) {
+      fetchMediaItems();
+    }
+  }, [sourceMode]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -31,7 +91,6 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
   };
 
   const compressAndUpload = async (file: File) => {
-    // Validate file type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.mov');
     const isLottie = file.type === 'application/json' || file.name.toLowerCase().endsWith('.json') || file.name.toLowerCase().endsWith('.tgs');
@@ -73,7 +132,6 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
           reader.readAsDataURL(file);
         });
       } else {
-        // Live Client-Side Image Compression for standard static images
         setProgress(30);
         compressedData = await new Promise<{ dataUrl: string; originalKb: number; compressedKb: number }>((resolve, reject) => {
           const reader = new FileReader();
@@ -86,7 +144,6 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
               let width = img.width;
               let height = img.height;
 
-              // Maximum dimensions for portfolio responsive preview
               const MAX_WIDTH = 1000;
               const MAX_HEIGHT = 1000;
               if (width > height) {
@@ -106,7 +163,6 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
               const ctx = canvas.getContext('2d');
               if (ctx) {
                 ctx.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG at 72% quality
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
                 const originalKb = Math.round(file.size / 1024);
                 const compressedKb = Math.round((compressedDataUrl.length * 0.75) / 1024);
@@ -129,16 +185,12 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
         });
       }
 
-      setProgress(60);
-      // Generate simulated Cloudinary public path for professional visual fidelity
-      const publicId = `portfolio/proj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      setProgress(80);
       
-      // Wait a tiny bit to represent network streaming
       setTimeout(() => {
         setProgress(100);
         setUploading(false);
         
-        // Save compression achievements if we actually compressed it
         if (!bypassCompression) {
           const percentSaved = Math.max(0, Math.round(((compressedData.originalKb - compressedData.compressedKb) / compressedData.originalKb) * 100));
           setCompressionStats({
@@ -150,9 +202,8 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
           setCompressionStats(null);
         }
 
-        // Pass back the base64 data URL so it renders in the UI immediately
         onUploadComplete(compressedData.dataUrl);
-      }, 500);
+      }, 400);
 
     } catch (err: any) {
       setError(err.message || "An error occurred during compression.");
@@ -175,22 +226,74 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
     }
   };
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+  const filteredMedia = mediaItems.filter(item => {
+    if (selectedFolder !== 'All' && item.folder !== selectedFolder) {
+      return false;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        item.title?.toLowerCase().includes(q) ||
+        item.folder?.toLowerCase().includes(q) ||
+        item.tags?.some(t => t.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <label className="block text-xs font-mono text-slate-400">Media/Thumbnail Asset</label>
-        <span className="text-[10px] bg-sky-500/15 text-sky-400 border border-sky-500/20 px-1.5 py-0.5 rounded font-mono font-semibold uppercase tracking-wider">
-          Cloudinary Secured
-        </span>
+    <div className="space-y-3">
+      {/* Top Header & Dual Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <label className="block text-xs font-mono text-slate-400 font-bold">{label}</label>
+
+        {/* 2 MAIN OPTIONS: Local Computer vs Media Manager */}
+        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setSourceMode('computer')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              sourceMode === 'computer'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Local Computer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSourceMode('media')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              sourceMode === 'media'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Folder className="w-3.5 h-3.5" />
+            <span>Media Manager</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSourceMode('url')}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              sourceMode === 'url'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            <span>Direct URL</span>
+          </button>
+        </div>
       </div>
       
-      {currentUrl ? (
-        <div className="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-900/40 p-3 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-800 bg-slate-950 shrink-0">
+      {/* Active Selected Asset Preview Card */}
+      {currentUrl && (
+        <div className="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-3 flex flex-col sm:flex-row sm:items-center gap-4 shadow-md">
+          <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-800 bg-slate-900 shrink-0 flex items-center justify-center p-1">
             <SkillMediaRenderer 
               src={currentUrl} 
               alt="Preview" 
@@ -200,27 +303,20 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
           <div className="flex-1 min-w-0">
             <p className="text-xs font-mono text-emerald-400 truncate flex items-center gap-1.5 font-semibold">
               <CheckCircle className="w-3.5 h-3.5" />
-              Securely Committed to CDN Cache
+              Active Media Asset Linked
             </p>
-            <p className="text-[10px] text-slate-500 font-mono truncate mt-0.5">
-              Mapped Delivery URL: res.cloudinary.com/alexdev/image/upload/...
+            <p className="text-[10px] text-slate-500 font-mono truncate mt-0.5" title={currentUrl}>
+              {currentUrl.startsWith('data:') ? 'Base64 Encoded Local Asset' : currentUrl}
             </p>
             
             {compressionStats ? (
               <div className="flex items-center gap-2 mt-1.5 text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/15 w-fit">
                 <Cpu className="w-3 h-3 text-emerald-400" />
                 <span>
-                  Canvas Compressed: {compressionStats.original} → {compressionStats.compressed} ({compressionStats.percentSaved}% Saved)
+                  Compressed: {compressionStats.original} → {compressionStats.compressed} ({compressionStats.percentSaved}% Saved)
                 </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-amber-400 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/15 w-fit">
-                <Cpu className="w-3 h-3 text-amber-400" />
-                <span>
-                  Original Format Retained (No Lossy Compression)
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
           <button
             type="button"
@@ -228,23 +324,26 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
               setCompressionStats(null);
               onClear();
             }}
-            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors border border-rose-500/20 self-end sm:self-center"
+            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors border border-rose-500/20 self-end sm:self-center cursor-pointer"
             title="Remove asset"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-      ) : (
+      )}
+
+      {/* OPTION 1: LOCAL COMPUTER DRAG & DROP */}
+      {sourceMode === 'computer' && (
         <div
           onDragEnter={handleDrag}
           onDragOver={handleDrag}
           onDragLeave={handleDrag}
           onDrop={handleDrop}
-          onClick={handleButtonClick}
+          onClick={() => fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
             dragActive 
-              ? 'border-emerald-500 bg-emerald-500/5' 
-              : 'border-slate-800 bg-slate-900/20 hover:bg-slate-900/40 hover:border-slate-700'
+              ? 'border-emerald-500 bg-emerald-500/10 scale-[1.01]' 
+              : 'border-slate-800 bg-slate-950/60 hover:bg-slate-950 hover:border-slate-700'
           }`}
         >
           <input
@@ -264,17 +363,135 @@ export default function ImageUploader({ currentUrl, onUploadComplete, onClear }:
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs font-mono text-slate-400">Stream compressing & syncing with Cloudinary... {progress}%</p>
+              <p className="text-xs font-mono text-slate-400">Compressing & optimizing asset... {progress}%</p>
             </div>
           ) : (
             <div className="space-y-2 flex flex-col items-center justify-center">
               <UploadCloud className={`w-8 h-8 transition-transform duration-200 ${dragActive ? 'scale-110 text-emerald-400' : 'text-slate-500'}`} />
               <div>
-                <p className="text-xs font-semibold text-slate-300">Drag & drop asset here, or <span className="text-emerald-400">browse</span></p>
-                <p className="text-[10px] text-slate-500 mt-1">PNG, JPEG, SVG, WebP, AVIF, GIF, MP4, WebM, MOV, or Lottie (.json)</p>
+                <p className="text-xs font-semibold text-slate-300">Drag & drop from computer, or <span className="text-emerald-400">browse files</span></p>
+                <p className="text-[10px] text-slate-500 mt-1">PNG, JPEG, SVG, WebP, AVIF, GIF, MP4, WebM, MOV, or Lottie JSON</p>
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* OPTION 2: CENTRALIZED MEDIA MANAGER BROWSER */}
+      {sourceMode === 'media' && (
+        <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search bulk media by name or tags..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={fetchMediaItems}
+              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-lg border border-slate-800 transition cursor-pointer self-end sm:self-auto"
+              title="Refresh media"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${mediaLoading ? 'animate-spin text-emerald-400' : ''}`} />
+            </button>
+          </div>
+
+          {/* Folder Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            {folders.map(f => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setSelectedFolder(f)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold whitespace-nowrap transition cursor-pointer ${
+                  selectedFolder === f
+                    ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {/* Media Grid */}
+          {mediaLoading ? (
+            <div className="flex items-center justify-center py-10 gap-2 text-xs font-mono text-slate-400">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+              <span>Loading Media Library assets...</span>
+            </div>
+          ) : filteredMedia.length === 0 ? (
+            <div className="text-center py-8 text-xs font-mono text-slate-500 border border-dashed border-slate-800 rounded-lg">
+              No media found in folder "{selectedFolder}". Upload assets in Media Manager to use here!
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto pr-1">
+              {filteredMedia.map(item => {
+                const isSelected = currentUrl === item.url;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onUploadComplete(item.url);
+                    }}
+                    className={`relative group aspect-square rounded-xl border p-1 overflow-hidden transition cursor-pointer flex flex-col items-center justify-center ${
+                      isSelected
+                        ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/40'
+                        : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900'
+                    }`}
+                    title={`${item.title} (${item.folder})`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
+                      <SkillMediaRenderer src={item.url} alt={item.title} variant="icon" />
+                    </div>
+
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 shadow">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      </div>
+                    )}
+
+                    <div className="absolute inset-x-0 bottom-0 bg-slate-950/90 text-[9px] font-mono text-slate-300 p-0.5 truncate text-center opacity-0 group-hover:opacity-100 transition">
+                      {item.title}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* OPTION 3: DIRECT URL INPUT */}
+      {sourceMode === 'url' && (
+        <div className="space-y-2 bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-2">
+            <input
+              type="url"
+              value={manualUrl}
+              onChange={(e) => setManualUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/photo-... or CDN link"
+              className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (manualUrl.trim()) {
+                  onUploadComplete(manualUrl.trim());
+                  setManualUrl('');
+                }
+              }}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold rounded-lg cursor-pointer transition"
+            >
+              Apply
+            </button>
+          </div>
         </div>
       )}
 

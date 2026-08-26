@@ -92,10 +92,10 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => 
-        p.title.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.skills.some(s => s.toLowerCase().includes(q)) ||
-        (p.category && p.category.toLowerCase().includes(q))
+        (p?.title || '').toLowerCase().includes(q) ||
+        (p?.description || '').toLowerCase().includes(q) ||
+        (Array.isArray(p?.skills) && p.skills.some(s => (s || '').toLowerCase().includes(q))) ||
+        ((p?.category || '') && p.category.toLowerCase().includes(q))
       );
     }
 

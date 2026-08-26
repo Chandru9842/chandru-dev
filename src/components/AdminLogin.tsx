@@ -151,6 +151,70 @@ storage.setItem('admin_user', JSON.stringify(user));
     setErrorMessage('For security reasons, password resets must be requested directly through system administration.');
   };
 
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage('Launching Recruiter Guest Demo Tour 🚀');
+
+    try {
+      // Clear persistent real admin credentials to ensure pure demo sandbox isolation
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('alex_dev_jwt_token');
+      localStorage.removeItem('admin_user');
+      localStorage.removeItem('admin_refresh_token');
+
+      let data: any = null;
+      try {
+        const response = await fetch('/api/auth/demo-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+          data = await response.json();
+        }
+      } catch (e) {
+        // Fallback for offline or static client demo
+      }
+
+      if (!data || !data.accessToken) {
+        // Client-side fallback token
+        const mockToken = 'demo_guest_token_' + Date.now();
+        data = {
+          accessToken: mockToken,
+          refreshToken: '',
+          user: {
+            id: 99999,
+            name: 'Recruiter Guest',
+            email: 'guest@recruiter.demo',
+            role: 'ROLE_ADMIN',
+            username: 'recruiter_guest',
+            isDemo: true
+          }
+        };
+      }
+
+      sessionStorage.clear();
+      sessionStorage.setItem('admin_token', data.accessToken);
+      sessionStorage.setItem('alex_dev_jwt_token', data.accessToken);
+      sessionStorage.setItem('admin_user', JSON.stringify(data.user));
+      sessionStorage.setItem('is_demo_session', 'true');
+      sessionStorage.setItem('is_fresh_login', 'true');
+
+      setTimeout(() => {
+        onLoginSuccess(
+          data.accessToken,
+          data.refreshToken || '',
+          data.user
+        );
+      }, 1000);
+    } catch (err) {
+      console.error('Demo login error:', err);
+      setErrorMessage('Failed to initialize demo session.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex items-center justify-center relative overflow-hidden px-4 font-sans portfolio-root">
       {/* Absolute Ambient Background Layer */}
@@ -309,6 +373,30 @@ storage.setItem('admin_user', JSON.stringify(user));
                 )}
               </button>
             </form>
+
+          {/* Recruiter / Guest Demo Mode Access */}
+          <div className="mt-5 pt-4 border-t border-white/[0.06] relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                Recruiter & Visitor Access
+              </span>
+              <span className="text-[9px] font-mono text-slate-500 uppercase font-semibold">1-Click Tour</span>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500/15 via-slate-800/90 to-cyan-500/15 hover:from-emerald-500/25 hover:to-cyan-500/25 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/5 flex items-center justify-center gap-2 group hover:scale-[1.01]"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-400 group-hover:rotate-12 transition-transform" />
+              <span>Explore as Recruiter / Guest Demo</span>
+            </button>
+            <p className="text-[10px] text-slate-400/90 text-center mt-2 leading-relaxed font-sans">
+              Instant read access to live CMS analytics, project schemas, system health, and theme controls without credentials.
+            </p>
+          </div>
 
           {/* Divider */}
           <div className="relative flex py-4 items-center z-10">

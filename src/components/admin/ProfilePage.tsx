@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Image as ImageIcon, FileText, Share2, Shield, Edit2, Check, RefreshCw, 
   Trash2, UploadCloud, Sliders, ZoomIn, CheckCircle2, AlertTriangle, Play, Save, 
-  RotateCcw, Eye, Download, Info, Globe, Mail, Phone, MapPin, Briefcase, Calendar, Lock, Unlock, Cpu
+  RotateCcw, Eye, Download, Info, Globe, Mail, Phone, MapPin, Briefcase, Calendar, Lock, Unlock, Cpu, Folder
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
+import MediaLibraryModal from './MediaLibraryModal';
 
 interface ProfileData {
   id: number;
@@ -97,7 +98,16 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const [activeResume, setActiveResume] = useState<ResumeItem | null>(null);
 
   // Security & JWT Authentication States
-  const [jwtToken, setJwtToken] = useState<string | null>(localStorage.getItem('alex_dev_jwt_token'));
+  const isDemoSession = Boolean(
+    sessionStorage.getItem('is_demo_session') === 'true' ||
+    sessionStorage.getItem('admin_token')?.startsWith('demo_guest_token_')
+  );
+  const [jwtToken, setJwtToken] = useState<string | null>(
+    localStorage.getItem('alex_dev_jwt_token') || 
+    localStorage.getItem('admin_token') || 
+    sessionStorage.getItem('admin_token') || 
+    sessionStorage.getItem('alex_dev_jwt_token')
+  );
   const [usernameInput, setUsernameInput] = useState('admin');
   const [passwordInput, setPasswordInput] = useState('admin123');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -126,6 +136,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
   // Draft vs Published flow states
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
+  const [mediaModalField, setMediaModalField] = useState<'profileImage' | 'coverImage' | 'aboutImage' | 'heroBackground' | 'heroAvatar' | null>(null);
 
   // Load profile data & resumes
   const fetchProfileAndResumes = async () => {
@@ -181,6 +192,13 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
   const handleAddTechnology = async () => {
     if (!newTechName.trim()) return;
+    if (isDemoSession) {
+      const newTech = { id: Date.now(), name: newTechName.trim(), order: technologies.length + 1 };
+      setTechnologies(prev => [...prev, newTech]);
+      setNewTechName('');
+      onTriggerToast("🛡️ Recruiter Demo Mode: Technology added in sandbox session.", "success");
+      return;
+    }
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -209,6 +227,12 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   const handleUpdateTechnology = async (id: number, updates: any) => {
+    if (isDemoSession) {
+      setTechnologies(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+      setEditingTechId(null);
+      onTriggerToast("🛡️ Recruiter Demo Mode: Technology updated in sandbox session.", "success");
+      return;
+    }
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -236,6 +260,11 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   const handleDeleteTechnology = async (id: number) => {
+    if (isDemoSession) {
+      setTechnologies(prev => prev.filter(t => t.id !== id));
+      onTriggerToast("🛡️ Recruiter Demo Mode: Technology deleted in sandbox session.", "success");
+      return;
+    }
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -262,11 +291,6 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   const handleReorderTechnology = async (index: number, direction: 'up' | 'down') => {
-    if (!jwtToken) {
-      setShowLoginModal(true);
-      onTriggerToast("Full administrative access is locked. Please log in first.", "error");
-      return;
-    }
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= technologies.length) return;
 
@@ -274,6 +298,18 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
     const temp = reordered[index];
     reordered[index] = reordered[targetIndex];
     reordered[targetIndex] = temp;
+
+    if (isDemoSession) {
+      setTechnologies(reordered);
+      onTriggerToast("🛡️ Recruiter Demo Mode: Technology reordered in sandbox session.", "success");
+      return;
+    }
+
+    if (!jwtToken) {
+      setShowLoginModal(true);
+      onTriggerToast("Full administrative access is locked. Please log in first.", "error");
+      return;
+    }
 
     const payload = reordered.map((item, idx) => ({ id: item.id, order: idx + 1 }));
 
@@ -436,6 +472,20 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   // Save/Publish Profile details
   const handleSaveProfile = async (isAutosave = false) => {
     if (!profile) return;
+
+    if (isDemoSession) {
+      setOriginalProfile(JSON.parse(JSON.stringify(profile)));
+      if (onProfileUpdated) {
+        onProfileUpdated(profile);
+      }
+      if (isAutosave) {
+        setLastAutosavedTime(new Date().toLocaleTimeString());
+      } else {
+        onTriggerToast("🛡️ Recruiter Demo Mode: You are in Recruiter / Demo Mode. Profile changes are simulated in this session.", "success");
+      }
+      return;
+    }
+
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -1507,22 +1557,32 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Profile Photo - Aspect 1:1 circular */}
+                {/* Profile Photo - Aspect 1:1 circular */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold font-mono text-slate-200">Profile Image</h4>
                       <p className="text-[10px] text-slate-500 font-mono">Used for primary avatars and headers</p>
                     </div>
-                    {profile.profileImage && (
-                      <button 
-                        onClick={() => handleDeleteImageField('profileImage')}
-                        className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete asset"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('profileImage')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
                       </button>
-                    )}
+                      {profile.profileImage && (
+                        <button 
+                          onClick={() => handleDeleteImageField('profileImage')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div 
@@ -1557,15 +1617,25 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <h4 className="text-xs font-bold font-mono text-slate-200">Hero Avatar Photo</h4>
                       <p className="text-[10px] text-slate-500 font-mono">Avatar overlay inside the home section</p>
                     </div>
-                    {profile.heroAvatar && (
-                      <button 
-                        onClick={() => handleDeleteImageField('heroAvatar')}
-                        className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete asset"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('heroAvatar')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
                       </button>
-                    )}
+                      {profile.heroAvatar && (
+                        <button 
+                          onClick={() => handleDeleteImageField('heroAvatar')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div 
@@ -1600,15 +1670,25 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <h4 className="text-xs font-bold font-mono text-slate-200">About Section Photo</h4>
                       <p className="text-[10px] text-slate-500 font-mono">Illustrated image on the About tab</p>
                     </div>
-                    {profile.aboutImage && (
-                      <button 
-                        onClick={() => handleDeleteImageField('aboutImage')}
-                        className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete asset"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('aboutImage')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
                       </button>
-                    )}
+                      {profile.aboutImage && (
+                        <button 
+                          onClick={() => handleDeleteImageField('aboutImage')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div 
@@ -1643,15 +1723,25 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <h4 className="text-xs font-bold font-mono text-slate-200">Cover Banner Image</h4>
                       <p className="text-[10px] text-slate-500 font-mono">Top panoramic panel background</p>
                     </div>
-                    {profile.coverImage && (
-                      <button 
-                        onClick={() => handleDeleteImageField('coverImage')}
-                        className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete asset"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('coverImage')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
                       </button>
-                    )}
+                      {profile.coverImage && (
+                        <button 
+                          onClick={() => handleDeleteImageField('coverImage')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div 
@@ -1686,15 +1776,25 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <h4 className="text-xs font-bold font-mono text-slate-200">Hero Section Wallpaper</h4>
                       <p className="text-[10px] text-slate-500 font-mono">Cosmic canvas overlay in portfolio header</p>
                     </div>
-                    {profile.heroBackground && (
-                      <button 
-                        onClick={() => handleDeleteImageField('heroBackground')}
-                        className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete asset"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('heroBackground')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
                       </button>
-                    )}
+                      {profile.heroBackground && (
+                        <button 
+                          onClick={() => handleDeleteImageField('heroBackground')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div 
@@ -2070,6 +2170,23 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           </form>
         </div>
       )}
+
+      {/* Centralized Media Library Modal for Profile & Hero Assets */}
+      <MediaLibraryModal
+        isOpen={mediaModalField !== null}
+        onClose={() => setMediaModalField(null)}
+        onSelectMedia={(media) => {
+          if (mediaModalField) {
+            setProfile(prev => ({
+              ...prev,
+              [mediaModalField]: media.url
+            }));
+            setHasDraftChanges(true);
+          }
+          setMediaModalField(null);
+        }}
+        title={`Select ${mediaModalField ? mediaModalField.replace(/([A-Z])/g, ' $1') : 'Asset'} from Centralized Media Library`}
+      />
 
     </div>
   );

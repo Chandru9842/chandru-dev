@@ -36,10 +36,14 @@ export default function ExperiencePage({ experiences, onAdd, onUpdate, onDelete 
 
   // Filters
   const filteredExps = useMemo(() => {
-    return experiences.filter(e => 
-      e.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const list = Array.isArray(experiences) ? experiences : [];
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(e => 
+      (e?.company || '').toLowerCase().includes(q) ||
+      (e?.role || '').toLowerCase().includes(q) ||
+      (e?.description || '').toLowerCase().includes(q) ||
+      (e?.location || '').toLowerCase().includes(q)
     );
   }, [experiences, searchQuery]);
 

@@ -579,8 +579,12 @@ function ResponsiveSceneContainer({ children }: { children: React.ReactNode }) {
 export default function ThreeDHero({ techString }: { techString?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(true);
+  const [isTabVisible, setIsTabVisible] = useState(() => typeof document !== 'undefined' ? !document.hidden : true);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [isLowBattery, setIsLowBattery] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
+  // 1. Viewport Intersection Observer (freeze when scrolled out of view)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -594,6 +598,34 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
     return () => observer.disconnect();
   }, []);
 
+  // 2. Tab Visibility Observer (freeze when user switches tabs to save 100% background GPU)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // 3. Battery Saver & Low-Power Hardware Awareness
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      (navigator as any).getBattery?.().then((battery: any) => {
+        const checkBattery = () => {
+          if (battery.level < 0.2 && !battery.charging) {
+            setIsLowBattery(true);
+          } else {
+            setIsLowBattery(false);
+          }
+        };
+        checkBattery();
+        battery.addEventListener?.('levelchange', checkBattery);
+        battery.addEventListener?.('chargingchange', checkBattery);
+      }).catch(() => {});
+    }
+  }, []);
+
+  // 4. Reduced Motion Preferences
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mediaQuery.matches);
@@ -603,9 +635,33 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
   }, []);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const shouldRender = isInView && isTabVisible && !isManuallyPaused;
+  const frameloopMode = shouldRender ? (reducedMotion || isLowBattery ? "demand" : "always") : "never";
 
   return (
     <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-auto" style={{ minHeight: '100%' }}>
+      
+      {/* Interactive WebGL Engine HUD Status Control */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-auto hidden sm:block">
+        <button
+          type="button"
+          onClick={() => setIsManuallyPaused(prev => !prev)}
+          className={`px-3 py-1.5 rounded-full border text-[10px] font-mono flex items-center gap-2 backdrop-blur-md transition-all shadow-lg cursor-pointer select-none ${
+            isManuallyPaused || !shouldRender
+              ? 'bg-slate-900/90 border-slate-700/80 text-slate-400 hover:text-slate-200'
+              : 'bg-slate-950/80 border-emerald-500/30 text-emerald-400 hover:border-emerald-400'
+          }`}
+          title={isManuallyPaused ? "Resume 3D Engine" : "Pause 3D WebGL Engine to save power"}
+          aria-label="Toggle 3D WebGL Engine"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${shouldRender ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+          <span className="font-bold">WebGL {shouldRender ? (isMobile ? '30FPS' : '60FPS') : 'PAUSED'}</span>
+          <span className="text-[9px] uppercase text-slate-500 font-semibold">
+            [{isManuallyPaused ? 'Play ▶' : 'Pause ⏸'}]
+          </span>
+        </button>
+      </div>
+
       {/* High Performance Suspense Lazy loader fallback wrapper */}
       <Suspense fallback={
         <div className="absolute inset-0 flex items-center justify-center bg-[#030712] z-50">
@@ -618,11 +674,11 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
         </div>
       }>
         <Canvas
-          dpr={isMobile ? [1, 1] : [1, 1.25]}
-          frameloop={isInView ? "always" : "never"}
-          shadows={!isMobile}
+          dpr={isMobile || isLowBattery ? [1, 1] : [1, 1.25]}
+          frameloop={frameloopMode}
+          shadows={!isMobile && !isLowBattery}
           camera={{ position: [0, 0, 7.2], fov: 46 }}
-          gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+          gl={{ antialias: !isMobile && !isLowBattery, powerPreference: isLowBattery ? "low-power" : "high-performance" }}
           style={{ width: '100%', height: '100%', display: 'block' }}
           id="react-three-fiber-universe"
         >
@@ -634,11 +690,11 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           
           {/* Main spotlight on planet and laptop */}
           <directionalLight
-            castShadow={!isMobile}
+            castShadow={!isMobile && !isLowBattery}
             position={[4, 5, 3]}
             intensity={1.2}
             color="#d1fae5"
-            shadow-mapSize={isMobile ? [256, 256] : [512, 512]}
+            shadow-mapSize={isMobile || isLowBattery ? [256, 256] : [512, 512]}
           />
 
           {/* Deep celestial ambient purple side fill */}
@@ -648,28 +704,28 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           <pointLight position={[0, 4, 2]} intensity={0.8} color="#10b981" />
 
           {/* Starfield galaxy background */}
-          <Stars radius={80} depth={50} count={isMobile ? 120 : 400} factor={4} saturation={0.5} fade speed={1} />
+          <Stars radius={80} depth={50} count={isMobile || isLowBattery ? 100 : 380} factor={4} saturation={0.5} fade speed={1} />
           
           {/* Secondary smaller dust particle swarm */}
-          <Sparkles count={isMobile ? 20 : 45} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
+          <Sparkles count={isMobile || isLowBattery ? 15 : 40} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
 
           {/* Major components wrapped in Responsive Scene Container */}
           <ResponsiveSceneContainer>
-            <ParticleGalaxy reducedMotion={reducedMotion} />
-            <PlanetEarth reducedMotion={reducedMotion} />
-            <HolographicLaptop reducedMotion={reducedMotion} />
+            <ParticleGalaxy reducedMotion={reducedMotion || isLowBattery} />
+            <PlanetEarth reducedMotion={reducedMotion || isLowBattery} />
+            <HolographicLaptop reducedMotion={reducedMotion || isLowBattery} />
 
             {/* High-tech HTML floating telemetry display (Responsive billboard) */}
-            <Float speed={reducedMotion ? 0 : 1.8} rotationIntensity={reducedMotion ? 0 : 0.2} floatIntensity={reducedMotion ? 0 : 0.5}>
+            <Float speed={reducedMotion || isLowBattery ? 0 : 1.8} rotationIntensity={reducedMotion ? 0 : 0.2} floatIntensity={reducedMotion ? 0 : 0.5}>
               <Html
                 position={[0, 2.0, 0]}
                 center
                 distanceFactor={8}
                 className="pointer-events-none"
               >
-                <div className="hidden md:flex glass-card border border-emerald-500/20 px-4 py-2.5 rounded-xl items-center gap-3 whitespace-nowrap opacity-90 select-none shadow-xl shadow-emerald-950/25">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <div className="font-mono text-[9px] uppercase tracking-wider text-slate-300">
+                <div className="flex glass-card border border-emerald-500/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl items-center gap-2 sm:gap-3 whitespace-nowrap opacity-90 select-none shadow-xl shadow-emerald-950/25">
+                  <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <div className="font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-300">
                     <span className="text-emerald-400 font-bold">{techString || "JAVA • SPRING BOOT • REACT • MYSQL"}</span>
                   </div>
                 </div>
@@ -678,7 +734,7 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
           </ResponsiveSceneContainer>
 
           {/* Mouse Parallax Tracking Camera Control */}
-          <CameraMouseController reducedMotion={reducedMotion} />
+          <CameraMouseController reducedMotion={reducedMotion || isLowBattery} />
 
         </Canvas>
       </Suspense>

@@ -4,7 +4,7 @@ import {
   Layout, BookOpen, Cpu, Award, Briefcase, GraduationCap, 
   BarChart3, Mail, Settings, RefreshCw, Terminal, LogOut, Code2, Database, ShieldAlert,
   Share2, FileText, User, Palette, AlertTriangle, Trophy, Shield, History,
-  Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe
+  Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe, Lock
 } from 'lucide-react';
 
 // Subpages
@@ -95,6 +95,32 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   // Sync / loading status
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Detect Recruiter / Guest Demo Mode session
+  const isDemoSession = React.useMemo(() => {
+    try {
+      const rawUser = localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed.isDemo) return true;
+      }
+    } catch (e) {}
+    return sessionStorage.getItem('is_demo_session') === 'true';
+  }, []);
+
+  // Helper trigger Toast
+  const triggerToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  };
+
+  // Helper to check Demo restrictions on write operations
+  const checkDemoRestriction = (actionName = 'Database modification') => {
+    if (isDemoSession) {
+      triggerToast(`🛡️ Recruiter Demo Mode: You are in Recruiter / Demo Mode. ${actionName} is simulated in this session to protect live data.`, 'success');
+      return true;
+    }
+    return false;
+  };
+
   // Helper to get authentication header
   const getAuthHeader = () => {
     const token = localStorage.getItem('alex_dev_jwt_token') || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
@@ -106,11 +132,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       'Content-Type': 'application/json',
       ...getAuthHeader()
     };
-  };
-
-  // Helper trigger Toast
-  const triggerToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
   };
 
   // Fetch all database lists from Express APIs
@@ -138,32 +159,49 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         fetch(`/api/portfolio-metrics?${cacheBuster}`, { headers: authHeader })
       ]);
 
-      setProjects(await projectsRes.json());
-      setSkills(await skillsRes.json());
-      setCertificates(await certsRes.json());
-      setAchievements(await achievementsRes.json());
-      setExperiences(await expRes.json());
-      setEducation(await eduRes.json());
-      setMessages(await msgRes.json());
-      setAnalytics(await analyticsRes.json());
-      setSettings(await settingsRes.json());
-      setFooter(await footerRes.json());
-      setSocialLinks(await socialsRes.json());
-      setThemeSettings(await themeRes.json());
+      const projectsData = await projectsRes.json();
+      const skillsData = await skillsRes.json();
+      const certsData = await certsRes.json();
+      const achievementsData = await achievementsRes.json();
+      const expData = await expRes.json();
+      const eduData = await eduRes.json();
+      const msgData = await msgRes.json();
+      const analyticsData = await analyticsRes.json();
+      const settingsData = await settingsRes.json();
+      const footerData = await footerRes.json();
+      const socialsData = await socialsRes.json();
+      const themeData = await themeRes.json();
+
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
+      setSkills(Array.isArray(skillsData) ? skillsData : []);
+      setCertificates(Array.isArray(certsData) ? certsData : []);
+      setAchievements(Array.isArray(achievementsData) ? achievementsData : []);
+      setExperiences(Array.isArray(expData) ? expData : []);
+      setEducation(Array.isArray(eduData) ? eduData : []);
+      setMessages(Array.isArray(msgData) ? msgData : []);
+      setAnalytics(analyticsData);
+      setSettings(settingsData);
+      setFooter(footerData);
+      setSocialLinks(Array.isArray(socialsData) ? socialsData : []);
+      setThemeSettings(themeData);
       if (codingProfilesRes.ok) {
-        setCodingProfiles(await codingProfilesRes.json());
+        const cpData = await codingProfilesRes.json();
+        setCodingProfiles(Array.isArray(cpData) ? cpData : []);
       }
       if (toolsRes.ok) {
-        setTools(await toolsRes.json());
+        const toolsData = await toolsRes.json();
+        setTools(Array.isArray(toolsData) ? toolsData : []);
       }
       if (metricsRes.ok) {
-        setPortfolioMetrics(await metricsRes.json());
+        const metricsData = await metricsRes.json();
+        setPortfolioMetrics(Array.isArray(metricsData) ? metricsData : []);
       }
       if (profileRes.ok) {
         setProfile(await profileRes.json());
       }
       if (footerSocialsRes.ok) {
-        setFooterSocialLinks(await footerSocialsRes.json());
+        const fsData = await footerSocialsRes.json();
+        setFooterSocialLinks(Array.isArray(fsData) ? fsData : []);
       }
     } catch (error) {
       console.error('Error fetching CMS tables:', error);
@@ -215,10 +253,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  // --- CRUD HANDLERS WITH REST APIs ---
-
   // Project CRUD
   const handleAddProject = async (proj: Omit<ProjectItem, 'id'>) => {
+    if (checkDemoRestriction('Add Project')) {
+      const mockProj: ProjectItem = { ...proj, id: Date.now() } as any;
+      setProjects(prev => [...prev, mockProj]);
+      return;
+    }
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -236,6 +277,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateProject = async (proj: ProjectItem) => {
+    if (checkDemoRestriction('Update Project')) {
+      setProjects(prev => prev.map(p => p.id === proj.id ? proj : p));
+      return;
+    }
     try {
       const res = await fetch(`/api/projects/${proj.id}`, {
         method: 'PUT',
@@ -252,13 +297,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteProject = async (id: number) => {
+    const target = projects.find(p => p.id === id);
+    if (checkDemoRestriction('Delete Project')) {
+      setProjects(prev => prev.filter(p => p.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/projects/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = projects.find(p => p.id === id);
         setProjects(prev => prev.filter(p => p.id !== id));
         triggerToast(`Purged project record: "${target?.title}" from database cascade schemas.`, 'success');
       }
@@ -269,6 +318,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Skills CRUD
   const handleAddSkill = async (skill: Omit<SkillItem, 'id'>) => {
+    if (checkDemoRestriction('Add Skill')) {
+      const mockSkill: SkillItem = { ...skill, id: Date.now() } as any;
+      setSkills(prev => [...prev, mockSkill]);
+      return;
+    }
     try {
       const res = await fetch('/api/skills', {
         method: 'POST',
@@ -286,6 +340,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateSkill = async (skill: SkillItem) => {
+    if (checkDemoRestriction('Update Skill')) {
+      setSkills(prev => prev.map(s => s.id === skill.id ? skill : s));
+      return;
+    }
     try {
       const res = await fetch(`/api/skills/${skill.id}`, {
         method: 'PUT',
@@ -302,13 +360,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteSkill = async (id: number) => {
+    const target = skills.find(s => s.id === id);
+    if (checkDemoRestriction('Delete Skill')) {
+      setSkills(prev => prev.filter(s => s.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/skills/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = skills.find(s => s.id === id);
         setSkills(prev => prev.filter(s => s.id !== id));
         triggerToast(`Removed skill "${target?.name}" from curriculum log.`, 'success');
       }
@@ -319,6 +381,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Certificates CRUD
   const handleAddCertificate = async (cert: Omit<CertificateItem, 'id'>) => {
+    if (checkDemoRestriction('Add Certificate')) {
+      const mockCert: CertificateItem = { ...cert, id: Date.now() } as any;
+      setCertificates(prev => [...prev, mockCert]);
+      return;
+    }
     try {
       const res = await fetch('/api/certificates', {
         method: 'POST',
@@ -336,6 +403,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateCertificate = async (cert: CertificateItem) => {
+    if (checkDemoRestriction('Update Certificate')) {
+      setCertificates(prev => prev.map(c => c.id === cert.id ? cert : c));
+      return;
+    }
     try {
       const res = await fetch(`/api/certificates/${cert.id}`, {
         method: 'PUT',
@@ -352,13 +423,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteCertificate = async (id: number) => {
+    const target = certificates.find(c => c.id === id);
+    if (checkDemoRestriction('Delete Certificate')) {
+      setCertificates(prev => prev.filter(c => c.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/certificates/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = certificates.find(c => c.id === id);
         setCertificates(prev => prev.filter(c => c.id !== id));
         triggerToast(`Purged credentials record: "${target?.name}".`, 'success');
       }
@@ -369,6 +444,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Tools & Technologies CRUD
   const handleAddTool = async (tool: Omit<ToolItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (checkDemoRestriction('Add Tool')) {
+      const mockTool: ToolItem = { ...tool, id: Date.now() } as any;
+      setTools(prev => [...prev, mockTool]);
+      return;
+    }
     try {
       const res = await fetch('/api/tools', {
         method: 'POST',
@@ -388,6 +468,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateTool = async (tool: ToolItem) => {
+    if (checkDemoRestriction('Update Tool')) {
+      setTools(prev => prev.map(t => t.id === tool.id ? tool : t));
+      return;
+    }
     try {
       const res = await fetch(`/api/tools/${tool.id}`, {
         method: 'PUT',
@@ -406,13 +490,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteTool = async (id: number) => {
+    const target = tools.find(t => t.id === id);
+    if (checkDemoRestriction('Delete Tool')) {
+      setTools(prev => prev.filter(t => t.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/tools/${id}`, {
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = tools.find(t => t.id === id);
         setTools(prev => prev.filter(t => t.id !== id));
         triggerToast(`Deleted tool "${target?.name || id}".`, 'success');
       } else {
@@ -424,6 +512,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleToolVisibility = async (id: number, isVisible: boolean) => {
+    if (checkDemoRestriction('Toggle Tool Visibility')) {
+      setTools(prev => prev.map(t => t.id === id ? { ...t, isVisible } : t));
+      return;
+    }
     try {
       const res = await fetch(`/api/tools/${id}/visibility`, {
         method: 'PATCH',
@@ -440,6 +532,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleToolFeatured = async (id: number, isFeatured: boolean) => {
+    if (checkDemoRestriction('Toggle Tool Featured')) {
+      setTools(prev => prev.map(t => t.id === id ? { ...t, isFeatured } : t));
+      return;
+    }
     try {
       const res = await fetch(`/api/tools/${id}/featured`, {
         method: 'PATCH',
@@ -457,6 +553,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleReorderTools = async (reordered: ToolItem[]) => {
     setTools(reordered);
+    if (checkDemoRestriction('Reorder Tools')) {
+      return;
+    }
     try {
       await fetch('/api/tools/order', {
         method: 'POST',
@@ -468,13 +567,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       triggerToast('Error saving tool order.', 'error');
     }
   };
+
   const handleAddAchievement = async (achievement: Omit<AchievementItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (checkDemoRestriction('Add Achievement')) {
+      const mockAch: AchievementItem = { ...achievement, id: Date.now() } as any;
+      setAchievements(prev => [...prev, mockAch]);
+      return;
+    }
     try {
-   const res = await fetch('/api/achievements', {
-    method: 'POST',
-    headers: getJsonHeaders(),
-    body: JSON.stringify(achievement)
-});
+      const res = await fetch('/api/achievements', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(achievement)
+      });
       if (res.ok) {
         const created = await res.json();
         setAchievements(prev => [...prev, created]);
@@ -487,13 +592,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-const handleUpdateAchievement = async (achievement: AchievementItem) => {
-  try {
-    const res = await fetch(`/api/achievements/${achievement.id}`, {
-      method: 'PUT',
-      headers: getJsonHeaders(),
-      body: JSON.stringify(achievement)
-    });
+  const handleUpdateAchievement = async (achievement: AchievementItem) => {
+    if (checkDemoRestriction('Update Achievement')) {
+      setAchievements(prev => prev.map(a => a.id === achievement.id ? achievement : a));
+      return;
+    }
+    try {
+      const res = await fetch(`/api/achievements/${achievement.id}`, {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(achievement)
+      });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === achievement.id ? achievement : a));
         triggerToast(`Updated achievement "${achievement.title}" successfully.`, 'success');
@@ -505,14 +614,18 @@ const handleUpdateAchievement = async (achievement: AchievementItem) => {
     }
   };
 
-const handleDeleteAchievement = async (id: number) => {
-  try {
-    const res = await fetch(`/api/achievements/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeader()
-    });
+  const handleDeleteAchievement = async (id: number) => {
+    const target = achievements.find(a => a.id === id);
+    if (checkDemoRestriction('Delete Achievement')) {
+      setAchievements(prev => prev.filter(a => a.id !== id));
+      return;
+    }
+    try {
+      const res = await fetch(`/api/achievements/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeader()
+      });
       if (res.ok) {
-        const target = achievements.find(a => a.id === id);
         setAchievements(prev => prev.filter(a => a.id !== id));
         triggerToast(`Purged achievement record "${target?.title}" from repository.`, 'success');
       } else {
@@ -523,13 +636,17 @@ const handleDeleteAchievement = async (id: number) => {
     }
   };
 
- const handleToggleAchievementVisibility = async (id: number, visibility: boolean) => {
-  try {
-    const res = await fetch(`/api/achievements/${id}/visibility`, {
-      method: 'PATCH',
-      headers: getJsonHeaders(),
-      body: JSON.stringify({ visibility })
-    });
+  const handleToggleAchievementVisibility = async (id: number, visibility: boolean) => {
+    if (checkDemoRestriction('Toggle Achievement Visibility')) {
+      setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility } : a));
+      return;
+    }
+    try {
+      const res = await fetch(`/api/achievements/${id}/visibility`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ visibility })
+      });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility } : a));
         triggerToast(`Visibility toggled: ${visibility ? 'Published' : 'Draft'}`, 'success');
@@ -541,13 +658,17 @@ const handleDeleteAchievement = async (id: number) => {
     }
   };
 
- const handleToggleAchievementFeatured = async (id: number, featured: boolean) => {
-  try {
-    const res = await fetch(`/api/achievements/${id}/featured`, {
-      method: 'PATCH',
-      headers: getJsonHeaders(),
-      body: JSON.stringify({ featured })
-    });
+  const handleToggleAchievementFeatured = async (id: number, featured: boolean) => {
+    if (checkDemoRestriction('Toggle Achievement Featured')) {
+      setAchievements(prev => prev.map(a => a.id === id ? { ...a, featured } : a));
+      return;
+    }
+    try {
+      const res = await fetch(`/api/achievements/${id}/featured`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ featured })
+      });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, featured } : a));
         triggerToast(`Highlight toggled: ${featured ? 'Featured' : 'Standard'}`, 'success');
@@ -559,24 +680,25 @@ const handleDeleteAchievement = async (id: number) => {
     }
   };
 
- const handleReorderAchievements = async (reordered: AchievementItem[]) => {
-  setAchievements(reordered);
-
-  try {
-    const res = await fetch('/api/achievements/order', {
-      method: 'PATCH',
-      headers: getJsonHeaders(),
-      body: JSON.stringify({
-        order: reordered.map((item, index) => ({
-          id: item.id,
-          displayOrder: index + 1
-        }))
-      })
-    });
+  const handleReorderAchievements = async (reordered: AchievementItem[]) => {
+    setAchievements(reordered);
+    if (checkDemoRestriction('Reorder Achievements')) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/achievements/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
       if (res.ok) {
         triggerToast('Committed new display hierarchy order to database.', 'success');
       } else {
-        // Rollback on failure
         const freshRes = await fetch('/api/achievements');
         setAchievements(await freshRes.json());
         triggerToast('Failed to save achievement display order.', 'error');
@@ -590,6 +712,11 @@ const handleDeleteAchievement = async (id: number) => {
 
   // Experience CRUD
   const handleAddExperience = async (exp: Omit<ExperienceItem, 'id'>) => {
+    if (checkDemoRestriction('Add Experience')) {
+      const mockExp: ExperienceItem = { ...exp, id: Date.now() } as any;
+      setExperiences(prev => [...prev, mockExp]);
+      return;
+    }
     try {
       const res = await fetch('/api/experiences', {
         method: 'POST',
@@ -607,6 +734,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleUpdateExperience = async (exp: ExperienceItem) => {
+    if (checkDemoRestriction('Update Experience')) {
+      setExperiences(prev => prev.map(e => e.id === exp.id ? exp : e));
+      return;
+    }
     try {
       const res = await fetch(`/api/experiences/${exp.id}`, {
         method: 'PUT',
@@ -623,13 +754,17 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleDeleteExperience = async (id: number) => {
+    const target = experiences.find(e => e.id === id);
+    if (checkDemoRestriction('Delete Experience')) {
+      setExperiences(prev => prev.filter(e => e.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/experiences/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = experiences.find(e => e.id === id);
         setExperiences(prev => prev.filter(e => e.id !== id));
         triggerToast(`Deleted experience record for "${target?.company}".`, 'success');
       }
@@ -640,6 +775,11 @@ const handleDeleteAchievement = async (id: number) => {
 
   // Education CRUD
   const handleAddEducation = async (edu: Omit<EducationItem, 'id'>) => {
+    if (checkDemoRestriction('Add Education')) {
+      const mockEdu: EducationItem = { ...edu, id: Date.now() } as any;
+      setEducation(prev => [...prev, mockEdu]);
+      return;
+    }
     try {
       const res = await fetch('/api/education', {
         method: 'POST',
@@ -657,6 +797,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleUpdateEducation = async (edu: EducationItem) => {
+    if (checkDemoRestriction('Update Education')) {
+      setEducation(prev => prev.map(e => e.id === edu.id ? edu : e));
+      return;
+    }
     try {
       const res = await fetch(`/api/education/${edu.id}`, {
         method: 'PUT',
@@ -673,13 +817,17 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleDeleteEducation = async (id: number) => {
+    const target = education.find(e => e.id === id);
+    if (checkDemoRestriction('Delete Education')) {
+      setEducation(prev => prev.filter(e => e.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/education/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
-        const target = education.find(e => e.id === id);
         setEducation(prev => prev.filter(e => e.id !== id));
         triggerToast(`Purged academic records for "${target?.institution}".`, 'success');
       }
@@ -1138,6 +1286,11 @@ const handleDeleteAchievement = async (id: number) => {
 
   // Portfolio Metrics CRUD Handlers
   const handleAddPortfolioMetric = async (metric: Omit<PortfolioMetricItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (checkDemoRestriction('Add Metric')) {
+      const mockMetric: PortfolioMetricItem = { ...metric, id: Date.now() } as any;
+      setPortfolioMetrics(prev => [...prev, mockMetric]);
+      return;
+    }
     try {
       const res = await fetch('/api/portfolio-metrics', {
         method: 'POST',
@@ -1156,6 +1309,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleUpdatePortfolioMetric = async (metric: PortfolioMetricItem) => {
+    if (checkDemoRestriction('Update Metric')) {
+      setPortfolioMetrics(prev => prev.map(m => m.id === metric.id ? metric : m));
+      return;
+    }
     try {
       const res = await fetch(`/api/portfolio-metrics/${metric.id}`, {
         method: 'PUT',
@@ -1174,6 +1331,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleDeletePortfolioMetric = async (id: number) => {
+    if (checkDemoRestriction('Delete Metric')) {
+      setPortfolioMetrics(prev => prev.filter(m => m.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}`, {
         method: 'DELETE',
@@ -1191,6 +1352,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleBulkDeletePortfolioMetrics = async (ids: number[]) => {
+    if (checkDemoRestriction('Bulk Delete Metrics')) {
+      setPortfolioMetrics(prev => prev.filter(m => !ids.includes(m.id)));
+      return;
+    }
     try {
       const res = await fetch('/api/portfolio-metrics/bulk-delete', {
         method: 'POST',
@@ -1207,6 +1372,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleBulkVisibilityPortfolioMetrics = async (ids: number[], visible: boolean) => {
+    if (checkDemoRestriction('Update Metrics Visibility')) {
+      setPortfolioMetrics(prev => prev.map(m => ids.includes(m.id) ? { ...m, visible } : m));
+      return;
+    }
     try {
       const res = await fetch('/api/portfolio-metrics/bulk-visibility', {
         method: 'PATCH',
@@ -1223,6 +1392,10 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleToggleVisibilityPortfolioMetric = async (id: number, visible: boolean) => {
+    if (checkDemoRestriction('Toggle Metric Visibility')) {
+      setPortfolioMetrics(prev => prev.map(m => m.id === id ? { ...m, visible } : m));
+      return;
+    }
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}/visibility`, {
         method: 'PATCH',
@@ -1241,8 +1414,11 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleReorderPortfolioMetrics = async (orderedMetrics: PortfolioMetricItem[]) => {
+    setPortfolioMetrics(orderedMetrics);
+    if (checkDemoRestriction('Reorder Metrics')) {
+      return;
+    }
     try {
-      setPortfolioMetrics(orderedMetrics);
       const res = await fetch('/api/portfolio-metrics/order', {
         method: 'PATCH',
         headers: getJsonHeaders(),
@@ -1260,6 +1436,14 @@ const handleDeleteAchievement = async (id: number) => {
   };
 
   const handleDuplicatePortfolioMetric = async (id: number) => {
+    if (checkDemoRestriction('Duplicate Metric')) {
+      const target = portfolioMetrics.find(m => m.id === id);
+      if (target) {
+        const mockDuplicate = { ...target, id: Date.now(), title: `${target.title} (Copy)` };
+        setPortfolioMetrics(prev => [...prev, mockDuplicate]);
+      }
+      return;
+    }
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}/duplicate`, {
         method: 'POST',
@@ -1308,7 +1492,33 @@ const handleDeleteAchievement = async (id: number) => {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[580px] bg-slate-950 border border-slate-900 rounded-3xl overflow-hidden shadow-2xl relative text-slate-100">
+    <div className="flex flex-col w-full min-h-[580px] bg-slate-950 border border-slate-900 rounded-3xl overflow-hidden shadow-2xl relative text-slate-100">
+      
+      {/* Recruiter / Guest Demo Mode Banner */}
+      {isDemoSession && (
+        <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900/95 to-cyan-950/90 border-b border-emerald-500/30 px-4 py-2.5 text-xs font-mono flex flex-wrap items-center justify-between gap-2 shadow-lg z-40 backdrop-blur-md">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-extrabold uppercase tracking-wider text-emerald-400 text-[11px] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              Recruiter Demo Tour Active
+            </span>
+            <span className="text-slate-400 text-[11px] hidden lg:inline">
+              — Full read access to live CMS analytics, project schemas, system health, and theme controls.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest">
+              Recruiter Sandbox Mode
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row flex-1 relative">
       
       {/* Mobile Nav Top Bar */}
       <div className="flex md:hidden items-center justify-between p-4 border-b border-slate-900 bg-slate-950/90 sticky top-0 z-30 w-full">
@@ -1742,6 +1952,7 @@ const handleDeleteAchievement = async (id: number) => {
           <ActivityHistoryPage />
         )}
       </section>
+      </div>
 
       {/* Global Toast render */}
       {toast && (

@@ -53,7 +53,14 @@ export default function MediaLibraryModal({
   const [uploadType, setUploadType] = useState<'image' | 'svg' | 'pdf' | 'video' | 'audio' | 'document'>('image');
   const [uploadSvg, setUploadSvg] = useState('');
 
-  const folders = ['All', 'Hero & Profile', 'Projects', 'Certificates & Badges', 'SVGs & Logos', 'Resumes & Documents', 'General'];
+  const [dynamicFolders, setDynamicFolders] = useState<string[]>([]);
+
+  const folders = [
+    'All',
+    ...dynamicFolders,
+    'Photos', 'Projects', 'Skills', 'Certificates', 'Tools', 'Profile', 
+    'Logos', 'Icons', 'Backgrounds', 'Documents', 'SEO', 'General'
+  ].filter((v, i, a) => a.indexOf(v) === i);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('alex_dev_jwt_token') || localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
@@ -63,10 +70,19 @@ export default function MediaLibraryModal({
   const fetchMedia = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/media', { headers: getAuthHeader() });
+      const [res, foldRes] = await Promise.all([
+        fetch('/api/media', { headers: getAuthHeader() }),
+        fetch('/api/media/folders', { headers: getAuthHeader() })
+      ]);
       if (res.ok) {
         const data = await res.json();
         setMediaItems(data);
+      }
+      if (foldRes.ok) {
+        const fData = await foldRes.json();
+        if (Array.isArray(fData)) {
+          setDynamicFolders(fData.map((f: any) => f.name));
+        }
       }
     } catch (e) {
       console.error('Failed to fetch media assets:', e);

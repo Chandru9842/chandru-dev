@@ -12,6 +12,8 @@ import {
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
+import AIPortfolioChat from './AIPortfolioChat';
+import DeveloperTerminalModal from './DeveloperTerminalModal';
 
 class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -441,8 +443,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
+
+  // Global Keyboard Shortcut Listener for Developer Terminal (Ctrl+K, Cmd+K)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsTerminalOpen(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setIsTerminalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -1867,8 +1885,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           </div>
 
-          {/* Right Column: 3D Canvas Universe / Mobile Celestial Visualizer */}
-          <div className="lg:col-span-5 xl:col-span-6 w-full h-[280px] sm:h-[340px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center my-2 lg:my-0 shadow-2xl shadow-emerald-500/5">
+          {/* Right Column: 3D Canvas Universe / Interactive Cyber Showcase on ALL screen sizes */}
+          <div className="lg:col-span-5 xl:col-span-6 w-full h-[320px] sm:h-[380px] md:h-[440px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center my-2 lg:my-0 shadow-2xl shadow-emerald-500/5">
             <CanvasErrorBoundary>
               <React.Suspense fallback={
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
@@ -1876,7 +1894,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing Universe...</p>
                 </div>
               }>
-                {render3D && !isMobileScreen ? (
+                {render3D ? (
                   <ThreeDHero techString={techString} />
                 ) : (
                   <div className="relative w-full h-full flex flex-col items-center justify-center p-6 select-none overflow-hidden">
@@ -3813,6 +3831,39 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Interactive AI Career & Portfolio Assistant */}
+      <AIPortfolioChat />
+
+      {/* Floating Developer Terminal Launcher (Ctrl+K) */}
+      <div className="fixed bottom-6 left-6 z-[90] flex items-center">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+          className="flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group"
+          title="Open Developer Terminal (Ctrl+K)"
+          aria-label="Open Developer CLI Terminal"
+        >
+          <Terminal className="w-4 h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
+          <span className="text-xs font-mono font-bold hidden sm:inline">CLI Terminal</span>
+          <span className="text-[9px] font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800 hidden md:inline">
+            Ctrl+K
+          </span>
+        </motion.button>
+      </div>
+
+      {/* Developer CLI Terminal Modal */}
+      <DeveloperTerminalModal
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+        projects={projects}
+        skills={skills}
+        experiences={experiences}
+        education={education}
+        metrics={portfolioMetrics}
+        profile={profile}
+      />
 
     </div>
   );

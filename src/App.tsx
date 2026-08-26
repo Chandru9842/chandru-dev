@@ -4,18 +4,20 @@ import { Layers, Database, Code2, ShieldAlert, ArrowRight, BookOpen, GitFork, Re
 import StatusCard from './components/StatusCard';
 import PortfolioFrontend from './components/PortfolioFrontend';
 import PublicPreviewWrapper from './components/PublicPreviewWrapper';
+import RecruiterDemoGate from './components/RecruiterDemoGate';
 
 const ArchitectureDiagram = React.lazy(() => import('./components/ArchitectureDiagram'));
 const DatabaseERD = React.lazy(() => import('./components/DatabaseERD'));
 const CodeExplorer = React.lazy(() => import('./components/CodeExplorer'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
-const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
+import AdminLogin from './components/AdminLogin';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [activeTab, setActiveTab] = useState<'explorer' | 'schema' | 'admin'>('admin');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [alwaysRequireLogin, setAlwaysRequireLogin] = useState<boolean | null>(null);
+  const [showDemoGate, setShowDemoGate] = useState(false);
   const isFirstCheck = React.useRef(true);
 
   // Helper for SPA navigation
@@ -35,6 +37,8 @@ export default function App() {
 
   // Session validation, token refresh & automatic logout on expiration
   useEffect(() => {
+    let isCancelled = false;
+
     const checkAuth = async () => {
       let configAlwaysRequire = false;
       try {
@@ -42,17 +46,15 @@ export default function App() {
         if (configRes.ok) {
           const configData = await configRes.json();
           configAlwaysRequire = !!configData.alwaysRequireLogin;
-          setAlwaysRequireLogin(configAlwaysRequire);
+          if (!isCancelled) setAlwaysRequireLogin(configAlwaysRequire);
         }
       } catch (e) {
-        // Handle transient network/boot errors silently with fallback defaults
-        setAlwaysRequireLogin(false);
+        if (!isCancelled) setAlwaysRequireLogin(false);
       }
 
       if (isFirstCheck.current) {
         isFirstCheck.current = false;
         if (configAlwaysRequire) {
-          // If always require login is enabled, clear all persistent and session tokens on initial load
           localStorage.removeItem('admin_token');
           localStorage.removeItem('alex_dev_jwt_token');
           localStorage.removeItem('admin_refresh_token');
@@ -61,21 +63,21 @@ export default function App() {
           sessionStorage.removeItem('alex_dev_jwt_token');
           sessionStorage.removeItem('admin_refresh_token');
           sessionStorage.removeItem('is_fresh_login');
-          setIsAuthenticated(false);
-          if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
-            navigate('/admin/login');
-          }
+          if (!isCancelled) setIsAuthenticated(false);
           return;
         }
+      }
+
+      const isDemo = sessionStorage.getItem('is_demo_session') === 'true';
+      if (isDemo) {
+        if (!isCancelled) setIsAuthenticated(true);
+        return;
       }
 
       const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
 
       if (!token) {
-        setIsAuthenticated(false);
-        if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
-          navigate('/admin/login');
-        }
+        if (!isCancelled) setIsAuthenticated(false);
         return;
       }
 
@@ -88,8 +90,8 @@ export default function App() {
         if (response.ok) {
           const data = await response.json();
           
-          if (data.valid && data.user?.role === 'ROLE_ADMIN') {
-            setIsAuthenticated(true);
+          if (data.valid && (data.user?.role === 'ROLE_ADMIN' || data.user?.isDemo)) {
+            if (!isCancelled) setIsAuthenticated(true);
             return;
           }
         }
@@ -107,7 +109,6 @@ export default function App() {
           if (refreshResponse.ok) {
             const refreshData = await refreshResponse.json();
             
-            // Decide storage mechanism based on where we found the token
             const isLocal = !!localStorage.getItem('admin_token');
             const storage = isLocal ? localStorage : sessionStorage;
 
@@ -116,23 +117,32 @@ export default function App() {
             if (refreshData.refreshToken) {
               storage.setItem('admin_refresh_token', refreshData.refreshToken);
             }
-            setIsAuthenticated(true);
+            if (!isCancelled) setIsAuthenticated(true);
             return;
           }
         }
-        // Clear session on fail
-        handleLogout();
+        
+        // Clear stale credentials on verify failure
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('alex_dev_jwt_token');
+        localStorage.removeItem('admin_refresh_token');
+        sessionStorage.removeItem('admin_token');
+        sessionStorage.removeItem('alex_dev_jwt_token');
+        sessionStorage.removeItem('admin_refresh_token');
+        sessionStorage.removeItem('is_fresh_login');
+        if (!isCancelled) setIsAuthenticated(false);
       } catch (error) {
-        // Handle transient network issues gracefully
-        setIsAuthenticated(false);
+        if (!isCancelled) setIsAuthenticated(false);
       }
     };
 
     checkAuth();
 
-    // Check periodically for session validity / automatic refresh every 30s
-    const interval = setInterval(checkAuth, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkAuth, 60000);
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
   }, [currentPath]);
 
   const handleLogout = async () => {
@@ -164,36 +174,40 @@ export default function App() {
     navigate('/');
   };
 
-const handleEnterCMS = async () => {
-  try {
-    const token =
-      localStorage.getItem('admin_token') ||
-      sessionStorage.getItem('admin_token');
+  const handleEnterCMS = () => {
+    // If the user already has an active Master Admin session, take them straight to dashboard
+    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+    const isMaster = token && sessionStorage.getItem('is_demo_session') !== 'true';
 
-    if (token) {
-      const verifyResponse = await fetch('/api/auth/verify', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (verifyResponse.ok) {
-        const verifyData = await verifyResponse.json();
-
-        if (verifyData.valid && verifyData.user?.role === 'ROLE_ADMIN') {
-          setIsAuthenticated(true);
-          navigate('/admin/dashboard');
-          return;
-        }
-      }
+    if (isMaster) {
+      setIsAuthenticated(true);
+      navigate('/admin/dashboard');
+      return;
     }
 
-    navigate('/admin/login');
-  } catch (err) {
-    console.error(err);
-    navigate('/admin/login');
-  }
-};
+    // Show the Recruiter Demo Welcome Gate first
+    setShowDemoGate(true);
+  };
+
+  const handleConfirmDemoEntry = () => {
+    // Activate Recruiter / Guest Demo Mode
+    const mockToken = 'demo_guest_token_' + Date.now();
+    sessionStorage.setItem('admin_token', mockToken);
+    sessionStorage.setItem('alex_dev_jwt_token', mockToken);
+    sessionStorage.setItem('admin_user', JSON.stringify({
+      id: 99999,
+      name: 'Recruiter Guest',
+      email: 'guest@recruiter.demo',
+      role: 'ROLE_ADMIN',
+      username: 'recruiter_guest',
+      isDemo: true
+    }));
+    sessionStorage.setItem('is_demo_session', 'true');
+    sessionStorage.setItem('is_fresh_login', 'true');
+    setShowDemoGate(false);
+    setIsAuthenticated(true);
+    navigate('/admin/dashboard');
+  };
 
   const handleLoginSuccess = (token: string, refreshToken: string, user: any) => {
     sessionStorage.setItem('is_fresh_login', 'true');
@@ -201,9 +215,25 @@ const handleEnterCMS = async () => {
     navigate('/admin/dashboard');
   };
 
-  // Determine page matching
-  const isCurrentPathAdmin = currentPath === '/admin/dashboard' || (currentPath.startsWith('/admin') && currentPath !== '/admin/login');
+  const isDirectAdminLogin = currentPath === '/admin' || currentPath === '/admin/login';
+  const isCurrentPathAdmin = currentPath === '/admin/dashboard' || (currentPath.startsWith('/admin') && !isDirectAdminLogin);
 
+  // If user navigated directly to /admin or /admin/login via browser URL bar, show Admin Login Portal
+  if (isDirectAdminLogin) {
+    const hasMasterToken = (localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token')) && sessionStorage.getItem('is_demo_session') !== 'true';
+    if (hasMasterToken && isAuthenticated) {
+      navigate('/admin/dashboard');
+    } else {
+      return (
+        <AdminLogin 
+          onLoginSuccess={handleLoginSuccess}
+          onBackToPortfolio={() => navigate('/')}
+        />
+      );
+    }
+  }
+
+  // If user is accessing protected admin dashboard (/admin/dashboard)
   if (isCurrentPathAdmin) {
     if (isAuthenticated === null) {
       return (
@@ -217,48 +247,13 @@ const handleEnterCMS = async () => {
     }
 
     if (!isAuthenticated) {
-      // Redirect to /admin/login
-      setTimeout(() => {
-        navigate('/admin/login');
-      }, 0);
-      return null;
-    }
-  }
-
-  if (currentPath === '/admin/login') {
-    const isFresh = sessionStorage.getItem('is_fresh_login') === 'true';
-    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
-    
-    if (alwaysRequireLogin) {
-      if (isAuthenticated === true && isFresh && token) {
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 0);
-        return null;
-      }
-    } else {
-      if (isAuthenticated === true && token) {
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 0);
-        return null;
-      }
-    }
-    return (
-      <React.Suspense fallback={
-        <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col items-center justify-center font-sans">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center animate-spin mb-4">
-            <RefreshCw className="w-5 h-5 text-emerald-400" />
-          </div>
-          <p className="text-xs font-mono text-slate-400 uppercase tracking-widest animate-pulse">Loading Secure Portal...</p>
-        </div>
-      }>
+      return (
         <AdminLogin 
           onLoginSuccess={handleLoginSuccess}
           onBackToPortfolio={() => navigate('/')}
         />
-      </React.Suspense>
-    );
+      );
+    }
   }
 
 
@@ -266,9 +261,16 @@ const handleEnterCMS = async () => {
   // Treat any non-admin route as the live portfolio view without unmounting/reloading
   if (!isCurrentPathAdmin) {
     return (
-      <PublicPreviewWrapper>
-        <PortfolioFrontend onEnterCMS={handleEnterCMS} />
-      </PublicPreviewWrapper>
+      <>
+        <PublicPreviewWrapper>
+          <PortfolioFrontend onEnterCMS={handleEnterCMS} />
+        </PublicPreviewWrapper>
+        <RecruiterDemoGate
+          isOpen={showDemoGate}
+          onClose={() => setShowDemoGate(false)}
+          onEnterDemo={handleConfirmDemoEntry}
+        />
+      </>
     );
   }
 

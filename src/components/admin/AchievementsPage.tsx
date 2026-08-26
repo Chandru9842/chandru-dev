@@ -98,17 +98,17 @@ export default function AchievementsPage({
 
   // Filter & Sort logic
   const filteredAchievements = useMemo(() => {
-    let result = [...achievements];
+    let result = Array.isArray(achievements) ? [...achievements] : [];
 
     // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(a => 
-        a.title.toLowerCase().includes(q) ||
-        a.organization.toLowerCase().includes(q) ||
-        a.shortDescription.toLowerCase().includes(q) ||
-        (a.skills && a.skills.some(s => s.toLowerCase().includes(q))) ||
-        (a.technologies && a.technologies.some(t => t.toLowerCase().includes(q)))
+        (a?.title || '').toLowerCase().includes(q) ||
+        (a?.organization || '').toLowerCase().includes(q) ||
+        (a?.shortDescription || '').toLowerCase().includes(q) ||
+        (Array.isArray(a?.skills) && a.skills.some(s => (s || '').toLowerCase().includes(q))) ||
+        (Array.isArray(a?.technologies) && a.technologies.some(t => (t || '').toLowerCase().includes(q)))
       );
     }
 

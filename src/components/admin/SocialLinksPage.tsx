@@ -615,10 +615,10 @@ export default function SocialLinksPage({
     return (socialLinks || []).filter(item => {
       const q = searchQuery.toLowerCase();
       const matchSearch = !q || 
-        item.platform.toLowerCase().includes(q) ||
-        (item.username && item.username.toLowerCase().includes(q)) ||
-        (item.displayName && item.displayName.toLowerCase().includes(q)) ||
-        (item.category && item.category.toLowerCase().includes(q));
+        (item?.platform || '').toLowerCase().includes(q) ||
+        ((item?.username || '') && item.username.toLowerCase().includes(q)) ||
+        ((item?.displayName || '') && item.displayName.toLowerCase().includes(q)) ||
+        ((item?.category || '') && item.category.toLowerCase().includes(q));
 
       const matchCat = filterCategory === 'All' || item.category === filterCategory;
       const matchStatus = filterStatus === 'All' ? !item.isArchived : (filterStatus === 'Archived' ? item.isArchived : item.status === filterStatus);
