@@ -12,6 +12,23 @@ export default defineConfig(() => {
       },
     },
     build: {
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies(_filename, deps) {
+          return deps.filter(
+            (dep) =>
+              !dep.includes('vendor-three') &&
+              !dep.includes('vendor-lottie') &&
+              !dep.includes('ThreeDHero') &&
+              !dep.includes('AdminDashboard') &&
+              !dep.includes('AIPortfolioChat') &&
+              !dep.includes('DeveloperTerminalModal') &&
+              !dep.includes('CodeExplorer') &&
+              !dep.includes('DatabaseERD') &&
+              !dep.includes('ArchitectureDiagram')
+          );
+        },
+      },
       cssCodeSplit: true,
       minify: 'esbuild',
       rollupOptions: {

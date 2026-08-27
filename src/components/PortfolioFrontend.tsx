@@ -389,7 +389,6 @@ const ScrollProgressBar = React.memo(function ScrollProgressBar() {
           if (totalHeight > 0 && barRef.current) {
             const progress = Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100));
             barRef.current.style.width = `${progress}%`;
-            barRef.current.setAttribute('aria-valuenow', Math.round(progress).toString());
           }
           ticking = false;
         });
@@ -398,7 +397,6 @@ const ScrollProgressBar = React.memo(function ScrollProgressBar() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -525,25 +523,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     }
   }, [activeSection]);
 
-  // Enterprise Navigation System: Centralized Throttled Scroll Observer for ScrollToTop and Parent Frame Preview
+  // Enterprise Navigation System: Throttled Scroll Observer for ScrollToTop button
   useEffect(() => {
     let ticking = false;
 
     const handleScroll = () => {
-      const currentScrollY = Math.max(
-        window.scrollY || 0,
-        window.pageYOffset || 0,
-        document.documentElement.scrollTop || 0,
-        document.body.scrollTop || 0
-      );
-      const shouldShow = currentScrollY > 150;
+      const currentScrollY = window.scrollY || 0;
+      const shouldShow = currentScrollY > 200;
 
       setShowScrollTop((prev) => (prev !== shouldShow ? shouldShow : prev));
 
-      // Permanent Sticky Header: Always visible across entire scroll
-      setIsHeaderVisible(true);
-
-      // Notify parent window when scrolling near top
+      // Notify parent window when scrolling near top (only when embedded in preview iframe)
       if (window.parent && window.parent !== window && currentScrollY < 50) {
         window.parent.postMessage({
           type: 'PREVIEW_ACTIVE_SECTION',
@@ -562,26 +552,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('touchmove', onScroll, { passive: true });
-    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      document.removeEventListener('scroll', onScroll);
-      window.removeEventListener('touchmove', onScroll);
     };
-  }, []);
-
-  // Hovering mouse near top edge (clientY <= 60) reveals navbar smoothly when scrolling
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientY <= 60) {
-        setIsHeaderVisible(true);
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   // Listen for PREVIEW_SCROLL_TO messages from parent LivePreviewModal frame
@@ -1205,7 +1179,21 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   };
 
   useEffect(() => {
-    fetchAllDataWithRetry(1, false);
+    // Hydrate dynamic data during idle time or after short delay to preserve instant initial paint
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = (window as any).requestIdleCallback(() => {
+        fetchAllDataWithRetry(1, false);
+      }, { timeout: 1500 });
+      return () => (window as any).cancelIdleCallback?.(handle);
+    } else {
+      const timer = setTimeout(() => {
+        fetchAllDataWithRetry(1, false);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  useEffect(() => {
 
     // Active synchronization listener for CMS updates
     const handleStorageChange = (e: StorageEvent) => {
