@@ -4,7 +4,7 @@ import {
   ShieldCheck, Layers, Globe, Smartphone, Network, Braces, 
   Cloud, Lock, Settings, Activity, Sparkles 
 } from 'lucide-react';
-import lottie from 'lottie-web';
+// lottie-web is loaded dynamically inside LottiePlayer to defer the 307 KB bundle
 
 // Mapping of preset names to Lucide icons
 const iconMapping: { [key: string]: React.ComponentType<any> } = {
@@ -269,6 +269,10 @@ export function LottiePlayer({ src, className, variant = 'icon' }: LottiePlayerP
 
     const loadLottie = async () => {
       try {
+        // Dynamic import: defers the 307 KB lottie-web bundle until actually needed
+        const lottieModule = await import('lottie-web');
+        const lottie = lottieModule.default;
+
         if (src.startsWith('data:')) {
           const parts = src.split(',');
           if (parts.length > 1) {

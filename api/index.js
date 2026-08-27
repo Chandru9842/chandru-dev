@@ -21,9 +21,9 @@ var initialTechStack = [
 var initialProfile = {
   id: 1,
   profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-  coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-  aboutImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-  heroBackground: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+  coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp",
+  aboutImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp",
+  heroBackground: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp",
   heroAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
   heroBadge: "Full Stack Java Developer",
   heroName: "Alex Rivera",
@@ -110,13 +110,13 @@ var initialProjects = [
     isFeatured: true,
     displayOrder: 1,
     skills: ["React", "Spring Boot", "MySQL", "Gemini API"],
-    imageUrl: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=480&q=75&fm=webp",
     category: "Full-Stack",
     status: "Completed",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     gallery: [
-      "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=480&q=75&fm=webp",
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
     ],
     createdAt: "2026-01-15T09:00:00Z",
     updatedAt: "2026-04-30T17:30:00Z"
@@ -133,12 +133,12 @@ var initialProjects = [
     isFeatured: true,
     displayOrder: 2,
     skills: ["React", "Node.js", "WebSocket", "TailwindCSS"],
-    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp",
     category: "Frontend",
     status: "Maintained",
     videoUrl: "",
     gallery: [
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
     ],
     createdAt: "2025-08-10T10:00:00Z",
     updatedAt: "2025-12-20T18:00:00Z"
@@ -155,12 +155,12 @@ var initialProjects = [
     isFeatured: false,
     displayOrder: 3,
     skills: ["React", "D3.js", "Spring Boot", "MySQL"],
-    imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=480&q=75&fm=webp",
     category: "Full-Stack",
     status: "Completed",
     videoUrl: "",
     gallery: [
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=480&q=75&fm=webp"
     ],
     createdAt: "2025-03-01T08:00:00Z",
     updatedAt: "2025-07-15T16:00:00Z"
@@ -499,7 +499,7 @@ var initialThemeSettings = {
   gradientEnd: "#0b1528",
   heroBackground: {
     type: "image",
-    src: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+    src: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp",
     enabled: true,
     opacity: 0.15,
     blur: 0,
@@ -535,7 +535,7 @@ var initialThemeSettings = {
   },
   customWallpaper: {
     type: "image",
-    src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp",
     enabled: false,
     opacity: 0.1,
     blur: 8,
@@ -590,7 +590,7 @@ var initialAchievements = [
     category: "Hackathon",
     organization: "Global AI Alliance & Google Cloud",
     achievementDate: "2026-05-15",
-    imageUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=480&q=75&fm=webp",
     logoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=120&q=80",
     certificateUrl: "",
     credentialUrl: "https://example.com/credentials/global-ai-winner",
@@ -617,7 +617,7 @@ var initialAchievements = [
     category: "Certification",
     organization: "Amazon Web Services (AWS)",
     achievementDate: "2026-02-10",
-    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=480&q=75&fm=webp",
     logoUrl: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=120&q=80",
     certificateUrl: "",
     credentialUrl: "https://example.com/verify/aws-sap-994321",
@@ -641,7 +641,7 @@ var initialAchievements = [
     category: "Coding",
     organization: "National Informatics Society",
     achievementDate: "2025-11-05",
-    imageUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=480&q=75&fm=webp",
     logoUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=120&q=80",
     certificateUrl: "",
     credentialUrl: "https://example.com/rank/nicc-2025-alex",
