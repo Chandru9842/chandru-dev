@@ -441,7 +441,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  const [render3D, setRender3D] = useState<boolean>(false);
+  const [render3D, setRender3D] = useState<boolean>(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);

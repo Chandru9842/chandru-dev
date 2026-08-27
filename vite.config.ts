@@ -17,9 +17,7 @@ export default defineConfig(() => {
         resolveDependencies(_filename, deps) {
           return deps.filter(
             (dep) =>
-              !dep.includes('vendor-three') &&
               !dep.includes('vendor-lottie') &&
-              !dep.includes('ThreeDHero') &&
               !dep.includes('AdminDashboard') &&
               !dep.includes('AIPortfolioChat') &&
               !dep.includes('DeveloperTerminalModal') &&
