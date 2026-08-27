@@ -652,7 +652,6 @@ export default function ThreeDHero({ techString }: { techString?: string }) {
               : 'bg-slate-950/80 border-emerald-500/30 text-emerald-400 hover:border-emerald-400'
           }`}
           title={isManuallyPaused ? "Resume 3D Engine" : "Pause 3D WebGL Engine to save power"}
-          aria-label="Toggle 3D WebGL Engine"
         >
           <span className={`w-1.5 h-1.5 rounded-full ${shouldRender ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
           <span className="font-bold">WebGL {shouldRender ? (isMobile ? '30FPS' : '60FPS') : 'PAUSED'}</span>

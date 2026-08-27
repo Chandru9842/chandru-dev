@@ -17,13 +17,13 @@
         "MySQL",
         "Gemini API"
       ],
-      "imageUrl": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=480&q=75&fm=webp",
       "category": "Full-Stack",
       "status": "Completed",
       "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
       "gallery": [
-        "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=480&q=75&fm=webp",
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2026-01-15T09:00:00Z",
       "updatedAt": "2026-04-30T17:30:00Z"
@@ -45,12 +45,12 @@
         "WebSocket",
         "TailwindCSS"
       ],
-      "imageUrl": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp",
       "category": "Frontend",
       "status": "Maintained",
       "videoUrl": "",
       "gallery": [
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2025-08-10T10:00:00Z",
       "updatedAt": "2025-12-20T18:00:00Z"
@@ -72,12 +72,12 @@
         "Spring Boot",
         "MySQL"
       ],
-      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=480&q=75&fm=webp",
       "category": "Full-Stack",
       "status": "Completed",
       "videoUrl": "",
       "gallery": [
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2025-03-01T08:00:00Z",
       "updatedAt": "2025-07-15T16:00:00Z"
@@ -92,7 +92,7 @@
       "color": "#0ea5e9",
       "description": "Modern React and Next.js frameworks for fast, reactive user interfaces and server-side applications.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 2,
@@ -102,7 +102,7 @@
       "color": "#3178c6",
       "description": "Typed superset of JavaScript providing robust developer tooling and compiler safety.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 3,
@@ -112,7 +112,7 @@
       "color": "#38bdf8",
       "description": "Utility-first CSS framework for rapid design implementations with custom tokens.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 4,
@@ -122,7 +122,7 @@
       "color": "#6db33f",
       "description": "Enterprise-grade JVM framework for resilient microservices and RESTful API structures.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 5,
@@ -132,7 +132,7 @@
       "color": "#005a9c",
       "description": "Token-based credentials architectures and role-based access control filters.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 6,
@@ -142,7 +142,7 @@
       "color": "#4479a1",
       "description": "Relational query optimizations, schema constraints, and Object-Relational mappings.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 7,
@@ -152,7 +152,7 @@
       "color": "#3448c5",
       "description": "Cloud media management API serving optimized, compressed assets dynamically.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     },
     {
       "id": 8,
@@ -162,7 +162,7 @@
       "color": "#2496ed",
       "description": "Container virtualization, service orchestrations, and automated deployment pipelines.",
       "visibility": true,
-      "iconUrl": "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=120&h=120&q=80"
+      "iconUrl": "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=60&h=60&q=75&fm=webp"
     }
   ],
   "certificates": [
@@ -1118,7 +1118,7 @@
       "fileType": "application/pdf",
       "fileSize": 45210,
       "cloudinaryPublicId": "portfolio/resume/alex_dev_systems_eng_v2_4",
-      "thumbnailImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=260&auto=format&fit=crop",
+      "thumbnailImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=150&q=75&fm=webp",
       "isActive": true,
       "isDownloadEnabled": true,
       "uploadedAt": "2026-06-15T09:30:00.000Z",
@@ -1134,7 +1134,7 @@
       "fileType": "application/pdf",
       "fileSize": 38940,
       "cloudinaryPublicId": "portfolio/resume/alex_dev_react_arch_v2_3_1",
-      "thumbnailImage": "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?q=80&w=260&auto=format&fit=crop",
+      "thumbnailImage": "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?auto=format&fit=crop&w=150&q=75&fm=webp",
       "isActive": false,
       "isDownloadEnabled": true,
       "uploadedAt": "2026-05-10T14:15:00.000Z",
@@ -1143,10 +1143,10 @@
   ],
   "profile": {
     "id": 1,
-    "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-    "coverImage": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    "aboutImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-    "heroBackground": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+    "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp",
+    "coverImage": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp",
+    "aboutImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp",
+    "heroBackground": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp",
     "fullName": "Chandru  Mohan",
     "displayName": "Chandru M",
     "title": "Principal Systems Architect",
@@ -1197,7 +1197,7 @@
     "gradientEnd": "#0b1528",
     "heroBackground": {
       "type": "image",
-      "src": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+      "src": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp",
       "enabled": true,
       "opacity": 0.15,
       "blur": 0,
@@ -1233,7 +1233,7 @@
     },
     "customWallpaper": {
       "type": "image",
-      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp",
       "enabled": false,
       "opacity": 0.1,
       "blur": 8,
@@ -1288,8 +1288,8 @@
       "category": "Hackathon",
       "organization": "Global AI Alliance & Google Cloud",
       "achievementDate": "2026-05-15",
-      "imageUrl": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
-      "logoUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=120&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=480&q=75&fm=webp",
+      "logoUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=60&h=60&q=75&fm=webp",
       "certificateUrl": "",
       "credentialUrl": "https://example.com/credentials/global-ai-winner",
       "projectUrl": "https://example.com/projects/ai-orchestrator",
@@ -1326,8 +1326,8 @@
       "category": "Certification",
       "organization": "Amazon Web Services (AWS)",
       "achievementDate": "2026-02-10",
-      "imageUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
-      "logoUrl": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=120&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=480&q=75&fm=webp",
+      "logoUrl": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=60&h=60&q=75&fm=webp",
       "certificateUrl": "",
       "credentialUrl": "https://example.com/verify/aws-sap-994321",
       "skills": [
@@ -1361,8 +1361,8 @@
       "category": "Coding",
       "organization": "National Informatics Society",
       "achievementDate": "2025-11-05",
-      "imageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
-      "logoUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=120&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=480&q=75&fm=webp",
+      "logoUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=60&h=60&q=75&fm=webp",
       "certificateUrl": "",
       "credentialUrl": "https://example.com/rank/nicc-2025-alex",
       "skills": [
@@ -1631,8 +1631,8 @@
       "action": "Profile Updated",
       "module": "Profile",
       "description": "Founder updated profile and account details.",
-      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Alex Rivera\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"alex.dev@example.com\",\"phone\":\"+1 (555) 019-2834\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-09T04:40:00.000Z\"}",
-      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Alex Rivera\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"alex.dev@example.com\",\"phone\":\"+1 (555) 019-2834\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-09T04:40:00.000Z\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
       "performedBy": "Chandru Mohan",
       "role": "ROLE_ADMIN",
       "browser": "Chrome",
@@ -2073,8 +2073,8 @@
       "action": "Profile Updated",
       "module": "Profile",
       "description": "Founder updated profile and account details.",
-      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
-      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Alex Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T08:55:47.650Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
       "performedBy": "Chandru  Mohan",
       "role": "ROLE_ADMIN",
       "browser": "Chrome",
@@ -2209,8 +2209,8 @@
       "action": "Profile Updated",
       "module": "Profile",
       "description": "Founder updated profile and account details.",
-      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
-      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:34:34.598Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:16:31.926Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:34:34.598Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\"}",
       "performedBy": "Chandru  Mohan",
       "role": "ROLE_ADMIN",
       "browser": "Chrome",
@@ -2260,8 +2260,8 @@
       "action": "Profile Updated",
       "module": "Profile",
       "description": "Founder updated profile and account details.",
-      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:34:34.598Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full Stack Java Developer\",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\"}",
-      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T02:36:22.875Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full \",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-11T10:34:34.598Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full Stack Java Developer\",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T02:36:22.875Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full \",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
       "performedBy": "Recruiter Guest",
       "role": "ROLE_ADMIN",
       "browser": "Edge",
@@ -2328,8 +2328,8 @@
       "action": "Profile Updated",
       "module": "Profile",
       "description": "Founder updated profile and account details.",
-      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T02:36:22.875Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full \",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
-      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T03:02:43.151Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full  iioheewwimdniwu89jerjkreuhtio\",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T02:36:22.875Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full \",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp\",\"fullName\":\"Chandru  Mohan\",\"displayName\":\"Chandru M\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"9655384140\",\"location\":\"San Francisco, California\",\"country\":\"United States\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1994-10-14\",\"resumeId\":1,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-26T03:02:43.151Z\",\"name\":\"Chandru  Mohan\",\"username\":\"chandru\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"password\":\"814723104029\",\"phoneNumber\":\"9655384140\",\"heroBadge\":\"Full  iioheewwimdniwu89jerjkreuhtio\",\"heroName\":\"Alex Rivera\",\"heroTitle\":\"Principal Systems Architect\",\"heroSubtitle\":\"Ecosystem Architect & Product Pioneer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"resumeUrl\":\"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\"quickStats\":\"\",\"heroVisibility\":true}",
       "performedBy": "Recruiter Guest",
       "role": "ROLE_ADMIN",
       "browser": "Edge",
@@ -3165,7 +3165,7 @@
     {
       "id": 1,
       "title": "Hero Profile Portrait",
-      "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+      "url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=75&fm=webp",
       "type": "image",
       "folder": "Hero & Profile",
       "size": 145000,
@@ -3181,7 +3181,7 @@
     {
       "id": 2,
       "title": "Distributed Microservices Architecture Diagram",
-      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=480&q=75&fm=webp",
       "type": "image",
       "folder": "Projects",
       "size": 320000,
@@ -3197,7 +3197,7 @@
     {
       "id": 3,
       "title": "AWS Certified Solutions Architect Badge",
-      "url": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=400&auto=format&fit=crop",
+      "url": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=200&q=75&fm=webp",
       "type": "image",
       "folder": "Certificates & Badges",
       "size": 98000,
@@ -3847,7 +3847,7 @@
     "keywords": "Software Engineer, Full Stack Architect, React, Node.js, Cloud, Microservices, TypeScript",
     "ogTitle": "Alex Dev - Enterprise Portfolio CMS",
     "ogDescription": "Architecting high-performance cloud applications & resilient enterprise platforms.",
-    "ogImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+    "ogImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=75&fm=webp",
     "twitterCard": "summary_large_image",
     "twitterSite": "@alex_dev_arch",
     "robotsTxt": "User-agent: *\nAllow: /\nSitemap: https://alexdev.io/sitemap.xml",

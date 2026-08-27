@@ -476,20 +476,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Hero Loading Priority: Defer 3D Canvas initialization until main thread is completely idle
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const handle = (window as any).requestIdleCallback(() => {
-        setRender3D(true);
-      }, { timeout: 2000 });
-      return () => (window as any).cancelIdleCallback?.(handle);
-    } else {
-      const timer = setTimeout(() => {
-        setRender3D(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+
 
   // Tablet Navigation state & ref for horizontal drag and auto-centering
   const tabletNavRef = useRef<HTMLDivElement>(null);
@@ -1935,12 +1922,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       </div>
                     </div>
 
-                    {/* Futuristic telemetry pill */}
-                    <div className="mt-5 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-950/40 flex items-center gap-2 z-10">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
-                        {techString || "JAVA • SPRING BOOT • REACT • MYSQL"}
-                      </span>
+                    {/* Futuristic telemetry pill & Launch 3D Button */}
+                    <div className="mt-4 flex flex-col items-center gap-2.5 z-10">
+                      <div className="px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-950/40 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                        <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
+                          {techString || "JAVA • SPRING BOOT • REACT • MYSQL"}
+                        </span>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setRender3D(true)}
+                        className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 hover:border-emerald-400 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer group"
+                        title="Experience interactive 3D WebGL universe"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
+                        <span>Interactive 3D Mode</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -3863,7 +3862,6 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             onClick={() => setIsTerminalOpen(!isTerminalOpen)}
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group"
             title="Open Developer Terminal (Ctrl+K)"
-            aria-label="Open Developer CLI Terminal"
           >
             <Terminal className="w-4 h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
             <span className="text-xs font-mono font-bold hidden sm:inline">CLI Terminal</span>
