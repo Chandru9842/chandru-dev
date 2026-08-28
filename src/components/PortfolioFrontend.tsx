@@ -1959,8 +1959,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           {/* Hero Analytics Grid (Spanning full width of Hero section) */}
           {portfolioMetrics && portfolioMetrics.length > 0 && (
-            <div className="lg:col-span-12 w-full pt-8 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),280px))] justify-center justify-items-center gap-3.5 sm:gap-4 md:gap-5 w-full mx-auto">
+            <div className="lg:col-span-12 w-full pt-6 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5 md:gap-4 w-full">
                 {portfolioMetrics.map((metric) => {
                   const colorConfig = COLOR_ACCENTS[metric.color || 'emerald'] || COLOR_ACCENTS.emerald;
                   return (
@@ -1968,26 +1968,26 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       key={metric.id}
                       initial={metric.animationEnabled ? { opacity: 0, y: 10 } : false}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`w-full max-w-[280px] min-w-[220px] p-3 sm:p-3.5 rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-3 shadow-lg group hover:scale-[1.02] transition-all`}
+                      className={`w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-2 sm:gap-3 shadow-md group hover:scale-[1.02] transition-all duration-200 last:col-span-2 sm:last:col-span-1`}
                       title={metric.tooltip || undefined}
                     >
-                      <div className={`w-9 h-9 rounded-xl ${colorConfig.bg} ${colorConfig.border} border flex items-center justify-center ${colorConfig.text} shrink-0 group-hover:rotate-6 transition-transform`}>
-                        <MetricIconRenderer metric={metric} className="w-4.5 h-4.5" />
+                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${colorConfig.bg} ${colorConfig.border} border flex items-center justify-center ${colorConfig.text} shrink-0 group-hover:rotate-6 transition-transform`}>
+                        <MetricIconRenderer metric={metric} className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-base sm:text-lg font-bold font-mono text-white tracking-tight leading-none">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate">
                             {metric.value}
                           </span>
                           {metric.color === 'emerald' && (
                             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
                           )}
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-200 block truncate mt-0.5">
+                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">
                           {metric.title}
                         </span>
                         {metric.subtitle && (
-                          <span className="text-[9px] font-mono text-slate-400 block truncate">
+                          <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate">
                             {metric.subtitle}
                           </span>
                         )}
