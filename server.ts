@@ -18,7 +18,7 @@ import {
   initialAnalytics, initialSettings, initialSocialLinks,
   initialResumes, initialProfile, initialThemeSettings,
   initialAchievements, initialFooter, initialTechStack, initialTools,
-  initialPortfolioMetrics
+  initialPortfolioMetrics, initialTestimonials, initialArticles
 } from "./src/data/cmsMockData";
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -409,17 +409,27 @@ function loadDatabase() {
         dirty = true;
       }
 
-      if (!db.seoConfig) {
+      if (!db.testimonials || !Array.isArray(db.testimonials) || db.testimonials.length === 0) {
+        db.testimonials = initialTestimonials;
+        dirty = true;
+      }
+
+      if (!db.articles || !Array.isArray(db.articles) || db.articles.length === 0) {
+        db.articles = initialArticles;
+        dirty = true;
+      }
+
+      if (!db.seoConfig || db.seoConfig.metaTitle?.includes("Alex Dev")) {
         db.seoConfig = {
-          metaTitle: "Alex Dev | Senior Full Stack Architect & Systems Engineer",
-          metaDescription: "Enterprise portfolio of Alex Dev featuring high-scale distributed systems, microservices, cloud infrastructure, and AI applications.",
-          keywords: "Software Engineer, Full Stack Architect, React, Node.js, Cloud, Microservices, TypeScript",
-          ogTitle: "Alex Dev - Enterprise Portfolio CMS",
+          metaTitle: "Chandru Mohan | Principal Systems Architect & Full Stack Java Developer",
+          metaDescription: "Enterprise portfolio of Chandru Mohan featuring high-scale distributed systems, Java 21, Spring Boot microservices, Kafka event streams, and cloud architecture.",
+          keywords: "Chandru Mohan, Systems Architect, Full Stack Java Developer, Spring Boot, Kafka, React, Cloud, Microservices, TypeScript",
+          ogTitle: "Chandru Mohan - Principal Systems Architect Portfolio CMS",
           ogDescription: "Architecting high-performance cloud applications & resilient enterprise platforms.",
           ogImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
           twitterCard: "summary_large_image",
-          twitterSite: "@alex_dev_arch",
-          robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://alexdev.io/sitemap.xml",
+          twitterSite: "@chandru_dev",
+          robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://chandru-dev-lime.vercel.app/sitemap.xml",
           pwaEnabled: true,
           offlineMode: true,
           highContrastMode: false
@@ -455,6 +465,9 @@ function loadDatabase() {
     achievements: initialAchievements,
     technologies: initialTechStack,
     tools: initialTools,
+    portfolioMetrics: initialPortfolioMetrics,
+    testimonials: initialTestimonials,
+    articles: initialArticles,
     users: [
       {
         id: 1,
@@ -1590,6 +1603,8 @@ app.get(["/health", "/api/health"], (req, res) => {
     const codingProfiles = [...(db.codingProfiles || initialCodingProfiles)].sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
     const technologies = [...(db.technologies || initialTechStack)].sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
     const portfolioMetrics = [...(db.portfolioMetrics || initialPortfolioMetrics)].sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+    const testimonials = [...(db.testimonials || initialTestimonials)].sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+    const articles = [...(db.articles || initialArticles)].sort((a: any, b: any) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
     const profile = db.profile || initialProfile;
     const themeSettings = db.themeSettings || initialThemeSettings;
 
@@ -1611,6 +1626,8 @@ app.get(["/health", "/api/health"], (req, res) => {
       codingProfiles,
       technologies,
       portfolioMetrics,
+      testimonials,
+      articles,
       activeResume,
       resumes
     };
@@ -4035,6 +4052,325 @@ app.get(["/health", "/api/health"], (req, res) => {
 
     saveDatabase(db);
     res.status(201).json(duplicate);
+  });
+
+  // --- TESTIMONIALS ENDPOINTS ---
+  app.get("/api/testimonials", (req, res) => {
+    const db = loadDatabase();
+    const list = db.testimonials || initialTestimonials;
+    const sorted = [...list].sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    res.json(sorted);
+  });
+
+  app.post("/api/testimonials", (req, res) => {
+    const db = loadDatabase();
+    if (!db.testimonials) db.testimonials = [...initialTestimonials];
+
+    const { name, role, company, avatarUrl, linkedInUrl, relationship, testimonialText, rating, isFeatured, isVisible, displayOrder } = req.body;
+    if (!name || !testimonialText) {
+      return res.status(400).json({ error: "Name and testimonial text are required" });
+    }
+
+    const maxId = db.testimonials.reduce((max: number, item: any) => (typeof item?.id === 'number' && item.id > max ? item.id : max), 0);
+    const newTestimonial = {
+      id: maxId + 1,
+      name: String(name).trim(),
+      role: role ? String(role).trim() : "Engineering Colleague",
+      company: company ? String(company).trim() : "",
+      avatarUrl: avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      linkedInUrl: linkedInUrl ? String(linkedInUrl).trim() : "",
+      relationship: relationship ? String(relationship).trim() : "Colleague",
+      testimonialText: String(testimonialText).trim(),
+      rating: typeof rating === "number" ? Math.min(5, Math.max(1, rating)) : 5,
+      isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : true,
+      isVisible: isVisible !== undefined ? Boolean(isVisible) : true,
+      displayOrder: typeof displayOrder === "number" ? displayOrder : db.testimonials.length + 1,
+      createdAt: new Date().toISOString()
+    };
+
+    db.testimonials.push(newTestimonial);
+    db.testimonials.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Testimonial Created",
+      module: "Testimonials",
+      description: `Added testimonial endorsement from ${newTestimonial.name} (${newTestimonial.company}).`,
+      newValue: newTestimonial
+    });
+
+    saveDatabase(db);
+    res.status(201).json(newTestimonial);
+  });
+
+  app.put("/api/testimonials/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.testimonials) db.testimonials = [...initialTestimonials];
+
+    const index = db.testimonials.findIndex((t: any) => t.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Testimonial not found" });
+    }
+
+    const oldValue = { ...db.testimonials[index] };
+    const { name, role, company, avatarUrl, linkedInUrl, relationship, testimonialText, rating, isFeatured, isVisible, displayOrder } = req.body;
+
+    db.testimonials[index] = {
+      ...db.testimonials[index],
+      name: name !== undefined ? String(name).trim() : db.testimonials[index].name,
+      role: role !== undefined ? String(role).trim() : db.testimonials[index].role,
+      company: company !== undefined ? String(company).trim() : db.testimonials[index].company,
+      avatarUrl: avatarUrl !== undefined ? avatarUrl : db.testimonials[index].avatarUrl,
+      linkedInUrl: linkedInUrl !== undefined ? String(linkedInUrl).trim() : db.testimonials[index].linkedInUrl,
+      relationship: relationship !== undefined ? String(relationship).trim() : db.testimonials[index].relationship,
+      testimonialText: testimonialText !== undefined ? String(testimonialText).trim() : db.testimonials[index].testimonialText,
+      rating: typeof rating === "number" ? Math.min(5, Math.max(1, rating)) : db.testimonials[index].rating,
+      isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : db.testimonials[index].isFeatured,
+      isVisible: isVisible !== undefined ? Boolean(isVisible) : db.testimonials[index].isVisible,
+      displayOrder: typeof displayOrder === "number" ? displayOrder : db.testimonials[index].displayOrder,
+      updatedAt: new Date().toISOString()
+    };
+
+    db.testimonials.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+    recordActivity(req, db, {
+      action: "Testimonial Updated",
+      module: "Testimonials",
+      description: `Updated testimonial from ${db.testimonials[index].name}.`,
+      oldValue,
+      newValue: db.testimonials[index]
+    });
+
+    saveDatabase(db);
+    res.json(db.testimonials[index]);
+  });
+
+  app.delete("/api/testimonials/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.testimonials) db.testimonials = [...initialTestimonials];
+
+    const oldValue = db.testimonials.find((t: any) => t.id === id);
+    if (!oldValue) {
+      return res.status(404).json({ error: "Testimonial not found" });
+    }
+
+    db.testimonials = db.testimonials.filter((t: any) => t.id !== id);
+
+    recordActivity(req, db, {
+      action: "Testimonial Deleted",
+      module: "Testimonials",
+      description: `Deleted testimonial from ${oldValue.name}.`,
+      oldValue
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.patch("/api/testimonials/:id/visibility", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const { isVisible } = req.body;
+    if (typeof isVisible !== "boolean") {
+      return res.status(400).json({ error: "isVisible must be a boolean" });
+    }
+    if (!db.testimonials) db.testimonials = [...initialTestimonials];
+
+    const index = db.testimonials.findIndex((t: any) => t.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Testimonial not found" });
+    }
+
+    db.testimonials[index].isVisible = isVisible;
+    saveDatabase(db);
+    res.json(db.testimonials[index]);
+  });
+
+  app.patch("/api/testimonials/order", (req, res) => {
+    const db = loadDatabase();
+    const { order } = req.body;
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ error: "order must be an array" });
+    }
+    if (!db.testimonials) db.testimonials = [...initialTestimonials];
+
+    order.forEach((item: any) => {
+      const found = db.testimonials.find((t: any) => t.id === item.id);
+      if (found) {
+        found.displayOrder = item.displayOrder;
+      }
+    });
+
+    db.testimonials.sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    saveDatabase(db);
+    res.json({ status: "success", testimonials: db.testimonials });
+  });
+
+  // --- ARTICLES & ENGINEERING BLOG ENDPOINTS ---
+  app.get("/api/articles", (req, res) => {
+    const db = loadDatabase();
+    const list = db.articles || initialArticles;
+    const sorted = [...list].sort((a: any, b: any) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
+    res.json(sorted);
+  });
+
+  app.get("/api/articles/:slug", (req, res) => {
+    const db = loadDatabase();
+    const slug = req.params.slug;
+    const list = db.articles || initialArticles;
+    const article = list.find((a: any) => a.slug === slug || String(a.id) === slug);
+    if (!article) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+    article.viewsCount = (article.viewsCount || 0) + 1;
+    saveDatabase(db);
+    res.json(article);
+  });
+
+  app.post("/api/articles", (req, res) => {
+    const db = loadDatabase();
+    if (!db.articles) db.articles = [...initialArticles];
+
+    const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ error: "Title and content are required" });
+    }
+
+    const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const maxId = db.articles.reduce((max: number, item: any) => (typeof item?.id === 'number' && item.id > max ? item.id : max), 0);
+
+    const newArticle = {
+      id: maxId + 1,
+      title: String(title).trim(),
+      slug: computedSlug || `article-${Date.now()}`,
+      excerpt: excerpt ? String(excerpt).trim() : String(content).substring(0, 150) + "...",
+      content: String(content),
+      coverImageUrl: coverImageUrl || "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
+      category: category || "System Design",
+      tags: Array.isArray(tags) ? tags : (typeof tags === "string" ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : ["Architecture", "Java"]),
+      readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : Math.max(1, Math.ceil(String(content).split(/\s+/).length / 200)),
+      isPublished: isPublished !== undefined ? Boolean(isPublished) : true,
+      isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : false,
+      viewsCount: 0,
+      author: "Chandru Mohan",
+      authorRole: "Principal Systems Architect",
+      authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      publishedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    db.articles.unshift(newArticle);
+
+    recordActivity(req, db, {
+      action: "Article Created",
+      module: "Articles",
+      description: `Published article "${newArticle.title}".`,
+      newValue: newArticle
+    });
+
+    saveDatabase(db);
+    res.status(201).json(newArticle);
+  });
+
+  app.put("/api/articles/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.articles) db.articles = [...initialArticles];
+
+    const index = db.articles.findIndex((a: any) => a.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+
+    const oldValue = { ...db.articles[index] };
+    const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+
+    const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : db.articles[index].slug;
+
+    db.articles[index] = {
+      ...db.articles[index],
+      title: title !== undefined ? String(title).trim() : db.articles[index].title,
+      slug: computedSlug,
+      excerpt: excerpt !== undefined ? String(excerpt).trim() : db.articles[index].excerpt,
+      content: content !== undefined ? String(content) : db.articles[index].content,
+      coverImageUrl: coverImageUrl !== undefined ? coverImageUrl : db.articles[index].coverImageUrl,
+      category: category !== undefined ? category : db.articles[index].category,
+      tags: Array.isArray(tags) ? tags : (typeof tags === "string" ? tags.split(",").map((t: string) => t.trim()).filter(Boolean) : db.articles[index].tags),
+      readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : db.articles[index].readTimeMinutes,
+      isPublished: isPublished !== undefined ? Boolean(isPublished) : db.articles[index].isPublished,
+      isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : db.articles[index].isFeatured,
+      author: "Chandru Mohan",
+      authorRole: "Principal Systems Architect",
+      updatedAt: new Date().toISOString()
+    };
+
+    recordActivity(req, db, {
+      action: "Article Updated",
+      module: "Articles",
+      description: `Updated article "${db.articles[index].title}".`,
+      oldValue,
+      newValue: db.articles[index]
+    });
+
+    saveDatabase(db);
+    res.json(db.articles[index]);
+  });
+
+  app.delete("/api/articles/:id", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.articles) db.articles = [...initialArticles];
+
+    const oldValue = db.articles.find((a: any) => a.id === id);
+    if (!oldValue) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+
+    db.articles = db.articles.filter((a: any) => a.id !== id);
+
+    recordActivity(req, db, {
+      action: "Article Deleted",
+      module: "Articles",
+      description: `Deleted article "${oldValue.title}".`,
+      oldValue
+    });
+
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+
+  app.patch("/api/articles/:id/status", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    const { isPublished } = req.body;
+    if (typeof isPublished !== "boolean") {
+      return res.status(400).json({ error: "isPublished must be a boolean" });
+    }
+    if (!db.articles) db.articles = [...initialArticles];
+
+    const index = db.articles.findIndex((a: any) => a.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+
+    db.articles[index].isPublished = isPublished;
+    db.articles[index].updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json(db.articles[index]);
+  });
+
+  app.post("/api/articles/:id/view", (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.articles) db.articles = [...initialArticles];
+
+    const article = db.articles.find((a: any) => a.id === id);
+    if (article) {
+      article.viewsCount = (article.viewsCount || 0) + 1;
+      saveDatabase(db);
+    }
+    res.json({ status: "success", viewsCount: article?.viewsCount || 0 });
   });
 
   // --- CODING PROFILES ENDPOINTS ---

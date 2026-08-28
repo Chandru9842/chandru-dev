@@ -7,7 +7,7 @@ import {
   Code2, Sparkles, MessageSquare, Terminal, X, ChevronLeft, Video, Play, Film,
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
-  Menu, XCircle, AlertCircle, Star, Wrench, Search
+  Menu, XCircle, AlertCircle, Star, Wrench, Search, BookOpen, BookOpenCheck, MessageSquareQuote, Quote, Clock, Share2
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
@@ -40,7 +40,14 @@ class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode },
     return this.props.children;
   }
 }
-import { ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem, initialTools, initialProfile, initialProjects, initialSkills, initialCertificates, initialAchievements, initialExperiences, initialEducation, initialSettings, initialFooter, initialSocialLinks, initialThemeSettings, initialAnalytics, initialResumes, initialCodingProfiles, initialPortfolioMetrics } from '../data/cmsMockData';
+import { 
+  ProjectItem, SkillItem, CertificateItem, ExperienceItem, EducationItem, SettingsConfig, 
+  AnalyticsMetric, SocialLinkItem, ResumeItem, AchievementItem, CodingProfileItem, ToolItem, 
+  PortfolioMetricItem, TestimonialItem, ArticleItem, initialTools, initialProfile, initialProjects, 
+  initialSkills, initialCertificates, initialAchievements, initialExperiences, initialEducation, 
+  initialSettings, initialFooter, initialSocialLinks, initialThemeSettings, initialAnalytics, 
+  initialResumes, initialCodingProfiles, initialPortfolioMetrics, initialTestimonials, initialArticles 
+} from '../data/cmsMockData';
 import { 
   getPlatformIconComponent, 
   getCodingPlatformIconComponent, 
@@ -78,10 +85,10 @@ const SocialLinkAnchor = ({ link, className, childrenClassName, onClick, isFoote
       href={url}
       target={openInNewTab ? "_blank" : "_self"}
       rel={openInNewTab ? "noopener noreferrer" : undefined}
-      title={tooltipText}
-      aria-label={tooltipText || `${link.platform} profile`}
       onClick={onClick}
-      className={className}
+      className={`relative group inline-flex items-center justify-center ${className}`}
+      title={tooltipText}
+      aria-label={tooltipText}
     >
       {link.customSvg ? (
         <span 
@@ -181,6 +188,7 @@ interface PortfolioFrontendProps {
 const desktopNavItems = [
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
+  { id: "articles", label: "Articles" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools" },
@@ -188,6 +196,7 @@ const desktopNavItems = [
   { id: "education", label: "Education" },
   { id: "credentials", label: "Certificates" },
   { id: "achievements", label: "Achievements" },
+  { id: "testimonials", label: "Testimonials" },
   { id: "contact", label: "Contact" },
 ];
 
@@ -195,6 +204,7 @@ const mobileNavItems = [
   { id: "hero", label: "Hero" },
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
+  { id: "articles", label: "Articles & Blog" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools & Technologies" },
@@ -202,6 +212,7 @@ const mobileNavItems = [
   { id: "education", label: "Education" },
   { id: "credentials", label: "Certificates" },
   { id: "achievements", label: "Achievements" },
+  { id: "testimonials", label: "Testimonials" },
   { id: "contact", label: "Contact" },
 ];
 
@@ -436,8 +447,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>(initialCodingProfiles);
   const [tools, setTools] = useState<ToolItem[]>(initialTools);
   const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>(initialPortfolioMetrics);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(initialTestimonials);
+  const [articles, setArticles] = useState<ArticleItem[]>(initialArticles);
   const [selectedToolCategory, setSelectedToolCategory] = useState<string>('All');
   const [toolSearchQuery, setToolSearchQuery] = useState<string>('');
+  const [selectedArticleCategory, setSelectedArticleCategory] = useState<string>('All');
+  const [articleSearchQuery, setArticleSearchQuery] = useState<string>('');
+  const [selectedArticleForModal, setSelectedArticleForModal] = useState<ArticleItem | null>(null);
+  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState<number>(0);
+  const [isTestimonialAutoplay, setIsTestimonialAutoplay] = useState<boolean>(true);
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -606,8 +624,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
-  useEffect(() => {
-    const sections = ["hero", "home", "about", "projects", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "contact"];
+  useEffect(() => {    const sections = ["hero", "home", "about", "projects", "articles", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "testimonials", "contact"];
     const observers = sections.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -649,7 +666,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => {
       observers.forEach(({ el }) => observer.unobserve(el));
     };
-  }, [projects, skills, certificates, achievements, experiences, education, tools]);
+  }, [projects, skills, certificates, achievements, experiences, education, tools, testimonials, articles]);
 
   // Prevent body scrolling when mobile drawer is open
   useEffect(() => {
@@ -712,6 +729,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         (normalizedId === 'skills' ? (document.getElementById('skills') || document.getElementById('techstack')) : null) ||
         (normalizedId === 'techstack' ? (document.getElementById('techstack') || document.getElementById('skills')) : null) ||
         (normalizedId === 'education' ? document.getElementById('education') : null) ||
+        (normalizedId === 'articles' ? document.getElementById('articles') : null) ||
+        (normalizedId === 'testimonials' ? document.getElementById('testimonials') : null) ||
         (normalizedId === 'coding-profiles' ? document.getElementById('coding-profiles') : null) ||
         (normalizedId === 'tools' ? document.getElementById('tools') : null) ||
         (normalizedId === 'achievements' ? document.getElementById('achievements') : null) ||
@@ -822,6 +841,40 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       return matchesCategory && matchesSearch;
     });
   }, [displayTools, selectedToolCategory, toolSearchQuery]);
+
+  const displayArticles = useMemo(() => {
+    return articles.length > 0 ? articles : initialArticles;
+  }, [articles]);
+
+  const articleCategories = useMemo(() => {
+    const cats = Array.from(new Set(displayArticles.map(a => a.category).filter(Boolean)));
+    return ['All', ...cats];
+  }, [displayArticles]);
+
+  const filteredArticles = useMemo(() => {
+    return displayArticles.filter(a => {
+      const matchesCategory = selectedArticleCategory === 'All' || a.category === selectedArticleCategory;
+      const q = articleSearchQuery.trim().toLowerCase();
+      const matchesSearch = !q || 
+        a.title.toLowerCase().includes(q) || 
+        (a.summary && a.summary.toLowerCase().includes(q)) || 
+        (a.tags && a.tags.some(tag => tag.toLowerCase().includes(q))) ||
+        (a.category && a.category.toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    });
+  }, [displayArticles, selectedArticleCategory, articleSearchQuery]);
+
+  const displayTestimonials = useMemo(() => {
+    return testimonials.length > 0 ? testimonials : initialTestimonials;
+  }, [testimonials]);
+
+  useEffect(() => {
+    if (!isTestimonialAutoplay || displayTestimonials.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveTestimonialIndex(prev => (prev + 1) % displayTestimonials.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isTestimonialAutoplay, displayTestimonials.length]);
   const [selectedAchievementCategory, setSelectedAchievementCategory] = useState<string>('All');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isBackendOffline, setIsBackendOffline] = useState<boolean>(false);
@@ -1073,6 +1126,20 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           .filter((m: any) => m.visible !== false)
           .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
         setPortfolioMetrics(visibleMetrics);
+      }
+
+      if (data.testimonials && Array.isArray(data.testimonials)) {
+        const visibleTestimonials = data.testimonials
+          .filter((t: any) => t.isVisible !== false)
+          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        setTestimonials(visibleTestimonials);
+      }
+
+      if (data.articles && Array.isArray(data.articles)) {
+        const visibleArticles = data.articles
+          .filter((a: any) => a.isPublished !== false)
+          .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+        setArticles(visibleArticles);
       }
 
       setActiveResume(data.activeResume);
@@ -2253,6 +2320,201 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </motion.div>
           </motion.section>
 
+          {/* Engineering Blog & Technical Articles Section */}
+          {displayArticles.length > 0 && (
+            <motion.section 
+              id="articles" 
+              className="space-y-8 scroll-mt-24 relative"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={sectionVariants}
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Thought Leadership & Publications</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {filteredArticles.length} {filteredArticles.length === 1 ? 'Article' : 'Articles'}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Engineering Blog & Articles</h2>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    Deep dives into high-throughput distributed systems, Java 21 Virtual Threads, Kafka event streams, zero-downtime database migrations, and microservices scalability.
+                  </p>
+                </div>
+
+                {/* Article Search Input */}
+                <div className="relative w-full md:w-72 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={articleSearchQuery}
+                    onChange={(e) => setArticleSearchQuery(e.target.value)}
+                    placeholder="Search articles, tags, topics..."
+                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                  />
+                  {articleSearchQuery && (
+                    <button
+                      onClick={() => setArticleSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category Filter Pills */}
+              {articleCategories.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                  {articleCategories.map((cat) => {
+                    const isActive = selectedArticleCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedArticleCategory(cat)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                          isActive
+                            ? 'bg-emerald-500 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20'
+                            : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Articles Grid */}
+              {filteredArticles.length === 0 ? (
+                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
+                  <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-slate-300">No matching articles found</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    No publications match your filter query. Try searching for different keywords or reset the filter.
+                  </p>
+                  {(articleSearchQuery || selectedArticleCategory !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setSelectedArticleCategory('All');
+                        setArticleSearchQuery('');
+                      }}
+                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredArticles.map((art) => (
+                    <motion.article
+                      key={art.id}
+                      whileHover={{ y: -6 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 ${
+                        art.featured
+                          ? 'border-emerald-500/40 bg-emerald-500/[0.02] shadow-xl shadow-emerald-500/5'
+                          : 'border-white/[0.05] bg-slate-900/40 hover:border-emerald-500/30'
+                      }`}
+                    >
+                      {/* Card Cover Image */}
+                      <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
+                        {art.coverImage ? (
+                          <img
+                            src={art.coverImage}
+                            alt={art.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                            <BookOpenCheck className="w-12 h-12 text-emerald-400/40" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent" />
+                        
+                        <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center">
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 uppercase">
+                            {art.category}
+                          </span>
+                          {art.featured && (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
+                              <Sparkles className="w-3 h-3" />
+                              Featured
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/[0.08]">
+                          <Clock className="w-3 h-3 text-emerald-400" />
+                          <span>{art.readTimeMinutes} min read</span>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                        <div className="space-y-2.5">
+                          <h3 
+                            onClick={() => setSelectedArticleForModal(art)}
+                            className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug cursor-pointer line-clamp-2"
+                          >
+                            {art.title}
+                          </h3>
+                          <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                            {art.summary}
+                          </p>
+                        </div>
+
+                        <div className="space-y-3 pt-3 border-t border-white/[0.04]">
+                          {/* Tags */}
+                          {art.tags && art.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {art.tags.slice(0, 3).map((tag, i) => (
+                                <span key={i} className="text-[9px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-white/[0.04]">
+                                  #{tag}
+                                </span>
+                              ))}
+                              {art.tags.length > 3 && (
+                                <span className="text-[9px] font-mono text-slate-500 px-1 py-0.5">
+                                  +{art.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Footer Action */}
+                          <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
+                                {profile?.profileImage ? (
+                                  <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-medium text-slate-300 truncate">{art.authorName || "Chandru Mohan"}</span>
+                            </div>
+
+                            <button
+                              onClick={() => setSelectedArticleForModal(art)}
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group-hover:translate-x-0.5"
+                            >
+                              <span>Read Article</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
+              )}
+            </motion.section>
+          )}
+
           {/* Coding Profiles Section */}
           <motion.section 
             id="coding-profiles" 
@@ -2963,6 +3225,192 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </div>
           </motion.section>
 
+          {/* Client & Peer Testimonials Section */}
+          {displayTestimonials.length > 0 && (
+            <motion.section 
+              id="testimonials" 
+              className="space-y-8 scroll-mt-24 relative"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={sectionVariants}
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Endorsements & Recommendations</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {displayTestimonials.length} {displayTestimonials.length === 1 ? 'Endorsement' : 'Endorsements'}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Client & Peer Testimonials</h2>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    Verified feedback and recommendations from Engineering Directors, Technical Leads, and enterprise stakeholders.
+                  </p>
+                </div>
+
+                {/* Carousel Controls */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setActiveTestimonialIndex(prev => (prev === 0 ? displayTestimonials.length - 1 : prev - 1))}
+                    className="p-2.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                    title="Previous Testimonial"
+                    aria-label="Previous Testimonial"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTestimonialIndex(prev => (prev + 1) % displayTestimonials.length)}
+                    className="p-2.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                    title="Next Testimonial"
+                    aria-label="Next Testimonial"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsTestimonialAutoplay(prev => !prev)}
+                    className={`px-3 py-2 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      isTestimonialAutoplay
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                        : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
+                    }`}
+                    title="Toggle auto rotation"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isTestimonialAutoplay ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                    <span>{isTestimonialAutoplay ? 'Autoplay ON' : 'Autoplay OFF'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Interactive Carousel Showcase */}
+              <div className="relative overflow-hidden">
+                <AnimatePresence mode="wait">
+                  {displayTestimonials[activeTestimonialIndex] && (() => {
+                    const currentTestimonial = displayTestimonials[activeTestimonialIndex];
+                    return (
+                      <motion.div
+                        key={currentTestimonial.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                        className="glass-card rounded-3xl border border-emerald-500/30 p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-950/90 relative shadow-2xl shadow-emerald-500/5"
+                      >
+                        <Quote className="w-12 h-12 sm:w-16 sm:h-16 text-emerald-500/15 absolute top-6 right-6 pointer-events-none" />
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                          {/* Author Info Column */}
+                          <div className="lg:col-span-4 flex flex-col items-center sm:items-start text-center sm:text-left space-y-4 border-b lg:border-b-0 lg:border-r border-white/[0.06] pb-6 lg:pb-0 lg:pr-8">
+                            <div className="relative">
+                              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/40 shadow-xl shadow-emerald-500/10 bg-slate-950">
+                                {currentTestimonial.authorAvatarUrl ? (
+                                  <img
+                                    src={currentTestimonial.authorAvatarUrl}
+                                    alt={currentTestimonial.authorName}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center font-bold text-2xl text-emerald-400 bg-emerald-500/10">
+                                    {currentTestimonial.authorName.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              {currentTestimonial.verifiedOnLinkedIn && (
+                                <div className="absolute -bottom-2 -right-2 bg-[#0A66C2] text-white p-1.5 rounded-lg shadow-md" title="Verified LinkedIn Recommendation">
+                                  <Linkedin className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                <h3 className="text-lg font-bold text-white font-display">
+                                  {currentTestimonial.authorName}
+                                </h3>
+                                {currentTestimonial.linkedInUrl && (
+                                  <a
+                                    href={currentTestimonial.linkedInUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-slate-400 hover:text-emerald-400 transition-colors"
+                                    title="View LinkedIn Profile"
+                                    aria-label="View LinkedIn Profile"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                              <p className="text-xs font-semibold text-emerald-400">
+                                {currentTestimonial.authorTitle}
+                              </p>
+                              <p className="text-[11px] font-mono text-slate-400">
+                                {currentTestimonial.authorCompany}
+                              </p>
+                            </div>
+
+                            {currentTestimonial.relationship && (
+                              <span className="px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                                {currentTestimonial.relationship}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Testimonial Quote Column */}
+                          <div className="lg:col-span-8 space-y-5">
+                            {/* Star Rating */}
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, idx) => (
+                                <Star
+                                  key={idx}
+                                  className={`w-4 h-4 ${
+                                    idx < currentTestimonial.rating
+                                      ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]'
+                                      : 'text-slate-700'
+                                  }`}
+                                />
+                              ))}
+                              <span className="text-xs font-mono text-slate-400 ml-2 font-bold">
+                                {currentTestimonial.rating}.0 / 5.0
+                              </span>
+                            </div>
+
+                            <blockquote className="text-sm sm:text-base text-slate-200 leading-relaxed font-sans italic">
+                              "{currentTestimonial.content}"
+                            </blockquote>
+
+                            <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-3 border-t border-white/[0.04]">
+                              <span>Endorsement Date: {new Date(currentTestimonial.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                              <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Verified Architectural Review
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
+                </AnimatePresence>
+
+                {/* Dot indicators */}
+                <div className="flex items-center justify-center gap-2 mt-5">
+                  {displayTestimonials.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveTestimonialIndex(idx)}
+                      className={`transition-all duration-300 rounded-full cursor-pointer ${
+                        activeTestimonialIndex === idx
+                          ? 'w-7 h-2 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                          : 'w-2 h-2 bg-slate-700 hover:bg-slate-500'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.section>
+          )}
+
           {/* Space between sections */}
 
           <motion.section 
@@ -3258,6 +3706,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     <a href="#projects" onClick={(e) => handleNavLinkClick(e, 'projects')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Projects
                     </a>
+                    <a href="#articles" onClick={(e) => handleNavLinkClick(e, 'articles')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Articles & Blog
+                    </a>
                     <a href="#coding-profiles" onClick={(e) => handleNavLinkClick(e, 'coding-profiles')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Coding Profiles
                     </a>
@@ -3278,6 +3729,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </a>
                     <a href="#achievements" onClick={(e) => handleNavLinkClick(e, 'achievements')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Achievements
+                    </a>
+                    <a href="#testimonials" onClick={(e) => handleNavLinkClick(e, 'testimonials')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-slate-600 text-[10px]">→</span> Testimonials
                     </a>
                     <a href="#contact" onClick={(e) => handleNavLinkClick(e, 'contact')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
                       <span className="text-slate-600 text-[10px]">→</span> Contact
@@ -3843,6 +4297,186 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </div>
         </div>
       )}
+
+      {/* Full-Screen Article Reader Modal */}
+      <AnimatePresence>
+        {selectedArticleForModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto"
+            >
+              {/* Modal Header */}
+              <div className="relative h-48 sm:h-64 bg-slate-950 shrink-0 overflow-hidden">
+                {selectedArticleForModal.coverImage ? (
+                  <img
+                    src={selectedArticleForModal.coverImage}
+                    alt={selectedArticleForModal.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                    <BookOpenCheck className="w-16 h-16 text-emerald-400/30" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+
+                <button
+                  onClick={() => setSelectedArticleForModal(null)}
+                  className="absolute top-4 right-4 p-2 rounded-xl bg-slate-950/80 backdrop-blur-md border border-white/[0.1] text-slate-300 hover:text-white hover:border-emerald-500/50 transition-all cursor-pointer z-10"
+                  aria-label="Close Article Reader"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="absolute bottom-4 left-6 right-6 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500 text-slate-950 uppercase">
+                      {selectedArticleForModal.category}
+                    </span>
+                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-slate-950/80 text-slate-300 border border-white/[0.1] flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-emerald-400" />
+                      {selectedArticleForModal.readTimeMinutes} min read
+                    </span>
+                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-slate-950/80 text-slate-300 border border-white/[0.1] flex items-center gap-1.5">
+                      <Eye className="w-3 h-3 text-emerald-400" />
+                      {selectedArticleForModal.viewsCount || 342} views
+                    </span>
+                  </div>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-luxury leading-tight">
+                    {selectedArticleForModal.title}
+                  </h1>
+                </div>
+              </div>
+
+              {/* Modal Body / Article Content */}
+              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
+                {/* Author Card */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/60 border border-white/[0.04]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl overflow-hidden border border-emerald-500/40 bg-slate-900 shrink-0">
+                      {profile?.profileImage ? (
+                        <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">{selectedArticleForModal.authorName || "Chandru Mohan"}</h4>
+                      <p className="text-[11px] font-mono text-emerald-400">Principal Systems Architect & Full Stack Java Developer</p>
+                    </div>
+                  </div>
+                  <div className="text-right text-[11px] font-mono text-slate-400 hidden sm:block">
+                    <p>Published: {new Date(selectedArticleForModal.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  </div>
+                </div>
+
+                {/* Article Markdown Renderer */}
+                <div className="max-w-none space-y-4 text-slate-300 text-sm leading-relaxed font-sans">
+                  {selectedArticleForModal.content.split('\n\n').map((block, idx) => {
+                    if (block.startsWith('### ')) {
+                      return (
+                        <h3 key={idx} className="text-lg font-bold text-emerald-400 mt-6 mb-2 font-display">
+                          {block.replace('### ', '')}
+                        </h3>
+                      );
+                    }
+                    if (block.startsWith('## ')) {
+                      return (
+                        <h2 key={idx} className="text-xl font-extrabold text-white mt-8 mb-3 font-display border-b border-white/[0.06] pb-2">
+                          {block.replace('## ', '')}
+                        </h2>
+                      );
+                    }
+                    if (block.startsWith('# ')) {
+                      return (
+                        <h1 key={idx} className="text-2xl font-black text-white mt-6 mb-4 font-display">
+                          {block.replace('# ', '')}
+                        </h1>
+                      );
+                    }
+                    if (block.startsWith('```')) {
+                      const lines = block.split('\n');
+                      const lang = lines[0].replace('```', '') || 'code';
+                      const codeContent = lines.slice(1, lines.length - 1).join('\n');
+                      return (
+                        <div key={idx} className="my-4 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                          <div className="px-4 py-2 bg-slate-900/80 border-b border-slate-800 text-[10px] font-mono text-emerald-400 uppercase font-bold flex items-center justify-between">
+                            <span>{lang} snippet</span>
+                            <span className="text-slate-500">production code</span>
+                          </div>
+                          <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed">
+                            <code>{codeContent}</code>
+                          </pre>
+                        </div>
+                      );
+                    }
+                    if (block.startsWith('- ') || block.startsWith('* ')) {
+                      const items = block.split('\n').filter(Boolean);
+                      return (
+                        <ul key={idx} className="list-disc list-inside space-y-1.5 pl-2 text-slate-300">
+                          {items.map((item, itemIdx) => (
+                            <li key={itemIdx} className="text-xs leading-relaxed">
+                              {item.replace(/^[-*]\s+/, '')}
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    }
+                    return (
+                      <p key={idx} className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {block}
+                      </p>
+                    );
+                  })}
+                </div>
+
+                {/* Article Footer Tags */}
+                {selectedArticleForModal.tags && selectedArticleForModal.tags.length > 0 && (
+                  <div className="pt-6 border-t border-white/[0.06] space-y-2">
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block font-bold">Related Topics & Skills:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedArticleForModal.tags.map((tag, i) => (
+                        <span key={i} className="px-3 py-1 rounded-lg text-xs font-mono bg-slate-950 text-emerald-400 border border-emerald-500/20">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-6 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+                <button
+                  onClick={() => setSelectedArticleForModal(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  ← Close Article
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href);
+                        setFeedbackToast('Article link copied to clipboard!');
+                        setTimeout(() => setFeedbackToast(null), 3000);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 cursor-pointer"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share Publication</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Scroll To Top Control */}
       <AnimatePresence>

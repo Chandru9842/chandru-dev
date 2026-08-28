@@ -31,6 +31,8 @@ import CodingProfilesPage from './admin/CodingProfilesPage';
 import MediaManagerPage from './admin/MediaManagerPage';
 import ToolsPage from './admin/ToolsPage';
 import PortfolioMetricsPage from './admin/PortfolioMetricsPage';
+import TestimonialsPage from './admin/TestimonialsPage';
+import ArticlesPage from './admin/ArticlesPage';
 import LivePreviewModal from './admin/LivePreviewModal';
 
 // Enterprise Platform Subpages & Modals
@@ -48,7 +50,8 @@ import SEOManagerPage from './admin/SEOManagerPage';
 import { 
   ProjectItem, SkillItem,
   CertificateItem, ExperienceItem, EducationItem, MessageItem, SettingsConfig, SocialLinkItem,
-  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem
+  ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem,
+  TestimonialItem, ArticleItem, initialTestimonials, initialArticles
 } from '../data/cmsMockData';
 
 import Toast, { ToastProps } from './Toast';
@@ -86,6 +89,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>([]);
   const [tools, setTools] = useState<ToolItem[]>([]);
   const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
@@ -153,7 +158,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     try {
       const cacheBuster = `t=${Date.now()}`;
       const authHeader = getAuthHeader();
-      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes, toolsRes, metricsRes] = await Promise.all([
+      const [projectsRes, skillsRes, certsRes, achievementsRes, expRes, eduRes, msgRes, analyticsRes, settingsRes, footerRes, socialsRes, themeRes, profileRes, footerSocialsRes, codingProfilesRes, toolsRes, metricsRes, testimonialsRes, articlesRes] = await Promise.all([
         fetch(`/api/projects?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/skills?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/certificates?${cacheBuster}`, { headers: authHeader }),
@@ -170,7 +175,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         fetch(`/api/footer/social-links?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/coding-profiles?${cacheBuster}`, { headers: authHeader }),
         fetch(`/api/tools?${cacheBuster}`, { headers: authHeader }),
-        fetch(`/api/portfolio-metrics?${cacheBuster}`, { headers: authHeader })
+        fetch(`/api/portfolio-metrics?${cacheBuster}`, { headers: authHeader }),
+        fetch(`/api/testimonials?${cacheBuster}`, { headers: authHeader }),
+        fetch(`/api/articles?${cacheBuster}`, { headers: authHeader })
       ]);
 
       const projectsData = await projectsRes.json();
@@ -209,6 +216,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (metricsRes.ok) {
         const metricsData = await metricsRes.json();
         setPortfolioMetrics(Array.isArray(metricsData) ? metricsData : []);
+      }
+      if (testimonialsRes.ok) {
+        const testData = await testimonialsRes.json();
+        setTestimonials(Array.isArray(testData) ? testData : []);
+      }
+      if (articlesRes.ok) {
+        const artData = await articlesRes.json();
+        setArticles(Array.isArray(artData) ? artData : []);
       }
       if (profileRes.ok) {
         setProfile(await profileRes.json());
@@ -1422,19 +1437,178 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
-  const handleDuplicatePortfolioMetric = async (id: number) => {
-    if (checkDemoRestriction('Duplicate Metric')) return;
+  // Testimonials CRUD Handlers
+  const handleAddTestimonial = async (item: Omit<TestimonialItem, 'id' | 'createdAt'>) => {
+    if (checkDemoRestriction('Add Testimonial')) return;
     try {
-      const res = await fetch(`/api/portfolio-metrics/${id}/duplicate`, {
+      const res = await fetch('/api/testimonials', {
         method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(item)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Testimonial added successfully!', 'success');
+      } else {
+        triggerToast('Failed to add testimonial.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error adding testimonial.', 'error');
+    }
+  };
+
+  const handleUpdateTestimonial = async (item: TestimonialItem) => {
+    if (checkDemoRestriction('Update Testimonial')) return;
+    try {
+      const res = await fetch(`/api/testimonials/${item.id}`, {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(item)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Testimonial updated successfully!', 'success');
+      } else {
+        triggerToast('Failed to update testimonial.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error updating testimonial.', 'error');
+    }
+  };
+
+  const handleDeleteTestimonial = async (id: number) => {
+    if (checkDemoRestriction('Delete Testimonial')) return;
+    try {
+      const res = await fetch(`/api/testimonials/${id}`, {
+        method: 'DELETE',
         headers: getJsonHeaders()
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Testimonial deleted.', 'success');
+      } else {
+        triggerToast('Failed to delete testimonial.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error deleting testimonial.', 'error');
+    }
+  };
+
+  const handleToggleTestimonialVisibility = async (id: number, isVisible: boolean) => {
+    if (checkDemoRestriction('Toggle Testimonial Visibility')) return;
+    try {
+      const res = await fetch(`/api/testimonials/${id}/visibility`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ isVisible })
       });
       if (res.ok) {
         await fetchAllData();
         notifyCmsUpdated();
       }
     } catch (e) {
-      triggerToast('Error duplicating metric', 'error');
+      triggerToast('Error toggling visibility.', 'error');
+    }
+  };
+
+  const handleReorderTestimonials = async (ordered: TestimonialItem[]) => {
+    if (checkDemoRestriction('Reorder Testimonials')) return;
+    setTestimonials(ordered);
+    try {
+      const res = await fetch('/api/testimonials/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: ordered.map((t, idx) => ({ id: t.id, displayOrder: idx + 1 }))
+        })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+      }
+    } catch (e) {
+      triggerToast('Error reordering testimonials.', 'error');
+    }
+  };
+
+  // Articles & Engineering Blog CRUD Handlers
+  const handleAddArticle = async (item: Omit<ArticleItem, 'id' | 'publishedAt' | 'updatedAt' | 'viewsCount'>) => {
+    if (checkDemoRestriction('Write Article')) return;
+    try {
+      const res = await fetch('/api/articles', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(item)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Article published successfully!', 'success');
+      } else {
+        triggerToast('Failed to publish article.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error publishing article.', 'error');
+    }
+  };
+
+  const handleUpdateArticle = async (item: ArticleItem) => {
+    if (checkDemoRestriction('Update Article')) return;
+    try {
+      const res = await fetch(`/api/articles/${item.id}`, {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(item)
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Article updated successfully!', 'success');
+      } else {
+        triggerToast('Failed to update article.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error updating article.', 'error');
+    }
+  };
+
+  const handleDeleteArticle = async (id: number) => {
+    if (checkDemoRestriction('Delete Article')) return;
+    try {
+      const res = await fetch(`/api/articles/${id}`, {
+        method: 'DELETE',
+        headers: getJsonHeaders()
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast('Article deleted.', 'success');
+      } else {
+        triggerToast('Failed to delete article.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error deleting article.', 'error');
+    }
+  };
+
+  const handleToggleArticleStatus = async (id: number, isPublished: boolean) => {
+    if (checkDemoRestriction('Toggle Article Status')) return;
+    try {
+      const res = await fetch(`/api/articles/${id}/status`, {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ isPublished })
+      });
+      if (res.ok) {
+        await fetchAllData();
+        notifyCmsUpdated();
+        triggerToast(`Article ${isPublished ? 'published' : 'moved to drafts'}.`, 'success');
+      }
+    } catch (e) {
+      triggerToast('Error toggling article status.', 'error');
     }
   };
 
@@ -1445,6 +1619,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
     { name: 'Hero Management', icon: <Palette className="w-4 h-4 text-emerald-400" /> },
     { name: 'Portfolio Metrics', icon: <BarChart3 className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Testimonials', icon: <MessageSquareQuote className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Articles & Blog', icon: <BookOpenCheck className="w-4 h-4 text-emerald-400" /> },
     { name: 'Tech Stack', icon: <Cpu className="w-4 h-4 text-emerald-400" /> },
     { name: 'Profile', icon: <User className="w-4 h-4" /> },
     { name: 'Projects', icon: <BookOpen className="w-4 h-4" /> },
@@ -1747,6 +1923,27 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onReorder={handleReorderPortfolioMetrics}
             onDuplicate={handleDuplicatePortfolioMetric}
             triggerToast={triggerToast}
+          />
+        )}
+
+        {activeTab === 'Testimonials' && (
+          <TestimonialsPage
+            testimonials={testimonials}
+            onAdd={handleAddTestimonial}
+            onUpdate={handleUpdateTestimonial}
+            onDelete={handleDeleteTestimonial}
+            onToggleVisibility={handleToggleTestimonialVisibility}
+            onReorder={handleReorderTestimonials}
+          />
+        )}
+
+        {activeTab === 'Articles & Blog' && (
+          <ArticlesPage
+            articles={articles}
+            onAdd={handleAddArticle}
+            onUpdate={handleUpdateArticle}
+            onDelete={handleDeleteArticle}
+            onToggleStatus={handleToggleArticleStatus}
           />
         )}
 

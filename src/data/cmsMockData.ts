@@ -144,6 +144,42 @@ export interface MessageItem {
   createdAt: string;
 }
 
+export interface TestimonialItem {
+  id: number;
+  name: string;
+  role: string;
+  company: string;
+  avatarUrl: string;
+  linkedInUrl?: string;
+  relationship: string;
+  testimonialText: string;
+  rating: number;
+  isFeatured: boolean;
+  isVisible: boolean;
+  displayOrder: number;
+  createdAt: string;
+}
+
+export interface ArticleItem {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  coverImageUrl: string;
+  category: string;
+  tags: string[];
+  readTimeMinutes: number;
+  isPublished: boolean;
+  isFeatured: boolean;
+  viewsCount: number;
+  author: string;
+  authorRole: string;
+  authorAvatar: string;
+  publishedAt: string;
+  updatedAt: string;
+}
+
 export interface AnalyticsMetric {
   pageViews: number;
   uniqueVisitors: number;
@@ -1640,6 +1676,247 @@ export const initialPortfolioMetrics: PortfolioMetricItem[] = [
     updatedAt: "2026-01-01T00:00:00Z"
   }
 ];
+
+export const initialTestimonials: TestimonialItem[] = [
+  {
+    id: 1,
+    name: "Dr. Vikram Sethi",
+    role: "VP of Cloud Engineering & Infrastructure",
+    company: "FinScale Technologies",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Managed Chandru directly",
+    testimonialText: "Chandru is one of the sharpest Principal Systems Architects I have ever worked with. He re-engineered our core Kafka transaction pipeline to handle over 120,000 requests/sec with sub-15ms p99 latency. His mastery of Java 21, Spring Boot microservices, and distributed consistency is unmatched.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 1,
+    createdAt: "2026-02-15T10:00:00Z"
+  },
+  {
+    id: 2,
+    name: "Ananya Deshmukh",
+    role: "Director of Enterprise Architecture",
+    company: "OmniCloud Solutions",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Senior Colleague / Tech Lead",
+    testimonialText: "Beyond his exceptional technical prowess in high-concurrency systems and database performance tuning, Chandru brings infectious passion for clean architecture. He led our zero-downtime database migration strategy across 5 global regions without a single dropped packet.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 2,
+    createdAt: "2026-03-01T14:30:00Z"
+  },
+  {
+    id: 3,
+    name: "Marcus Vance",
+    role: "Head of Product & Platform Engineering",
+    company: "QuantumFlow Systems",
+    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Collaborated on Enterprise Deliverables",
+    testimonialText: "Chandru bridges the gap between deep backend systems and fluid, intuitive user interfaces with rare finesse. His full-stack execution speed, algorithmic precision, and architectural discipline delivered our multi-tenant SaaS MVP 4 weeks ahead of schedule.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 3,
+    createdAt: "2026-04-10T09:15:00Z"
+  }
+];
+
+export const initialArticles: ArticleItem[] = [
+  {
+    id: 1,
+    title: "Architecting High-Throughput Event-Driven Systems with Apache Kafka & Spring Boot 3",
+    slug: "architecting-high-throughput-event-driven-systems-kafka-spring-boot",
+    excerpt: "A deep dive into partition balancing, idempotent consumer groups, zero-copy socket transfers, and transactional outbox patterns for million-message/sec workloads.",
+    content: `## 🚀 Introduction
+
+Modern microservices architectures demand ultra-low latency, loose decoupling, and resilient event persistence. In high-concurrency financial and telemetry systems, achieving reliable throughput at scale requires moving beyond standard synchronous REST patterns toward **Event-Driven Architecture (EDA)** powered by Apache Kafka and Spring Boot 3.
+
+---
+
+### 1. Partition Strategies & Key Distribution
+
+The fundamental unit of parallelism in Kafka is the **Partition**. When designing event producers:
+- Use consistent hash keys on entity IDs (e.g. \`accountId\` or \`tenantId\`) to preserve strictly in-order processing per stream.
+- Avoid hot partitions by adding salt bits when entity throughput exceeds single-partition consumer limits.
+
+\`\`\`java
+@Configuration
+public class KafkaProducerConfig {
+    @Bean
+    public ProducerFactory<String, TransactionEvent> producerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "10.0.0.1:9092,10.0.0.2:9092");
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "zstd");
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 64 * 1024);
+        config.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+}
+\`\`\`
+
+---
+
+### 2. Transactional Outbox Pattern with Debezium CDC
+
+Direct dual-writes between relational databases (MySQL/PostgreSQL) and Kafka brokers risk distributed transaction anomalies. Implementing the **Transactional Outbox Pattern** ensures atomicity:
+1. Write business entity and outbox message in the same local ACID database transaction.
+2. An asynchronous Debezium CDC worker reads the database Write-Ahead Log (WAL) and streams events to Kafka with zero application overhead.
+
+---
+
+### 3. Conclusion & Production Takeaways
+By combining idempotent producers, zstd compression, and transactional outbox streaming, enterprise systems can effortlessly scale past 100k events/sec while maintaining guaranteed 99.999% message delivery reliability.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
+    category: "System Design",
+    tags: ["Java", "Spring Boot", "Apache Kafka", "Microservices", "High Concurrency"],
+    readTimeMinutes: 6,
+    isPublished: true,
+    isFeatured: true,
+    viewsCount: 1420,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-06-12T00:00:00Z",
+    updatedAt: "2026-06-12T00:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Java 21 Virtual Threads (Project Loom) in Production: Benchmarks & Thread Safety",
+    slug: "java-21-virtual-threads-production-benchmarks-concurrency",
+    excerpt: "Evaluating carrier thread pinning, synchronized block pitfalls, structured concurrency, and 10x throughput gains in I/O-bound enterprise microservices.",
+    content: `## 🧵 The Paradigm Shift in Java Concurrency
+
+With the Long-Term Support (LTS) release of **Java 21**, Virtual Threads (JEP 444 / Project Loom) have revolutionized concurrent programming on the JVM. Instead of allocating expensive 1:1 OS threads (costing ~1MB memory per thread), Virtual Threads are lightweight M:N managed carrier threads taking only a few hundred bytes.
+
+---
+
+### 1. Benchmark: Platform vs Virtual Threads (10,000 Concurrent I/O Tasks)
+
+| Metric | Traditional Platform Threads | Java 21 Virtual Threads |
+| :--- | :--- | :--- |
+| **Peak Memory Footprint** | ~1.4 GB RAM | ~38 MB RAM |
+| **Time to Completion** | 4.82 seconds | 0.51 seconds |
+| **Throughput (req/s)** | 2,074 req/s | 19,607 req/s |
+| **Context Switch Overhead** | Kernel Mode Traps | JVM User-space Park |
+
+---
+
+### 2. Avoiding Carrier Thread Pinning
+
+The most common trap in production migration is **Thread Pinning**. When a virtual thread enters a \`synchronized\` block or invokes native JNI code, it cannot yield its carrier thread.
+
+**Anti-Pattern (Blocks Carrier):**
+\`\`\`java
+public synchronized String fetchPaymentDetails(String id) {
+    return restTemplate.getForObject("/api/payments/" + id, String.class);
+}
+\`\`\`
+
+**Best Practice (ReentrantLock Yields Carrier):**
+\`\`\`java
+private final ReentrantLock lock = new ReentrantLock();
+
+public String fetchPaymentDetails(String id) {
+    lock.lock();
+    try {
+        return restClient.get().uri("/api/payments/{id}", id).retrieve().body(String.class);
+    } finally {
+        lock.unlock();
+    }
+}
+\`\`\`
+
+---
+
+### 3. Structured Concurrency with Scope Execution
+Java 21 introduces StructuredTaskScope to treat subtasks executed in concurrent threads as a unified atomic unit of work:
+
+\`\`\`java
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    Supplier<User> userTask = scope.fork(() -> userService.getUser(id));
+    Supplier<List<Order>> ordersTask = scope.fork(() -> orderService.getOrders(id));
+
+    scope.join();
+    scope.throwIfFailed();
+
+    return new DashboardResponse(userTask.get(), ordersTask.get());
+}
+\`\`\`
+
+---
+
+### 4. Summary
+Java 21 Virtual Threads provide the simplicity of synchronous blocking code with the staggering throughput of reactive streams without any Callback Hell or Project Reactor complexity.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
+    category: "Java Engineering",
+    tags: ["Java 21", "Project Loom", "Concurrency", "Performance Tuning", "JVM"],
+    readTimeMinutes: 5,
+    isPublished: true,
+    isFeatured: true,
+    viewsCount: 2180,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-07-04T00:00:00Z",
+    updatedAt: "2026-07-04T00:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Zero-Downtime Database Schema Migrations in Distributed Microservices",
+    slug: "zero-downtime-database-schema-migrations-microservices",
+    excerpt: "Mastering Expand-Contract (Parallel Run) migration patterns with Flyway and Liquibase across distributed high-availability MySQL clusters.",
+    content: `## 🛡️ The Zero-Downtime Imperative
+
+In 24/7 mission-critical applications, scheduled maintenance windows are obsolete. Applying database schema migrations (adding columns, renaming fields, altering foreign keys, splitting tables) while live transactional queries execute simultaneously requires strict adherence to the **Expand and Contract (Parallel Run)** methodology.
+
+---
+
+### 1. The 4 Phases of Zero-Downtime Migration
+
+1. **Phase 1 (Expand):** Add new schema structures (new columns/tables) alongside existing ones without modifying live application readers.
+2. **Phase 2 (Dual-Write):** Deploy application version V2 that writes to both old and new columns while reading from the old structure.
+3. **Phase 3 (Backfill & Flip):** Run an asynchronous chunked background job to backfill legacy rows, then deploy application version V3 that reads from the new column.
+4. **Phase 4 (Contract):** Once all microservice instances are on V3, deploy a final Flyway migration script to drop legacy columns.
+
+---
+
+### 2. Safe vs Unsafe MySQL Operations
+
+\`\`\`sql
+-- ❌ DANGEROUS: Takes exclusive table lock in older MySQL engines
+ALTER TABLE users ADD COLUMN phone_number VARCHAR(20) NOT NULL DEFAULT '';
+
+-- ✅ ZERO-DOWNTIME SAFE: Instantly applied in MySQL 8.0+ via ALGORITHM=INPLACE, LOCK=NONE
+ALTER TABLE users ADD COLUMN phone_number VARCHAR(20) NULL,
+    ALGORITHM=INPLACE, 
+    LOCK=NONE;
+\`\`\`
+
+---
+
+### 3. Conclusion
+By pairing CI/CD automated Flyway pipelines with Expand-Contract patterns, engineering teams can ship schema mutations daily with guaranteed zero downtime and zero database lockups.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=1200&q=80",
+    category: "Database Architecture",
+    tags: ["MySQL", "Flyway", "Database Migration", "Zero Downtime", "System Design"],
+    readTimeMinutes: 7,
+    isPublished: true,
+    isFeatured: false,
+    viewsCount: 980,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-07-28T00:00:00Z",
+    updatedAt: "2026-07-28T00:00:00Z"
+  }
+];
+
 
 
 

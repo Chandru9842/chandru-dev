@@ -1082,6 +1082,244 @@ var initialPortfolioMetrics = [
     updatedAt: "2026-01-01T00:00:00Z"
   }
 ];
+var initialTestimonials = [
+  {
+    id: 1,
+    name: "Dr. Vikram Sethi",
+    role: "VP of Cloud Engineering & Infrastructure",
+    company: "FinScale Technologies",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Managed Chandru directly",
+    testimonialText: "Chandru is one of the sharpest Principal Systems Architects I have ever worked with. He re-engineered our core Kafka transaction pipeline to handle over 120,000 requests/sec with sub-15ms p99 latency. His mastery of Java 21, Spring Boot microservices, and distributed consistency is unmatched.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 1,
+    createdAt: "2026-02-15T10:00:00Z"
+  },
+  {
+    id: 2,
+    name: "Ananya Deshmukh",
+    role: "Director of Enterprise Architecture",
+    company: "OmniCloud Solutions",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Senior Colleague / Tech Lead",
+    testimonialText: "Beyond his exceptional technical prowess in high-concurrency systems and database performance tuning, Chandru brings infectious passion for clean architecture. He led our zero-downtime database migration strategy across 5 global regions without a single dropped packet.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 2,
+    createdAt: "2026-03-01T14:30:00Z"
+  },
+  {
+    id: 3,
+    name: "Marcus Vance",
+    role: "Head of Product & Platform Engineering",
+    company: "QuantumFlow Systems",
+    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: "https://www.linkedin.com/in/chandru9842/",
+    relationship: "Collaborated on Enterprise Deliverables",
+    testimonialText: "Chandru bridges the gap between deep backend systems and fluid, intuitive user interfaces with rare finesse. His full-stack execution speed, algorithmic precision, and architectural discipline delivered our multi-tenant SaaS MVP 4 weeks ahead of schedule.",
+    rating: 5,
+    isFeatured: true,
+    isVisible: true,
+    displayOrder: 3,
+    createdAt: "2026-04-10T09:15:00Z"
+  }
+];
+var initialArticles = [
+  {
+    id: 1,
+    title: "Architecting High-Throughput Event-Driven Systems with Apache Kafka & Spring Boot 3",
+    slug: "architecting-high-throughput-event-driven-systems-kafka-spring-boot",
+    excerpt: "A deep dive into partition balancing, idempotent consumer groups, zero-copy socket transfers, and transactional outbox patterns for million-message/sec workloads.",
+    content: `## \u{1F680} Introduction
+
+Modern microservices architectures demand ultra-low latency, loose decoupling, and resilient event persistence. In high-concurrency financial and telemetry systems, achieving reliable throughput at scale requires moving beyond standard synchronous REST patterns toward **Event-Driven Architecture (EDA)** powered by Apache Kafka and Spring Boot 3.
+
+---
+
+### 1. Partition Strategies & Key Distribution
+
+The fundamental unit of parallelism in Kafka is the **Partition**. When designing event producers:
+- Use consistent hash keys on entity IDs (e.g. \`accountId\` or \`tenantId\`) to preserve strictly in-order processing per stream.
+- Avoid hot partitions by adding salt bits when entity throughput exceeds single-partition consumer limits.
+
+\`\`\`java
+@Configuration
+public class KafkaProducerConfig {
+    @Bean
+    public ProducerFactory<String, TransactionEvent> producerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "10.0.0.1:9092,10.0.0.2:9092");
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "zstd");
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 64 * 1024);
+        config.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+}
+\`\`\`
+
+---
+
+### 2. Transactional Outbox Pattern with Debezium CDC
+
+Direct dual-writes between relational databases (MySQL/PostgreSQL) and Kafka brokers risk distributed transaction anomalies. Implementing the **Transactional Outbox Pattern** ensures atomicity:
+1. Write business entity and outbox message in the same local ACID database transaction.
+2. An asynchronous Debezium CDC worker reads the database Write-Ahead Log (WAL) and streams events to Kafka with zero application overhead.
+
+---
+
+### 3. Conclusion & Production Takeaways
+By combining idempotent producers, zstd compression, and transactional outbox streaming, enterprise systems can effortlessly scale past 100k events/sec while maintaining guaranteed 99.999% message delivery reliability.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
+    category: "System Design",
+    tags: ["Java", "Spring Boot", "Apache Kafka", "Microservices", "High Concurrency"],
+    readTimeMinutes: 6,
+    isPublished: true,
+    isFeatured: true,
+    viewsCount: 1420,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-06-12T00:00:00Z",
+    updatedAt: "2026-06-12T00:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Java 21 Virtual Threads (Project Loom) in Production: Benchmarks & Thread Safety",
+    slug: "java-21-virtual-threads-production-benchmarks-concurrency",
+    excerpt: "Evaluating carrier thread pinning, synchronized block pitfalls, structured concurrency, and 10x throughput gains in I/O-bound enterprise microservices.",
+    content: `## \u{1F9F5} The Paradigm Shift in Java Concurrency
+
+With the Long-Term Support (LTS) release of **Java 21**, Virtual Threads (JEP 444 / Project Loom) have revolutionized concurrent programming on the JVM. Instead of allocating expensive 1:1 OS threads (costing ~1MB memory per thread), Virtual Threads are lightweight M:N managed carrier threads taking only a few hundred bytes.
+
+---
+
+### 1. Benchmark: Platform vs Virtual Threads (10,000 Concurrent I/O Tasks)
+
+| Metric | Traditional Platform Threads | Java 21 Virtual Threads |
+| :--- | :--- | :--- |
+| **Peak Memory Footprint** | ~1.4 GB RAM | ~38 MB RAM |
+| **Time to Completion** | 4.82 seconds | 0.51 seconds |
+| **Throughput (req/s)** | 2,074 req/s | 19,607 req/s |
+| **Context Switch Overhead** | Kernel Mode Traps | JVM User-space Park |
+
+---
+
+### 2. Avoiding Carrier Thread Pinning
+
+The most common trap in production migration is **Thread Pinning**. When a virtual thread enters a \`synchronized\` block or invokes native JNI code, it cannot yield its carrier thread.
+
+**Anti-Pattern (Blocks Carrier):**
+\`\`\`java
+public synchronized String fetchPaymentDetails(String id) {
+    return restTemplate.getForObject("/api/payments/" + id, String.class);
+}
+\`\`\`
+
+**Best Practice (ReentrantLock Yields Carrier):**
+\`\`\`java
+private final ReentrantLock lock = new ReentrantLock();
+
+public String fetchPaymentDetails(String id) {
+    lock.lock();
+    try {
+        return restClient.get().uri("/api/payments/{id}", id).retrieve().body(String.class);
+    } finally {
+        lock.unlock();
+    }
+}
+\`\`\`
+
+---
+
+### 3. Structured Concurrency with Scope Execution
+Java 21 introduces StructuredTaskScope to treat subtasks executed in concurrent threads as a unified atomic unit of work:
+
+\`\`\`java
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    Supplier<User> userTask = scope.fork(() -> userService.getUser(id));
+    Supplier<List<Order>> ordersTask = scope.fork(() -> orderService.getOrders(id));
+
+    scope.join();
+    scope.throwIfFailed();
+
+    return new DashboardResponse(userTask.get(), ordersTask.get());
+}
+\`\`\`
+
+---
+
+### 4. Summary
+Java 21 Virtual Threads provide the simplicity of synchronous blocking code with the staggering throughput of reactive streams without any Callback Hell or Project Reactor complexity.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
+    category: "Java Engineering",
+    tags: ["Java 21", "Project Loom", "Concurrency", "Performance Tuning", "JVM"],
+    readTimeMinutes: 5,
+    isPublished: true,
+    isFeatured: true,
+    viewsCount: 2180,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-07-04T00:00:00Z",
+    updatedAt: "2026-07-04T00:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Zero-Downtime Database Schema Migrations in Distributed Microservices",
+    slug: "zero-downtime-database-schema-migrations-microservices",
+    excerpt: "Mastering Expand-Contract (Parallel Run) migration patterns with Flyway and Liquibase across distributed high-availability MySQL clusters.",
+    content: `## \u{1F6E1}\uFE0F The Zero-Downtime Imperative
+
+In 24/7 mission-critical applications, scheduled maintenance windows are obsolete. Applying database schema migrations (adding columns, renaming fields, altering foreign keys, splitting tables) while live transactional queries execute simultaneously requires strict adherence to the **Expand and Contract (Parallel Run)** methodology.
+
+---
+
+### 1. The 4 Phases of Zero-Downtime Migration
+
+1. **Phase 1 (Expand):** Add new schema structures (new columns/tables) alongside existing ones without modifying live application readers.
+2. **Phase 2 (Dual-Write):** Deploy application version V2 that writes to both old and new columns while reading from the old structure.
+3. **Phase 3 (Backfill & Flip):** Run an asynchronous chunked background job to backfill legacy rows, then deploy application version V3 that reads from the new column.
+4. **Phase 4 (Contract):** Once all microservice instances are on V3, deploy a final Flyway migration script to drop legacy columns.
+
+---
+
+### 2. Safe vs Unsafe MySQL Operations
+
+\`\`\`sql
+-- \u274C DANGEROUS: Takes exclusive table lock in older MySQL engines
+ALTER TABLE users ADD COLUMN phone_number VARCHAR(20) NOT NULL DEFAULT '';
+
+-- \u2705 ZERO-DOWNTIME SAFE: Instantly applied in MySQL 8.0+ via ALGORITHM=INPLACE, LOCK=NONE
+ALTER TABLE users ADD COLUMN phone_number VARCHAR(20) NULL,
+    ALGORITHM=INPLACE, 
+    LOCK=NONE;
+\`\`\`
+
+---
+
+### 3. Conclusion
+By pairing CI/CD automated Flyway pipelines with Expand-Contract patterns, engineering teams can ship schema mutations daily with guaranteed zero downtime and zero database lockups.`,
+    coverImageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=1200&q=80",
+    category: "Database Architecture",
+    tags: ["MySQL", "Flyway", "Database Migration", "Zero Downtime", "System Design"],
+    readTimeMinutes: 7,
+    isPublished: true,
+    isFeatured: false,
+    viewsCount: 980,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: "2026-07-28T00:00:00Z",
+    updatedAt: "2026-07-28T00:00:00Z"
+  }
+];
 
 // server.ts
 dotenv.config();
@@ -1543,17 +1781,25 @@ function loadDatabase() {
         ];
         dirty = true;
       }
-      if (!db.seoConfig) {
+      if (!db.testimonials || !Array.isArray(db.testimonials) || db.testimonials.length === 0) {
+        db.testimonials = initialTestimonials;
+        dirty = true;
+      }
+      if (!db.articles || !Array.isArray(db.articles) || db.articles.length === 0) {
+        db.articles = initialArticles;
+        dirty = true;
+      }
+      if (!db.seoConfig || db.seoConfig.metaTitle?.includes("Alex Dev")) {
         db.seoConfig = {
-          metaTitle: "Alex Dev | Senior Full Stack Architect & Systems Engineer",
-          metaDescription: "Enterprise portfolio of Alex Dev featuring high-scale distributed systems, microservices, cloud infrastructure, and AI applications.",
-          keywords: "Software Engineer, Full Stack Architect, React, Node.js, Cloud, Microservices, TypeScript",
-          ogTitle: "Alex Dev - Enterprise Portfolio CMS",
+          metaTitle: "Chandru Mohan | Principal Systems Architect & Full Stack Java Developer",
+          metaDescription: "Enterprise portfolio of Chandru Mohan featuring high-scale distributed systems, Java 21, Spring Boot microservices, Kafka event streams, and cloud architecture.",
+          keywords: "Chandru Mohan, Systems Architect, Full Stack Java Developer, Spring Boot, Kafka, React, Cloud, Microservices, TypeScript",
+          ogTitle: "Chandru Mohan - Principal Systems Architect Portfolio CMS",
           ogDescription: "Architecting high-performance cloud applications & resilient enterprise platforms.",
           ogImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
           twitterCard: "summary_large_image",
-          twitterSite: "@alex_dev_arch",
-          robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://alexdev.io/sitemap.xml",
+          twitterSite: "@chandru_dev",
+          robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://chandru-dev-lime.vercel.app/sitemap.xml",
           pwaEnabled: true,
           offlineMode: true,
           highContrastMode: false
@@ -1587,6 +1833,9 @@ function loadDatabase() {
     achievements: initialAchievements,
     technologies: initialTechStack,
     tools: initialTools,
+    portfolioMetrics: initialPortfolioMetrics,
+    testimonials: initialTestimonials,
+    articles: initialArticles,
     users: [
       {
         id: 1,
@@ -2568,6 +2817,8 @@ var getPortfolioCombinedHandler = (req, res) => {
   const codingProfiles = [...db.codingProfiles || initialCodingProfiles].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const technologies = [...db.technologies || initialTechStack].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const portfolioMetrics = [...db.portfolioMetrics || initialPortfolioMetrics].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const testimonials = [...db.testimonials || initialTestimonials].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const articles = [...db.articles || initialArticles].sort((a, b) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
   const profile = db.profile || initialProfile;
   const themeSettings = db.themeSettings || initialThemeSettings;
   const consolidatedData = {
@@ -2588,6 +2839,8 @@ var getPortfolioCombinedHandler = (req, res) => {
     codingProfiles,
     technologies,
     portfolioMetrics,
+    testimonials,
+    articles,
     activeResume,
     resumes
   };
@@ -4666,6 +4919,272 @@ app.post("/api/portfolio-metrics/:id/duplicate", (req, res) => {
   });
   saveDatabase(db);
   res.status(201).json(duplicate);
+});
+app.get("/api/testimonials", (req, res) => {
+  const db = loadDatabase();
+  const list = db.testimonials || initialTestimonials;
+  const sorted = [...list].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  res.json(sorted);
+});
+app.post("/api/testimonials", (req, res) => {
+  const db = loadDatabase();
+  if (!db.testimonials) db.testimonials = [...initialTestimonials];
+  const { name, role, company, avatarUrl, linkedInUrl, relationship, testimonialText, rating, isFeatured, isVisible, displayOrder } = req.body;
+  if (!name || !testimonialText) {
+    return res.status(400).json({ error: "Name and testimonial text are required" });
+  }
+  const maxId = db.testimonials.reduce((max, item) => typeof item?.id === "number" && item.id > max ? item.id : max, 0);
+  const newTestimonial = {
+    id: maxId + 1,
+    name: String(name).trim(),
+    role: role ? String(role).trim() : "Engineering Colleague",
+    company: company ? String(company).trim() : "",
+    avatarUrl: avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    linkedInUrl: linkedInUrl ? String(linkedInUrl).trim() : "",
+    relationship: relationship ? String(relationship).trim() : "Colleague",
+    testimonialText: String(testimonialText).trim(),
+    rating: typeof rating === "number" ? Math.min(5, Math.max(1, rating)) : 5,
+    isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : true,
+    isVisible: isVisible !== void 0 ? Boolean(isVisible) : true,
+    displayOrder: typeof displayOrder === "number" ? displayOrder : db.testimonials.length + 1,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  db.testimonials.push(newTestimonial);
+  db.testimonials.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  recordActivity(req, db, {
+    action: "Testimonial Created",
+    module: "Testimonials",
+    description: `Added testimonial endorsement from ${newTestimonial.name} (${newTestimonial.company}).`,
+    newValue: newTestimonial
+  });
+  saveDatabase(db);
+  res.status(201).json(newTestimonial);
+});
+app.put("/api/testimonials/:id", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  if (!db.testimonials) db.testimonials = [...initialTestimonials];
+  const index = db.testimonials.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Testimonial not found" });
+  }
+  const oldValue = { ...db.testimonials[index] };
+  const { name, role, company, avatarUrl, linkedInUrl, relationship, testimonialText, rating, isFeatured, isVisible, displayOrder } = req.body;
+  db.testimonials[index] = {
+    ...db.testimonials[index],
+    name: name !== void 0 ? String(name).trim() : db.testimonials[index].name,
+    role: role !== void 0 ? String(role).trim() : db.testimonials[index].role,
+    company: company !== void 0 ? String(company).trim() : db.testimonials[index].company,
+    avatarUrl: avatarUrl !== void 0 ? avatarUrl : db.testimonials[index].avatarUrl,
+    linkedInUrl: linkedInUrl !== void 0 ? String(linkedInUrl).trim() : db.testimonials[index].linkedInUrl,
+    relationship: relationship !== void 0 ? String(relationship).trim() : db.testimonials[index].relationship,
+    testimonialText: testimonialText !== void 0 ? String(testimonialText).trim() : db.testimonials[index].testimonialText,
+    rating: typeof rating === "number" ? Math.min(5, Math.max(1, rating)) : db.testimonials[index].rating,
+    isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : db.testimonials[index].isFeatured,
+    isVisible: isVisible !== void 0 ? Boolean(isVisible) : db.testimonials[index].isVisible,
+    displayOrder: typeof displayOrder === "number" ? displayOrder : db.testimonials[index].displayOrder,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  db.testimonials.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  recordActivity(req, db, {
+    action: "Testimonial Updated",
+    module: "Testimonials",
+    description: `Updated testimonial from ${db.testimonials[index].name}.`,
+    oldValue,
+    newValue: db.testimonials[index]
+  });
+  saveDatabase(db);
+  res.json(db.testimonials[index]);
+});
+app.delete("/api/testimonials/:id", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  if (!db.testimonials) db.testimonials = [...initialTestimonials];
+  const oldValue = db.testimonials.find((t) => t.id === id);
+  if (!oldValue) {
+    return res.status(404).json({ error: "Testimonial not found" });
+  }
+  db.testimonials = db.testimonials.filter((t) => t.id !== id);
+  recordActivity(req, db, {
+    action: "Testimonial Deleted",
+    module: "Testimonials",
+    description: `Deleted testimonial from ${oldValue.name}.`,
+    oldValue
+  });
+  saveDatabase(db);
+  res.json({ status: "success" });
+});
+app.patch("/api/testimonials/:id/visibility", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  const { isVisible } = req.body;
+  if (typeof isVisible !== "boolean") {
+    return res.status(400).json({ error: "isVisible must be a boolean" });
+  }
+  if (!db.testimonials) db.testimonials = [...initialTestimonials];
+  const index = db.testimonials.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Testimonial not found" });
+  }
+  db.testimonials[index].isVisible = isVisible;
+  saveDatabase(db);
+  res.json(db.testimonials[index]);
+});
+app.patch("/api/testimonials/order", (req, res) => {
+  const db = loadDatabase();
+  const { order } = req.body;
+  if (!Array.isArray(order)) {
+    return res.status(400).json({ error: "order must be an array" });
+  }
+  if (!db.testimonials) db.testimonials = [...initialTestimonials];
+  order.forEach((item) => {
+    const found = db.testimonials.find((t) => t.id === item.id);
+    if (found) {
+      found.displayOrder = item.displayOrder;
+    }
+  });
+  db.testimonials.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  saveDatabase(db);
+  res.json({ status: "success", testimonials: db.testimonials });
+});
+app.get("/api/articles", (req, res) => {
+  const db = loadDatabase();
+  const list = db.articles || initialArticles;
+  const sorted = [...list].sort((a, b) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
+  res.json(sorted);
+});
+app.get("/api/articles/:slug", (req, res) => {
+  const db = loadDatabase();
+  const slug = req.params.slug;
+  const list = db.articles || initialArticles;
+  const article = list.find((a) => a.slug === slug || String(a.id) === slug);
+  if (!article) {
+    return res.status(404).json({ error: "Article not found" });
+  }
+  article.viewsCount = (article.viewsCount || 0) + 1;
+  saveDatabase(db);
+  res.json(article);
+});
+app.post("/api/articles", (req, res) => {
+  const db = loadDatabase();
+  if (!db.articles) db.articles = [...initialArticles];
+  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: "Title and content are required" });
+  }
+  const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const maxId = db.articles.reduce((max, item) => typeof item?.id === "number" && item.id > max ? item.id : max, 0);
+  const newArticle = {
+    id: maxId + 1,
+    title: String(title).trim(),
+    slug: computedSlug || `article-${Date.now()}`,
+    excerpt: excerpt ? String(excerpt).trim() : String(content).substring(0, 150) + "...",
+    content: String(content),
+    coverImageUrl: coverImageUrl || "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
+    category: category || "System Design",
+    tags: Array.isArray(tags) ? tags : typeof tags === "string" ? tags.split(",").map((t) => t.trim()).filter(Boolean) : ["Architecture", "Java"],
+    readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : Math.max(1, Math.ceil(String(content).split(/\s+/).length / 200)),
+    isPublished: isPublished !== void 0 ? Boolean(isPublished) : true,
+    isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : false,
+    viewsCount: 0,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+    publishedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  db.articles.unshift(newArticle);
+  recordActivity(req, db, {
+    action: "Article Created",
+    module: "Articles",
+    description: `Published article "${newArticle.title}".`,
+    newValue: newArticle
+  });
+  saveDatabase(db);
+  res.status(201).json(newArticle);
+});
+app.put("/api/articles/:id", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  if (!db.articles) db.articles = [...initialArticles];
+  const index = db.articles.findIndex((a) => a.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Article not found" });
+  }
+  const oldValue = { ...db.articles[index] };
+  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+  const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : db.articles[index].slug;
+  db.articles[index] = {
+    ...db.articles[index],
+    title: title !== void 0 ? String(title).trim() : db.articles[index].title,
+    slug: computedSlug,
+    excerpt: excerpt !== void 0 ? String(excerpt).trim() : db.articles[index].excerpt,
+    content: content !== void 0 ? String(content) : db.articles[index].content,
+    coverImageUrl: coverImageUrl !== void 0 ? coverImageUrl : db.articles[index].coverImageUrl,
+    category: category !== void 0 ? category : db.articles[index].category,
+    tags: Array.isArray(tags) ? tags : typeof tags === "string" ? tags.split(",").map((t) => t.trim()).filter(Boolean) : db.articles[index].tags,
+    readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : db.articles[index].readTimeMinutes,
+    isPublished: isPublished !== void 0 ? Boolean(isPublished) : db.articles[index].isPublished,
+    isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : db.articles[index].isFeatured,
+    author: "Chandru Mohan",
+    authorRole: "Principal Systems Architect",
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  recordActivity(req, db, {
+    action: "Article Updated",
+    module: "Articles",
+    description: `Updated article "${db.articles[index].title}".`,
+    oldValue,
+    newValue: db.articles[index]
+  });
+  saveDatabase(db);
+  res.json(db.articles[index]);
+});
+app.delete("/api/articles/:id", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  if (!db.articles) db.articles = [...initialArticles];
+  const oldValue = db.articles.find((a) => a.id === id);
+  if (!oldValue) {
+    return res.status(404).json({ error: "Article not found" });
+  }
+  db.articles = db.articles.filter((a) => a.id !== id);
+  recordActivity(req, db, {
+    action: "Article Deleted",
+    module: "Articles",
+    description: `Deleted article "${oldValue.title}".`,
+    oldValue
+  });
+  saveDatabase(db);
+  res.json({ status: "success" });
+});
+app.patch("/api/articles/:id/status", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  const { isPublished } = req.body;
+  if (typeof isPublished !== "boolean") {
+    return res.status(400).json({ error: "isPublished must be a boolean" });
+  }
+  if (!db.articles) db.articles = [...initialArticles];
+  const index = db.articles.findIndex((a) => a.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Article not found" });
+  }
+  db.articles[index].isPublished = isPublished;
+  db.articles[index].updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  saveDatabase(db);
+  res.json(db.articles[index]);
+});
+app.post("/api/articles/:id/view", (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  if (!db.articles) db.articles = [...initialArticles];
+  const article = db.articles.find((a) => a.id === id);
+  if (article) {
+    article.viewsCount = (article.viewsCount || 0) + 1;
+    saveDatabase(db);
+  }
+  res.json({ status: "success", viewsCount: article?.viewsCount || 0 });
 });
 app.get("/api/coding-profiles", (req, res) => {
   const db = loadDatabase();
