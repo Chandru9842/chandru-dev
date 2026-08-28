@@ -17,13 +17,16 @@ export default defineConfig(() => {
         resolveDependencies(_filename, deps) {
           return deps.filter(
             (dep) =>
+              !dep.includes('vendor-three') &&
+              !dep.includes('ThreeDHero') &&
               !dep.includes('vendor-lottie') &&
               !dep.includes('AdminDashboard') &&
               !dep.includes('AIPortfolioChat') &&
               !dep.includes('DeveloperTerminalModal') &&
               !dep.includes('CodeExplorer') &&
               !dep.includes('DatabaseERD') &&
-              !dep.includes('ArchitectureDiagram')
+              !dep.includes('ArchitectureDiagram') &&
+              !dep.includes('backendCode')
           );
         },
       },

@@ -39,6 +39,19 @@ export default function App() {
   useEffect(() => {
     let isCancelled = false;
 
+    // Skip eager auth network calls on public homepage for maximum initial performance
+    const isAdminRoute = currentPath.startsWith('/admin');
+    if (!isAdminRoute) {
+      const isDemo = sessionStorage.getItem('is_demo_session') === 'true';
+      const hasToken = !!(localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token'));
+      if (isDemo || hasToken) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+      return;
+    }
+
     const checkAuth = async () => {
       let configAlwaysRequire = false;
       try {

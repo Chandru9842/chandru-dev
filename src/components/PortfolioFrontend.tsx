@@ -441,14 +441,28 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  const [render3D, setRender3D] = useState<boolean>(true);
+  const [render3D, setRender3D] = useState<boolean>(false);
+  const [shouldMountChat, setShouldMountChat] = useState<boolean>(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
-  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
+
+  // Defer 3D on desktop and chat assistant until after initial paint
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      const timer = setTimeout(() => setRender3D(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  useEffect(() => {
+    const chatTimer = setTimeout(() => setShouldMountChat(true), 2500);
+    return () => clearTimeout(chatTimer);
+  }, []);
 
   // Global Keyboard Shortcut Listener for Developer Terminal (Ctrl+K, Cmd+K)
   useEffect(() => {
@@ -1098,58 +1112,66 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         }, 150);
       }
 
-      // Track standard page view details dynamically in background (non-blocking)
-      (async () => {
-        try {
-          const sessionKey = 'alex_dev_session_active';
-          const isNewSession = !sessionStorage.getItem(sessionKey);
-          if (isNewSession) {
-            sessionStorage.setItem(sessionKey, 'true');
-          }
-
-          let referralSource = 'Direct Traffic';
+      // Track standard page view details dynamically in background after initial render settles (non-blocking)
+      const trackPageView = () => {
+        (async () => {
           try {
-            const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct Traffic';
-            if (referrer.includes('github.com')) referralSource = 'GitHub';
-            else if (referrer.includes('linkedin.com')) referralSource = 'LinkedIn';
-            else if (referrer.includes('twitter.com') || referrer.includes('t.co')) referralSource = 'Twitter / X';
-            else if (referrer.includes('google.com')) referralSource = 'Google / SEO';
-          } catch (e) {}
-
-          let clientCountry = 'United States';
-          try {
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            if (tz.includes('Asia/Calcutta') || tz.includes('Asia/Kolkata')) clientCountry = 'India';
-            else if (tz.includes('Europe/London') || tz.includes('GB')) clientCountry = 'United Kingdom';
-            else if (tz.includes('Europe/Berlin') || tz.includes('DE')) clientCountry = 'Germany';
-            else if (tz.includes('America/Toronto') || tz.includes('CA')) clientCountry = 'Canada';
-            else if (tz.includes('Asia/Tokyo')) clientCountry = 'Japan';
-            else if (tz.includes('Australia')) clientCountry = 'Australia';
-            else if (tz.includes('Europe/Paris')) clientCountry = 'France';
-          } catch (e) {}
-
-          const visitRes = await fetch('/api/analytics/track', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'pageview',
-              metadata: {
-                isNewSession,
-                referral: referralSource,
-                country: clientCountry
-              }
-            })
-          });
-          if (visitRes.ok) {
-            const trackData = await visitRes.json();
-            if (trackData?.status === 'success') {
-              setAnalytics(trackData.analytics);
+            const sessionKey = 'alex_dev_session_active';
+            const isNewSession = !sessionStorage.getItem(sessionKey);
+            if (isNewSession) {
+              sessionStorage.setItem(sessionKey, 'true');
             }
+
+            let referralSource = 'Direct Traffic';
+            try {
+              const referrer = document.referrer ? new URL(document.referrer).hostname : 'Direct Traffic';
+              if (referrer.includes('github.com')) referralSource = 'GitHub';
+              else if (referrer.includes('linkedin.com')) referralSource = 'LinkedIn';
+              else if (referrer.includes('twitter.com') || referrer.includes('t.co')) referralSource = 'Twitter / X';
+              else if (referrer.includes('google.com')) referralSource = 'Google / SEO';
+            } catch (e) {}
+
+            let clientCountry = 'United States';
+            try {
+              const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              if (tz.includes('Asia/Calcutta') || tz.includes('Asia/Kolkata')) clientCountry = 'India';
+              else if (tz.includes('Europe/London') || tz.includes('GB')) clientCountry = 'United Kingdom';
+              else if (tz.includes('Europe/Berlin') || tz.includes('DE')) clientCountry = 'Germany';
+              else if (tz.includes('America/Toronto') || tz.includes('CA')) clientCountry = 'Canada';
+              else if (tz.includes('Asia/Tokyo')) clientCountry = 'Japan';
+              else if (tz.includes('Australia')) clientCountry = 'Australia';
+              else if (tz.includes('Europe/Paris')) clientCountry = 'France';
+            } catch (e) {}
+
+            const visitRes = await fetch('/api/analytics/track', { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'pageview',
+                metadata: {
+                  isNewSession,
+                  referral: referralSource,
+                  country: clientCountry
+                }
+              })
+            });
+            if (visitRes.ok) {
+              const trackData = await visitRes.json();
+              if (trackData?.status === 'success') {
+                setAnalytics(trackData.analytics);
+              }
+            }
+          } catch (e) {
+            // Ignore analytics background tracking errors
           }
-        } catch (e) {
-          // Ignore analytics background tracking errors
-        }
-      })();
+        })();
+      };
+
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(trackPageView, { timeout: 4000 });
+      } else {
+        setTimeout(trackPageView, 3000);
+      }
 
     } catch (error) {
       console.warn(`Portfolio API fetch notice (attempt ${attempt}):`, error);
@@ -2405,13 +2427,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     initial={initialProps}
                     whileInView={animateProps}
                     viewport={{ once: true }}
-                    whileHover={{ 
-                      y: -6, 
-                      borderColor: `${itemColor}50`,
-                      boxShadow: `0 12px 30px ${itemColor}15`
-                    }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className={`glass-card rounded-xl p-5 border border-white/[0.04] transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${
+                    whileHover={{ y: -6 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className={`glass-card rounded-xl p-5 border border-white/[0.04] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${
                       isPulse ? 'animate-pulse' : ''
                     }`}
                     style={{
@@ -2621,6 +2639,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-1.5 rounded hover:bg-emerald-500/10"
                               title={`Visit ${tool.name} official website`}
+                              aria-label={`Visit ${tool.name} official website`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span>Website</span>
@@ -3280,7 +3299,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             link={link}
                             isFooter={true}
                             onClick={() => trackClick('social_footer_' + link.platform.toLowerCase(), link.platform)}
-                            className={`w-9 h-9 rounded-xl border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-md ${themeCls.bgHover} hover:text-white`}
+                            className={`w-9 h-9 rounded-xl border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-transform hover:scale-105 duration-200 shadow-md ${themeCls.bgHover} hover:text-white transition-colors`}
                             childrenClassName="w-4.5 h-4.5 object-contain"
                           />
                         ))}
@@ -3840,7 +3859,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
       {/* Interactive AI Career & Portfolio Assistant and Developer Terminal Modal (Deferred) */}
       <React.Suspense fallback={null}>
-        <AIPortfolioChat />
+        {shouldMountChat && <AIPortfolioChat />}
 
         {/* Floating Developer Terminal Launcher (Ctrl+K) */}
         <div className="fixed bottom-6 left-6 z-[90] flex items-center">
@@ -3859,17 +3878,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           </motion.button>
         </div>
 
-        {/* Developer CLI Terminal Modal */}
-        <DeveloperTerminalModal
-          isOpen={isTerminalOpen}
-          onClose={() => setIsTerminalOpen(false)}
-          projects={projects}
-          skills={skills}
-          experiences={experiences}
-          education={education}
-          metrics={portfolioMetrics}
-          profile={profile}
-        />
+        {/* Developer CLI Terminal Modal (loaded strictly on open) */}
+        {isTerminalOpen && (
+          <DeveloperTerminalModal
+            isOpen={isTerminalOpen}
+            onClose={() => setIsTerminalOpen(false)}
+            projects={projects}
+            skills={skills}
+            experiences={experiences}
+            education={education}
+            metrics={portfolioMetrics}
+            profile={profile}
+          />
+        )}
       </React.Suspense>
 
     </div>
