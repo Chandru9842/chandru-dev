@@ -4100,5 +4100,40 @@
       "uploadedAt": "2026-06-15T09:30:00.000Z",
       "updatedAt": "2026-07-01T12:00:00.000Z"
     }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Chandru Mohan",
+      "email": "chandrumohan550@gmail.com",
+      "username": "chandru",
+      "phoneNumber": "+919655384140",
+      "backupEmail": "",
+      "recoveryPhoneNumber": "",
+      "passwordHash": "$2a$10$T8ZqT3mFq3x7VfQ2O1hE4eaH0YFvA7mP3W0x8s2r7D.1vR4s.1m.G",
+      "role": "ROLE_ADMIN",
+      "otpEnabled": false,
+      "alwaysRequireLogin": false,
+      "rememberLogin": true,
+      "verifyNewDevice": false,
+      "sessionTimeout": "Never",
+      "refreshTokenEnabled": true,
+      "maxLoginAttempts": 50,
+      "lockDuration": 1,
+      "otpExpiration": 5,
+      "otpLength": 6,
+      "enableRememberMe": true,
+      "enableJWT": true,
+      "allowLoginEmail": true,
+      "allowLoginUsername": true,
+      "allowLoginPhone": true,
+      "knownDevices": [],
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "lastLogin": null,
+      "isActive": true,
+      "failedAttempts": 0,
+      "lockUntil": null
+    }
   ]
 }

