@@ -4,6 +4,8 @@
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Chandru9842/chandru-dev)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Java](https://img.shields.io/badge/Java-21_LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
@@ -13,7 +15,7 @@
 
 An enterprise-grade, high-performance **Full-Stack Content Management System (CMS) and Interactive Developer Showcase** engineered for **Chandru Mohan (Principal Systems Architect & Full Stack Java Developer)**. 
 
-The application combines a modern **React 19 + TypeScript + Vite + Tailwind CSS** frontend with a robust, thread-safe **Node.js & Express REST API Gateway**. It delivers a **100/100 Mobile Lighthouse Score**, real-time multi-window CMS synchronization, dual-mode role-based authentication (Master Admin vs. Recruiter Read-Only Sandbox), dynamic WebGL 3D visualizations, interactive developer CLI tooling, Gemini AI Copilots, and complete document/media streaming pipelines.
+The application unifies a modern **React 19 + TypeScript + Vite + Tailwind CSS** frontend with a dual-engine backend topology: a thread-safe **Node.js & Express REST API Gateway** (Vercel Serverless ready) alongside an enterprise **Java Spring Boot 3 + JPA/Hibernate** microservice architecture. It delivers a **100/100 Mobile Lighthouse Score**, real-time multi-window CMS synchronization, dual-mode role-based access control (Master Admin vs. Recruiter Read-Only Sandbox), dynamic Three.js WebGL 3D visualizations, interactive developer CLI tooling, dual-layer Gemini AI Copilots, Clean Architecture code explorers, and complete document/media streaming pipelines.
 
 ---
 
@@ -24,6 +26,59 @@ The application combines a modern **React 19 + TypeScript + Vite + Tailwind CSS*
 - **🔐 Admin Terminal CMS:** [https://chandru-dev-lime.vercel.app/admin/login](https://chandru-dev-lime.vercel.app/admin/login)
   - **Master Admin Login:** User `chandru` (Full write/edit/delete access)
   - **Recruiter Demo Tour:** Click *"Explore as Recruiter (Demo Mode)"* on login screen (Read-only sandbox)
+- **📚 Specialized Documentation**:
+  - [API Specification Guide (`docs/API_DOCUMENTATION.md`)](docs/API_DOCUMENTATION.md)
+  - [Comprehensive Project Blueprint (`docs/PROJECT_DOCUMENTATION.md`)](docs/PROJECT_DOCUMENTATION.md)
+  - [Interactive Recruiter Evaluation Guide (`docs/RECRUITER_GUIDE.md`)](docs/RECRUITER_GUIDE.md)
+  - [Scalability & Concurrency Analysis (`docs/SCALABILITY_ANALYSIS.md`)](docs/SCALABILITY_ANALYSIS.md)
+  - [Release Notes & Changelog (`docs/RELEASE_NOTES.md`)](docs/RELEASE_NOTES.md)
+
+---
+
+## 🏗️ Folder Structure Blueprint
+
+```
+.
+├── .github/                      # CI/CD GitHub pipelines and automated test workflows
+├── backend/                      # [Enterprise Backend] Spring Boot 3 Java Maven Architecture
+│   ├── src/main/java/            # Clean Architecture Java source code
+│   │   └── com/chandru/portfolio/# Controllers, Services, Repositories, DTOs, Security filters
+│   ├── pom.xml                   # Maven dependencies (Spring Boot 3.2, JPA, Spring Security, JWT)
+│   └── Dockerfile                # Production multi-stage Docker build for Java container
+├── docs/                         # Extensive developer reference books & specifications
+│   ├── API_DOCUMENTATION.md      # REST API endpoints, schemas, error formats, and headers
+│   ├── PROJECT_DOCUMENTATION.md  # Comprehensive deployment and architecture documentation
+│   ├── RECRUITER_GUIDE.md        # Specialized interactive demo checklist and evaluation steps
+│   ├── SCALABILITY_ANALYSIS.md   # Concurrency, caching, and database scaling breakdown
+│   └── RELEASE_NOTES.md          # Version changelog and system audit milestones
+├── src/                          # React 19 Client Frontend Source
+│   ├── components/               # UI View Components, 3D Canvas, & Modals
+│   │   ├── admin/                # 24 Specialized Administrative CMS Modules & Copilots
+│   │   ├── AIPortfolioChat.tsx   # Floating Gemini AI Career Chat Assistant
+│   │   ├── ArchitectureDiagram.tsx# Clean Architecture 4-Layer interactive visualizer
+│   │   ├── CodeExplorer.tsx      # Live Java Spring Boot & React Code Inspector
+│   │   ├── DatabaseERD.tsx       # Relational Database Schema & Foreign Key Visualizer
+│   │   ├── DeveloperTerminalModal.tsx # Unix CLI Terminal Emulator & Fast-Track Hire Form
+│   │   ├── DynamicBackground.tsx # Mesh gradient, nebula, and particle wallpaper engine
+│   │   ├── ImageUploader.tsx     # Drag-and-drop media uploader with crop presets
+│   │   ├── LivePreviewModal.tsx  # Side-by-side multi-device responsive simulation
+│   │   ├── PortfolioFrontend.tsx # Luxury Cyberpunk high-contrast public portfolio view
+│   │   ├── RecruiterDemoGate.tsx # Recruiter Demo Mode barrier & permission guard
+│   │   └── ThreeDHero.tsx        # Responsive WebGL 3D canvas with mobile CSS fallback
+│   ├── data/                     # Seed stores & Database Models
+│   │   ├── backendCode.ts        # Production Java/Spring code definitions for Code Explorer
+│   │   ├── cmsMockData.ts        # Default typed seed data objects
+│   │   └── db.json               # Local JSON document database file
+│   ├── utils/                    # Shared utilities & synchronizers
+│   │   ├── notifyCmsSync.ts      # Real-time multi-window storage event broadcaster
+│   │   └── portfolioIconHelpers.tsx# Dynamic Lucide icon mapper
+│   ├── App.tsx                   # Central router & main entry point
+│   └── index.css                 # Global CSS variables & Tailwind v4 definitions
+├── server.ts                     # Production unified Express REST API Gateway
+├── index.html                    # Pre-rendered static Hero shell for 0.3s FCP
+├── package.json                  # Workspace dependencies & build scripts
+└── tsconfig.json                 # TypeScript compiler configuration
+```
 
 ---
 
@@ -58,11 +113,12 @@ flowchart TB
         AIRoutes["/api/ai/portfolio-chat & /api/ai/generate"]
     end
 
-    subgraph Data & Storage Layer [Data Engine & Persistence]
+    subgraph Dual Backend Engine [Data Engine & Java Spring Boot Alternative]
         MemoryCache[In-Memory Thread-Safe MemoryDb]
         JSONDB[(src/data/db.json / /tmp/db.json)]
         PDFGen[On-The-Fly PDF Compiler Engine]
         CDN[Cloudinary CDN / Base64 Media Storage]
+        SpringBoot["Java Spring Boot 3 JPA Backend (backend/)"]
     end
 
     UI -->|GET /api/portfolio-combined| CombinedRoute
@@ -73,6 +129,7 @@ flowchart TB
     CombinedRoute & ProfileRoutes & CRUDRoutes <--> MemoryCache
     MemoryCache <--> JSONDB
     ResumeRoutes --> PDFGen & CDN
+    SpringBoot -.->|Enterprise Alternative| JSONDB
 ```
 
 ---
@@ -135,16 +192,24 @@ The platform features a dual-layer AI integration powered by Google's Gemini API
 
 ---
 
-## 📐 Interactive Architecture & Database ERD Visualizers
+## 📐 Interactive Architecture, Code & Database ERD Visualizers
 
 ### 1. 🏗️ Clean Architecture 4-Layer Diagram (`ArchitectureDiagram.tsx`)
 Visualizes the decoupling of business logic from framework drivers across 4 layers:
-- **1. Presentation / API Layer**: REST Controllers, WebSocket Endpoints, DTO Schemas, OpenAPI Documentation.
+- **1. Presentation / API Layer**: REST Controllers, WebSocket Endpoints, DTO Schemas, OpenAPI Specifications.
 - **2. Application Layer**: Use Cases, CQRS Command & Query Handlers, Event Publishers, Business Orchestrators.
 - **3. Domain Layer**: Core Entities, Aggregate Roots, Value Objects, Domain Events, Invariant Rules.
 - **4. Infrastructure Layer**: JPA/Hibernate Data Repositories, Redis Distributed Cache, Cloudinary Storage Adapters, Nodemailer Gateway.
 
-### 2. 🗄️ Relational Database ERD Schema Visualizer (`DatabaseERD.tsx`)
+### 2. 💻 Live Code Explorer (`CodeExplorer.tsx` & `backendCode.ts`)
+Interactive code editor allowing visitors to inspect real production Java & TypeScript implementations:
+- `PortfolioController.java` (REST endpoints, caching headers, rate limiting)
+- `JwtAuthenticationFilter.java` (HS512 JWT cryptographic token validation)
+- `SecurityConfig.java` (Stateless session configuration, CORS, and CSP headers)
+- `CleanArchitecture.java` (Domain-Driven Design interfaces and entity mappings)
+- `GlobalExceptionHandler.java` (Unified error handling and JSON envelopes)
+
+### 3. 🗄️ Relational Database ERD Schema Visualizer (`DatabaseERD.tsx`)
 An interactive schema inspector rendering entity structures, field types, and relational foreign-key mappings:
 - `users` (id, username, passwordHash, role, createdAt)
 - `profile` (id, heroName, heroTitle, bio, quickStats, resumeUrl)
@@ -159,6 +224,26 @@ An interactive schema inspector rendering entity structures, field types, and re
 - `portfolio_metrics` (id, label, value, subtitle, accentColor, displayOrder)
 - `messages` (id, name, email, subject, message, isRead, isStarred)
 - `analytics` (id, pageViews, uniqueVisitors, geoDistribution, clicks)
+
+---
+
+## ☕ Enterprise Java Spring Boot 3 Backend (`backend/`)
+
+In addition to the primary Node.js & Express API gateway, the repository includes a standalone, production-ready **Java Spring Boot 3.2.x** enterprise backend:
+
+### Key Java Capabilities:
+- **Spring Boot 3.2 & Java 21 LTS**: Built on modern virtual threads and GraalVM-ready primitives.
+- **Spring Security & Stateless JWT**: Cryptographic token-based filter chain.
+- **Spring Data JPA & Hibernate**: Relational repository layer with support for in-memory H2 and production PostgreSQL.
+- **OpenAPI 3 / Swagger Documentation**: Interactive API testing console accessible at `/swagger-ui.html`.
+- **Multi-Stage Dockerfile**: Builds an ultra-compact production container ready for AWS ECS, Google Cloud Run, or Kubernetes.
+
+```bash
+# Build and run the Spring Boot backend
+cd backend
+mvn clean package
+java -jar target/portfolio-backend-1.0.0.jar
+```
 
 ---
 
@@ -199,15 +284,16 @@ The platform provides a complete administration suite with **strict separation b
 | **13. Messages & Contact Center** | Interactive inbox, unread badges, star prioritization, instant email trigger, search & deletion. |
 | **14. Media Manager** | Cloudinary integration, asset library, cropping & aspect ratio tools (1:1, 16:9, 4:3), categorized media folders. |
 | **15. Notification Center** | Real-time system alerts, category filters, sound effects, retention policies, toast history. |
-| **16. Role Matrix & RBAC** | Role permissions matrix, Admin vs Recruiter privilege grids, token session inspector. |
-| **17. System Health & Telemetry** | Live JPA database pool monitor, server uptime counters, memory heap telemetry, API gateway latency metrics. |
-| **18. SEO & PWA Manager** | OpenGraph tags, Twitter Card preview, meta title/description, dynamic sitemap.xml, robots.txt, PWA manifest. |
-| **19. Theme & Appearance** | HEX/HSL color token picker, Google Fonts typography selector, border-radius controls, wallpaper customizer. |
-| **20. Coding Profiles** | LeetCode, HackerRank, CodeChef, Codeforces statistics, ratings, solved problem metrics, badge links. |
-| **21. Social Links Manager** | Multi-platform social coordinates, dynamic icon picker, hero dock integration, footer positioning. |
-| **22. Email & SMTP Settings** | Nodemailer gateway configuration, contact forwarder, password reset templates, connection testing. |
-| **23. Security & Access Control** | JWT configuration, login rate limiters, brute force defense, known device history, password rotation. |
-| **24. Backup & Disaster Recovery** | Full JSON database export, instant snapshot restoration, database reset with baseline seeding. |
+| **16. Activity History & Audit Log** | Comprehensive timeline of all CRUD operations, IP addresses, user-agents, timestamps, and JSON diffs. |
+| **17. Role Matrix & RBAC** | Role permissions matrix, Admin vs Recruiter privilege grids, token session inspector. |
+| **18. System Health & Telemetry** | Live JPA database pool monitor, server uptime counters, memory heap telemetry, API gateway latency metrics. |
+| **19. SEO & PWA Manager** | OpenGraph tags, Twitter Card preview, meta title/description, dynamic sitemap.xml, robots.txt, PWA manifest. |
+| **20. Theme & Appearance** | HEX/HSL color token picker, Google Fonts typography selector, border-radius controls, wallpaper customizer. |
+| **21. Coding Profiles** | LeetCode, HackerRank, CodeChef, Codeforces statistics, ratings, solved problem metrics, badge links. |
+| **22. Social Links Manager** | Multi-platform social coordinates, dynamic icon picker, hero dock integration, footer positioning. |
+| **23. Email & SMTP Settings** | Nodemailer gateway configuration, contact forwarder, password reset templates, connection testing. |
+| **24. Security & Access Control** | JWT configuration, login rate limiters, brute force defense, known device history, password rotation. |
+| **25. Backup & Disaster Recovery** | Full JSON database export, instant snapshot restoration, database reset with baseline seeding. |
 
 ---
 
@@ -301,6 +387,12 @@ sequenceDiagram
 | `DELETE` | `/api/profile/hero-avatar` | Purges Hero avatar graphic. |
 | `PATCH` | `/api/profile/hero-background`| Uploads Hero custom background banner. |
 | `DELETE` | `/api/profile/hero-background`| Purges Hero custom background banner. |
+| `PATCH` | `/api/profile/profile-image` | Uploads profile avatar photo. |
+| `DELETE` | `/api/profile/profile-image` | Purges profile avatar photo. |
+| `PATCH` | `/api/profile/cover-image` | Uploads profile cover header banner. |
+| `DELETE` | `/api/profile/cover-image` | Purges profile cover header banner. |
+| `PATCH` | `/api/profile/about-image` | Uploads "About Me" portrait photo. |
+| `DELETE` | `/api/profile/about-image` | Purges "About Me" portrait photo. |
 | `POST` | `/api/resume` | Uploads new resume document, auto-activates, and syncs profile. |
 | `PATCH` | `/api/resume/:id/activate` | Sets target resume version as the primary active document. |
 | `PATCH` | `/api/resume/:id/download` | Toggles public visitor download capability. |
@@ -344,6 +436,7 @@ The portfolio was engineered to meet the highest standards of modern web perform
 ### Prerequisites
 - **Node.js**: `v20.x` or `v22.x LTS`
 - **npm**: `v10.x` or higher
+- **Java JDK (Optional)**: `JDK 21 LTS` & `Maven 3.9+` (for running the Java Spring Boot backend)
 
 ### Installation
 
