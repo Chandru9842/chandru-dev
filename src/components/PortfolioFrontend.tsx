@@ -2409,107 +2409,115 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredArticles.map((art) => (
-                    <motion.article
-                      key={art.id}
-                      whileHover={{ y: -6 }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
-                      className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 ${
-                        art.featured
-                          ? 'border-emerald-500/40 bg-emerald-500/[0.02] shadow-xl shadow-emerald-500/5'
-                          : 'border-white/[0.05] bg-slate-900/40 hover:border-emerald-500/30'
-                      }`}
-                    >
-                      {/* Card Cover Image */}
-                      <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
-                        {art.coverImage ? (
-                          <img
-                            src={art.coverImage}
-                            alt={art.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                            <BookOpenCheck className="w-12 h-12 text-emerald-400/40" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent" />
-                        
-                        <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center">
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 uppercase">
-                            {art.category}
-                          </span>
-                          {art.featured && (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
-                              <Sparkles className="w-3 h-3" />
-                              Featured
-                            </span>
-                          )}
-                        </div>
+                  {filteredArticles.map((art) => {
+                    const coverImg = art.coverImageUrl || (art as any).coverImage || "";
+                    const excerptText = art.excerpt || (art as any).summary || "";
+                    const authorName = art.author || (art as any).authorName || "Chandru Mohan";
+                    const isFeatured = art.isFeatured ?? (art as any).featured ?? false;
+                    const readMins = art.readTimeMinutes || 5;
 
-                        <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/[0.08]">
-                          <Clock className="w-3 h-3 text-emerald-400" />
-                          <span>{art.readTimeMinutes} min read</span>
-                        </div>
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                        <div className="space-y-2.5">
-                          <h3 
-                            onClick={() => setSelectedArticleForModal(art)}
-                            className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug cursor-pointer line-clamp-2"
-                          >
-                            {art.title}
-                          </h3>
-                          <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                            {art.summary}
-                          </p>
-                        </div>
-
-                        <div className="space-y-3 pt-3 border-t border-white/[0.04]">
-                          {/* Tags */}
-                          {art.tags && art.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {art.tags.slice(0, 3).map((tag, i) => (
-                                <span key={i} className="text-[9px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-white/[0.04]">
-                                  #{tag}
-                                </span>
-                              ))}
-                              {art.tags.length > 3 && (
-                                <span className="text-[9px] font-mono text-slate-500 px-1 py-0.5">
-                                  +{art.tags.length - 3}
-                                </span>
-                              )}
+                    return (
+                      <motion.article
+                        key={art.id}
+                        whileHover={{ y: -6 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 ${
+                          isFeatured
+                            ? 'border-emerald-500/40 bg-emerald-500/[0.02] shadow-xl shadow-emerald-500/5'
+                            : 'border-white/[0.05] bg-slate-900/40 hover:border-emerald-500/30'
+                        }`}
+                      >
+                        {/* Card Cover Image */}
+                        <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
+                          {coverImg ? (
+                            <img
+                              src={coverImg}
+                              alt={art.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                              <BookOpenCheck className="w-12 h-12 text-emerald-400/40" />
                             </div>
                           )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent" />
+                          
+                          <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 uppercase">
+                              {art.category}
+                            </span>
+                            {isFeatured && (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
+                                <Sparkles className="w-3 h-3" />
+                                Featured
+                              </span>
+                            )}
+                          </div>
 
-                          {/* Footer Action */}
-                          <div className="flex items-center justify-between pt-1">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
-                                {profile?.profileImage ? (
-                                  <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                          <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/[0.08]">
+                            <Clock className="w-3 h-3 text-emerald-400" />
+                            <span>{readMins} min read</span>
+                          </div>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                          <div className="space-y-2.5">
+                            <h3 
+                              onClick={() => setSelectedArticleForModal(art)}
+                              className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug cursor-pointer line-clamp-2"
+                            >
+                              {art.title}
+                            </h3>
+                            <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                              {excerptText}
+                            </p>
+                          </div>
+
+                          <div className="space-y-3 pt-3 border-t border-white/[0.04]">
+                            {/* Tags */}
+                            {art.tags && art.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {art.tags.slice(0, 3).map((tag, i) => (
+                                  <span key={i} className="text-[9px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-white/[0.04]">
+                                    #{tag}
+                                  </span>
+                                ))}
+                                {art.tags.length > 3 && (
+                                  <span className="text-[9px] font-mono text-slate-500 px-1 py-0.5">
+                                    +{art.tags.length - 3}
+                                  </span>
                                 )}
                               </div>
-                              <span className="text-[11px] font-medium text-slate-300 truncate">{art.authorName || "Chandru Mohan"}</span>
-                            </div>
+                            )}
 
-                            <button
-                              onClick={() => setSelectedArticleForModal(art)}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group-hover:translate-x-0.5"
-                            >
-                              <span>Read Article</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
+                            {/* Footer Action */}
+                            <div className="flex items-center justify-between pt-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
+                                  {profile?.profileImage ? (
+                                    <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] font-medium text-slate-300 truncate">{authorName}</span>
+                              </div>
+
+                              <button
+                                onClick={() => setSelectedArticleForModal(art)}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group-hover:translate-x-0.5"
+                              >
+                                <span>Read Article</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.article>
-                  ))}
+                      </motion.article>
+                    );
+                  })}
                 </div>
               )}
             </motion.section>
@@ -3286,10 +3294,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <div className="relative overflow-hidden">
                 <AnimatePresence mode="wait">
                   {displayTestimonials[activeTestimonialIndex] && (() => {
-                    const currentTestimonial = displayTestimonials[activeTestimonialIndex];
+                    const t = displayTestimonials[activeTestimonialIndex];
+                    const authorName = t.name || (t as any).authorName || "Verified Client";
+                    const authorRole = t.role || (t as any).authorTitle || "Technical Director";
+                    const authorCompany = t.company || (t as any).authorCompany || "";
+                    const avatarUrl = t.avatarUrl || (t as any).authorAvatarUrl || "";
+                    const content = t.testimonialText || (t as any).content || "";
+                    const rating = t.rating || 5;
+                    const dateVal = t.createdAt || (t as any).date || "2026-01-01";
+                    const initialLetter = authorName.charAt(0).toUpperCase();
+
                     return (
                       <motion.div
-                        key={currentTestimonial.id}
+                        key={t.id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
@@ -3303,20 +3320,20 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           <div className="lg:col-span-4 flex flex-col items-center sm:items-start text-center sm:text-left space-y-4 border-b lg:border-b-0 lg:border-r border-white/[0.06] pb-6 lg:pb-0 lg:pr-8">
                             <div className="relative">
                               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/40 shadow-xl shadow-emerald-500/10 bg-slate-950">
-                                {currentTestimonial.authorAvatarUrl ? (
+                                {avatarUrl ? (
                                   <img
-                                    src={currentTestimonial.authorAvatarUrl}
-                                    alt={currentTestimonial.authorName}
+                                    src={avatarUrl}
+                                    alt={authorName}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center font-bold text-2xl text-emerald-400 bg-emerald-500/10">
-                                    {currentTestimonial.authorName.charAt(0)}
+                                    {initialLetter}
                                   </div>
                                 )}
                               </div>
-                              {currentTestimonial.verifiedOnLinkedIn && (
+                              {t.verifiedOnLinkedIn && (
                                 <div className="absolute -bottom-2 -right-2 bg-[#0A66C2] text-white p-1.5 rounded-lg shadow-md" title="Verified LinkedIn Recommendation">
                                   <Linkedin className="w-3.5 h-3.5" />
                                 </div>
@@ -3326,11 +3343,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 justify-center sm:justify-start">
                                 <h3 className="text-lg font-bold text-white font-display">
-                                  {currentTestimonial.authorName}
+                                  {authorName}
                                 </h3>
-                                {currentTestimonial.linkedInUrl && (
+                                {t.linkedInUrl && (
                                   <a
-                                    href={currentTestimonial.linkedInUrl}
+                                    href={t.linkedInUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-slate-400 hover:text-emerald-400 transition-colors"
@@ -3342,16 +3359,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 )}
                               </div>
                               <p className="text-xs font-semibold text-emerald-400">
-                                {currentTestimonial.authorTitle}
+                                {authorRole}
                               </p>
-                              <p className="text-[11px] font-mono text-slate-400">
-                                {currentTestimonial.authorCompany}
-                              </p>
+                              {authorCompany && (
+                                <p className="text-[11px] font-mono text-slate-400">
+                                  {authorCompany}
+                                </p>
+                              )}
                             </div>
 
-                            {currentTestimonial.relationship && (
+                            {t.relationship && (
                               <span className="px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                                {currentTestimonial.relationship}
+                                {t.relationship}
                               </span>
                             )}
                           </div>
@@ -3364,23 +3383,23 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 <Star
                                   key={idx}
                                   className={`w-4 h-4 ${
-                                    idx < currentTestimonial.rating
+                                    idx < rating
                                       ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]'
                                       : 'text-slate-700'
                                   }`}
                                 />
                               ))}
                               <span className="text-xs font-mono text-slate-400 ml-2 font-bold">
-                                {currentTestimonial.rating}.0 / 5.0
+                                {rating}.0 / 5.0
                               </span>
                             </div>
 
                             <blockquote className="text-sm sm:text-base text-slate-200 leading-relaxed font-sans italic">
-                              "{currentTestimonial.content}"
+                              "{content}"
                             </blockquote>
 
                             <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-3 border-t border-white/[0.04]">
-                              <span>Endorsement Date: {new Date(currentTestimonial.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                              <span>Endorsement Date: {new Date(dateVal).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                               <span className="text-emerald-400 flex items-center gap-1 font-bold">
                                 <ShieldCheck className="w-3.5 h-3.5" /> Verified Architectural Review
                               </span>
@@ -4311,9 +4330,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             >
               {/* Modal Header */}
               <div className="relative h-48 sm:h-64 bg-slate-950 shrink-0 overflow-hidden">
-                {selectedArticleForModal.coverImage ? (
+                {(selectedArticleForModal.coverImageUrl || (selectedArticleForModal as any).coverImage) ? (
                   <img
-                    src={selectedArticleForModal.coverImage}
+                    src={selectedArticleForModal.coverImageUrl || (selectedArticleForModal as any).coverImage}
                     alt={selectedArticleForModal.title}
                     className="w-full h-full object-cover"
                   />
