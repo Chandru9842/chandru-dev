@@ -117,6 +117,51 @@ const SocialLinkAnchor = ({ link, className, childrenClassName, onClick, isFoote
   );
 };
 
+const HeroTypewriter: React.FC<{ wordsString?: string }> = ({ wordsString }) => {
+  const words = useMemo(() => {
+    if (!wordsString || !wordsString.trim()) {
+      return ["Principal Systems Architect", "Full-Stack Pioneer", "Clean Code Advocate"];
+    }
+    return wordsString.split(',').map(w => w.trim()).filter(Boolean);
+  }, [wordsString]);
+
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (words.length === 0) return;
+    const currentWord = words[currentWordIndex % words.length];
+    const typingSpeed = isDeleting ? 35 : 75;
+    const pauseDelay = isDeleting ? 30 : 2000;
+
+    let timeout: any;
+
+    if (!isDeleting && currentText === currentWord) {
+      timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
+    } else if (isDeleting && currentText === '') {
+      setIsDeleting(false);
+      setCurrentWordIndex((prev) => (prev + 1) % words.length);
+    } else {
+      timeout = setTimeout(() => {
+        const nextText = isDeleting
+          ? currentWord.substring(0, currentText.length - 1)
+          : currentWord.substring(0, currentText.length + 1);
+        setCurrentText(nextText);
+      }, typingSpeed);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [currentText, isDeleting, currentWordIndex, words]);
+
+  return (
+    <span className="inline-flex items-center text-emerald-400 font-mono font-semibold">
+      <span>{currentText}</span>
+      <span className="w-1.5 h-4 ml-1 bg-emerald-400 animate-pulse inline-block" />
+    </span>
+  );
+};
+
 const getFooterThemeClasses = (themeName?: string) => {
   const name = themeName || 'emerald';
   switch (name) {
@@ -1792,6 +1837,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       <main id="main-content" tabIndex={-1} className="focus:outline-none">
 
       {/* Hero Section */}
+      {profile?.heroVisibility !== false && (
       <section className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" id="hero">
         
         {theme?.heroBackground?.enabled && (
@@ -1804,7 +1850,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           <div className="lg:col-span-7 xl:col-span-6 flex flex-col items-center text-center lg:items-start lg:text-left w-full gap-4 sm:gap-5 lg:gap-6">
 
             {/* Top Badges & Status Container */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3.5 shrink-0">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 shrink-0">
               {/* Developer Badge */}
               <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-sm">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -1812,6 +1858,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   {profile?.heroBadge || "Full Stack Java Developer"}
                 </span>
               </div>
+
+              {/* Dynamic Highlight Tags */}
+              {profile?.highlightTags && profile.highlightTags.trim() && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {profile.highlightTags.split(',').map((tag: string, idx: number) => {
+                    const cleanTag = tag.trim();
+                    if (!cleanTag) return null;
+                    return (
+                      <span
+                        key={idx}
+                        className="text-[9px] sm:text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 font-semibold shadow-xs"
+                      >
+                        {cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Optional Avatar & Online Status */}
               {profile?.heroAvatar && (
@@ -1825,7 +1889,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <div className="text-left flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-                      {profile?.statusBadgeText || "Founder Online"}
+                      {profile?.statusBadgeText || profile?.onlineStatus || "Founder Online"}
                     </span>
                   </div>
                 </div>
@@ -1843,8 +1907,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
                 {profile?.heroTitle || profile?.title || "Principal Systems Architect"}
               </p>
-              <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug">
-                {profile?.heroSubtitle || profile?.shortTagline || "Ecosystem Architect & Product Pioneer"}
+              <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug flex flex-wrap items-center gap-1.5 justify-center lg:justify-start">
+                <span>{profile?.heroSubtitle || profile?.shortTagline || "Ecosystem Architect & Product Pioneer"}</span>
+                {profile?.typingText && (
+                  <>
+                    <span className="text-slate-600 hidden sm:inline">•</span>
+                    <HeroTypewriter wordsString={profile.typingText} />
+                  </>
+                )}
               </h2>
             </div>
 
@@ -2093,6 +2163,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
         </div>
       </section>
+      )}
 
       <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-16 pb-10 space-y-20 lg:space-y-24">
 

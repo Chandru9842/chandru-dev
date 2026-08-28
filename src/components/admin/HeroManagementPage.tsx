@@ -73,7 +73,36 @@ const getJwtToken = () =>
       const cacheBuster = `t=${Date.now()}`;
       const res = await fetch(`/api/profile?${cacheBuster}`);
       if (res.ok) {
-        const data: HeroProfileData = await res.json();
+        const raw: any = await res.json();
+        const data: HeroProfileData = {
+          ...raw,
+          heroBadge: raw.heroBadge ?? "Full Stack Java Developer",
+          professionalLabel: raw.professionalLabel ?? "SYSTEMS ARCHITECT",
+          heroName: raw.heroName ?? raw.fullName ?? "CHANDRU M",
+          fullName: raw.fullName ?? raw.heroName ?? "CHANDRU M",
+          heroTitle: raw.heroTitle ?? raw.title ?? "PRINCIPAL SYSTEMS ARCHITECT",
+          title: raw.title ?? raw.heroTitle ?? "PRINCIPAL SYSTEMS ARCHITECT",
+          heroSubtitle: raw.heroSubtitle ?? raw.shortTagline ?? "Java Full Stack Developer",
+          shortTagline: raw.shortTagline ?? raw.heroSubtitle ?? "Java Full Stack Developer",
+          heroDescription: raw.heroDescription ?? raw.shortIntroduction ?? "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
+          shortIntroduction: raw.shortIntroduction ?? raw.heroDescription ?? "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
+          primaryCtaText: raw.primaryCtaText ?? "Explore Engineering",
+          primaryCtaUrl: raw.primaryCtaUrl ?? "#projects",
+          secondaryCtaText: raw.secondaryCtaText ?? "Get in Touch",
+          secondaryCtaUrl: raw.secondaryCtaUrl ?? "#contact",
+          resumeDownloadText: raw.resumeDownloadText ?? raw.downloadCtaText ?? "Download CV",
+          statusBadgeText: raw.statusBadgeText ?? "Founder Online",
+          onlineStatus: raw.onlineStatus ?? "Online",
+          versionText: raw.versionText ?? "Version 2.4.0",
+          updateText: raw.updateText ?? "Updated Recently",
+          typingText: raw.typingText ?? "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
+          highlightTags: raw.highlightTags ?? "#CloudNative, #HighConcurrency, #ZeroDowntime",
+          heroVisibility: raw.heroVisibility !== false,
+          heroAvatar: raw.heroAvatar ?? raw.profileImage ?? "",
+          heroBackground: raw.heroBackground ?? "",
+          quickStats: raw.quickStats ?? "8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written"
+        };
+
         setProfile(data);
         setOriginalProfile(JSON.parse(JSON.stringify(data)));
         setHistory([JSON.parse(JSON.stringify(data))]);
@@ -115,10 +144,13 @@ const getJwtToken = () =>
       .map(s => `${s.value.trim()} ${s.label.trim()}`)
       .join(' | ');
 
-    const finalProfile = {
+    const finalProfile: HeroProfileData = {
       ...updated,
       quickStats: quickStatsString,
-      updatedAt: new Date().toISOString()
+      fullName: updated.heroName || updated.fullName || "",
+      title: updated.heroTitle || updated.title || "",
+      shortTagline: updated.heroSubtitle || updated.shortTagline || "",
+      shortIntroduction: updated.heroDescription || updated.shortIntroduction || ""
     };
 
     setProfile(finalProfile);
@@ -610,8 +642,8 @@ if (!token) {
             <div className="space-y-2">
               <label className="block text-[11px] font-mono text-slate-400">Comma-Separated Highlight Tags</label>
               <input 
-                type="text"
-                value={profile.highlightTags || ""}
+                type="text" 
+                value={profile.highlightTags ?? ""} 
                 onChange={(e) => updateProfileWithHistory({ ...profile, highlightTags: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                 placeholder="e.g. #CloudNative, #HighConcurrency, #ZeroDowntime"
@@ -640,7 +672,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Hero Badge Text</label>
                 <input 
                   type="text" 
-                  value={profile.heroBadge || ""} 
+                  value={profile.heroBadge ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, heroBadge: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. FULL STACK JAVA DEVELOPER"
@@ -652,7 +684,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Professional Eyebrow Label</label>
                 <input 
                   type="text" 
-                  value={profile.professionalLabel || ""} 
+                  value={profile.professionalLabel ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, professionalLabel: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. SYSTEMS ARCHITECT"
@@ -664,8 +696,8 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Hero Display Name</label>
                 <input 
                   type="text" 
-                  value={profile.heroName || profile.fullName || ""} 
-                  onChange={(e) => updateProfileWithHistory({ ...profile, heroName: e.target.value })}
+                  value={profile.heroName ?? ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, heroName: e.target.value, fullName: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. CHANDRU M"
                 />
@@ -676,7 +708,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Status Badge Heading</label>
                 <input 
                   type="text" 
-                  value={profile.statusBadgeText || ""} 
+                  value={profile.statusBadgeText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, statusBadgeText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Founder Online / Available for Hire"
@@ -688,7 +720,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Online Status Node Text</label>
                 <input 
                   type="text" 
-                  value={profile.onlineStatus || ""} 
+                  value={profile.onlineStatus ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, onlineStatus: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Online / Open to Work"
@@ -700,7 +732,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Portfolio Version Tag</label>
                 <input 
                   type="text" 
-                  value={profile.versionText || ""} 
+                  value={profile.versionText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, versionText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Version 2.4.0"
@@ -712,7 +744,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Updated Date Label</label>
                 <input 
                   type="text" 
-                  value={profile.updateText || ""} 
+                  value={profile.updateText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, updateText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Updated July 2026 / Updated Recently"
@@ -724,8 +756,8 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Hero Display Title</label>
                 <input 
                   type="text" 
-                  value={profile.heroTitle || profile.title || ""} 
-                  onChange={(e) => updateProfileWithHistory({ ...profile, heroTitle: e.target.value })}
+                  value={profile.heroTitle ?? ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, heroTitle: e.target.value, title: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Principal Systems Architect"
                 />
@@ -736,8 +768,8 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Hero Display Subtitle</label>
                 <input 
                   type="text" 
-                  value={profile.heroSubtitle || profile.shortTagline || ""} 
-                  onChange={(e) => updateProfileWithHistory({ ...profile, heroSubtitle: e.target.value })}
+                  value={profile.heroSubtitle ?? ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, heroSubtitle: e.target.value, shortTagline: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Ecosystem Architect & Product Pioneer"
                 />
@@ -748,7 +780,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Typing Animation Words (Comma-Separated)</label>
                 <input 
                   type="text" 
-                  value={profile.typingText || ""} 
+                  value={profile.typingText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, typingText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Systems Architect, Full-Stack Pioneer, Clean Code Advocate"
@@ -763,8 +795,8 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Hero Short Description</label>
                 <textarea 
                   rows={3}
-                  value={profile.heroDescription || profile.shortIntroduction || ""} 
-                  onChange={(e) => updateProfileWithHistory({ ...profile, heroDescription: e.target.value })}
+                  value={profile.heroDescription ?? ""} 
+                  onChange={(e) => updateProfileWithHistory({ ...profile, heroDescription: e.target.value, shortIntroduction: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-sans text-slate-100 transition focus:outline-none resize-none leading-relaxed"
                   placeholder="I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces..."
                 />
@@ -786,7 +818,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Primary Button Text</label>
                 <input 
                   type="text" 
-                  value={profile.primaryCtaText || "Explore Engineering"} 
+                  value={profile.primaryCtaText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, primaryCtaText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Explore Engineering"
@@ -798,7 +830,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Primary Button Target URL / ID</label>
                 <input 
                   type="text" 
-                  value={profile.primaryCtaUrl || "#projects"} 
+                  value={profile.primaryCtaUrl ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, primaryCtaUrl: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. #projects"
@@ -810,7 +842,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Contact Button Text</label>
                 <input 
                   type="text" 
-                  value={profile.secondaryCtaText || "Get in Touch"} 
+                  value={profile.secondaryCtaText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, secondaryCtaText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. Get in Touch"
@@ -822,7 +854,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Contact Button Target URL / ID</label>
                 <input 
                   type="text" 
-                  value={profile.secondaryCtaUrl || "#contact"} 
+                  value={profile.secondaryCtaUrl ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, secondaryCtaUrl: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. #contact"
@@ -834,7 +866,7 @@ if (!token) {
                 <label className="block text-[11px] font-mono text-slate-400">Resume Download Button Text</label>
                 <input 
                   type="text" 
-                  value={profile.resumeDownloadText || "View Resume"} 
+                  value={profile.resumeDownloadText ?? ""} 
                   onChange={(e) => updateProfileWithHistory({ ...profile, resumeDownloadText: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
                   placeholder="e.g. View Resume"

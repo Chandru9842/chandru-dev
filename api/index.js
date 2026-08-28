@@ -2899,15 +2899,33 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
       db.profile[key] = updated[key];
     }
   });
-  if (updated.heroName && !updated.fullName) {
+  if (updated.heroName !== void 0) {
     db.profile.fullName = updated.heroName;
-  } else if (updated.fullName && !updated.heroName) {
+    db.profile.heroName = updated.heroName;
+  } else if (updated.fullName !== void 0) {
+    db.profile.fullName = updated.fullName;
     db.profile.heroName = updated.fullName;
   }
-  if (updated.heroTitle && !updated.title) {
+  if (updated.heroTitle !== void 0) {
     db.profile.title = updated.heroTitle;
-  } else if (updated.title && !updated.heroTitle) {
+    db.profile.heroTitle = updated.heroTitle;
+  } else if (updated.title !== void 0) {
+    db.profile.title = updated.title;
     db.profile.heroTitle = updated.title;
+  }
+  if (updated.heroSubtitle !== void 0) {
+    db.profile.shortTagline = updated.heroSubtitle;
+    db.profile.heroSubtitle = updated.heroSubtitle;
+  } else if (updated.shortTagline !== void 0) {
+    db.profile.shortTagline = updated.shortTagline;
+    db.profile.heroSubtitle = updated.shortTagline;
+  }
+  if (updated.heroDescription !== void 0) {
+    db.profile.shortIntroduction = updated.heroDescription;
+    db.profile.heroDescription = updated.heroDescription;
+  } else if (updated.shortIntroduction !== void 0) {
+    db.profile.shortIntroduction = updated.shortIntroduction;
+    db.profile.heroDescription = updated.shortIntroduction;
   }
   db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   if (user) {

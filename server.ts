@@ -1695,17 +1695,37 @@ app.get(["/health", "/api/health"], (req, res) => {
       }
     });
 
-    // Ensure reciprocal synchronization between heroName and fullName
-    if (updated.heroName && !updated.fullName) {
+    // Ensure reciprocal synchronization between all hero and profile aliases
+    if (updated.heroName !== undefined) {
       db.profile.fullName = updated.heroName;
-    } else if (updated.fullName && !updated.heroName) {
+      db.profile.heroName = updated.heroName;
+    } else if (updated.fullName !== undefined) {
+      db.profile.fullName = updated.fullName;
       db.profile.heroName = updated.fullName;
     }
 
-    if (updated.heroTitle && !updated.title) {
+    if (updated.heroTitle !== undefined) {
       db.profile.title = updated.heroTitle;
-    } else if (updated.title && !updated.heroTitle) {
+      db.profile.heroTitle = updated.heroTitle;
+    } else if (updated.title !== undefined) {
+      db.profile.title = updated.title;
       db.profile.heroTitle = updated.title;
+    }
+
+    if (updated.heroSubtitle !== undefined) {
+      db.profile.shortTagline = updated.heroSubtitle;
+      db.profile.heroSubtitle = updated.heroSubtitle;
+    } else if (updated.shortTagline !== undefined) {
+      db.profile.shortTagline = updated.shortTagline;
+      db.profile.heroSubtitle = updated.shortTagline;
+    }
+
+    if (updated.heroDescription !== undefined) {
+      db.profile.shortIntroduction = updated.heroDescription;
+      db.profile.heroDescription = updated.heroDescription;
+    } else if (updated.shortIntroduction !== undefined) {
+      db.profile.shortIntroduction = updated.shortIntroduction;
+      db.profile.heroDescription = updated.shortIntroduction;
     }
 
     db.profile.updatedAt = new Date().toISOString();
