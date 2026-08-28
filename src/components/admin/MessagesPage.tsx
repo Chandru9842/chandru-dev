@@ -40,8 +40,12 @@ export default function MessagesPage({ messages, onToggleRead, onToggleStar, onD
 
   // Find currently active reading message
   const activeMessage = useMemo(() => {
-    return messages.find(m => m.id === selectedMsgId) || null;
-  }, [messages, selectedMsgId]);
+    if (selectedMsgId) {
+      const found = messages.find(m => m.id === selectedMsgId);
+      if (found) return found;
+    }
+    return (filteredMsgs && filteredMsgs.length > 0) ? filteredMsgs[0] : (messages[0] || null);
+  }, [messages, selectedMsgId, filteredMsgs]);
 
   const handleSelectMessage = (id: number) => {
     setSelectedMsgId(id);

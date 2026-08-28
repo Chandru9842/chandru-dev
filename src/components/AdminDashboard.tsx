@@ -113,9 +113,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   // Helper to check Demo restrictions on write operations
-  const checkDemoRestriction = (actionName = 'Database modification') => {
+  const checkDemoRestriction = (actionName = 'Modifying records') => {
     if (isDemoSession) {
-      triggerToast(`🛡️ Recruiter Demo Mode: You are in Recruiter / Demo Mode. ${actionName} is simulated in this session to protect live data.`, 'success');
+      triggerToast(`🛡️ Recruiter / Demo Mode: You have read-only access in the demo tour. ${actionName} is disabled in demo mode. Please log in as Master Admin to create, edit, or delete records.`, 'error');
       return true;
     }
     return false;
@@ -838,6 +838,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Messages CRUD
   const handleToggleReadMessage = async (id: number) => {
+    if (checkDemoRestriction('Toggle message read state')) {
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: !m.isRead } : m));
+      return;
+    }
     try {
       const res = await fetch(`/api/messages/${id}/read`, { 
         method: 'PUT',
@@ -852,6 +856,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleStarMessage = async (id: number) => {
+    if (checkDemoRestriction('Toggle message star')) {
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, isStarred: !m.isStarred } : m));
+      return;
+    }
     try {
       const res = await fetch(`/api/messages/${id}/star`, { 
         method: 'PUT',
@@ -868,6 +876,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteMessage = async (id: number) => {
+    if (checkDemoRestriction('Delete message')) {
+      setMessages(prev => prev.filter(m => m.id !== id));
+      return;
+    }
     try {
       const res = await fetch(`/api/messages/${id}`, { 
         method: 'DELETE',
@@ -1937,9 +1949,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
           />
         )}
 
-        {activeTab === 'Settings' && settings && (
+        {activeTab === 'Settings' && (
           <SettingsPage 
-            settings={settings}
+            settings={settings || initialSettings}
             onSave={handleSaveSettings}
           />
         )}

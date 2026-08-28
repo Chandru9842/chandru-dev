@@ -1292,7 +1292,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         setAnalytics(analyticsData);
 
         // Auto trigger a brief visual success alert
-        setFeedbackToast('Your connection request was securely committed to our Spring JPA transaction log!');
+        setFeedbackToast("Your message has been sent successfully and delivered to Chandru's Admin Inbox!");
         setTimeout(() => setFeedbackToast(null), 5000);
       } else {
         setFormError('Endpoint rejected transaction. Please verify backend state.');

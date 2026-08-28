@@ -144,6 +144,10 @@ function loadDatabase() {
         db.achievements = initialAchievements;
         dirty = true;
       }
+      if (!db.messages || !Array.isArray(db.messages)) {
+        db.messages = initialMessages;
+        dirty = true;
+      }
       if (!db.users || !Array.isArray(db.users) || db.users.length === 0) {
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync("9655384140", salt);
@@ -2853,6 +2857,148 @@ app.get(["/health", "/api/health"], (req, res) => {
       newValue: order
     });
     
+    saveDatabase(db);
+    res.json({ status: "success" });
+  });
+    
+  // --- MESSAGES API ENDPOINTS (Public submission, Authenticated admin management) ---
+  app.get(["/api/messages", "/messages"], (req: any, res: any) => {
+    const db = loadDatabase();
+    const messages = db.messages || [];
+    // Sort messages with newest first
+    const sorted = [...messages].sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    res.json(sorted);
+  });
+
+  app.post(["/api/messages", "/messages"], (req: any, res: any) => {
+    const db = loadDatabase();
+    const { senderName, senderEmail, subject, messageContent, name, email, message } = req.body || {};
+    
+    const resolvedName = (senderName || name || "").trim();
+    const resolvedEmail = (senderEmail || email || "").trim();
+    const resolvedSubject = (subject || "Inbound Connection Request").trim();
+    const resolvedMessage = (messageContent || message || "").trim();
+
+    if (!resolvedName || !resolvedEmail || !resolvedMessage) {
+      return res.status(400).json({ error: "Name, email, and message content are required." });
+    }
+
+    db.messages = db.messages || [];
+    const maxId = db.messages.reduce((max: number, m: any) => (m.id > max ? m.id : max), 0);
+    const now = new Date().toISOString();
+
+    const newMessage = {
+      id: maxId + 1,
+      senderName: resolvedName,
+      senderEmail: resolvedEmail,
+      subject: resolvedSubject,
+      messageContent: resolvedMessage,
+      isRead: false,
+      isStarred: false,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    db.messages.unshift(newMessage);
+
+    // Update Analytics contact metrics
+    if (db.analytics) {
+      db.analytics.contactConversionRate = Math.min(100, Number(((db.analytics.contactConversionRate || 2.8) + 0.1).toFixed(1)));
+    }
+
+    recordActivity(req, db, {
+      action: "Message Sent",
+      module: "Visitor Interaction",
+      description: `New inbound message from ${resolvedName} (${resolvedEmail}): "${resolvedSubject}"`,
+      newValue: newMessage
+    });
+
+    publishNotification(db, {
+      module: "Email",
+      action: "Inbound Message Received",
+      title: `Message from ${resolvedName}`,
+      description: `${resolvedSubject}: ${resolvedMessage.substring(0, 100)}...`,
+      performedBy: resolvedName,
+      category: "Email",
+      icon: "Mail",
+      color: "#10b981",
+      severity: "Success"
+    });
+
+    saveDatabase(db);
+    res.status(201).json({ status: "success", message: newMessage });
+  });
+
+  app.put(["/api/messages/:id/read", "/messages/:id/read"], authenticateJWT, (req: any, res: any) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    db.messages = db.messages || [];
+    const msg = db.messages.find((m: any) => m.id === id);
+    if (!msg) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    msg.isRead = req.body.isRead !== undefined ? !!req.body.isRead : !msg.isRead;
+    msg.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", message: msg });
+  });
+
+  app.patch(["/api/messages/:id/read", "/messages/:id/read"], authenticateJWT, (req: any, res: any) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    db.messages = db.messages || [];
+    const msg = db.messages.find((m: any) => m.id === id);
+    if (!msg) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    msg.isRead = req.body.isRead !== undefined ? !!req.body.isRead : !msg.isRead;
+    msg.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", message: msg });
+  });
+
+  app.put(["/api/messages/:id/star", "/messages/:id/star"], authenticateJWT, (req: any, res: any) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    db.messages = db.messages || [];
+    const msg = db.messages.find((m: any) => m.id === id);
+    if (!msg) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    msg.isStarred = req.body.isStarred !== undefined ? !!req.body.isStarred : !msg.isStarred;
+    msg.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", message: msg });
+  });
+
+  app.patch(["/api/messages/:id/star", "/messages/:id/star"], authenticateJWT, (req: any, res: any) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    db.messages = db.messages || [];
+    const msg = db.messages.find((m: any) => m.id === id);
+    if (!msg) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    msg.isStarred = req.body.isStarred !== undefined ? !!req.body.isStarred : !msg.isStarred;
+    msg.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", message: msg });
+  });
+
+  app.delete(["/api/messages/:id", "/messages/:id"], authenticateJWT, (req: any, res: any) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    db.messages = db.messages || [];
+    const oldValue = db.messages.find((m: any) => m.id === id);
+    db.messages = db.messages.filter((m: any) => m.id !== id);
+    
+    recordActivity(req, db, {
+      action: "Message Deleted",
+      module: "Visitor Interaction",
+      description: `Purged inbox message "${oldValue?.subject || id}" from database.`,
+      oldValue
+    });
+
     saveDatabase(db);
     res.json({ status: "success" });
   });
