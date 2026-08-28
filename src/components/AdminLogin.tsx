@@ -88,9 +88,10 @@ export default function AdminLogin({ onLoginSuccess, onBackToPortfolio, initialM
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-       usernameOrEmail: email,
-        password: password
-})
+          usernameOrEmail: email.trim(),
+          password: password,
+          rememberMe: !!rememberMe
+        })
       });
 
       const data = await response.json();
@@ -98,34 +99,34 @@ export default function AdminLogin({ onLoginSuccess, onBackToPortfolio, initialM
       if (response.ok) {
         setSuccessMessage(`Welcome back Chandru 👋`);
         
+        const token = data.accessToken || data.token;
+        const refreshToken = data.refreshToken || '';
+        const user = {
+          username: data.username || data.user?.username || 'chandru',
+          role: data.role || data.user?.role || 'ROLE_ADMIN',
+          isDemo: false
+        };
+
         // Choose storage mechanism based on rememberMe option and rememberLogin setting
         const isRememberActive = rememberMe && loginConfig.enableRememberMe !== false && !loginConfig.alwaysRequireLogin;
         const storage = isRememberActive ? localStorage : sessionStorage;
         const otherStorage = isRememberActive ? sessionStorage : localStorage;
 
         // Clear tokens from the alternative storage to prevent conflicts
-      // Clear tokens from the alternative storage to prevent conflicts
-otherStorage.removeItem('admin_token');
-otherStorage.removeItem('alex_dev_jwt_token');
-otherStorage.removeItem('admin_refresh_token');
-otherStorage.removeItem('admin_user');
-otherStorage.removeItem('admin_remember');
-
-// Create user object from backend response
-        const user = {
-          username: data.username,
-          role: data.role,
-          isDemo: false
-        };
+        otherStorage.removeItem('admin_token');
+        otherStorage.removeItem('alex_dev_jwt_token');
+        otherStorage.removeItem('admin_refresh_token');
+        otherStorage.removeItem('admin_user');
+        otherStorage.removeItem('admin_remember');
 
         // Clear any previous demo/guest mode session flags
         sessionStorage.removeItem('is_demo_session');
         localStorage.removeItem('is_demo_session');
 
         // Store tokens securely
-        storage.setItem('admin_token', data.accessToken);
-        storage.setItem('alex_dev_jwt_token', data.accessToken);
-        storage.setItem('admin_refresh_token', data.refreshToken);
+        storage.setItem('admin_token', token);
+        storage.setItem('alex_dev_jwt_token', token);
+        storage.setItem('admin_refresh_token', refreshToken);
         storage.setItem('admin_user', JSON.stringify(user));
         
         if (isRememberActive) {
@@ -134,19 +135,19 @@ otherStorage.removeItem('admin_remember');
           localStorage.removeItem('admin_remember');
         }
 
-       setTimeout(() => {
-  onLoginSuccess(
-    data.accessToken,
-    data.refreshToken,
-    user
-  );
-}, 1200);
+        setTimeout(() => {
+          onLoginSuccess(
+            token,
+            refreshToken,
+            user
+          );
+        }, 500);
       } else {
-       setErrorMessage(data.message || 'Invalid identifier or password.');
+        setErrorMessage(data.error || data.message || 'Invalid identifier or password.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrorMessage('Invalid identifier or password.');
+      setErrorMessage('Could not connect to authentication service.');
     } finally {
       setIsLoading(false);
     }
