@@ -177,25 +177,29 @@ export default function AIPortfolioChat() {
   return (
     <>
       {/* Floating Trigger Launcher Button */}
-      <div className="fixed bottom-6 right-6 md:right-20 z-[90] flex items-center">
+      <div className="fixed bottom-4 right-14 sm:right-16 md:right-20 z-[90] flex items-center">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2.5 px-4 py-3 rounded-full border shadow-2xl backdrop-blur-xl transition-all duration-300 cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-full border shadow-2xl backdrop-blur-xl transition-all duration-300 cursor-pointer ${
             isOpen 
               ? 'bg-slate-900 border-emerald-500/50 text-emerald-400 shadow-emerald-500/20 ring-2 ring-emerald-500/20' 
               : 'bg-gradient-to-r from-slate-950/90 via-slate-900/95 to-slate-950/90 hover:from-emerald-950/60 hover:to-slate-900/95 border-emerald-500/30 hover:border-emerald-400/60 text-slate-100 shadow-emerald-500/10'
           }`}
           aria-label="Ask Chandru's AI Career Assistant"
         >
-          <span className="flex h-2.5 w-2.5 relative">
+          <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
           </span>
-          <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-          <span className="text-xs font-mono font-bold tracking-wide">
-            {isOpen ? 'Close AI Chat' : "Ask Chandru's AI"}
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 animate-pulse shrink-0" />
+          <span className="text-[11px] sm:text-xs font-mono font-bold tracking-wide whitespace-nowrap">
+            {isOpen ? 'Close' : (
+              <>
+                <span className="hidden sm:inline">Ask Chandru's </span>AI
+              </>
+            )}
           </span>
         </motion.button>
       </div>

@@ -1555,11 +1555,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 <span className="font-luxury font-bold text-emerald-400 text-lg">A</span>
               )}
             </div>
-            <div className="min-w-0 max-w-[150px] xs:max-w-[200px] sm:max-w-[130px] md:max-w-[150px] lg:max-w-none">
+            <div className="min-w-0 flex-1 max-w-[210px] sm:max-w-[260px] md:max-w-none">
               <h2 className="text-[11px] xs:text-xs sm:text-sm font-bold tracking-tight text-white uppercase font-display truncate group-hover:text-emerald-400 transition-colors">
                 {profile?.displayName || (settings?.siteName ? settings.siteName.split('|')[0].trim() : "Alex Dev")}
               </h2>
-              <span className="text-[8px] xs:text-[9px] font-mono tracking-widest text-emerald-400/80 block uppercase font-bold truncate">
+              <span className="text-[8px] xs:text-[9px] font-mono tracking-wider text-emerald-400/80 block uppercase font-bold truncate">
                 {profile?.title || "Systems Architect"}
               </span>
             </div>
@@ -2400,7 +2400,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {filteredSkills.map(skill => {
                 const itemColor = skill.color || '#10b981';
                 
@@ -2429,7 +2429,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     viewport={{ once: true }}
                     whileHover={{ y: -6 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className={`glass-card rounded-xl p-5 border border-white/[0.04] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${
+                    className={`glass-card rounded-xl p-3 sm:p-5 border border-white/[0.04] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-2.5 sm:gap-4 relative overflow-hidden ${
                       isPulse ? 'animate-pulse' : ''
                     }`}
                     style={{
@@ -2437,9 +2437,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       boxShadow: isGlow ? `0 0 12px ${itemColor}05` : 'none'
                     }}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2.5 sm:gap-4">
                       <div 
-                        className="w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500 overflow-hidden bg-slate-950/60"
+                        className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500 overflow-hidden bg-slate-950/60 p-1.5 sm:p-2"
                         style={{ 
                           borderColor: `${itemColor}30`,
                         }}
@@ -2453,14 +2453,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         />
                       </div>
                       <div className="min-w-0 flex-grow">
-                        <span className="font-semibold text-white block text-sm sm:text-base truncate" title={skill.name}>{skill.name}</span>
-                        <span className="text-[10px] font-mono text-slate-400 block uppercase tracking-widest mt-0.5" style={{ color: itemColor }}>
+                        <span className="font-semibold text-white block text-xs sm:text-base truncate" title={skill.name}>{skill.name}</span>
+                        <span className="text-[8px] sm:text-[10px] font-mono text-slate-400 block uppercase tracking-wider truncate mt-0.5" style={{ color: itemColor }}>
                           {skill.category}
                         </span>
                       </div>
                     </div>
                     {skill.description && (
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                      <p className="text-[10px] sm:text-xs text-slate-400 leading-snug sm:leading-relaxed line-clamp-2">
                         {skill.description}
                       </p>
                     )}
@@ -2558,11 +2558,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   )}
                 </div>
               ) : (
-                /* Tools Cards Grid */
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
+                /* Tools Cards Grid (2-column compact on mobile for space optimization) */
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
                   {filteredTools.map((tool) => {
                     const brandColor = tool.brandColor || '#10B981';
-                    const hoverScale = tool.hoverScale || 1.03;
+                    const hoverScale = tool.hoverScale || 1.02;
                     const hoverRotation = tool.hoverRotation || 0;
 
                     return (
@@ -2574,16 +2574,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           rotate: hoverRotation,
                           transition: { duration: 0.2, ease: "easeOut" } 
                         }}
-                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-3.5 sm:p-4 lg:p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-800/90 p-3 sm:p-4 lg:p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
                         style={{
                           boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
                         }}
                       >
-                        <div className="space-y-2 sm:space-y-3.5">
+                        <div className="space-y-1.5 sm:space-y-3">
                           {/* Header: Icon + Category Badge + Star if featured */}
-                          <div className="flex items-start justify-between gap-2.5">
+                          <div className="flex items-start justify-between gap-1.5 sm:gap-2.5">
                             <div 
-                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300"
+                              className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300 shrink-0"
                               style={{ 
                                 backgroundColor: tool.backgroundColor || `${brandColor}15`,
                                 borderColor: tool.borderColor || `${brandColor}30`,
@@ -2592,14 +2592,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             >
                               <ToolIconRenderer tool={tool} />
                             </div>
-                            <div className="flex items-center gap-1 flex-wrap justify-end">
+                            <div className="flex items-center gap-1 flex-wrap justify-end min-w-0">
                               {tool.isFeatured && (
-                                <span className="p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm" title="Featured Tool">
+                                <span className="p-0.5 sm:p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm shrink-0" title="Featured Tool">
                                   <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400" />
                                 </span>
                               )}
                               {tool.category && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60">
+                                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60 truncate max-w-[80px] sm:max-w-none">
                                   {tool.category}
                                 </span>
                               )}
@@ -2608,11 +2608,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                           {/* Tool Name & Description */}
                           <div>
-                            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                            <h3 className="text-xs sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1 truncate" title={tool.name}>
                               {tool.name}
                             </h3>
                             {tool.description && (
-                              <p className="text-xs text-slate-400 leading-snug sm:leading-relaxed mt-1 sm:mt-1.5 line-clamp-2 sm:line-clamp-3">
+                              <p className="text-[10px] sm:text-xs text-slate-400 leading-snug sm:leading-relaxed mt-0.5 sm:mt-1.5 line-clamp-2 sm:line-clamp-3">
                                 {tool.description}
                               </p>
                             )}
@@ -2620,15 +2620,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         </div>
 
                         {/* Footer Meta & Website Link */}
-                        <div className="pt-2.5 mt-2.5 sm:pt-4 sm:mt-3 border-t border-slate-800/80 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-400">
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <div className="pt-2 mt-2 sm:pt-3.5 sm:mt-3 border-t border-slate-800/80 flex items-center justify-between text-[9px] sm:text-[11px] font-mono text-slate-400">
+                          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
                             {tool.experienceLevel && (
-                              <span className="text-emerald-400 font-medium">
+                              <span className="text-emerald-400 font-medium truncate">
                                 {tool.experienceLevel}
                               </span>
                             )}
                             {tool.yearsOfExperience && (
-                              <span className="text-slate-500">• {tool.yearsOfExperience} yrs</span>
+                              <span className="text-slate-500 hidden xs:inline">• {tool.yearsOfExperience}y</span>
                             )}
                           </div>
 
@@ -2637,13 +2637,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                               href={tool.officialWebsite}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-1.5 rounded hover:bg-emerald-500/10"
+                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-1 sm:px-1.5 rounded hover:bg-emerald-500/10 shrink-0"
                               title={`Visit ${tool.name} official website`}
                               aria-label={`Visit ${tool.name} official website`}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <span>Website</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <span className="hidden xs:inline">Website</span>
+                              <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             </a>
                           )}
                         </div>
@@ -3848,11 +3848,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.2 }}
             onClick={(e) => scrollToSection('hero', e)}
-            className="fixed bottom-6 right-6 z-[100] p-3 rounded-full bg-slate-900/90 border border-emerald-500/30 text-emerald-400 hover:text-white hover:bg-emerald-500 hover:border-emerald-400 shadow-xl shadow-emerald-500/10 backdrop-blur-md transition-all duration-300 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="fixed bottom-4 right-4 z-[100] p-2.5 sm:p-3 rounded-full bg-slate-900/90 border border-emerald-500/30 text-emerald-400 hover:text-white hover:bg-emerald-500 hover:border-emerald-400 shadow-xl shadow-emerald-500/10 backdrop-blur-md transition-all duration-300 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             aria-label="Scroll back to top"
             title="Scroll to top"
           >
-            <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+            <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-y-0.5 transition-transform" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -3862,16 +3862,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         {shouldMountChat && <AIPortfolioChat />}
 
         {/* Floating Developer Terminal Launcher (Ctrl+K) */}
-        <div className="fixed bottom-6 left-6 z-[90] flex items-center">
+        <div className="fixed bottom-4 left-4 z-[90] flex items-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-3.5 sm:py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group"
             title="Open Developer Terminal (Ctrl+K)"
           >
-            <Terminal className="w-4 h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
-            <span className="text-xs font-mono font-bold hidden sm:inline">CLI Terminal</span>
+            <Terminal className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
+            <span className="text-[11px] sm:text-xs font-mono font-bold hidden sm:inline">CLI Terminal</span>
             <span className="text-[9px] font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800 hidden md:inline">
               Ctrl+K
             </span>
