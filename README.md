@@ -13,7 +13,7 @@
 
 An enterprise-grade, high-performance **Full-Stack Content Management System (CMS) and Interactive Developer Showcase** engineered for **Chandru Mohan (Principal Systems Architect & Full Stack Java Developer)**. 
 
-The application combines a modern **React 19 + TypeScript + Vite + Tailwind CSS** frontend with a robust, thread-safe **Node.js & Express REST API Gateway**. It delivers a **100/100 Mobile Lighthouse Score**, real-time multi-window CMS synchronization, dual-mode role-based authentication (Master Admin vs. Recruiter Read-Only Sandbox), dynamic WebGL 3D visualizations, interactive developer CLI tooling, and complete document/media upload and streaming pipelines.
+The application combines a modern **React 19 + TypeScript + Vite + Tailwind CSS** frontend with a robust, thread-safe **Node.js & Express REST API Gateway**. It delivers a **100/100 Mobile Lighthouse Score**, real-time multi-window CMS synchronization, dual-mode role-based authentication (Master Admin vs. Recruiter Read-Only Sandbox), dynamic WebGL 3D visualizations, interactive developer CLI tooling, Gemini AI Copilots, and complete document/media streaming pipelines.
 
 ---
 
@@ -34,10 +34,11 @@ flowchart TB
     subgraph Client Layer [Frontend Client — React 19 + TypeScript + Tailwind CSS]
         UI[Public Portfolio Frontend]
         Hero[Hero Section + 3D Universe]
-        AdminUI[Admin Dashboard CMS — 20+ Modules]
-        AIChat[Gemini AI Portfolio Chat & Copilot]
-        CLI[Developer Terminal CLI Modal]
-        LivePrev[Side-by-Side Live Preview]
+        AdminUI[Admin Dashboard CMS — 24 Modules]
+        AIChat[Gemini AI Career Chat & Writing Copilot]
+        CLI[Developer Terminal CLI Modal & Fast-Track Hire]
+        LivePrev[Side-by-Side Live Multi-Viewport Preview]
+        CodeExp[Clean Architecture Code & ERD Visualizers]
     end
 
     subgraph Sync Engine [Real-Time Cross-Window Synchronizer]
@@ -54,6 +55,7 @@ flowchart TB
         ResumeRoutes["/api/resume & Stream Pipeline"]
         CRUDRoutes["Projects / Skills / Metrics / Certificates CRUD"]
         AnalyticsRoute["/api/analytics & Background Tracker"]
+        AIRoutes["/api/ai/portfolio-chat & /api/ai/generate"]
     end
 
     subgraph Data & Storage Layer [Data Engine & Persistence]
@@ -67,11 +69,96 @@ flowchart TB
     AdminUI -->|Dispatches Mutations| AuthMW
     AdminUI -->|Broadcasts Updates| SyncEngine
     SyncEngine -.->|Auto-Refreshes UI| UI
-    AuthMW --> CRUDRoutes & ProfileRoutes & ResumeRoutes
+    AuthMW --> CRUDRoutes & ProfileRoutes & ResumeRoutes & AIRoutes
     CombinedRoute & ProfileRoutes & CRUDRoutes <--> MemoryCache
     MemoryCache <--> JSONDB
     ResumeRoutes --> PDFGen & CDN
 ```
+
+---
+
+## 💻 Developer Terminal CLI Modal (`DeveloperTerminalModal.tsx`)
+
+An interactive, Unix-style developer terminal modal integrated directly into the portfolio. Visitors and recruiters can trigger command-line exploration using keyboard shortcuts or on-screen terminal buttons.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ chandru@systems-architect:~ (zsh)                             -  □  ×  │
+├────────────────────────────────────────────────────────────────────────┤
+│ * Type 'help' to see all available commands.                          │
+│ * Type 'sudo hire chandru' to open the instant recruitment form.       │
+│                                                                        │
+│ chandru@systems-architect:~$ _                                         │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Supported Terminal Commands
+| Command | Action & Output Description |
+| :--- | :--- |
+| `help` | Prints the complete directory of supported terminal commands and usage examples. |
+| `whoami` | Outputs Chandru's full profile, current role (*Principal Systems Architect*), location (*Bengaluru, India*), and verified credentials. |
+| `skills` | Renders a categorized matrix of competencies (Frontend, Backend, Databases, Cloud & DevOps) with proficiency indicators. |
+| `projects` | Lists all enterprise systems with slugs, live deployment links, and GitHub source links. |
+| `experience` | Renders the chronological career timeline, companies, titles, and key architecture impact statements. |
+| `education` | Displays university degrees, academic honors, and graduation credentials. |
+| `metrics` | Queries and outputs live operational metrics (8+ Years Exp, 50+ Projects Mapped, 99.9% Core SLA Uptime, 120k+ Lines Written). |
+| `contact` | Outputs verified communication channels (Email, Phone, WhatsApp, LinkedIn, GitHub, Twitter). |
+| `sudo hire chandru` | **Fast-Track Recruiter Dispatcher**: Launches an embedded recruitment form allowing recruiters to submit interview details directly to Chandru with automatic Gmail, Outlook, and system mail protocol links. |
+| `clear` | Purges all prior console history and resets terminal screen buffer. |
+| `exit` | Closes the terminal modal window and restores UI focus. |
+
+---
+
+## 🤖 Intelligent AI Portfolio Chat & Admin Copilot (Gemini API)
+
+The platform features a dual-layer AI integration powered by Google's Gemini API:
+
+### 1. 💬 Visitor AI Career Chat Assistant (`AIPortfolioChat.tsx`)
+- **Floating Interactive Widget**: Available on every page for immediate recruiter inquiries.
+- **Context-Aware Knowledge Base**: Pre-loaded with Chandru's projects, technical proficiencies, career timeline, microservices design patterns, and contact channels.
+- **Suggested Instant Prompts**:
+  - *"What are Chandru's top scaled projects?"*
+  - *"Tell me about his backend & distributed systems skills"*
+  - *"How can I contact Chandru for an interview?"*
+  - *"Summarize his full tech stack in 60 seconds"*
+- **Graceful Multi-Tier Fallback**: Automatically provides curated responses and direct contact details if network or API keys are unavailable.
+
+### 2. ✍️ Admin AI Writing Copilot (`AIAssistantModal.tsx`)
+- **Content Generation & Rephrasing**: Built directly into all Admin CMS modules to generate and refine:
+  - Hero Taglines and Headlines
+  - "About Me" & Career Objective Statements
+  - Bento Project Problem & Architecture Summaries
+  - Technical Skill Bullet Points
+  - ATS-Friendly Experience & Achievement Descriptions
+- **Tone Personalization**: Toggle between `Professional`, `Recruiter Friendly`, `ATS Friendly`, `Creative`, and `Concise`.
+- **One-Click Field Insertion**: Directly applies the generated text into active CMS form inputs.
+
+---
+
+## 📐 Interactive Architecture & Database ERD Visualizers
+
+### 1. 🏗️ Clean Architecture 4-Layer Diagram (`ArchitectureDiagram.tsx`)
+Visualizes the decoupling of business logic from framework drivers across 4 layers:
+- **1. Presentation / API Layer**: REST Controllers, WebSocket Endpoints, DTO Schemas, OpenAPI Documentation.
+- **2. Application Layer**: Use Cases, CQRS Command & Query Handlers, Event Publishers, Business Orchestrators.
+- **3. Domain Layer**: Core Entities, Aggregate Roots, Value Objects, Domain Events, Invariant Rules.
+- **4. Infrastructure Layer**: JPA/Hibernate Data Repositories, Redis Distributed Cache, Cloudinary Storage Adapters, Nodemailer Gateway.
+
+### 2. 🗄️ Relational Database ERD Schema Visualizer (`DatabaseERD.tsx`)
+An interactive schema inspector rendering entity structures, field types, and relational foreign-key mappings:
+- `users` (id, username, passwordHash, role, createdAt)
+- `profile` (id, heroName, heroTitle, bio, quickStats, resumeUrl)
+- `resumes` (id, title, version, fileName, fileUrl, isActive, isDownloadEnabled)
+- `projects` (id, title, slug, summary, demoUrl, githubUrl, order)
+- `skills` (id, name, category, proficiency, color, displayOrder)
+- `tools` (id, name, category, icon, isFeatured)
+- `certificates` (id, title, issuer, issueDate, credentialUrl)
+- `achievements` (id, title, organization, year, proofUrl)
+- `experiences` (id, company, position, period, responsibilities)
+- `education` (id, institution, degree, year, gpa)
+- `portfolio_metrics` (id, label, value, subtitle, accentColor, displayOrder)
+- `messages` (id, name, email, subject, message, isRead, isStarred)
+- `analytics` (id, pageViews, uniqueVisitors, geoDistribution, clicks)
 
 ---
 
@@ -85,15 +172,13 @@ flowchart TB
 - **Dynamic Live Theme Engine**: Real-time CSS root variable injection for custom primary colors, gradients, card backgrounds, and typography.
 - **Hero Analytics Grid**: Displays live operational metrics (Years Exp, Projects Completed, System SLA Uptime, Lines of Code) with dynamic counter animations.
 - **Interactive Code Explorer**: Live code inspection showcasing backend Java Spring Boot and React architecture patterns.
-- **Architecture Diagram Visualizer**: Interactive SVG/Mermaid flowcharts depicting microservice communication and event streams.
-- **Database ERD Visualizer**: Entity-Relationship Diagram modal illustrating relational tables, foreign keys, and indexes.
-- **Developer Terminal CLI Modal**: Interactive Unix-style terminal (`help`, `skills`, `projects`, `contact`, `clear`, `sudo`).
-- **AI Portfolio Chat Assistant**: Floating intelligent Gemini-powered chatbot capable of answering technical questions about Chandru's career, architecture paradigms, and contact options.
+- **Global Search Modal (Ctrl+K)**: Instant fuzzy-search omnibar across projects, skills, certificates, and quick actions.
+- **Side-by-Side Live Preview Modal**: Admin-side multi-device responsive simulation (Desktop, Tablet, Mobile) with instant refresh.
 - **Zero-Dependency Analytics Tracker**: Tracks real-time pageviews, geographic locations, referral sources, device types, and button click conversions without external cookies.
 
 ---
 
-### 2. 🛡️ Enterprise 20+ Module Admin CMS Console
+### 2. 🛡️ Enterprise 24 Module Admin CMS Console
 
 The platform provides a complete administration suite with **strict separation between Master Admin and Recruiter Demo Mode**:
 
@@ -205,7 +290,7 @@ sequenceDiagram
 | `GET` | `/api/resume/download` | Triggers direct attachment download of the active resume PDF. |
 | `POST` | `/api/messages` | Submits a contact inquiry to the administrative inbox. |
 | `POST` | `/api/analytics/track` | Logs non-blocking pageviews, geo-locations, and click conversions. |
-| `POST` | `/api/ai/chat` | AI Portfolio Chat endpoint powered by Gemini API. |
+| `POST` | `/api/ai/portfolio-chat` | Interactive AI Career Chat Assistant powered by Gemini API. |
 
 ### Administrative Endpoints (Protected by JWT & Demo Sandbox Guard)
 | HTTP Method | Route | Description |
@@ -224,6 +309,7 @@ sequenceDiagram
 | `PUT` | `/api/projects/:id` | Updates project details, galleries, and skills. |
 | `DELETE` | `/api/projects/:id` | Deletes project record. |
 | `PUT` | `/api/theme` | Saves live theme colors, fonts, and border-radius settings. |
+| `POST` | `/api/ai/generate` | Admin AI Writing Copilot endpoint for generating and rewriting content. |
 | `GET` | `/api/admin/database/export` | Downloads full JSON database backup snapshot. |
 | `POST` | `/api/admin/database/import` | Restores database from uploaded JSON snapshot. |
 
