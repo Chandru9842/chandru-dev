@@ -317,7 +317,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
     try {
       const res = await fetch(`/api/resume/${id}/activate`, {
         method: 'PATCH',
-        headers: getAuthHeader()
+        headers: getJsonHeaders()
       });
       if (res.ok) {
         onTriggerToast('Successfully activated resume version. All other copies deactivated.', 'success');
@@ -339,7 +339,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
     try {
       const res = await fetch(`/api/resume/${id}`, {
         method: 'DELETE',
-        headers: getAuthHeader()
+        headers: getJsonHeaders()
       });
       if (res.ok) {
         onTriggerToast('Purged resume version draft from SQL storage and Cloudinary CDN.', 'success');
@@ -361,7 +361,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
     try {
       const res = await fetch(`/api/resume/${id}/restore`, {
         method: 'POST',
-        headers: getAuthHeader()
+        headers: getJsonHeaders()
       });
       if (res.ok) {
         const updated = await res.json();
@@ -624,7 +624,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
                   </button>
 
                   <a
-                    href={activeResume.fileUrl}
+                    href={`/api/resume/${activeResume.id}/download?fileName=${encodeURIComponent(activeResume.fileName)}`}
                     download={activeResume.fileName}
                     className="flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-3.5 py-1.5 rounded-lg border border-emerald-500/20 text-xs font-bold transition-all cursor-pointer"
                   >
@@ -770,7 +770,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
                   {/* Right controls */}
                   <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto pl-7 md:pl-0">
                     <a
-                      href={item.fileUrl}
+                      href={item.fileUrl || `/api/resume/${item.id}/file`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 bg-slate-950/40 border border-slate-850 hover:border-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors cursor-pointer"
@@ -780,7 +780,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
                     </a>
                     
                     <a
-                      href={item.fileUrl}
+                      href={`/api/resume/${item.id}/download?fileName=${encodeURIComponent(item.fileName)}`}
                       download={item.fileName}
                       className="p-1.5 bg-slate-950/40 border border-slate-850 hover:border-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition-colors cursor-pointer"
                       title="Download PDF"

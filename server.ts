@@ -23,7 +23,7 @@ import {
 
 const PORT = Number(process.env.PORT) || 3000;
 const DB_SEED_SOURCE = path.join(process.cwd(), "src", "data", "db.json");
-const DB_PATH_DEFAULT = path.join(process.cwd(), "data", "db.json");
+const DB_PATH_DEFAULT = path.join(process.cwd(), "src", "data", "db.json");
 const DB_FILE = process.env.VERCEL
   ? path.join("/tmp", "db.json")
   : DB_PATH_DEFAULT;
@@ -475,20 +475,27 @@ function loadDatabase() {
   return initialData;
 }
 
-let cachedPortfolioData: any = null;
-
 function saveDatabase(data: any) {
   memoryDb = data;
   cachedPortfolioData = null; // Invalidate portfolio cache on any write/mutation!
-  try {
-    const dir = path.dirname(DB_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+
+  const targetPaths = [
+    DB_FILE,
+    path.join(process.cwd(), "src", "data", "db.json"),
+    path.join(process.cwd(), "data", "db.json")
+  ];
+
+  targetPaths.forEach(targetPath => {
+    try {
+      const dir = path.dirname(targetPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(targetPath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (error) {
+      // Ignored for secondary paths in read-only serverless environments
     }
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
-  } catch (error) {
-    console.error("Error writing database file:", error);
-  }
+  });
 }
 
 function syncProfileActiveResume(db: any) {
@@ -4707,6 +4714,11 @@ app.get(["/health", "/api/health"], (req, res) => {
       db.resumes.forEach((r: any) => { r.isActive = false; });
     }
 
+    let finalFileUrl = original.fileUrl;
+    if (fileUrl && !fileUrl.startsWith("/api/resume/")) {
+      finalFileUrl = fileUrl;
+    }
+
     const detectedMime = fileType ? String(fileType).trim() : (fileName ? (String(fileName).toLowerCase().endsWith(".docx") ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/pdf") : original.fileType);
 
     const updated = {
@@ -4715,8 +4727,8 @@ app.get(["/health", "/api/health"], (req, res) => {
       version: version ? String(version).trim() : original.version,
       description: description !== undefined ? String(description).trim() : original.description,
       fileName: fileName ? String(fileName).trim() : original.fileName,
-      fileUrl: fileUrl || original.fileUrl,
-      fileType: fileUrl ? detectedMime : original.fileType,
+      fileUrl: finalFileUrl,
+      fileType: detectedMime,
       fileSize: typeof fileSize === "number" ? fileSize : original.fileSize,
       cloudinaryPublicId: cloudinaryPublicId ? String(cloudinaryPublicId).trim() : original.cloudinaryPublicId,
       thumbnailImage: thumbnailImage || original.thumbnailImage,
@@ -4793,6 +4805,34 @@ app.get(["/health", "/api/health"], (req, res) => {
       action: "Resume Replaced",
       module: "Profile",
       description: `Activated Resume/CV version ${db.resumes[index].version} as primary default draft.`,
+      newValue: db.resumes[index]
+    });
+
+    syncProfileActiveResume(db);
+    saveDatabase(db);
+    res.json(db.resumes[index]);
+  });
+
+  app.post("/api/resume/:id/restore", authenticateJWT, (req, res) => {
+    const db = loadDatabase();
+    const id = parseInt(req.params.id);
+    if (!db.resumes) db.resumes = [];
+
+    const index = db.resumes.findIndex((r: any) => r.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Resume CV draft not found." });
+    }
+
+    // Deactivate all others
+    db.resumes.forEach((r: any) => { r.isActive = false; });
+    // Activate target
+    db.resumes[index].isActive = true;
+    db.resumes[index].updatedAt = new Date().toISOString();
+
+    recordActivity(req, db, {
+      action: "Resume Restored",
+      module: "Profile",
+      description: `Restored Resume/CV version ${db.resumes[index].version} as primary active draft.`,
       newValue: db.resumes[index]
     });
 

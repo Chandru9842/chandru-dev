@@ -917,23 +917,25 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const handleViewResume = (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
-    if (!isValidResumeUrl(profile?.resumeUrl)) return;
     trackClick(trackingKey, trackingLabel);
     
     // Open in new tab: if valid direct URL use it, otherwise use backend view endpoint
-    const targetUrl = profile?.resumeUrl || '/api/resume/view';
+    const targetUrl = (isValidResumeUrl(profile?.resumeUrl) && !profile?.resumeUrl?.startsWith('/api/resume'))
+      ? profile.resumeUrl
+      : (activeResume?.id ? `/api/resume/${activeResume.id}/file` : '/api/resume/view');
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleDownloadResume = async (e: React.MouseEvent<HTMLAnchorElement>, trackingKey: string, trackingLabel: string) => {
     e.preventDefault();
-    if (!isValidResumeUrl(profile?.resumeUrl)) return;
     trackClick(trackingKey, trackingLabel);
     trackResumeDownload();
 
     const candidateName = (profile?.fullName || profile?.displayName || 'Chandru_Mohan').replace(/\s+/g, '_');
     const fileName = activeResume?.fileName || `${candidateName}_Resume.pdf`;
-    const backendDownloadUrl = `/api/resume/download?fileName=${encodeURIComponent(fileName)}&url=${encodeURIComponent(profile?.resumeUrl || '')}&t=${Date.now()}`;
+    const backendDownloadUrl = activeResume?.id
+      ? `/api/resume/${activeResume.id}/download?fileName=${encodeURIComponent(fileName)}&t=${Date.now()}`
+      : `/api/resume/download?fileName=${encodeURIComponent(fileName)}&url=${encodeURIComponent(profile?.resumeUrl || '')}&t=${Date.now()}`;
 
     try {
       // 1. Fetch via our same-origin backend download endpoint which always returns attachment headers
@@ -1841,7 +1843,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </a>
 
                     {/* Download Resume Button */}
-                    {activeResume?.isDownloadEnabled && (
+                    {(activeResume ? activeResume.isDownloadEnabled !== false : true) && (
                       <a 
                         href={profile?.resumeUrl || '#'}
                         download={activeResume?.fileName || 'resume.pdf'}
