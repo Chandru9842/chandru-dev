@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
 import MediaLibraryModal from './MediaLibraryModal';
+import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 
 interface ProfileData {
   id: number;
@@ -98,10 +99,19 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const [activeResume, setActiveResume] = useState<ResumeItem | null>(null);
 
   // Security & JWT Authentication States
-  const isDemoSession = Boolean(
-    sessionStorage.getItem('is_demo_session') === 'true' ||
-    sessionStorage.getItem('admin_token')?.startsWith('demo_guest_token_')
-  );
+  const isDemoSession = React.useMemo(() => {
+    try {
+      const rawUser = localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed.isDemo === true) return true;
+        if (parsed.isDemo === false) return false;
+      }
+    } catch (e) {}
+    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
+    if (token.startsWith('demo_guest_token_')) return true;
+    return sessionStorage.getItem('is_demo_session') === 'true';
+  }, []);
   const [jwtToken, setJwtToken] = useState<string | null>(
     localStorage.getItem('alex_dev_jwt_token') || 
     localStorage.getItem('admin_token') || 
@@ -509,6 +519,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         if (onProfileUpdated) {
           onProfileUpdated(savedData);
         }
+        notifyCmsUpdate();
         
         if (isAutosave) {
           setLastAutosavedTime(new Date().toLocaleTimeString());

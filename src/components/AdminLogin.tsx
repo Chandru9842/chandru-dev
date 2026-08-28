@@ -112,16 +112,21 @@ otherStorage.removeItem('admin_user');
 otherStorage.removeItem('admin_remember');
 
 // Create user object from backend response
-const user = {
-  username: data.username,
-  role: data.role,
-};
+        const user = {
+          username: data.username,
+          role: data.role,
+          isDemo: false
+        };
 
-// Store tokens securely
-storage.setItem('admin_token', data.accessToken);
-storage.setItem('alex_dev_jwt_token', data.accessToken);
-storage.setItem('admin_refresh_token', data.refreshToken);
-storage.setItem('admin_user', JSON.stringify(user));
+        // Clear any previous demo/guest mode session flags
+        sessionStorage.removeItem('is_demo_session');
+        localStorage.removeItem('is_demo_session');
+
+        // Store tokens securely
+        storage.setItem('admin_token', data.accessToken);
+        storage.setItem('alex_dev_jwt_token', data.accessToken);
+        storage.setItem('admin_refresh_token', data.refreshToken);
+        storage.setItem('admin_user', JSON.stringify(user));
         
         if (isRememberActive) {
           localStorage.setItem('admin_remember', 'true');

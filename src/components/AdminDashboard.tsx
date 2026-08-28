@@ -101,15 +101,29 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       const rawUser = localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
-        if (parsed.isDemo) return true;
+        if (parsed.isDemo === true) return true;
+        if (parsed.isDemo === false) return false;
       }
     } catch (e) {}
+    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
+    if (token.startsWith('demo_guest_token_')) return true;
     return sessionStorage.getItem('is_demo_session') === 'true';
   }, []);
 
   // Helper trigger Toast
   const triggerToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
+  };
+
+  // Helper to trigger live frontend synchronization
+  const notifyCmsUpdated = () => {
+    try {
+      localStorage.setItem('cms_update_timestamp', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('cms-data-updated'));
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'CMS_DATA_UPDATED' }, '*');
+      }
+    } catch (e) {}
   };
 
   // Helper to check Demo restrictions on write operations
@@ -255,11 +269,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Project CRUD
   const handleAddProject = async (proj: Omit<ProjectItem, 'id'>) => {
-    if (checkDemoRestriction('Add Project')) {
-      const mockProj: ProjectItem = { ...proj, id: Date.now() } as any;
-      setProjects(prev => [...prev, mockProj]);
-      return;
-    }
+    if (checkDemoRestriction('Add Project')) return;
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -269,7 +279,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setProjects(prev => [...prev, created]);
-        triggerToast(`Successfully committed project "${proj.title}" to MySQL 3NF pool.`, 'success');
+        notifyCmsUpdated();
+        triggerToast(`Successfully committed project "${proj.title}" to database.`, 'success');
       }
     } catch (e) {
       triggerToast('Error inserting project into database.', 'error');
@@ -277,10 +288,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateProject = async (proj: ProjectItem) => {
-    if (checkDemoRestriction('Update Project')) {
-      setProjects(prev => prev.map(p => p.id === proj.id ? proj : p));
-      return;
-    }
+    if (checkDemoRestriction('Update Project')) return;
     try {
       const res = await fetch(`/api/projects/${proj.id}`, {
         method: 'PUT',
@@ -289,6 +297,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setProjects(prev => prev.map(p => p.id === proj.id ? proj : p));
+        notifyCmsUpdated();
         triggerToast(`Updated project "${proj.title}" record in DB successfully.`, 'success');
       }
     } catch (e) {
@@ -298,10 +307,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteProject = async (id: number) => {
     const target = projects.find(p => p.id === id);
-    if (checkDemoRestriction('Delete Project')) {
-      setProjects(prev => prev.filter(p => p.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Project')) return;
     try {
       const res = await fetch(`/api/projects/${id}`, { 
         method: 'DELETE',
@@ -309,7 +315,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setProjects(prev => prev.filter(p => p.id !== id));
-        triggerToast(`Purged project record: "${target?.title}" from database cascade schemas.`, 'success');
+        notifyCmsUpdated();
+        triggerToast(`Purged project record: "${target?.title}" from database.`, 'success');
       }
     } catch (e) {
       triggerToast('Error deleting project.', 'error');
@@ -318,11 +325,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Skills CRUD
   const handleAddSkill = async (skill: Omit<SkillItem, 'id'>) => {
-    if (checkDemoRestriction('Add Skill')) {
-      const mockSkill: SkillItem = { ...skill, id: Date.now() } as any;
-      setSkills(prev => [...prev, mockSkill]);
-      return;
-    }
+    if (checkDemoRestriction('Add Skill')) return;
     try {
       const res = await fetch('/api/skills', {
         method: 'POST',
@@ -332,6 +335,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setSkills(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Registered skill competency "${skill.name}".`, 'success');
       }
     } catch (e) {
@@ -340,10 +344,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateSkill = async (skill: SkillItem) => {
-    if (checkDemoRestriction('Update Skill')) {
-      setSkills(prev => prev.map(s => s.id === skill.id ? skill : s));
-      return;
-    }
+    if (checkDemoRestriction('Update Skill')) return;
     try {
       const res = await fetch(`/api/skills/${skill.id}`, {
         method: 'PUT',
@@ -352,6 +353,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setSkills(prev => prev.map(s => s.id === skill.id ? skill : s));
+        notifyCmsUpdated();
         triggerToast(`Updated competency metrics for "${skill.name}".`, 'success');
       }
     } catch (e) {
@@ -361,10 +363,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteSkill = async (id: number) => {
     const target = skills.find(s => s.id === id);
-    if (checkDemoRestriction('Delete Skill')) {
-      setSkills(prev => prev.filter(s => s.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Skill')) return;
     try {
       const res = await fetch(`/api/skills/${id}`, { 
         method: 'DELETE',
@@ -372,6 +371,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setSkills(prev => prev.filter(s => s.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Removed skill "${target?.name}" from curriculum log.`, 'success');
       }
     } catch (e) {
@@ -381,11 +381,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Certificates CRUD
   const handleAddCertificate = async (cert: Omit<CertificateItem, 'id'>) => {
-    if (checkDemoRestriction('Add Certificate')) {
-      const mockCert: CertificateItem = { ...cert, id: Date.now() } as any;
-      setCertificates(prev => [...prev, mockCert]);
-      return;
-    }
+    if (checkDemoRestriction('Add Certificate')) return;
     try {
       const res = await fetch('/api/certificates', {
         method: 'POST',
@@ -395,6 +391,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setCertificates(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Logged certification: "${cert.name}".`, 'success');
       }
     } catch (e) {
@@ -403,10 +400,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateCertificate = async (cert: CertificateItem) => {
-    if (checkDemoRestriction('Update Certificate')) {
-      setCertificates(prev => prev.map(c => c.id === cert.id ? cert : c));
-      return;
-    }
+    if (checkDemoRestriction('Update Certificate')) return;
     try {
       const res = await fetch(`/api/certificates/${cert.id}`, {
         method: 'PUT',
@@ -415,6 +409,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setCertificates(prev => prev.map(c => c.id === cert.id ? cert : c));
+        notifyCmsUpdated();
         triggerToast(`Updated certificate attributes for "${cert.name}".`, 'success');
       }
     } catch (e) {
@@ -424,10 +419,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteCertificate = async (id: number) => {
     const target = certificates.find(c => c.id === id);
-    if (checkDemoRestriction('Delete Certificate')) {
-      setCertificates(prev => prev.filter(c => c.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Certificate')) return;
     try {
       const res = await fetch(`/api/certificates/${id}`, { 
         method: 'DELETE',
@@ -435,6 +427,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setCertificates(prev => prev.filter(c => c.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Purged credentials record: "${target?.name}".`, 'success');
       }
     } catch (e) {
@@ -444,11 +437,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Tools & Technologies CRUD
   const handleAddTool = async (tool: Omit<ToolItem, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (checkDemoRestriction('Add Tool')) {
-      const mockTool: ToolItem = { ...tool, id: Date.now() } as any;
-      setTools(prev => [...prev, mockTool]);
-      return;
-    }
+    if (checkDemoRestriction('Add Tool')) return;
     try {
       const res = await fetch('/api/tools', {
         method: 'POST',
@@ -458,6 +447,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setTools(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Added tool "${tool.name}" to database.`, 'success');
       } else {
         triggerToast('Failed to save tool.', 'error');
@@ -468,10 +458,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateTool = async (tool: ToolItem) => {
-    if (checkDemoRestriction('Update Tool')) {
-      setTools(prev => prev.map(t => t.id === tool.id ? tool : t));
-      return;
-    }
+    if (checkDemoRestriction('Update Tool')) return;
     try {
       const res = await fetch(`/api/tools/${tool.id}`, {
         method: 'PUT',
@@ -480,6 +467,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setTools(prev => prev.map(t => t.id === tool.id ? tool : t));
+        notifyCmsUpdated();
         triggerToast(`Updated tool "${tool.name}" successfully.`, 'success');
       } else {
         triggerToast('Failed to update tool.', 'error');
@@ -491,10 +479,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteTool = async (id: number) => {
     const target = tools.find(t => t.id === id);
-    if (checkDemoRestriction('Delete Tool')) {
-      setTools(prev => prev.filter(t => t.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Tool')) return;
     try {
       const res = await fetch(`/api/tools/${id}`, {
         method: 'DELETE',
@@ -502,6 +487,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setTools(prev => prev.filter(t => t.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Deleted tool "${target?.name || id}".`, 'success');
       } else {
         triggerToast('Failed to delete tool.', 'error');
@@ -512,10 +498,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleToolVisibility = async (id: number, isVisible: boolean) => {
-    if (checkDemoRestriction('Toggle Tool Visibility')) {
-      setTools(prev => prev.map(t => t.id === id ? { ...t, isVisible } : t));
-      return;
-    }
+    if (checkDemoRestriction('Toggle Tool Visibility')) return;
     try {
       const res = await fetch(`/api/tools/${id}/visibility`, {
         method: 'PATCH',
@@ -524,6 +507,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setTools(prev => prev.map(t => t.id === id ? { ...t, isVisible } : t));
+        notifyCmsUpdated();
         triggerToast(`Tool visibility toggled.`, 'success');
       }
     } catch (e) {
@@ -532,10 +516,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleToolFeatured = async (id: number, isFeatured: boolean) => {
-    if (checkDemoRestriction('Toggle Tool Featured')) {
-      setTools(prev => prev.map(t => t.id === id ? { ...t, isFeatured } : t));
-      return;
-    }
+    if (checkDemoRestriction('Toggle Tool Featured')) return;
     try {
       const res = await fetch(`/api/tools/${id}/featured`, {
         method: 'PATCH',
@@ -544,6 +525,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setTools(prev => prev.map(t => t.id === id ? { ...t, isFeatured } : t));
+        notifyCmsUpdated();
         triggerToast(`Tool featured status toggled.`, 'success');
       }
     } catch (e) {
@@ -552,16 +534,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderTools = async (reordered: ToolItem[]) => {
+    if (checkDemoRestriction('Reorder Tools')) return;
     setTools(reordered);
-    if (checkDemoRestriction('Reorder Tools')) {
-      return;
-    }
     try {
       await fetch('/api/tools/order', {
         method: 'POST',
         headers: getJsonHeaders(),
         body: JSON.stringify({ orderedIds: reordered.map(t => t.id) })
       });
+      notifyCmsUpdated();
       triggerToast('Tools display order saved.', 'success');
     } catch (e) {
       triggerToast('Error saving tool order.', 'error');
@@ -593,10 +574,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateAchievement = async (achievement: AchievementItem) => {
-    if (checkDemoRestriction('Update Achievement')) {
-      setAchievements(prev => prev.map(a => a.id === achievement.id ? achievement : a));
-      return;
-    }
+    if (checkDemoRestriction('Update Achievement')) return;
     try {
       const res = await fetch(`/api/achievements/${achievement.id}`, {
         method: 'PUT',
@@ -605,6 +583,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === achievement.id ? achievement : a));
+        notifyCmsUpdated();
         triggerToast(`Updated achievement "${achievement.title}" successfully.`, 'success');
       } else {
         triggerToast('Failed to update achievement.', 'error');
@@ -616,17 +595,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteAchievement = async (id: number) => {
     const target = achievements.find(a => a.id === id);
-    if (checkDemoRestriction('Delete Achievement')) {
-      setAchievements(prev => prev.filter(a => a.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Achievement')) return;
     try {
-      const res = await fetch(`/api/achievements/${id}`, {
+      const res = await fetch(`/api/achievements/${id}`, { 
         method: 'DELETE',
         headers: getAuthHeader()
       });
       if (res.ok) {
         setAchievements(prev => prev.filter(a => a.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Purged achievement record "${target?.title}" from repository.`, 'success');
       } else {
         triggerToast('Failed to delete achievement.', 'error');
@@ -637,10 +614,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleAchievementVisibility = async (id: number, visibility: boolean) => {
-    if (checkDemoRestriction('Toggle Achievement Visibility')) {
-      setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility } : a));
-      return;
-    }
+    if (checkDemoRestriction('Toggle Achievement Visibility')) return;
     try {
       const res = await fetch(`/api/achievements/${id}/visibility`, {
         method: 'PATCH',
@@ -649,6 +623,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, visibility } : a));
+        notifyCmsUpdated();
         triggerToast(`Visibility toggled: ${visibility ? 'Published' : 'Draft'}`, 'success');
       } else {
         triggerToast('Failed to toggle visibility.', 'error');
@@ -659,10 +634,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleAchievementFeatured = async (id: number, featured: boolean) => {
-    if (checkDemoRestriction('Toggle Achievement Featured')) {
-      setAchievements(prev => prev.map(a => a.id === id ? { ...a, featured } : a));
-      return;
-    }
+    if (checkDemoRestriction('Toggle Achievement Featured')) return;
     try {
       const res = await fetch(`/api/achievements/${id}/featured`, {
         method: 'PATCH',
@@ -671,6 +643,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setAchievements(prev => prev.map(a => a.id === id ? { ...a, featured } : a));
+        notifyCmsUpdated();
         triggerToast(`Highlight toggled: ${featured ? 'Featured' : 'Standard'}`, 'success');
       } else {
         triggerToast('Failed to toggle featured status.', 'error');
@@ -681,10 +654,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderAchievements = async (reordered: AchievementItem[]) => {
+    if (checkDemoRestriction('Reorder Achievements')) return;
     setAchievements(reordered);
-    if (checkDemoRestriction('Reorder Achievements')) {
-      return;
-    }
     try {
       const res = await fetch('/api/achievements/order', {
         method: 'PATCH',
@@ -697,6 +668,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         })
       });
       if (res.ok) {
+        notifyCmsUpdated();
         triggerToast('Committed new display hierarchy order to database.', 'success');
       } else {
         const freshRes = await fetch('/api/achievements');
@@ -712,11 +684,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Experience CRUD
   const handleAddExperience = async (exp: Omit<ExperienceItem, 'id'>) => {
-    if (checkDemoRestriction('Add Experience')) {
-      const mockExp: ExperienceItem = { ...exp, id: Date.now() } as any;
-      setExperiences(prev => [...prev, mockExp]);
-      return;
-    }
+    if (checkDemoRestriction('Add Experience')) return;
     try {
       const res = await fetch('/api/experiences', {
         method: 'POST',
@@ -726,6 +694,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setExperiences(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Saved work experience at "${exp.company}".`, 'success');
       }
     } catch (e) {
@@ -734,10 +703,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateExperience = async (exp: ExperienceItem) => {
-    if (checkDemoRestriction('Update Experience')) {
-      setExperiences(prev => prev.map(e => e.id === exp.id ? exp : e));
-      return;
-    }
+    if (checkDemoRestriction('Update Experience')) return;
     try {
       const res = await fetch(`/api/experiences/${exp.id}`, {
         method: 'PUT',
@@ -746,6 +712,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setExperiences(prev => prev.map(e => e.id === exp.id ? exp : e));
+        notifyCmsUpdated();
         triggerToast(`Updated professional milestone details at "${exp.company}".`, 'success');
       }
     } catch (e) {
@@ -755,10 +722,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteExperience = async (id: number) => {
     const target = experiences.find(e => e.id === id);
-    if (checkDemoRestriction('Delete Experience')) {
-      setExperiences(prev => prev.filter(e => e.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Experience')) return;
     try {
       const res = await fetch(`/api/experiences/${id}`, { 
         method: 'DELETE',
@@ -766,6 +730,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setExperiences(prev => prev.filter(e => e.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Deleted experience record for "${target?.company}".`, 'success');
       }
     } catch (e) {
@@ -775,11 +740,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Education CRUD
   const handleAddEducation = async (edu: Omit<EducationItem, 'id'>) => {
-    if (checkDemoRestriction('Add Education')) {
-      const mockEdu: EducationItem = { ...edu, id: Date.now() } as any;
-      setEducation(prev => [...prev, mockEdu]);
-      return;
-    }
+    if (checkDemoRestriction('Add Education')) return;
     try {
       const res = await fetch('/api/education', {
         method: 'POST',
@@ -789,6 +750,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setEducation(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Logged academic degrees at "${edu.institution}".`, 'success');
       }
     } catch (e) {
@@ -797,10 +759,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateEducation = async (edu: EducationItem) => {
-    if (checkDemoRestriction('Update Education')) {
-      setEducation(prev => prev.map(e => e.id === edu.id ? edu : e));
-      return;
-    }
+    if (checkDemoRestriction('Update Education')) return;
     try {
       const res = await fetch(`/api/education/${edu.id}`, {
         method: 'PUT',
@@ -809,6 +768,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setEducation(prev => prev.map(e => e.id === edu.id ? edu : e));
+        notifyCmsUpdated();
         triggerToast(`Updated academic credentials record for "${edu.institution}".`, 'success');
       }
     } catch (e) {
@@ -818,10 +778,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   const handleDeleteEducation = async (id: number) => {
     const target = education.find(e => e.id === id);
-    if (checkDemoRestriction('Delete Education')) {
-      setEducation(prev => prev.filter(e => e.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Education')) return;
     try {
       const res = await fetch(`/api/education/${id}`, { 
         method: 'DELETE',
@@ -829,6 +786,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setEducation(prev => prev.filter(e => e.id !== id));
+        notifyCmsUpdated();
         triggerToast(`Purged academic records for "${target?.institution}".`, 'success');
       }
     } catch (e) {
@@ -838,10 +796,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Messages CRUD
   const handleToggleReadMessage = async (id: number) => {
-    if (checkDemoRestriction('Toggle message read state')) {
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: !m.isRead } : m));
-      return;
-    }
+    if (checkDemoRestriction('Toggle message read state')) return;
     try {
       const res = await fetch(`/api/messages/${id}/read`, { 
         method: 'PUT',
@@ -856,10 +811,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleStarMessage = async (id: number) => {
-    if (checkDemoRestriction('Toggle message star')) {
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, isStarred: !m.isStarred } : m));
-      return;
-    }
+    if (checkDemoRestriction('Toggle message star')) return;
     try {
       const res = await fetch(`/api/messages/${id}/star`, { 
         method: 'PUT',
@@ -876,10 +828,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteMessage = async (id: number) => {
-    if (checkDemoRestriction('Delete message')) {
-      setMessages(prev => prev.filter(m => m.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete message')) return;
     try {
       const res = await fetch(`/api/messages/${id}`, { 
         method: 'DELETE',
@@ -896,6 +845,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Social Links CRUD Handlers
   const handleAddSocialLink = async (social: Omit<SocialLinkItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (checkDemoRestriction('Add Social Link')) return;
     try {
       const res = await fetch('/api/social-links', {
         method: 'POST',
@@ -905,6 +855,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setSocialLinks(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Added social link for platform "${social.platform}".`, 'success');
       } else {
         const errData = await res.json();
@@ -916,6 +867,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateSocialLink = async (social: SocialLinkItem) => {
+    if (checkDemoRestriction('Update Social Link')) return;
     try {
       const res = await fetch(`/api/social-links/${social.id}`, {
         method: 'PUT',
@@ -925,6 +877,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setSocialLinks(prev => prev.map(s => s.id === social.id ? updated : s));
+        notifyCmsUpdated();
         triggerToast(`Updated social link details for "${social.platform}".`, 'success');
       } else {
         const errData = await res.json();
@@ -936,6 +889,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteSocialLink = async (id: number) => {
+    if (checkDemoRestriction('Delete Social Link')) return;
     try {
       const res = await fetch(`/api/social-links/${id}`, { 
         method: 'DELETE',
@@ -943,7 +897,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setSocialLinks(prev => prev.filter(s => s.id !== id));
-        triggerToast('Removed social link from backend database.', 'success');
+        notifyCmsUpdated();
+        triggerToast('Removed social link from database.', 'success');
       } else {
         triggerToast('Failed to delete social link.', 'error');
       }
@@ -953,6 +908,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleSocialLinkVisibility = async (id: number, isVisible: boolean) => {
+    if (checkDemoRestriction('Toggle Social Link Visibility')) return;
     try {
       const res = await fetch(`/api/social-links/${id}/visibility`, {
         method: 'PATCH',
@@ -962,6 +918,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setSocialLinks(prev => prev.map(s => s.id === id ? updated : s));
+        notifyCmsUpdated();
         triggerToast(`Social link visibility toggled to ${isVisible ? 'Visible' : 'Hidden'}.`, 'success');
       } else {
         triggerToast('Failed to toggle visibility.', 'error');
@@ -972,7 +929,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderSocialLinks = async (reorderedList: SocialLinkItem[]) => {
-    // Optimistic state update
+    if (checkDemoRestriction('Reorder Social Links')) return;
     setSocialLinks(reorderedList);
     try {
       const res = await fetch('/api/social-links/order', {
@@ -983,11 +940,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         })
       });
       if (!res.ok) {
-        // Rollback or fetch fresh data if it failed
         const freshRes = await fetch('/api/social-links', { headers: getAuthHeader() });
         setSocialLinks(await freshRes.json());
         triggerToast('Failed to save display order.', 'error');
       } else {
+        notifyCmsUpdated();
         triggerToast('Successfully persisted social links order.', 'success');
       }
     } catch (e) {
@@ -999,6 +956,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Coding Profiles CRUD Handlers
   const handleAddCodingProfile = async (profile: Omit<CodingProfileItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (checkDemoRestriction('Add Coding Profile')) return;
     try {
       const res = await fetch('/api/coding-profiles', {
         method: 'POST',
@@ -1008,6 +966,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setCodingProfiles(prev => [...prev, created].sort((a, b) => a.displayOrder - b.displayOrder));
+        notifyCmsUpdated();
         triggerToast(`Added coding profile for ${profile.displayName}.`, 'success');
       } else {
         const err = await res.json();
@@ -1021,6 +980,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateCodingProfile = async (profile: CodingProfileItem) => {
+    if (checkDemoRestriction('Update Coding Profile')) return;
     try {
       const res = await fetch(`/api/coding-profiles/${profile.id}`, {
         method: 'PUT',
@@ -1030,6 +990,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setCodingProfiles(prev => prev.map(p => p.id === profile.id ? updated : p).sort((a, b) => a.displayOrder - b.displayOrder));
+        notifyCmsUpdated();
         triggerToast(`Updated coding profile for ${profile.displayName}.`, 'success');
       } else {
         const err = await res.json();
@@ -1043,6 +1004,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteCodingProfile = async (id: number) => {
+    if (checkDemoRestriction('Delete Coding Profile')) return;
     try {
       const res = await fetch(`/api/coding-profiles/${id}`, {
         method: 'DELETE',
@@ -1050,6 +1012,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setCodingProfiles(prev => prev.filter(p => p.id !== id));
+        notifyCmsUpdated();
         triggerToast('Removed coding profile from database.', 'success');
       } else {
         triggerToast('Failed to delete coding profile.', 'error');
@@ -1060,6 +1023,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleCodingProfileVisibility = async (id: number, visible: boolean) => {
+    if (checkDemoRestriction('Toggle Coding Profile Visibility')) return;
     try {
       const res = await fetch(`/api/coding-profiles/${id}/visibility`, {
         method: 'PATCH',
@@ -1069,6 +1033,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setCodingProfiles(prev => prev.map(p => p.id === id ? updated : p));
+        notifyCmsUpdated();
         triggerToast(`Toggled visibility of coding profile.`, 'success');
       } else {
         triggerToast('Failed to toggle visibility.', 'error');
@@ -1079,6 +1044,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderCodingProfiles = async (reorderedList: CodingProfileItem[]) => {
+    if (checkDemoRestriction('Reorder Coding Profiles')) return;
     setCodingProfiles(reorderedList);
     try {
       const res = await fetch('/api/coding-profiles/order', {
@@ -1093,6 +1059,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         setCodingProfiles(await freshRes.json());
         triggerToast('Failed to save coding profiles order.', 'error');
       } else {
+        notifyCmsUpdated();
         triggerToast('Successfully persisted coding profiles display order.', 'success');
       }
     } catch (e) {
@@ -1104,6 +1071,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Settings Save
   const handleSaveSettings = async (cfg: SettingsConfig) => {
+    if (checkDemoRestriction('Save Settings')) return;
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -1112,6 +1080,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setSettings(cfg);
+        notifyCmsUpdated();
         triggerToast("Committed global SEO settings and theme overrides.", 'success');
       }
     } catch (e) {
@@ -1120,27 +1089,31 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   // Footer Save
- const handleSaveFooter = async (footerData: any) => {
-  try {
-    const res = await fetch('/api/footer', {
-      method: 'PUT',
-      headers: getJsonHeaders(),
-      body: JSON.stringify(footerData)
-    });
+  const handleSaveFooter = async (footerData: any) => {
+    if (checkDemoRestriction('Save Footer')) return;
+    try {
+      const res = await fetch('/api/footer', {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(footerData)
+      });
 
-    if (res.ok) {
-      const updated = await res.json();
-      setFooter(updated);
-      triggerToast("Committed footer configurations and contact highlights.", 'success');
-    } else {
-      triggerToast('Failed to save footer settings.', 'error');
+      if (res.ok) {
+        const updated = await res.json();
+        setFooter(updated);
+        notifyCmsUpdated();
+        triggerToast("Committed footer configurations and contact highlights.", 'success');
+      } else {
+        triggerToast('Failed to save footer settings.', 'error');
+      }
+    } catch (e) {
+      triggerToast('Error saving footer settings.', 'error');
     }
-  } catch (e) {
-    triggerToast('Error saving footer settings.', 'error');
-  }
-};
+  };
+
   // Footer Social Links CRUD Handlers
   const handleAddFooterSocialLink = async (social: Omit<FooterSocialLinkItem, 'id'>) => {
+    if (checkDemoRestriction('Add Footer Social Link')) return;
     try {
       const res = await fetch('/api/footer/social-links', {
         method: 'POST',
@@ -1150,6 +1123,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const created = await res.json();
         setFooterSocialLinks(prev => [...prev, created]);
+        notifyCmsUpdated();
         triggerToast(`Added footer social link for "${social.platform}".`, 'success');
       } else {
         const errData = await res.json();
@@ -1161,6 +1135,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdateFooterSocialLink = async (social: FooterSocialLinkItem) => {
+    if (checkDemoRestriction('Update Footer Social Link')) return;
     try {
       const res = await fetch(`/api/footer/social-links/${social.id}`, {
         method: 'PUT',
@@ -1170,6 +1145,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setFooterSocialLinks(prev => prev.map(s => s.id === social.id ? updated : s));
+        notifyCmsUpdated();
         triggerToast(`Updated footer social link details for "${social.platform}".`, 'success');
       } else {
         const errData = await res.json();
@@ -1181,6 +1157,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeleteFooterSocialLink = async (id: number) => {
+    if (checkDemoRestriction('Delete Footer Social Link')) return;
     try {
       const res = await fetch(`/api/footer/social-links/${id}`, { 
         method: 'DELETE',
@@ -1188,6 +1165,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         setFooterSocialLinks(prev => prev.filter(s => s.id !== id));
+        notifyCmsUpdated();
         triggerToast('Removed footer social link from database.', 'success');
       } else {
         triggerToast('Failed to delete footer social link.', 'error');
@@ -1198,6 +1176,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleFooterSocialLinkVisibility = async (id: number, isVisible: boolean) => {
+    if (checkDemoRestriction('Toggle Footer Social Link Visibility')) return;
     try {
       const res = await fetch(`/api/footer/social-links/${id}/visibility`, {
         method: 'PATCH',
@@ -1207,6 +1186,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       if (res.ok) {
         const updated = await res.json();
         setFooterSocialLinks(prev => prev.map(s => s.id === id ? updated : s));
+        notifyCmsUpdated();
         triggerToast(`Footer social link visibility toggled to ${isVisible ? 'Visible' : 'Hidden'}.`, 'success');
       } else {
         triggerToast('Failed to toggle visibility.', 'error');
@@ -1217,7 +1197,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderFooterSocialLinks = async (reorderedList: FooterSocialLinkItem[]) => {
-    // Optimistic state update
+    if (checkDemoRestriction('Reorder Footer Social Links')) return;
     setFooterSocialLinks(reorderedList);
     try {
       const res = await fetch('/api/footer/social-links/order', {
@@ -1232,6 +1212,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         setFooterSocialLinks(await freshRes.json());
         triggerToast('Failed to save footer display order.', 'error');
       } else {
+        notifyCmsUpdated();
         triggerToast('Successfully persisted footer social links order.', 'success');
       }
     } catch (e) {
@@ -1242,44 +1223,49 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   // Theme & Appearance Customizer Handlers
- const handleSaveTheme = async (updatedTheme: ThemeSettings) => {
-  try {
-    const res = await fetch('/api/theme', {
-      method: 'PUT',
-      headers: getJsonHeaders(),
-      body: JSON.stringify(updatedTheme)
-    });
+  const handleSaveTheme = async (updatedTheme: ThemeSettings) => {
+    if (checkDemoRestriction('Save Theme')) return;
+    try {
+      const res = await fetch('/api/theme', {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(updatedTheme)
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setThemeSettings(data);
-    } else {
-      triggerToast("Unauthorized access. Admin credentials required to modify theme assets.", 'error');
+      if (res.ok) {
+        const data = await res.json();
+        setThemeSettings(data);
+        notifyCmsUpdated();
+        triggerToast("Theme modifications saved and published.", 'success');
+      } else {
+        triggerToast("Unauthorized access. Admin credentials required to modify theme assets.", 'error');
+      }
+    } catch (e) {
+      triggerToast('Failed to save theme modifications.', 'error');
     }
-  } catch (e) {
-    triggerToast('Failed to save theme modifications.', 'error');
-  }
-};
+  };
 
- const handleResetTheme = async () => {
-  try {
-    const res = await fetch('/api/theme', {
-      method: 'PUT',
-      headers: getJsonHeaders(),
-      body: JSON.stringify(initialThemeSettings)
-    });
+  const handleResetTheme = async () => {
+    if (checkDemoRestriction('Reset Theme')) return;
+    try {
+      const res = await fetch('/api/theme', {
+        method: 'PUT',
+        headers: getJsonHeaders(),
+        body: JSON.stringify(initialThemeSettings)
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setThemeSettings(data);
-      triggerToast("Successfully restored standard design template.", 'success');
-    } else {
-      triggerToast("Unauthorized access. Admin credentials required.", 'error');
+      if (res.ok) {
+        const data = await res.json();
+        setThemeSettings(data);
+        notifyCmsUpdated();
+        triggerToast("Successfully restored standard design template.", 'success');
+      } else {
+        triggerToast("Unauthorized access. Admin credentials required.", 'error');
+      }
+    } catch (e) {
+      triggerToast('Failed to restore theme configuration.', 'error');
     }
-  } catch (e) {
-    triggerToast('Failed to restore theme configuration.', 'error');
-  }
-};
+  };
 
   // Global Sync handler
   const handleRefreshStats = async () => {
@@ -1288,7 +1274,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       const analyticsRes = await fetch('/api/analytics');
       const latestAnalytics = await analyticsRes.json();
       setAnalytics(latestAnalytics);
-      triggerToast("Synchronized statistics with MySQL operational storage.", 'success');
+      triggerToast("Synchronized statistics with operational storage.", 'success');
     } catch (e) {
       triggerToast('Failed to sync database stats.', 'error');
     } finally {
@@ -1298,11 +1284,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Portfolio Metrics CRUD Handlers
   const handleAddPortfolioMetric = async (metric: Omit<PortfolioMetricItem, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (checkDemoRestriction('Add Metric')) {
-      const mockMetric: PortfolioMetricItem = { ...metric, id: Date.now() } as any;
-      setPortfolioMetrics(prev => [...prev, mockMetric]);
-      return;
-    }
+    if (checkDemoRestriction('Add Metric')) return;
     try {
       const res = await fetch('/api/portfolio-metrics', {
         method: 'POST',
@@ -1311,7 +1293,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       } else {
         triggerToast('Failed to add metric', 'error');
       }
@@ -1321,10 +1303,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleUpdatePortfolioMetric = async (metric: PortfolioMetricItem) => {
-    if (checkDemoRestriction('Update Metric')) {
-      setPortfolioMetrics(prev => prev.map(m => m.id === metric.id ? metric : m));
-      return;
-    }
+    if (checkDemoRestriction('Update Metric')) return;
     try {
       const res = await fetch(`/api/portfolio-metrics/${metric.id}`, {
         method: 'PUT',
@@ -1333,7 +1312,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       } else {
         triggerToast('Failed to update metric', 'error');
       }
@@ -1343,10 +1322,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDeletePortfolioMetric = async (id: number) => {
-    if (checkDemoRestriction('Delete Metric')) {
-      setPortfolioMetrics(prev => prev.filter(m => m.id !== id));
-      return;
-    }
+    if (checkDemoRestriction('Delete Metric')) return;
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}`, {
         method: 'DELETE',
@@ -1354,7 +1330,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       } else {
         triggerToast('Failed to delete metric', 'error');
       }
@@ -1364,10 +1340,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleBulkDeletePortfolioMetrics = async (ids: number[]) => {
-    if (checkDemoRestriction('Bulk Delete Metrics')) {
-      setPortfolioMetrics(prev => prev.filter(m => !ids.includes(m.id)));
-      return;
-    }
+    if (checkDemoRestriction('Bulk Delete Metrics')) return;
     try {
       const res = await fetch('/api/portfolio-metrics/bulk-delete', {
         method: 'POST',
@@ -1376,7 +1349,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       }
     } catch (e) {
       triggerToast('Error bulk deleting metrics', 'error');
@@ -1384,10 +1357,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleBulkVisibilityPortfolioMetrics = async (ids: number[], visible: boolean) => {
-    if (checkDemoRestriction('Update Metrics Visibility')) {
-      setPortfolioMetrics(prev => prev.map(m => ids.includes(m.id) ? { ...m, visible } : m));
-      return;
-    }
+    if (checkDemoRestriction('Update Metrics Visibility')) return;
     try {
       const res = await fetch('/api/portfolio-metrics/bulk-visibility', {
         method: 'PATCH',
@@ -1396,7 +1366,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       }
     } catch (e) {
       triggerToast('Error updating metrics visibility', 'error');
@@ -1404,10 +1374,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleToggleVisibilityPortfolioMetric = async (id: number, visible: boolean) => {
-    if (checkDemoRestriction('Toggle Metric Visibility')) {
-      setPortfolioMetrics(prev => prev.map(m => m.id === id ? { ...m, visible } : m));
-      return;
-    }
+    if (checkDemoRestriction('Toggle Metric Visibility')) return;
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}/visibility`, {
         method: 'PATCH',
@@ -1416,7 +1383,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       } else {
         triggerToast('Failed to toggle visibility', 'error');
       }
@@ -1426,10 +1393,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleReorderPortfolioMetrics = async (orderedMetrics: PortfolioMetricItem[]) => {
+    if (checkDemoRestriction('Reorder Metrics')) return;
     setPortfolioMetrics(orderedMetrics);
-    if (checkDemoRestriction('Reorder Metrics')) {
-      return;
-    }
     try {
       const res = await fetch('/api/portfolio-metrics/order', {
         method: 'PATCH',
@@ -1440,7 +1405,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       }
     } catch (e) {
       triggerToast('Error reordering metrics', 'error');
@@ -1448,14 +1413,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   };
 
   const handleDuplicatePortfolioMetric = async (id: number) => {
-    if (checkDemoRestriction('Duplicate Metric')) {
-      const target = portfolioMetrics.find(m => m.id === id);
-      if (target) {
-        const mockDuplicate = { ...target, id: Date.now(), title: `${target.title} (Copy)` };
-        setPortfolioMetrics(prev => [...prev, mockDuplicate]);
-      }
-      return;
-    }
+    if (checkDemoRestriction('Duplicate Metric')) return;
     try {
       const res = await fetch(`/api/portfolio-metrics/${id}/duplicate`, {
         method: 'POST',
@@ -1463,7 +1421,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       });
       if (res.ok) {
         await fetchAllData();
-        window.dispatchEvent(new CustomEvent('cms-data-updated'));
+        notifyCmsUpdated();
       }
     } catch (e) {
       triggerToast('Error duplicating metric', 'error');

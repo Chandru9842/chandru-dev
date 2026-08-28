@@ -223,6 +223,8 @@ export default function App() {
   };
 
   const handleLoginSuccess = (token: string, refreshToken: string, user: any) => {
+    sessionStorage.removeItem('is_demo_session');
+    localStorage.removeItem('is_demo_session');
     sessionStorage.setItem('is_fresh_login', 'true');
     setIsAuthenticated(true);
     navigate('/admin/dashboard');

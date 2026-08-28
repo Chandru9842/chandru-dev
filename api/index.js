@@ -2424,9 +2424,9 @@ app.post("/api/auth/reset-password", (req, res) => {
   res.json({ status: "success", message: "Password reset link sent to your email." });
 });
 var getPortfolioCombinedHandler = (req, res) => {
-  if (cachedPortfolioData) {
-    return res.json(cachedPortfolioData);
-  }
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   const db = loadDatabase();
   const oldResumeUrl = db.profile?.resumeUrl;
   syncProfileActiveResume(db);
@@ -2434,37 +2434,55 @@ var getPortfolioCombinedHandler = (req, res) => {
     saveDatabase(db);
   }
   const resumes = db.resumes || [];
-  let activeResume = resumes.find((r) => r.isActive) || null;
+  let activeResume = resumes.find((r) => r.isActive) || resumes[0] || null;
   if (activeResume && activeResume.fileUrl && activeResume.fileUrl.startsWith("data:")) {
     activeResume = {
       ...activeResume,
       fileUrl: `/api/resume/${activeResume.id}/file`
     };
   }
-  cachedPortfolioData = {
-    projects: db.projects || [],
-    skills: db.skills || [],
-    certificates: db.certificates || [],
-    experiences: db.experiences || [],
-    education: db.education || [],
-    achievements: db.achievements || [],
-    analytics: db.analytics || { pageViews: 0, uniqueVisitors: 0, clickEvents: [] },
-    socialLinks: db.socialLinks || [],
-    footerSocialLinks: db.footerSocialLinks || [],
+  const projects = [...db.projects || initialProjects].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const skills = [...db.skills || initialSkills].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const tools = [...db.tools || initialTools].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const certificates = db.certificates || initialCertificates;
+  const achievements = [...db.achievements || initialAchievements].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const experiences = db.experiences || initialExperiences;
+  const education = db.education || initialEducation;
+  const analytics = db.analytics || initialAnalytics;
+  const settings = db.settings || initialSettings;
+  const footer = db.footer || initialFooter;
+  const socialLinks = [...db.socialLinks || initialSocialLinks].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const footerSocialLinks = [...db.footerSocialLinks || []].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const codingProfiles = [...db.codingProfiles || initialCodingProfiles].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const technologies = [...db.technologies || initialTechStack].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const portfolioMetrics = [...db.portfolioMetrics || initialPortfolioMetrics].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const profile = db.profile || initialProfile;
+  const themeSettings = db.themeSettings || initialThemeSettings;
+  const consolidatedData = {
+    profile,
+    settings,
+    theme: themeSettings,
+    footer,
+    projects,
+    skills,
+    tools,
+    certificates,
+    achievements,
+    experiences,
+    education,
+    analytics,
+    socialLinks,
+    footerSocialLinks,
+    codingProfiles,
+    technologies,
+    portfolioMetrics,
     activeResume,
-    profile: db.profile || initialProfile,
-    theme: db.themeSettings || initialThemeSettings,
-    settings: db.settings || initialSettings,
-    footer: db.footer || initialFooter,
-    technologies: db.technologies || [],
-    tools: db.tools || [],
-    codingProfiles: db.codingProfiles || [],
-    portfolioMetrics: db.portfolioMetrics || initialPortfolioMetrics
+    resumes
   };
-  res.json(cachedPortfolioData);
+  cachedPortfolioData = consolidatedData;
+  res.json(consolidatedData);
 };
-app.get("/api/portfolio-combined", getPortfolioCombinedHandler);
-app.get("/api/portfolio-data", getPortfolioCombinedHandler);
+app.get(["/api/portfolio-combined", "/portfolio-combined", "/api/portfolio", "/portfolio", "/api/portfolio-data"], getPortfolioCombinedHandler);
 app.get("/api/profile", (req, res) => {
   const db = loadDatabase();
   const oldResumeUrl = db.profile?.resumeUrl;

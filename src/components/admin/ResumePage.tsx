@@ -5,6 +5,7 @@ import {
   ChevronRight, Plus, Edit, ShieldCheck, ToggleLeft, ToggleRight, Search, Filter, HelpCircle
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
+import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 
 interface ResumePageProps {
   onTriggerToast: (message: string, type: 'success' | 'error') => void;
@@ -222,6 +223,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
         setIsUploadOpen(false);
         resetUploadForm();
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         const errData = await res.json();
@@ -268,6 +270,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
         setIsEditOpen(false);
         setSelectedResume(null);
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         const errData = await res.json();
@@ -299,6 +302,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       if (res.ok) {
         onTriggerToast(`Visitor downloads are now ${nextStatus ? 'ENABLED' : 'DISABLED'} for version ${resume.version}.`, 'success');
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         onTriggerToast('Failed to toggle download status.', 'error');
@@ -318,6 +322,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       if (res.ok) {
         onTriggerToast('Successfully activated resume version. All other copies deactivated.', 'success');
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         onTriggerToast('Failed to activate resume.', 'error');
@@ -339,6 +344,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       if (res.ok) {
         onTriggerToast('Purged resume version draft from SQL storage and Cloudinary CDN.', 'success');
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         onTriggerToast('Failed to delete resume draft.', 'error');
@@ -361,6 +367,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
         const updated = await res.json();
         onTriggerToast(`Restored version ${updated.version} as the active CV.`, 'success');
         fetchResumes();
+        notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
         onTriggerToast('Failed to restore previous version.', 'error');
