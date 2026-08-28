@@ -1960,7 +1960,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           {/* Hero Analytics Grid (Spanning full width of Hero section) */}
           {portfolioMetrics && portfolioMetrics.length > 0 && (
             <div className="lg:col-span-12 w-full pt-6 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5 md:gap-4 w-full">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 md:gap-4 w-full">
                 {portfolioMetrics.map((metric) => {
                   const colorConfig = COLOR_ACCENTS[metric.color || 'emerald'] || COLOR_ACCENTS.emerald;
                   return (
@@ -1968,26 +1968,29 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       key={metric.id}
                       initial={metric.animationEnabled ? { opacity: 0, y: 10 } : false}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-2 sm:gap-3 shadow-md group hover:scale-[1.02] transition-all duration-200 last:col-span-2 sm:last:col-span-1`}
+                      className={`w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md group hover:scale-[1.02] transition-all duration-200`}
                       title={metric.tooltip || undefined}
                     >
                       <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${colorConfig.bg} ${colorConfig.border} border flex items-center justify-center ${colorConfig.text} shrink-0 group-hover:rotate-6 transition-transform`}>
                         <MetricIconRenderer metric={metric} className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate">
                             {metric.value}
                           </span>
                           {metric.color === 'emerald' && (
-                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
+                            <span className="relative flex h-1.5 w-1.5 shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
                           )}
                         </div>
                         <span className="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">
                           {metric.title}
                         </span>
                         {metric.subtitle && (
-                          <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate">
+                          <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">
                             {metric.subtitle}
                           </span>
                         )}
