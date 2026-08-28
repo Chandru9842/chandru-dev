@@ -1328,6 +1328,7 @@ var DB_SEED_SOURCE = path.join(process.cwd(), "src", "data", "db.json");
 var DB_PATH_DEFAULT = path.join(process.cwd(), "src", "data", "db.json");
 var DB_FILE = process.env.VERCEL ? path.join("/tmp", "db.json") : DB_PATH_DEFAULT;
 var memoryDb = null;
+var cachedPortfolioData = null;
 function loadDatabase() {
   if (memoryDb) {
     return memoryDb;

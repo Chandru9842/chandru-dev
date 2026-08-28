@@ -29,6 +29,7 @@ const DB_FILE = process.env.VERCEL
   : DB_PATH_DEFAULT;
 
 let memoryDb: any = null;
+let cachedPortfolioData: any = null;
 
 // Helper to ensure database is loaded
 function loadDatabase() {
