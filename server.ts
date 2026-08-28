@@ -521,8 +521,26 @@ function syncProfileActiveResume(db: any) {
 
 export const app = express();
 app.use(compression()); // Compress all dynamic/static HTTP responses
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Safe body parser for both local development and Vercel Serverless Function runtime
+app.use((req: any, res: any, next: any) => {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return next();
+  }
+  express.json({ limit: '100mb' })(req, res, (err: any) => {
+    if (err) return next(err);
+    next();
+  });
+});
+app.use((req: any, res: any, next: any) => {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return next();
+  }
+  express.urlencoded({ limit: '100mb', extended: true })(req, res, (err: any) => {
+    if (err) return next(err);
+    next();
+  });
+});
 
 // Limit API metadata to /api only so frontend SPA handles / and all page routes
 app.get("/api", (req, res) => {
@@ -631,6 +649,19 @@ app.get(["/health", "/api/health"], (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
+
+      // Allow master admin session tokens for Chandru Mohan
+      if (token.startsWith("master_admin_session_")) {
+        req.user = {
+          id: 1,
+          name: "Chandru Mohan",
+          email: "chandrumohan550@gmail.com",
+          role: "ROLE_ADMIN",
+          username: "chandru",
+          isDemo: false
+        };
+        return next();
+      }
 
       // Allow demo guest tokens for recruiter read-only access
       if (token.startsWith("demo_guest_token_")) {
@@ -1377,6 +1408,32 @@ app.get(["/health", "/api/health"], (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
+      if (token.startsWith("master_admin_session_")) {
+        return res.json({
+          valid: true,
+          user: {
+            id: 1,
+            name: "Chandru Mohan",
+            email: "chandrumohan550@gmail.com",
+            role: "ROLE_ADMIN",
+            username: "chandru",
+            isDemo: false
+          }
+        });
+      }
+      if (token.startsWith("demo_guest_token_")) {
+        return res.json({
+          valid: true,
+          user: {
+            id: 99999,
+            name: "Recruiter Guest",
+            email: "guest@recruiter.demo",
+            role: "ROLE_ADMIN",
+            username: "recruiter_guest",
+            isDemo: true
+          }
+        });
+      }
       jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
         if (err) {
           return res.json({ valid: false });
