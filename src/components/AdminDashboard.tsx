@@ -4,7 +4,8 @@ import {
   Layout, BookOpen, Cpu, Award, Briefcase, GraduationCap, 
   BarChart3, Mail, Settings, RefreshCw, Terminal, LogOut, Code2, Database, ShieldAlert,
   Share2, FileText, User, Palette, AlertTriangle, Trophy, Shield, History,
-  Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe, Lock
+  Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe, Lock,
+  MessageSquareQuote, BookOpenCheck, MessageSquare, Quote
 } from 'lucide-react';
 
 // Subpages
