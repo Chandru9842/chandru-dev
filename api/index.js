@@ -26,27 +26,27 @@ var initialProfile = {
   heroBackground: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1280&q=75&fm=webp",
   heroAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&h=60&q=75&fm=webp",
   heroBadge: "Full Stack Java Developer",
-  heroName: "Alex Rivera",
-  heroTitle: "Principal Systems Architect",
-  heroSubtitle: "Ecosystem Architect & Product Pioneer",
+  heroName: "CHANDRU M",
+  heroTitle: "PRINCIPAL SYSTEMS ARCHITECT",
+  heroSubtitle: "Java Full Stack Developer",
   heroDescription: "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-  fullName: "Alex Rivera",
-  displayName: "Alex Dev",
+  fullName: "Chandru Mohan",
+  displayName: "Chandru Dev",
   title: "Principal Systems Architect",
   subtitle: "Designing high-throughput distributed architectures & interactive visual frameworks.",
   typingText: "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
-  shortBio: "Hi, I'm Alex. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
-  aboutDescription: "With over 8 years of professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
+  shortBio: "Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
+  aboutDescription: "With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
   shortTagline: "Ecosystem Architect & Product Pioneer",
   shortIntroduction: "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-  biography: "I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past eight years, I've designed cloud native integrations for Nexus and Google Partners, written database layers supporting millions of transactions, and optimized responsive micro-dashboards. Outside of direct engineering, I mentor developers and speak at system design meetups.",
+  biography: "I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.",
   careerObjective: "To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.",
   aboutHeading: "A Journey of Technical Rigor & Aesthetic Execution",
-  experienceSummary: "8+ Years of Crafting Clean Systems & Interactive Developer Tools",
+  experienceSummary: "Crafting Clean Systems & Interactive Developer Tools",
   skillsSummary: "Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation",
   quickStats: "8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written",
-  seoTitle: "Alex Rivera | Principal Systems Architect & Portfolio",
-  seoDescription: "The professional full-stack portfolio of Alex Rivera, featuring advanced analytics, system designs, and visual client-side engineering dashboards.",
+  seoTitle: "Chandru Mohan | Principal Systems Architect & Portfolio",
+  seoDescription: "The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.",
   seoKeywords: "Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard",
   primaryCtaText: "Explore Engineering",
   primaryCtaUrl: "#projects",
@@ -70,25 +70,25 @@ var initialProfile = {
   apiStatusCardVisible: true,
   apiStatusText: "REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED",
   dynamicChannelsVisible: true,
-  email: "alex.dev@example.com",
-  phone: "+1 (555) 019-2834",
-  whatsapp: "+1 (555) 019-2834",
-  resumeUrl: "https://example.com/resume.pdf",
-  resumeDownloadText: "Download Resume",
+  email: "chandrumohan550@gmail.com",
+  phone: "+91 9655384140",
+  whatsapp: "+91 9655384140",
+  resumeUrl: "/api/resume/download",
+  resumeDownloadText: "Download CV",
   onlineStatus: "Online",
-  location: "San Francisco, California",
-  country: "United States",
+  location: "Bengaluru, India",
+  country: "India",
   availability: "Open to Work",
   yearsExperience: 8,
   currentCompany: "Nexus Cloud Systems",
   currentPosition: "Lead Engineer",
-  birthday: "1994-10-14",
+  birthday: "1998-04-09",
   resumeId: 1,
-  githubUrl: "https://github.com/username",
-  linkedinUrl: "https://linkedin.com/in/username",
-  instagramUrl: "https://instagram.com/username",
-  twitterUrl: "https://twitter.com/username",
-  youtubeUrl: "https://youtube.com/c/username",
+  githubUrl: "https://github.com/Chandru9842",
+  linkedinUrl: "https://www.linkedin.com/in/chandru9842/",
+  instagramUrl: "https://instagram.com/chandru_kmn",
+  twitterUrl: "https://x.com/chandru_kmn",
+  youtubeUrl: "https://youtube.com",
   leetcodeUrl: "https://leetcode.com/username",
   hackerrankUrl: "https://hackerrank.com/username",
   codechefUrl: "https://codechef.com/users/username",
@@ -441,37 +441,20 @@ var initialSocialLinks = [
 var initialResumes = [
   {
     id: 1,
-    title: "Alex Dev - Principal Systems Engineer Resume",
+    title: "Chandru Mohan - Principal Systems Architect Resume",
     version: "2.4.0",
-    description: "Principal Systems Engineer CV focusing on Full-Stack systems architecture, Kubernetes, and AI Integration with Gemini API.",
-    fileName: "Alex_Dev_Resume_v2.4.pdf",
-    fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    description: "Principal Systems Architect CV focusing on Full-Stack Java systems architecture, Spring Boot, Microservices, and React.",
+    fileName: "Chandru_Mohan_Resume.pdf",
+    fileUrl: "/api/resume/download",
     fileType: "application/pdf",
     fileSize: 45210,
     // ~45 KB
-    cloudinaryPublicId: "portfolio/resume/alex_dev_systems_eng_v2_4",
+    cloudinaryPublicId: "portfolio/resume/chandru_mohan_systems_eng_v2_4",
     thumbnailImage: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=150&q=75&fm=webp",
     isActive: true,
     isDownloadEnabled: true,
     uploadedAt: "2026-06-15T09:30:00.000Z",
     updatedAt: "2026-07-01T12:00:00.000Z"
-  },
-  {
-    id: 2,
-    title: "Alex Dev - Full-Stack React Architect CV",
-    version: "2.3.1",
-    description: "Secondary draft focusing specifically on Frontend performance, Tailwind UI crafting, and edge rendering systems.",
-    fileName: "Alex_Dev_CV_Frontend_v2.3.1.pdf",
-    fileUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    fileType: "application/pdf",
-    fileSize: 38940,
-    // ~39 KB
-    cloudinaryPublicId: "portfolio/resume/alex_dev_react_arch_v2_3_1",
-    thumbnailImage: "https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?auto=format&fit=crop&w=150&q=75&fm=webp",
-    isActive: false,
-    isDownloadEnabled: true,
-    uploadedAt: "2026-05-10T14:15:00.000Z",
-    updatedAt: "2026-05-10T14:15:00.000Z"
   }
 ];
 var initialThemeSettings = {
@@ -2505,18 +2488,26 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
   const user = db.users[0];
   const oldValue = { ...db.profile || initialProfile };
   const updated = req.body;
-  db.profile = {
-    ...db.profile || initialProfile,
-    ...updated,
-    fullName: updated.fullName || updated.name || (db.profile || initialProfile).fullName,
-    email: updated.email || (db.profile || initialProfile).email,
-    phone: updated.phone || updated.phoneNumber || (db.profile || initialProfile).phone,
-    profileImage: updated.profileImage || updated.profilePhoto || (db.profile || initialProfile).profileImage,
-    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  user.name = updated.fullName || updated.name || user.name;
-  user.email = updated.email || user.email;
-  user.phoneNumber = updated.phone || updated.phoneNumber || user.phoneNumber;
+  if (!db.profile) db.profile = { ...initialProfile };
+  Object.keys(updated).forEach((key) => {
+    if (updated[key] !== void 0) {
+      db.profile[key] = updated[key];
+    }
+  });
+  if (updated.heroName && !updated.fullName) {
+    db.profile.fullName = updated.heroName;
+  } else if (updated.fullName && !updated.heroName) {
+    db.profile.heroName = updated.fullName;
+  }
+  if (updated.heroTitle && !updated.title) {
+    db.profile.title = updated.heroTitle;
+  } else if (updated.title && !updated.heroTitle) {
+    db.profile.heroTitle = updated.title;
+  }
+  db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  user.name = db.profile.fullName || user.name;
+  user.email = db.profile.email || user.email;
+  user.phoneNumber = db.profile.phone || db.profile.phoneNumber || user.phoneNumber;
   user.username = updated.username || user.username;
   user.backupEmail = updated.backupEmail !== void 0 ? updated.backupEmail : user.backupEmail;
   user.recoveryPhoneNumber = updated.recoveryPhoneNumber !== void 0 ? updated.recoveryPhoneNumber : user.recoveryPhoneNumber;
@@ -2528,7 +2519,7 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
   recordActivity(req, db, {
     action: "Profile Updated",
     module: "Profile",
-    description: "Founder updated profile and account details.",
+    description: "Founder updated profile and hero presentation details.",
     oldValue,
     newValue: {
       ...db.profile,
@@ -2537,6 +2528,7 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
       recoveryPhoneNumber: user.recoveryPhoneNumber
     }
   });
+  syncProfileActiveResume(db);
   saveDatabase(db);
   res.json({
     ...db.profile,
@@ -2546,6 +2538,38 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
     recoveryPhoneNumber: user.recoveryPhoneNumber
   });
 });
+var handleProfileImagePatch = (fieldName) => (req, res) => {
+  const db = loadDatabase();
+  const { image } = req.body;
+  if (!db.profile) db.profile = { ...initialProfile };
+  let processedUrl = image || "";
+  if (processedUrl && processedUrl.startsWith("data:")) {
+    const processed = processMockCloudinaryImage(processedUrl, fieldName);
+    processedUrl = processed.url;
+  }
+  db.profile[fieldName] = processedUrl;
+  db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  saveDatabase(db);
+  res.json({ status: "success", profile: db.profile });
+};
+var handleProfileImageDelete = (fieldName) => (req, res) => {
+  const db = loadDatabase();
+  if (!db.profile) db.profile = { ...initialProfile };
+  db.profile[fieldName] = "";
+  db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+  saveDatabase(db);
+  res.json({ status: "success", profile: db.profile });
+};
+app.patch("/api/profile/hero-avatar", authenticateJWT, handleProfileImagePatch("heroAvatar"));
+app.delete("/api/profile/hero-avatar", authenticateJWT, handleProfileImageDelete("heroAvatar"));
+app.patch("/api/profile/hero-background", authenticateJWT, handleProfileImagePatch("heroBackground"));
+app.delete("/api/profile/hero-background", authenticateJWT, handleProfileImageDelete("heroBackground"));
+app.patch("/api/profile/profile-image", authenticateJWT, handleProfileImagePatch("profileImage"));
+app.delete("/api/profile/profile-image", authenticateJWT, handleProfileImageDelete("profileImage"));
+app.patch("/api/profile/cover-image", authenticateJWT, handleProfileImagePatch("coverImage"));
+app.delete("/api/profile/cover-image", authenticateJWT, handleProfileImageDelete("coverImage"));
+app.patch("/api/profile/about-image", authenticateJWT, handleProfileImagePatch("aboutImage"));
+app.delete("/api/profile/about-image", authenticateJWT, handleProfileImageDelete("aboutImage"));
 app.get("/api/admin/database/export", authenticateJWT, (req, res) => {
   try {
     const db = loadDatabase();
@@ -5127,7 +5151,7 @@ app.post("/api/resume", authenticateJWT, (req, res) => {
   }
   const newId = db.resumes.length > 0 ? Math.max(...db.resumes.map((r) => r.id)) + 1 : 1;
   const nowStr = (/* @__PURE__ */ new Date()).toISOString();
-  const finalActive = isActive === true || db.resumes.length === 0;
+  const finalActive = isActive !== false;
   if (finalActive) {
     db.resumes.forEach((r) => {
       r.isActive = false;

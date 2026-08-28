@@ -32,7 +32,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   const [uploadVersion, setUploadVersion] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadIsActive, setUploadIsActive] = useState(false);
+  const [uploadIsActive, setUploadIsActive] = useState(true);
   const [uploadIsDownloadEnabled, setUploadIsDownloadEnabled] = useState(true);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -242,7 +242,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
     setUploadVersion('');
     setUploadDescription('');
     setUploadFile(null);
-    setUploadIsActive(false);
+    setUploadIsActive(true);
     setUploadIsDownloadEnabled(true);
     setUploadProgress(0);
     setIsUploading(false);

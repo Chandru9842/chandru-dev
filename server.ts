@@ -1515,21 +1515,34 @@ app.get(["/health", "/api/health"], (req, res) => {
     const oldValue = { ...(db.profile || initialProfile) };
     const updated = req.body;
     
-    // Update public profile
-    db.profile = {
-      ...(db.profile || initialProfile),
-      ...updated,
-      fullName: updated.fullName || updated.name || (db.profile || initialProfile).fullName,
-      email: updated.email || (db.profile || initialProfile).email,
-      phone: updated.phone || updated.phoneNumber || (db.profile || initialProfile).phone,
-      profileImage: updated.profileImage || updated.profilePhoto || (db.profile || initialProfile).profileImage,
-      updatedAt: new Date().toISOString()
-    };
+    if (!db.profile) db.profile = { ...initialProfile };
+
+    // Update public profile with all incoming properties
+    Object.keys(updated).forEach((key) => {
+      if (updated[key] !== undefined) {
+        db.profile[key] = updated[key];
+      }
+    });
+
+    // Ensure reciprocal synchronization between heroName and fullName
+    if (updated.heroName && !updated.fullName) {
+      db.profile.fullName = updated.heroName;
+    } else if (updated.fullName && !updated.heroName) {
+      db.profile.heroName = updated.fullName;
+    }
+
+    if (updated.heroTitle && !updated.title) {
+      db.profile.title = updated.heroTitle;
+    } else if (updated.title && !updated.heroTitle) {
+      db.profile.heroTitle = updated.title;
+    }
+
+    db.profile.updatedAt = new Date().toISOString();
     
     // Update Founder user details
-    user.name = updated.fullName || updated.name || user.name;
-    user.email = updated.email || user.email;
-    user.phoneNumber = updated.phone || updated.phoneNumber || user.phoneNumber;
+    user.name = db.profile.fullName || user.name;
+    user.email = db.profile.email || user.email;
+    user.phoneNumber = db.profile.phone || db.profile.phoneNumber || user.phoneNumber;
     user.username = updated.username || user.username;
     user.backupEmail = updated.backupEmail !== undefined ? updated.backupEmail : user.backupEmail;
     user.recoveryPhoneNumber = updated.recoveryPhoneNumber !== undefined ? updated.recoveryPhoneNumber : user.recoveryPhoneNumber;
@@ -1544,7 +1557,7 @@ app.get(["/health", "/api/health"], (req, res) => {
     recordActivity(req, db, {
       action: "Profile Updated",
       module: "Profile",
-      description: "Founder updated profile and account details.",
+      description: "Founder updated profile and hero presentation details.",
       oldValue,
       newValue: {
         ...db.profile,
@@ -1554,6 +1567,7 @@ app.get(["/health", "/api/health"], (req, res) => {
       }
     });
     
+    syncProfileActiveResume(db);
     saveDatabase(db);
     res.json({
       ...db.profile,
@@ -1563,6 +1577,48 @@ app.get(["/health", "/api/health"], (req, res) => {
       recoveryPhoneNumber: user.recoveryPhoneNumber
     });
   });
+
+  // Profile Image Patch and Delete Handlers (Supporting Hero and Profile pages)
+  const handleProfileImagePatch = (fieldName: string) => (req: any, res: any) => {
+    const db = loadDatabase();
+    const { image } = req.body;
+    if (!db.profile) db.profile = { ...initialProfile };
+    
+    let processedUrl = image || "";
+    if (processedUrl && processedUrl.startsWith("data:")) {
+      const processed = processMockCloudinaryImage(processedUrl, fieldName);
+      processedUrl = processed.url;
+    }
+    
+    db.profile[fieldName] = processedUrl;
+    db.profile.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", profile: db.profile });
+  };
+
+  const handleProfileImageDelete = (fieldName: string) => (req: any, res: any) => {
+    const db = loadDatabase();
+    if (!db.profile) db.profile = { ...initialProfile };
+    db.profile[fieldName] = "";
+    db.profile.updatedAt = new Date().toISOString();
+    saveDatabase(db);
+    res.json({ status: "success", profile: db.profile });
+  };
+
+  app.patch("/api/profile/hero-avatar", authenticateJWT, handleProfileImagePatch("heroAvatar"));
+  app.delete("/api/profile/hero-avatar", authenticateJWT, handleProfileImageDelete("heroAvatar"));
+
+  app.patch("/api/profile/hero-background", authenticateJWT, handleProfileImagePatch("heroBackground"));
+  app.delete("/api/profile/hero-background", authenticateJWT, handleProfileImageDelete("heroBackground"));
+
+  app.patch("/api/profile/profile-image", authenticateJWT, handleProfileImagePatch("profileImage"));
+  app.delete("/api/profile/profile-image", authenticateJWT, handleProfileImageDelete("profileImage"));
+
+  app.patch("/api/profile/cover-image", authenticateJWT, handleProfileImagePatch("coverImage"));
+  app.delete("/api/profile/cover-image", authenticateJWT, handleProfileImageDelete("coverImage"));
+
+  app.patch("/api/profile/about-image", authenticateJWT, handleProfileImagePatch("aboutImage"));
+  app.delete("/api/profile/about-image", authenticateJWT, handleProfileImageDelete("aboutImage"));
 
   // Database Backup Export Endpoint
   app.get("/api/admin/database/export", authenticateJWT, (req: any, res: any) => {
@@ -4564,7 +4620,7 @@ app.get(["/health", "/api/health"], (req, res) => {
     const newId = db.resumes.length > 0 ? Math.max(...db.resumes.map((r: any) => r.id)) + 1 : 1;
     const nowStr = new Date().toISOString();
 
-    const finalActive = isActive === true || db.resumes.length === 0;
+    const finalActive = isActive !== false;
 
     // If setting active, deactivate all other resumes
     if (finalActive) {
