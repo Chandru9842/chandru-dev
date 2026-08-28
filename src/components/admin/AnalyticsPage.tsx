@@ -103,7 +103,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
           </div>
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Total Page Views</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{pageViews.toLocaleString()}</h4>
+            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(pageViews || 0).toLocaleString()}</h4>
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
           </div>
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Unique Visitors</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{uniqueVisitors.toLocaleString()}</h4>
+            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(uniqueVisitors || 0).toLocaleString()}</h4>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
           </div>
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Resume Downloads</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{resumeDownloads.toLocaleString()}</h4>
+            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(resumeDownloads || 0).toLocaleString()}</h4>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
           </div>
           <div>
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Conversion Rate</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{contactConversionRate}%</h4>
+            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{contactConversionRate || 0}%</h4>
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
                 <div className="flex justify-between text-xs">
                   <span className="font-semibold text-slate-300">{ref.source}</span>
                   <div className="space-x-1.5 font-mono text-[10px]">
-                    <span className="text-slate-400">{ref.count.toLocaleString()} views</span>
+                    <span className="text-slate-400">{Number(ref?.count || 0).toLocaleString()} views</span>
                     <span className="text-emerald-400 bg-emerald-500/5 px-1 py-0.2 rounded border border-emerald-500/10 font-bold">{ref.percentage}%</span>
                   </div>
                 </div>
@@ -438,7 +438,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
           <div className="divide-y divide-slate-800/50">
             {countries.map((item, idx) => {
               const maxCount = countries[0]?.count ?? 1;
-              const ratio = Math.round((item.count / maxCount) * 100);
+              const ratio = Math.round(((item?.count || 0) / maxCount) * 100);
               return (
                 <div key={idx} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -449,7 +449,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
                     <div className="w-24 bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800/60 hidden sm:block">
                       <div className="bg-emerald-500/75 h-full rounded-full" style={{ width: `${ratio}%` }} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-slate-200">{item.count.toLocaleString()}</span>
+                    <span className="text-xs font-mono font-bold text-slate-200">{Number(item?.count || 0).toLocaleString()}</span>
                   </div>
                 </div>
               );
