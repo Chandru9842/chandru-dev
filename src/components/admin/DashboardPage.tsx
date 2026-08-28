@@ -30,6 +30,19 @@ export default function DashboardPage({
   const pageViews = analytics?.pageViews ?? 14250;
   const uniqueVisitors = analytics?.uniqueVisitors ?? 3840;
   const avgSession = analytics?.averageSessionSec ?? 184;
+  const contactConversionRate = analytics?.contactConversionRate ?? 4.2;
+  const viewsHistory = (analytics?.viewsHistory && Array.isArray(analytics.viewsHistory) && analytics.viewsHistory.length > 0)
+    ? analytics.viewsHistory
+    : [
+        { date: 'Mon', views: 240, visitors: 110 },
+        { date: 'Tue', views: 320, visitors: 140 },
+        { date: 'Wed', views: 290, visitors: 130 },
+        { date: 'Thu', views: 450, visitors: 190 },
+        { date: 'Fri', views: 520, visitors: 220 },
+        { date: 'Sat', views: 610, visitors: 280 },
+        { date: 'Sun', views: 740, visitors: 350 }
+      ];
+  const safeProjects = projects || [];
 
   return (
     <div className="space-y-6">
@@ -152,33 +165,25 @@ export default function DashboardPage({
               <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-lg">Active Session Streams</span>
             </div>
 
-            {/* Custom high-fidelity SVG Area Chart for Traffic Acquisition */}
-            <div className="h-56 w-full relative mt-6">
-              <svg className="w-full h-full" viewBox="0 0 700 200" preserveAspectRatio="none">
+            {/* Custom SVG Traffic Curve Chart */}
+            <div className="relative h-48 w-full pt-4">
+              <svg className="w-full h-36 overflow-visible" viewBox="0 0 700 200" preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                  <linearGradient id="curveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                {/* Horizontal gridlines */}
-                <line x1="0" y1="50" x2="700" y2="50" stroke="#1e293b" strokeDasharray="4 4" />
-                <line x1="0" y1="100" x2="700" y2="100" stroke="#1e293b" strokeDasharray="4 4" />
-                <line x1="0" y1="150" x2="700" y2="150" stroke="#1e293b" strokeDasharray="4 4" />
-
-                {/* Main area path */}
-                <path
-                  d="M 10 180 Q 110 150 210 165 T 410 110 T 510 80 T 610 50 T 690 60 L 690 190 L 10 190 Z"
-                  fill="url(#viewsGrad)"
+                <path 
+                  d="M 10,180 C 70,170 80,150 120,155 C 170,160 190,175 230,165 C 280,150 300,120 340,130 C 390,140 400,90 450,98 C 500,110 520,60 560,65 C 610,70 630,50 670,58 L 670,200 L 10,200 Z" 
+                  fill="url(#curveGradient)" 
                 />
-
-                {/* Line path */}
-                <path
-                  d="M 10 180 Q 110 150 210 165 T 410 110 T 510 80 T 610 50 T 690 60"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="3"
-                  strokeLinecap="round"
+                <path 
+                  d="M 10,180 C 70,170 80,150 120,155 C 170,160 190,175 230,165 C 280,150 300,120 340,130 C 390,140 400,90 450,98 C 500,110 520,60 560,65 C 610,70 630,50 670,58" 
+                  fill="none" 
+                  stroke="#10b981" 
+                  strokeWidth="3" 
+                  strokeLinecap="round" 
                 />
 
                 {/* Circles for each daily metric */}
@@ -193,7 +198,7 @@ export default function DashboardPage({
 
               {/* Day Labels */}
               <div className="absolute bottom-[-15px] left-0 right-0 flex justify-between px-1.5 text-[10px] font-mono text-slate-500">
-                {analytics.viewsHistory.map((item, idx) => (
+                {viewsHistory.map((item, idx) => (
                   <span key={idx}>{item.date}</span>
                 ))}
               </div>
@@ -203,18 +208,18 @@ export default function DashboardPage({
             <div className="grid grid-cols-3 gap-4 mt-8 pt-4 border-t border-slate-800/80 text-center">
               <div>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">Conversion</span>
-                <p className="text-sm font-semibold font-mono text-emerald-400 mt-0.5">{analytics.contactConversionRate}%</p>
+                <p className="text-sm font-semibold font-mono text-emerald-400 mt-0.5">{contactConversionRate}%</p>
               </div>
               <div>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">Featured Assets</span>
                 <p className="text-sm font-semibold font-mono text-slate-300 mt-0.5">
-                  {projects.filter(p => p.isFeatured).length} / {projects.length}
+                  {safeProjects.filter(p => p?.isFeatured).length} / {safeProjects.length}
                 </p>
               </div>
               <div>
                 <span className="text-[10px] font-mono text-slate-500 uppercase">Total Items</span>
                 <p className="text-sm font-semibold font-mono text-slate-300 mt-0.5">
-                  {projects.length + skillsCount + certificatesCount}
+                  {safeProjects.length + (skillsCount || 0) + (certificatesCount || 0)}
                 </p>
               </div>
             </div>

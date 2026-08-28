@@ -226,6 +226,16 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   useEffect(() => {
     fetchAllData();
     fetchNotifications();
+
+    // Trigger Welcome Chandru notification on dashboard mount
+    const isFresh = sessionStorage.getItem('is_fresh_login');
+    if (isFresh === 'true' || !sessionStorage.getItem('dashboard_welcomed')) {
+      sessionStorage.removeItem('is_fresh_login');
+      sessionStorage.setItem('dashboard_welcomed', 'true');
+      setTimeout(() => {
+        triggerToast('👋 Welcome back, Chandru! CMS Dashboard operational.', 'success');
+      }, 300);
+    }
   }, []);
 
   const fetchNotifications = async () => {
