@@ -994,7 +994,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       const data = await response.json();
 
       // Configure document properties and title (SEO)
-      const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Alex Rivera Portfolio"));
+      const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Chandru Mohan Portfolio"));
       document.title = seoTitle;
 
       // Dynamic Meta Description
@@ -1771,7 +1771,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 {profile?.professionalLabel || "Systems Architect"}
               </span>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">
-                {profile?.heroName || profile?.fullName || "Alex Rivera"}
+                {profile?.heroName || profile?.fullName || "Chandru M"}
               </h1>
               <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
                 {profile?.heroTitle || profile?.title || "Principal Systems Architect"}
@@ -2117,7 +2117,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <div className="lg:col-span-7 space-y-6">
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold font-display text-white">
-                    {profile?.fullName || "Alex Rivera"}
+                    {profile?.fullName || "Chandru Mohan"}
                   </h3>
                   <p className="text-xs font-mono text-emerald-400">
                     {profile?.title || "Principal Architect"} {profile?.currentCompany ? `@ ${profile.currentCompany}` : ""}
@@ -3215,13 +3215,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-luxury font-bold text-emerald-400 text-base shrink-0">
-                        {(profile?.fullName || "Alex Rivera")[0]}
+                        {(profile?.fullName || "Chandru Mohan")[0]}
                       </div>
                     )}
                     
                     <div className="space-y-0.5">
                       <h4 className="text-base font-sans font-extrabold text-slate-100 tracking-tight">
-                        {profile?.fullName || "Alex Rivera"}
+                        {profile?.fullName || "Chandru Mohan"}
                       </h4>
                       <span className="text-[11px] font-mono text-emerald-400 font-semibold uppercase tracking-wider block">
                         {profile?.title || "Systems Architect"}
@@ -3236,11 +3236,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <div className="space-y-2 pt-1 font-mono text-[11px] text-slate-400">
                     <div className="flex items-center gap-2.5">
                       <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{profile?.location ? `${profile.location}, ${profile.country || 'USA'}` : "San Francisco Bay Area, CA"}</span>
+                      <span>{profile?.location ? `${profile.location}, ${profile.country || 'India'}` : "Bengaluru, Karnataka, India"}</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{profile?.email || "alex.dev@stanford.edu"}</span>
+                      <span>{profile?.email || "chandrumohan550@gmail.com"}</span>
                     </div>
                   </div>
                 </div>
@@ -3347,7 +3347,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 {/* Copyright + Technical Details */}
                 <div className="flex flex-col gap-1 text-center lg:text-left">
                   <p className="text-[11px] text-slate-400 font-mono">
-                    {footer?.copyrightText || `© 2026 ${profile?.fullName || "Alex Rivera"} Portfolio. All database relations mapped to 3NF standards.`}
+                    {footer?.copyrightText || `© 2026 ${profile?.fullName || "Chandru Mohan"} Portfolio. All database relations mapped to 3NF standards.`}
                   </p>
                   <p className="text-[10px] text-slate-600 font-mono">
                     {footer?.builtWithText || "Securely served from local sandbox cache. Admin actions synchronized with backend."}

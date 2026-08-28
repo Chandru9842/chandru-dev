@@ -1925,58 +1925,67 @@ function recordActivity(req, db, {
   status = "SUCCESS",
   email = null
 }) {
-  const userAgent = req.headers["user-agent"] || "";
-  const { browser, operatingSystem, device } = parseUserAgent(userAgent);
-  const ipAddress = req.ip || req.headers["x-forwarded-for"] || "127.0.0.1";
-  const locations = ["Bengaluru, India", "Chennai, India", "California, USA", "New York, USA", "Singapore", "London, UK", "Tokyo, Japan"];
-  const location = locations[Math.floor(Math.random() * locations.length)];
-  let performedBy = "Chandru Mohan";
-  let role = "ROLE_ADMIN";
-  if (req.user) {
-    performedBy = req.user.name || req.user.email || "Chandru Mohan";
-    role = req.user.role || "ROLE_ADMIN";
-  } else if (email) {
-    performedBy = email;
-    role = "ROLE_ADMIN";
-  } else if (module === "Visitor Interaction" || action === "Message Sent" || action === "Analytics Tracked") {
-    performedBy = "Visitor";
-    role = "ROLE_VISITOR";
-  }
-  db.activityHistory = db.activityHistory || [];
-  const logEntry = {
-    id: db.activityHistory.length > 0 ? Math.max(...db.activityHistory.map((l) => l.id)) + 1 : 1,
-    action,
-    module,
-    description,
-    oldValue: oldValue ? typeof oldValue === "string" ? oldValue : JSON.stringify(oldValue) : null,
-    newValue: newValue ? typeof newValue === "string" ? newValue : JSON.stringify(newValue) : null,
-    performedBy,
-    role,
-    browser,
-    operatingSystem,
-    device,
-    ipAddress,
-    location,
-    status,
-    createdAt: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  db.activityHistory.push(logEntry);
-  publishNotification(db, {
-    module,
-    action,
-    title: `${action}`,
-    description,
-    performedBy,
-    severity: status === "ERROR" ? "Error" : status === "WARNING" ? "Warning" : void 0,
-    metadata: {
+  try {
+    const userAgent = req?.headers?.["user-agent"] || "";
+    const { browser, operatingSystem, device } = parseUserAgent(userAgent);
+    const ipAddress = req?.ip || req?.headers?.["x-forwarded-for"] || "127.0.0.1";
+    const locations = ["Bengaluru, India", "Chennai, India", "California, USA", "New York, USA", "Singapore", "London, UK", "Tokyo, Japan"];
+    const location = locations[Math.floor(Math.random() * locations.length)];
+    let performedBy = "Chandru Mohan";
+    let role = "ROLE_ADMIN";
+    if (req?.user) {
+      performedBy = req.user.name || req.user.email || "Chandru Mohan";
+      role = req.user.role || "ROLE_ADMIN";
+    } else if (email) {
+      performedBy = email;
+      role = "ROLE_ADMIN";
+    } else if (module === "Visitor Interaction" || action === "Message Sent" || action === "Analytics Tracked") {
+      performedBy = "Visitor";
+      role = "ROLE_VISITOR";
+    }
+    db.activityHistory = db.activityHistory || [];
+    const maxId = db.activityHistory.reduce((max, l) => typeof l?.id === "number" && !isNaN(l.id) ? Math.max(max, l.id) : max, 0);
+    const logEntry = {
+      id: maxId + 1,
+      action,
+      module,
+      description,
+      oldValue: oldValue ? typeof oldValue === "string" ? oldValue : JSON.stringify(oldValue) : null,
+      newValue: newValue ? typeof newValue === "string" ? newValue : JSON.stringify(newValue) : null,
+      performedBy,
+      role,
       browser,
       operatingSystem,
       device,
       ipAddress,
-      location
+      location,
+      status,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    db.activityHistory.push(logEntry);
+    try {
+      publishNotification(db, {
+        module,
+        action,
+        title: `${action}`,
+        description,
+        performedBy,
+        severity: status === "ERROR" ? "Error" : status === "WARNING" ? "Warning" : void 0,
+        metadata: {
+          browser,
+          operatingSystem,
+          device,
+          ipAddress,
+          location
+        }
+      });
+    } catch (notifErr) {
     }
-  });
-  return logEntry;
+    return logEntry;
+  } catch (e) {
+    console.warn("Activity logging suppressed non-fatal error:", e);
+    return null;
+  }
 }
 function getExpiresIn(timeout) {
   switch (timeout) {
@@ -2593,21 +2602,43 @@ app.get("/api/profile", (req, res) => {
   if (oldResumeUrl !== db.profile?.resumeUrl) {
     saveDatabase(db);
   }
+  if (!db.users || !Array.isArray(db.users) || db.users.length === 0) {
+    db.users = [{
+      id: 1,
+      name: "Chandru Mohan",
+      email: "chandrumohan550@gmail.com",
+      username: "chandru",
+      phoneNumber: "+919655384140",
+      role: "ROLE_ADMIN",
+      isActive: true
+    }];
+  }
   const user = db.users[0];
   const profile = db.profile || initialProfile;
   res.json({
     ...profile,
-    username: user.username || "chandru",
-    phoneNumber: user.phoneNumber || "+919655384140",
-    backupEmail: user.backupEmail || "",
-    recoveryPhoneNumber: user.recoveryPhoneNumber || ""
+    username: user?.username || "chandru",
+    phoneNumber: user?.phoneNumber || "+919655384140",
+    backupEmail: user?.backupEmail || "",
+    recoveryPhoneNumber: user?.recoveryPhoneNumber || ""
   });
 });
 app.put("/api/profile", authenticateJWT, (req, res) => {
   const db = loadDatabase();
+  if (!db.users || !Array.isArray(db.users) || db.users.length === 0) {
+    db.users = [{
+      id: 1,
+      name: "Chandru Mohan",
+      email: "chandrumohan550@gmail.com",
+      username: "chandru",
+      phoneNumber: "+919655384140",
+      role: "ROLE_ADMIN",
+      isActive: true
+    }];
+  }
   const user = db.users[0];
   const oldValue = { ...db.profile || initialProfile };
-  const updated = req.body;
+  const updated = req.body || {};
   if (!db.profile) db.profile = { ...initialProfile };
   Object.keys(updated).forEach((key) => {
     if (updated[key] !== void 0) {
@@ -2625,17 +2656,19 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
     db.profile.heroTitle = updated.title;
   }
   db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-  user.name = db.profile.fullName || user.name;
-  user.email = db.profile.email || user.email;
-  user.phoneNumber = db.profile.phone || db.profile.phoneNumber || user.phoneNumber;
-  user.username = updated.username || user.username;
-  user.backupEmail = updated.backupEmail !== void 0 ? updated.backupEmail : user.backupEmail;
-  user.recoveryPhoneNumber = updated.recoveryPhoneNumber !== void 0 ? updated.recoveryPhoneNumber : user.recoveryPhoneNumber;
-  if (updated.password) {
-    const salt = bcrypt.genSaltSync(10);
-    user.passwordHash = bcrypt.hashSync(updated.password, salt);
+  if (user) {
+    user.name = db.profile.fullName || user.name || "Chandru Mohan";
+    user.email = db.profile.email || user.email || "chandrumohan550@gmail.com";
+    user.phoneNumber = db.profile.phone || db.profile.phoneNumber || user.phoneNumber || "+919655384140";
+    user.username = updated.username || user.username || "chandru";
+    user.backupEmail = updated.backupEmail !== void 0 ? updated.backupEmail : user.backupEmail;
+    user.recoveryPhoneNumber = updated.recoveryPhoneNumber !== void 0 ? updated.recoveryPhoneNumber : user.recoveryPhoneNumber;
+    if (updated.password) {
+      const salt = bcrypt.genSaltSync(10);
+      user.passwordHash = bcrypt.hashSync(updated.password, salt);
+    }
+    user.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   }
-  user.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   recordActivity(req, db, {
     action: "Profile Updated",
     module: "Profile",
@@ -2643,19 +2676,19 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
     oldValue,
     newValue: {
       ...db.profile,
-      username: user.username,
-      backupEmail: user.backupEmail,
-      recoveryPhoneNumber: user.recoveryPhoneNumber
+      username: user?.username || "chandru",
+      backupEmail: user?.backupEmail || "",
+      recoveryPhoneNumber: user?.recoveryPhoneNumber || ""
     }
   });
   syncProfileActiveResume(db);
   saveDatabase(db);
   res.json({
     ...db.profile,
-    username: user.username,
-    phoneNumber: user.phoneNumber,
-    backupEmail: user.backupEmail,
-    recoveryPhoneNumber: user.recoveryPhoneNumber
+    username: user?.username || "chandru",
+    phoneNumber: user?.phoneNumber || "+919655384140",
+    backupEmail: user?.backupEmail || "",
+    recoveryPhoneNumber: user?.recoveryPhoneNumber || ""
   });
 });
 var handleProfileImagePatch = (fieldName) => (req, res) => {

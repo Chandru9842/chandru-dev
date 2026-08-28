@@ -1600,7 +1600,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-xs font-black text-slate-100 uppercase tracking-wide truncate">
-                {profile?.fullName || "Alex Rivera"}
+                {profile?.fullName || profile?.heroName || "Chandru Mohan"}
               </h2>
               <p className="text-[10px] font-medium text-slate-400 truncate">
                 {profile?.title || "Principal Systems Architect"}
