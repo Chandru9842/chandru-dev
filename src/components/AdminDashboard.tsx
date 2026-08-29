@@ -52,7 +52,7 @@ import {
   ProjectItem, SkillItem,
   CertificateItem, ExperienceItem, EducationItem, MessageItem, SettingsConfig, SocialLinkItem,
   ThemeSettings, initialThemeSettings, AchievementItem, CodingProfileItem, ToolItem, PortfolioMetricItem,
-  TestimonialItem, ArticleItem, initialTestimonials, initialArticles
+  TestimonialItem, ArticleItem, initialTestimonials, initialArticles, initialSettings
 } from '../data/cmsMockData';
 
 import Toast, { ToastProps } from './Toast';
@@ -1436,6 +1436,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     } catch (e) {
       triggerToast('Error reordering metrics', 'error');
     }
+  };
+
+  const handleDuplicatePortfolioMetric = async (id: number) => {
+    if (checkDemoRestriction('Duplicate Metric')) return;
+    const target = portfolioMetrics.find(m => m.id === id);
+    if (!target) return;
+    const { id: _, createdAt: __, updatedAt: ___, ...rest } = target;
+    await handleAddPortfolioMetric({
+      ...rest,
+      title: `${target.title} (Copy)`
+    });
   };
 
   // Testimonials CRUD Handlers

@@ -2815,7 +2815,7 @@ var getPortfolioCombinedHandler = (req, res) => {
   const footer = db.footer || initialFooter;
   const socialLinks = [...db.socialLinks || initialSocialLinks].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const footerSocialLinks = [...db.footerSocialLinks || []].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
-  const codingProfiles = [...db.codingProfiles || initialCodingProfiles].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const codingProfiles = [...db.codingProfiles || []].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const technologies = [...db.technologies || initialTechStack].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const portfolioMetrics = [...db.portfolioMetrics || initialPortfolioMetrics].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const testimonials = [...db.testimonials || initialTestimonials].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
@@ -5816,7 +5816,8 @@ app.post("/api/resume", authenticateJWT, (req, res) => {
     cloudinaryPublicId,
     thumbnailImage,
     isActive,
-    isDownloadEnabled
+    isDownloadEnabled,
+    overwrite
   } = req.body;
   if (!title || !title.trim()) {
     return res.status(400).json({ error: "Resume Title is required." });
@@ -5836,11 +5837,6 @@ app.post("/api/resume", authenticateJWT, (req, res) => {
     return res.status(400).json({ error: "File exceeds maximum size threshold of 10 MB." });
   }
   if (!db.resumes) db.resumes = [];
-  const isDuplicate = db.resumes.some((r) => r.version === version.trim() && r.fileName === fileName);
-  if (isDuplicate) {
-    return res.status(400).json({ error: `A resume version ${version} with the same file name already exists.` });
-  }
-  const newId = db.resumes.length > 0 ? Math.max(...db.resumes.map((r) => r.id)) + 1 : 1;
   const nowStr = (/* @__PURE__ */ new Date()).toISOString();
   const finalActive = isActive !== false;
   if (finalActive) {
@@ -5849,6 +5845,37 @@ app.post("/api/resume", authenticateJWT, (req, res) => {
     });
   }
   const detectedMime = fileType ? String(fileType).trim() : fileName && String(fileName).toLowerCase().endsWith(".docx") ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/pdf";
+  const existingIndex = db.resumes.findIndex((r) => r.version === version.trim());
+  if (existingIndex !== -1 && overwrite) {
+    const original = db.resumes[existingIndex];
+    const updated = {
+      ...original,
+      title: String(title).trim(),
+      version: String(version).trim(),
+      description: description !== void 0 ? String(description).trim() : original.description,
+      fileName: fileName ? String(fileName).trim() : original.fileName,
+      fileUrl,
+      fileType: detectedMime,
+      fileSize: typeof fileSize === "number" ? fileSize : original.fileSize,
+      cloudinaryPublicId: cloudinaryPublicId ? String(cloudinaryPublicId).trim() : original.cloudinaryPublicId,
+      thumbnailImage: thumbnailImage || original.thumbnailImage,
+      isActive: finalActive,
+      isDownloadEnabled: isDownloadEnabled !== false,
+      updatedAt: nowStr
+    };
+    db.resumes[existingIndex] = updated;
+    recordActivity(req, db, {
+      action: "Resume Replaced",
+      module: "Profile",
+      description: `Overwrote existing Resume/CV version ${version} - "${title}".`,
+      oldValue: original,
+      newValue: updated
+    });
+    syncProfileActiveResume(db);
+    saveDatabase(db);
+    return res.status(200).json(updated);
+  }
+  const newId = db.resumes.length > 0 ? Math.max(...db.resumes.map((r) => r.id)) + 1 : 1;
   const created = {
     id: newId,
     title: String(title).trim(),
@@ -5858,7 +5885,7 @@ app.post("/api/resume", authenticateJWT, (req, res) => {
     fileUrl,
     fileType: detectedMime,
     fileSize: typeof fileSize === "number" ? fileSize : 5e4,
-    cloudinaryPublicId: cloudinaryPublicId ? String(cloudinaryPublicId).trim() : `portfolio/resume/res_${Date.now()}`,
+    cloudinaryPublicId: cloudinaryPublicId ? String(cloudinaryPublicId).trim() : `portfolio/resume/chandru_mohan_resume_${Date.now()}`,
     thumbnailImage: thumbnailImage || "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=260&auto=format&fit=crop",
     isActive: finalActive,
     isDownloadEnabled: isDownloadEnabled !== false,
@@ -5957,6 +5984,112 @@ app.put("/api/resume/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json(updated);
 });
+app.post("/api/resume/:id/replace", authenticateJWT, (req, res) => {
+  const db = loadDatabase();
+  const id = parseInt(req.params.id);
+  const {
+    title,
+    version,
+    description,
+    fileName,
+    fileUrl,
+    fileType,
+    fileSize,
+    cloudinaryPublicId,
+    thumbnailImage,
+    isActive,
+    isDownloadEnabled,
+    mode
+  } = req.body;
+  if (!db.resumes) db.resumes = [];
+  const index = db.resumes.findIndex((r) => r.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Resume CV draft not found." });
+  }
+  if (!fileUrl) {
+    return res.status(400).json({ error: "Replacement resume file attachment or URL is required." });
+  }
+  const isAllowedDoc = fileType === "application/pdf" || fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || fileName && (String(fileName).toLowerCase().endsWith(".pdf") || String(fileName).toLowerCase().endsWith(".docx")) || fileUrl.startsWith("data:application/pdf;") || fileUrl.startsWith("data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;");
+  if (!isAllowedDoc) {
+    return res.status(400).json({ error: "Invalid file type. Only PDF and DOCX files are supported." });
+  }
+  const original = db.resumes[index];
+  const nowStr = (/* @__PURE__ */ new Date()).toISOString();
+  const detectedMime = fileType ? String(fileType).trim() : fileName && String(fileName).toLowerCase().endsWith(".docx") ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "application/pdf";
+  if (mode === "new_version") {
+    const newId = Math.max(...db.resumes.map((r) => r.id), 0) + 1;
+    const finalActive = isActive !== false;
+    if (finalActive) {
+      db.resumes.forEach((r) => {
+        r.isActive = false;
+      });
+    }
+    const created = {
+      id: newId,
+      title: title ? String(title).trim() : original.title,
+      version: version ? String(version).trim() : `v${parseFloat(original.version || "1.0") + 0.1}`,
+      description: description !== void 0 ? String(description).trim() : `Supersedes ${original.version}`,
+      fileName: fileName ? String(fileName).trim() : original.fileName,
+      fileUrl,
+      fileType: detectedMime,
+      fileSize: typeof fileSize === "number" ? fileSize : original.fileSize,
+      cloudinaryPublicId: cloudinaryPublicId || `portfolio/resume/chandru_mohan_cv_${Date.now()}`,
+      thumbnailImage: thumbnailImage || original.thumbnailImage,
+      isActive: finalActive,
+      isDownloadEnabled: isDownloadEnabled !== void 0 ? !!isDownloadEnabled : original.isDownloadEnabled,
+      uploadedAt: nowStr,
+      updatedAt: nowStr
+    };
+    db.resumes.push(created);
+    recordActivity(req, db, {
+      action: "Resume Replaced",
+      module: "Profile",
+      description: `Created new Resume revision ${created.version} replacing ${original.version}.`,
+      oldValue: original,
+      newValue: created
+    });
+    syncProfileActiveResume(db);
+    saveDatabase(db);
+    return res.status(201).json(created);
+  } else {
+    const finalActive = isActive !== void 0 ? !!isActive : original.isActive;
+    if (finalActive && !original.isActive) {
+      db.resumes.forEach((r) => {
+        r.isActive = false;
+      });
+    }
+    const updated = {
+      ...original,
+      title: title ? String(title).trim() : original.title,
+      version: version ? String(version).trim() : original.version,
+      description: description !== void 0 ? String(description).trim() : original.description,
+      fileName: fileName ? String(fileName).trim() : original.fileName,
+      fileUrl,
+      fileType: detectedMime,
+      fileSize: typeof fileSize === "number" ? fileSize : original.fileSize,
+      cloudinaryPublicId: cloudinaryPublicId || original.cloudinaryPublicId,
+      thumbnailImage: thumbnailImage || original.thumbnailImage,
+      isActive: finalActive,
+      isDownloadEnabled: isDownloadEnabled !== void 0 ? !!isDownloadEnabled : original.isDownloadEnabled,
+      updatedAt: nowStr
+    };
+    db.resumes[index] = updated;
+    const activeExists = db.resumes.some((r) => r.isActive);
+    if (!activeExists && db.resumes.length > 0) {
+      db.resumes[0].isActive = true;
+    }
+    recordActivity(req, db, {
+      action: "Resume Replaced",
+      module: "Profile",
+      description: `Replaced document and metadata for Resume/CV version ${updated.version} - "${updated.title}".`,
+      oldValue: original,
+      newValue: updated
+    });
+    syncProfileActiveResume(db);
+    saveDatabase(db);
+    return res.json(updated);
+  }
+});
 app.delete("/api/resume/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
@@ -6042,29 +6175,6 @@ app.patch("/api/resume/:id/download", authenticateJWT, (req, res) => {
     action: "Resume Replaced",
     module: "Profile",
     description: `Toggled download ability for Resume/CV version ${db.resumes[index].version} to ${isDownloadEnabled ? "Enabled" : "Disabled"}.`,
-    newValue: db.resumes[index]
-  });
-  syncProfileActiveResume(db);
-  saveDatabase(db);
-  res.json(db.resumes[index]);
-});
-app.post("/api/resume/:id/restore", authenticateJWT, (req, res) => {
-  const db = loadDatabase();
-  const id = parseInt(req.params.id);
-  if (!db.resumes) db.resumes = [];
-  const index = db.resumes.findIndex((r) => r.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: "Resume CV draft not found." });
-  }
-  db.resumes.forEach((r) => {
-    r.isActive = false;
-  });
-  db.resumes[index].isActive = true;
-  db.resumes[index].updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-  recordActivity(req, db, {
-    action: "Resume Replaced",
-    module: "Profile",
-    description: `Restored Resume/CV version ${db.resumes[index].version} from archive as active.`,
     newValue: db.resumes[index]
   });
   syncProfileActiveResume(db);

@@ -902,7 +902,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       const q = articleSearchQuery.trim().toLowerCase();
       const matchesSearch = !q || 
         a.title.toLowerCase().includes(q) || 
-        (a.summary && a.summary.toLowerCase().includes(q)) || 
+        ((a.excerpt || (a as any).summary || '').toLowerCase().includes(q)) || 
         (a.tags && a.tags.some(tag => tag.toLowerCase().includes(q))) ||
         (a.category && a.category.toLowerCase().includes(q));
       return matchesCategory && matchesSearch;
@@ -1017,10 +1017,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     e.preventDefault();
     trackClick(trackingKey, trackingLabel);
     
-    // Open in new tab: if valid direct URL use it, otherwise use backend view endpoint
-    const targetUrl = (isValidResumeUrl(profile?.resumeUrl) && !profile?.resumeUrl?.startsWith('/api/resume'))
+    // Open in new tab: if valid direct remote HTTP URL use it, otherwise use backend view endpoint with cache-buster
+    const targetUrl = (isValidResumeUrl(profile?.resumeUrl) && !profile?.resumeUrl?.startsWith('/api/resume') && !profile?.resumeUrl?.startsWith('data:'))
       ? profile.resumeUrl
-      : (activeResume?.id ? `/api/resume/${activeResume.id}/file` : '/api/resume/view');
+      : (activeResume?.id ? `/api/resume/${activeResume.id}/file?t=${Date.now()}` : `/api/resume/view?t=${Date.now()}`);
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -3404,7 +3404,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                   </div>
                                 )}
                               </div>
-                              {t.verifiedOnLinkedIn && (
+                              {t.linkedInUrl && (
                                 <div className="absolute -bottom-2 -right-2 bg-[#0A66C2] text-white p-1.5 rounded-lg shadow-md" title="Verified LinkedIn Recommendation">
                                   <Linkedin className="w-3.5 h-3.5" />
                                 </div>
@@ -4455,7 +4455,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       )}
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-white">{selectedArticleForModal.authorName || "Chandru Mohan"}</h4>
+                      <h4 className="text-sm font-bold text-white">{selectedArticleForModal.author || "Chandru Mohan"}</h4>
                       <p className="text-[11px] font-mono text-emerald-400">Principal Systems Architect & Full Stack Java Developer</p>
                     </div>
                   </div>
