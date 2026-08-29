@@ -528,7 +528,7 @@ function syncProfileActiveResume(db: any) {
 }
 
 export const app = express();
-app.use(compression()); // Compress all dynamic/static HTTP responses
+app.use(compression() as any); // Compress all dynamic/static HTTP responses
 
 // Safe body parser for both local development and Vercel Serverless Function runtime
 app.use((req: any, res: any, next: any) => {
