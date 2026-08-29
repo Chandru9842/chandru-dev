@@ -96,7 +96,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
         const data = await res.json();
         let list: ResumeItem[] = Array.isArray(data) ? data : [];
 
-        // Merge local cache for base64 file attachments
+        // Attach local base64 file data if available
         try {
           const cachedStr = localStorage.getItem('cms_resumes_cache');
           if (cachedStr) {
@@ -108,13 +108,6 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
                   return { ...item, fileUrl: match.fileUrl, fileName: match.fileName || item.fileName };
                 }
                 return item;
-              });
-
-              // Also include any new locally uploaded items not yet present
-              cachedList.forEach((cachedItem) => {
-                if (!list.some(l => l.id === cachedItem.id || l.version === cachedItem.version)) {
-                  list.push(cachedItem);
-                }
               });
             }
           }
@@ -524,6 +517,23 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   const handleToggleDownload = async (resume: ResumeItem) => {
     const nextStatus = !resume.isDownloadEnabled;
     try {
+      try {
+        const cachedStr = localStorage.getItem('cms_resumes_cache');
+        if (cachedStr) {
+          let cachedList: ResumeItem[] = JSON.parse(cachedStr);
+          cachedList = cachedList.map(c => (c.id === resume.id || c.version === resume.version) ? { ...c, isDownloadEnabled: nextStatus } : c);
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+          const activeStr = localStorage.getItem('cms_custom_active_resume');
+          if (activeStr) {
+            const activeItem = JSON.parse(activeStr);
+            if (activeItem.id === resume.id || activeItem.version === resume.version) {
+              activeItem.isDownloadEnabled = nextStatus;
+              localStorage.setItem('cms_custom_active_resume', JSON.stringify(activeItem));
+            }
+          }
+        }
+      } catch (e) {}
+
       const res = await fetch(`/api/resume/${resume.id}/download`, {
         method: 'PATCH',
         headers: getJsonHeaders(),
@@ -545,6 +555,19 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   // Activate Resume Version
   const handleActivate = async (id: number) => {
     try {
+      try {
+        const cachedStr = localStorage.getItem('cms_resumes_cache');
+        if (cachedStr) {
+          let cachedList: ResumeItem[] = JSON.parse(cachedStr);
+          cachedList = cachedList.map(c => ({ ...c, isActive: c.id === id }));
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+          const target = cachedList.find(c => c.id === id);
+          if (target) {
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(target));
+          }
+        }
+      } catch (e) {}
+
       const res = await fetch(`/api/resume/${id}/activate`, {
         method: 'PATCH',
         headers: getJsonHeaders()
@@ -566,6 +589,40 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
 
   // Delete Action
   const handleDelete = async (id: number) => {
+    // 1. Immediately remove from local state
+    setResumes(prev => {
+      const remaining = prev.filter(r => r.id !== id);
+      const wasActive = prev.some(r => r.id === id && r.isActive);
+      if (wasActive && remaining.length > 0) {
+        remaining[0].isActive = true;
+      }
+      return remaining;
+    });
+
+    // 2. Remove from local cache
+    try {
+      const cachedStr = localStorage.getItem('cms_resumes_cache');
+      if (cachedStr) {
+        let cachedList: ResumeItem[] = JSON.parse(cachedStr);
+        cachedList = cachedList.filter(c => c.id !== id);
+        localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+      }
+      const activeStr = localStorage.getItem('cms_custom_active_resume');
+      if (activeStr) {
+        const activeItem: ResumeItem = JSON.parse(activeStr);
+        if (activeItem.id === id) {
+          const cachedStr2 = localStorage.getItem('cms_resumes_cache');
+          const remaining2 = cachedStr2 ? JSON.parse(cachedStr2) : [];
+          if (remaining2.length > 0) {
+            remaining2[0].isActive = true;
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(remaining2[0]));
+          } else {
+            localStorage.removeItem('cms_custom_active_resume');
+          }
+        }
+      }
+    } catch (e) {}
+
     try {
       const res = await fetch(`/api/resume/${id}`, {
         method: 'DELETE',
@@ -577,7 +634,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
         notifyCmsUpdate();
         onResumeUpdated?.();
       } else {
-        onTriggerToast('Failed to delete resume draft.', 'error');
+        onTriggerToast('Failed to delete resume draft from database.', 'error');
       }
     } catch (e) {
       onTriggerToast('Network error during delete action.', 'error');
@@ -589,6 +646,19 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   // Restore previous version
   const handleRestore = async (id: number) => {
     try {
+      try {
+        const cachedStr = localStorage.getItem('cms_resumes_cache');
+        if (cachedStr) {
+          let cachedList: ResumeItem[] = JSON.parse(cachedStr);
+          cachedList = cachedList.map(c => ({ ...c, isActive: c.id === id }));
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+          const target = cachedList.find(c => c.id === id);
+          if (target) {
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(target));
+          }
+        }
+      } catch (e) {}
+
       const res = await fetch(`/api/resume/${id}/restore`, {
         method: 'POST',
         headers: getJsonHeaders()
