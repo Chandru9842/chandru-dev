@@ -1017,10 +1017,42 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     e.preventDefault();
     trackClick(trackingKey, trackingLabel);
     
-    // Open in new tab: if valid direct remote HTTP URL use it, otherwise use backend view endpoint with cache-buster
-    const targetUrl = (isValidResumeUrl(profile?.resumeUrl) && !profile?.resumeUrl?.startsWith('/api/resume') && !profile?.resumeUrl?.startsWith('data:'))
-      ? profile.resumeUrl
-      : (activeResume?.id ? `/api/resume/${activeResume.id}/file?t=${Date.now()}` : `/api/resume/view?t=${Date.now()}`);
+    // 1. If activeResume has a direct base64 data URL, convert to Blob URL for instant viewing
+    if (activeResume?.fileUrl && activeResume.fileUrl.startsWith('data:')) {
+      try {
+        const commaIndex = activeResume.fileUrl.indexOf(',');
+        const base64Data = activeResume.fileUrl.substring(commaIndex + 1);
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const mimeType = activeResume.fileType || 'application/pdf';
+        const blob = new Blob([byteArray], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank', 'noopener,noreferrer');
+        return;
+      } catch (err) {
+        console.warn("Base64 blob view fallback:", err);
+      }
+    }
+
+    // 2. If valid direct remote HTTP URL
+    if (isValidResumeUrl(profile?.resumeUrl) && !profile?.resumeUrl?.startsWith('/api/resume') && !profile?.resumeUrl?.startsWith('data:')) {
+      window.open(profile.resumeUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (isValidResumeUrl(activeResume?.fileUrl) && !activeResume?.fileUrl?.startsWith('/api/resume') && !activeResume?.fileUrl?.startsWith('data:')) {
+      window.open(activeResume.fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // 3. Backend view endpoint with cache-buster
+    const targetUrl = activeResume?.id 
+      ? `/api/resume/${activeResume.id}/file?t=${Date.now()}` 
+      : `/api/resume/view?t=${Date.now()}`;
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -1031,12 +1063,44 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
     const candidateName = (profile?.fullName || profile?.displayName || 'Chandru_Mohan').replace(/\s+/g, '_');
     const fileName = activeResume?.fileName || `${candidateName}_Resume.pdf`;
+
+    // 1. If activeResume has a direct base64 data URL, download blob directly
+    if (activeResume?.fileUrl && activeResume.fileUrl.startsWith('data:')) {
+      try {
+        const commaIndex = activeResume.fileUrl.indexOf(',');
+        const base64Data = activeResume.fileUrl.substring(commaIndex + 1);
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const mimeType = activeResume.fileType || 'application/pdf';
+        const blob = new Blob([byteArray], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+        
+        setFeedbackToast('✅ CV Resume downloaded successfully!');
+        setTimeout(() => setFeedbackToast(null), 3500);
+        return;
+      } catch (err) {
+        console.warn("Base64 direct download fallback:", err);
+      }
+    }
+
     const backendDownloadUrl = activeResume?.id
       ? `/api/resume/${activeResume.id}/download?fileName=${encodeURIComponent(fileName)}&t=${Date.now()}`
       : `/api/resume/download?fileName=${encodeURIComponent(fileName)}&url=${encodeURIComponent(profile?.resumeUrl || '')}&t=${Date.now()}`;
 
     try {
-      // 1. Fetch via our same-origin backend download endpoint which always returns attachment headers
+      // 2. Fetch via our same-origin backend download endpoint
       const res = await fetch(backendDownloadUrl);
       if (res.ok) {
         const blob = await res.blob();
@@ -1058,7 +1122,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       console.warn("Direct blob fetch fallback:", err);
     }
 
-    // 2. Direct browser navigation to download endpoint (guarantees browser download dialog)
+    // 3. Direct browser navigation to download endpoint
     const fallbackLink = document.createElement('a');
     fallbackLink.href = backendDownloadUrl;
     fallbackLink.download = fileName;
@@ -1187,7 +1251,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         setArticles(visibleArticles);
       }
 
-      setActiveResume(data.activeResume);
+      let finalActiveResume = data.activeResume;
+      try {
+        const localActive = localStorage.getItem('cms_custom_active_resume');
+        if (localActive) {
+          const parsed = JSON.parse(localActive);
+          if (parsed && (parsed.fileUrl?.startsWith('data:') || !finalActiveResume || (parsed.updatedAt && parsed.updatedAt > (finalActiveResume.updatedAt || '')))) {
+            finalActiveResume = parsed;
+          }
+        }
+      } catch (e) {}
+
+      setActiveResume(finalActiveResume);
       setProfile(data.profile);
 
       // Read URL Query Params for theme mode or section jump
@@ -1838,7 +1913,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
       {/* Hero Section */}
       {profile?.heroVisibility !== false && (
-      <section className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" id="hero">
+      <section 
+        className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" 
+        id="hero"
+        style={profile?.heroBackground ? {
+          backgroundImage: `linear-gradient(to bottom, rgba(3, 7, 18, 0.85), rgba(3, 7, 18, 0.95)), url("${profile.heroBackground}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        } : undefined}
+      >
         
         {theme?.heroBackground?.enabled && (
           <DynamicBackground bg={theme.heroBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />

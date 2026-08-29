@@ -1432,12 +1432,6 @@ function loadDatabase() {
       if (!db.profile) {
         db.profile = initialProfile;
         dirty = true;
-      } else {
-        if (db.profile.heroBadge === void 0) db.profile.heroBadge = initialProfile.heroBadge;
-        if (db.profile.heroName === void 0) db.profile.heroName = initialProfile.heroName;
-        if (db.profile.heroTitle === void 0) db.profile.heroTitle = initialProfile.heroTitle;
-        if (db.profile.heroSubtitle === void 0) db.profile.heroSubtitle = initialProfile.heroSubtitle;
-        if (db.profile.heroDescription === void 0) db.profile.heroDescription = initialProfile.heroDescription;
       }
       if (!db.technologies) {
         db.technologies = initialTechStack;
@@ -2926,6 +2920,9 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
   } else if (updated.shortIntroduction !== void 0) {
     db.profile.shortIntroduction = updated.shortIntroduction;
     db.profile.heroDescription = updated.shortIntroduction;
+  }
+  if (updated.heroVisibility !== void 0) {
+    db.profile.heroVisibility = updated.heroVisibility !== false;
   }
   db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   if (user) {

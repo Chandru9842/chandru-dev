@@ -118,12 +118,6 @@ function loadDatabase() {
       if (!db.profile) {
         db.profile = initialProfile;
         dirty = true;
-      } else {
-        if (db.profile.heroBadge === undefined) db.profile.heroBadge = initialProfile.heroBadge;
-        if (db.profile.heroName === undefined) db.profile.heroName = initialProfile.heroName;
-        if (db.profile.heroTitle === undefined) db.profile.heroTitle = initialProfile.heroTitle;
-        if (db.profile.heroSubtitle === undefined) db.profile.heroSubtitle = initialProfile.heroSubtitle;
-        if (db.profile.heroDescription === undefined) db.profile.heroDescription = initialProfile.heroDescription;
       }
       if (!db.technologies) {
         db.technologies = initialTechStack;
@@ -1726,6 +1720,10 @@ app.get(["/health", "/api/health"], (req, res) => {
     } else if (updated.shortIntroduction !== undefined) {
       db.profile.shortIntroduction = updated.shortIntroduction;
       db.profile.heroDescription = updated.shortIntroduction;
+    }
+
+    if (updated.heroVisibility !== undefined) {
+      db.profile.heroVisibility = updated.heroVisibility !== false;
     }
 
     db.profile.updatedAt = new Date().toISOString();

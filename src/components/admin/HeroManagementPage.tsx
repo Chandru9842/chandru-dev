@@ -66,6 +66,41 @@ const getJwtToken = () =>
   // Media picker modal target
   const [mediaModalTarget, setMediaModalTarget] = useState<'avatar' | 'background' | null>(null);
 
+  const normalizeHeroData = (raw: any): HeroProfileData => {
+    return {
+      id: raw?.id || 1,
+      heroBadge: raw?.heroBadge !== undefined ? raw.heroBadge : "Full Stack Java Developer",
+      professionalLabel: raw?.professionalLabel !== undefined ? raw.professionalLabel : "SYSTEMS ARCHITECT",
+      heroName: raw?.heroName !== undefined ? raw.heroName : (raw?.fullName || "CHANDRU M"),
+      fullName: raw?.fullName !== undefined ? raw.fullName : (raw?.heroName || "CHANDRU M"),
+      displayName: raw?.displayName || raw?.heroName || raw?.fullName || "Chandru Dev",
+      heroTitle: raw?.heroTitle !== undefined ? raw.heroTitle : (raw?.title || "PRINCIPAL SYSTEMS ARCHITECT"),
+      title: raw?.title !== undefined ? raw.title : (raw?.heroTitle || "PRINCIPAL SYSTEMS ARCHITECT"),
+      subtitle: raw?.subtitle || "",
+      shortBio: raw?.shortBio || "",
+      aboutDescription: raw?.aboutDescription || "",
+      heroSubtitle: raw?.heroSubtitle !== undefined ? raw.heroSubtitle : (raw?.shortTagline || "Java Full Stack Developer"),
+      shortTagline: raw?.shortTagline !== undefined ? raw.shortTagline : (raw?.heroSubtitle || "Java Full Stack Developer"),
+      heroDescription: raw?.heroDescription !== undefined ? raw.heroDescription : (raw?.shortIntroduction || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."),
+      shortIntroduction: raw?.shortIntroduction !== undefined ? raw.shortIntroduction : (raw?.heroDescription || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."),
+      primaryCtaText: raw?.primaryCtaText !== undefined ? raw.primaryCtaText : "Explore Engineering",
+      primaryCtaUrl: raw?.primaryCtaUrl !== undefined ? raw.primaryCtaUrl : "#projects",
+      secondaryCtaText: raw?.secondaryCtaText !== undefined ? raw.secondaryCtaText : "Get in Touch",
+      secondaryCtaUrl: raw?.secondaryCtaUrl !== undefined ? raw.secondaryCtaUrl : "#contact",
+      resumeDownloadText: raw?.resumeDownloadText !== undefined ? raw.resumeDownloadText : (raw?.downloadCtaText || "Download CV"),
+      statusBadgeText: raw?.statusBadgeText !== undefined ? raw.statusBadgeText : "Founder Online",
+      onlineStatus: raw?.onlineStatus !== undefined ? raw.onlineStatus : "Online",
+      versionText: raw?.versionText !== undefined ? raw.versionText : "Version 2.4.0",
+      updateText: raw?.updateText !== undefined ? raw.updateText : "Updated Recently",
+      typingText: raw?.typingText !== undefined ? raw.typingText : "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
+      highlightTags: raw?.highlightTags !== undefined ? raw.highlightTags : "",
+      heroVisibility: raw?.heroVisibility !== false,
+      heroAvatar: raw?.heroAvatar !== undefined ? raw.heroAvatar : "",
+      heroBackground: raw?.heroBackground !== undefined ? raw.heroBackground : "",
+      quickStats: raw?.quickStats !== undefined ? raw.quickStats : ""
+    };
+  };
+
   // Load hero and profile data
   const fetchHeroData = async () => {
     setLoading(true);
@@ -74,34 +109,7 @@ const getJwtToken = () =>
       const res = await fetch(`/api/profile?${cacheBuster}`);
       if (res.ok) {
         const raw: any = await res.json();
-        const data: HeroProfileData = {
-          ...raw,
-          heroBadge: raw.heroBadge ?? "Full Stack Java Developer",
-          professionalLabel: raw.professionalLabel ?? "SYSTEMS ARCHITECT",
-          heroName: raw.heroName ?? raw.fullName ?? "CHANDRU M",
-          fullName: raw.fullName ?? raw.heroName ?? "CHANDRU M",
-          heroTitle: raw.heroTitle ?? raw.title ?? "PRINCIPAL SYSTEMS ARCHITECT",
-          title: raw.title ?? raw.heroTitle ?? "PRINCIPAL SYSTEMS ARCHITECT",
-          heroSubtitle: raw.heroSubtitle ?? raw.shortTagline ?? "Java Full Stack Developer",
-          shortTagline: raw.shortTagline ?? raw.heroSubtitle ?? "Java Full Stack Developer",
-          heroDescription: raw.heroDescription ?? raw.shortIntroduction ?? "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-          shortIntroduction: raw.shortIntroduction ?? raw.heroDescription ?? "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-          primaryCtaText: raw.primaryCtaText ?? "Explore Engineering",
-          primaryCtaUrl: raw.primaryCtaUrl ?? "#projects",
-          secondaryCtaText: raw.secondaryCtaText ?? "Get in Touch",
-          secondaryCtaUrl: raw.secondaryCtaUrl ?? "#contact",
-          resumeDownloadText: raw.resumeDownloadText ?? raw.downloadCtaText ?? "Download CV",
-          statusBadgeText: raw.statusBadgeText ?? "Founder Online",
-          onlineStatus: raw.onlineStatus ?? "Online",
-          versionText: raw.versionText ?? "Version 2.4.0",
-          updateText: raw.updateText ?? "Updated Recently",
-          typingText: raw.typingText ?? "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
-          highlightTags: raw.highlightTags ?? "#CloudNative, #HighConcurrency, #ZeroDowntime",
-          heroVisibility: raw.heroVisibility !== false,
-          heroAvatar: raw.heroAvatar ?? raw.profileImage ?? "",
-          heroBackground: raw.heroBackground ?? "",
-          quickStats: raw.quickStats ?? "8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written"
-        };
+        const data = normalizeHeroData(raw);
 
         setProfile(data);
         setOriginalProfile(JSON.parse(JSON.stringify(data)));
@@ -109,14 +117,14 @@ const getJwtToken = () =>
         setCurrentHistoryIndex(0);
 
         // Parse quickStats (e.g. "8+ Years Exp | 50+ Projects Mapped")
-        if (data.quickStats) {
+        if (data.quickStats && data.quickStats.trim()) {
           const parsedStats = data.quickStats.split('|').map(item => {
             const parts = item.trim().split(' ');
             return {
               value: parts[0] || '',
               label: parts.slice(1).join(' ') || ''
             };
-          });
+          }).filter(s => s.value || s.label);
           setStats(parsedStats);
         } else {
           setStats([]);
@@ -137,7 +145,7 @@ const getJwtToken = () =>
 
   // Update history state
   const updateProfileWithHistory = (updated: HeroProfileData, updatedStatsList?: { value: string; label: string }[]) => {
-    const finalStatsList = updatedStatsList || stats;
+    const finalStatsList = updatedStatsList !== undefined ? updatedStatsList : stats;
     // Compile stats back into string
     const quickStatsString = finalStatsList
       .filter(s => s.value.trim() && s.label.trim())
@@ -147,10 +155,10 @@ const getJwtToken = () =>
     const finalProfile: HeroProfileData = {
       ...updated,
       quickStats: quickStatsString,
-      fullName: updated.heroName || updated.fullName || "",
-      title: updated.heroTitle || updated.title || "",
-      shortTagline: updated.heroSubtitle || updated.shortTagline || "",
-      shortIntroduction: updated.heroDescription || updated.shortIntroduction || ""
+      fullName: updated.heroName !== undefined ? updated.heroName : (updated.fullName || ""),
+      title: updated.heroTitle !== undefined ? updated.heroTitle : (updated.title || ""),
+      shortTagline: updated.heroSubtitle !== undefined ? updated.heroSubtitle : (updated.shortTagline || ""),
+      shortIntroduction: updated.heroDescription !== undefined ? updated.heroDescription : (updated.shortIntroduction || "")
     };
 
     setProfile(finalProfile);
@@ -307,10 +315,25 @@ if (!token) {
 
       if (res.ok) {
         const savedData = await res.json();
-        setProfile(savedData);
-        setOriginalProfile(JSON.parse(JSON.stringify(savedData)));
-        setHistory([JSON.parse(JSON.stringify(savedData))]);
+        const data = normalizeHeroData(savedData);
+        setProfile(data);
+        setOriginalProfile(JSON.parse(JSON.stringify(data)));
+        setHistory([JSON.parse(JSON.stringify(data))]);
         setCurrentHistoryIndex(0);
+
+        if (data.quickStats && data.quickStats.trim()) {
+          const parsedStats = data.quickStats.split('|').map(item => {
+            const parts = item.trim().split(' ');
+            return {
+              value: parts[0] || '',
+              label: parts.slice(1).join(' ') || ''
+            };
+          }).filter(s => s.value || s.label);
+          setStats(parsedStats);
+        } else {
+          setStats([]);
+        }
+
         onTriggerToast("Hero configuration successfully published to database!", "success");
         notifyCmsUpdate();
         if (onHeroUpdated) {
@@ -334,10 +357,10 @@ if (!token) {
 
     const token = getJwtToken();
 
-if (!token) {
-    onTriggerToast("Upload locked. Please unlock admin panel first.", "error");
-    return;
-}
+    if (!token) {
+      onTriggerToast("Upload locked. Please unlock admin panel first.", "error");
+      return;
+    }
 
     // Read file as base64 data URL
     const reader = new FileReader();
@@ -358,14 +381,18 @@ if (!token) {
 
         if (uploadRes.ok) {
           const resData = await uploadRes.json();
-          setProfile(resData.profile);
-          setOriginalProfile(JSON.parse(JSON.stringify(resData.profile)));
-          onTriggerToast(`Cloudinary ${type} upload complete and saved!`, "success");
+          const data = normalizeHeroData(resData.profile);
+          setProfile(data);
+          setOriginalProfile(JSON.parse(JSON.stringify(data)));
+          setHistory([JSON.parse(JSON.stringify(data))]);
+          setCurrentHistoryIndex(0);
+          onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
+          notifyCmsUpdate();
           if (onHeroUpdated) {
             onHeroUpdated();
           }
         } else {
-          onTriggerToast("Cloudinary gateway refused asset storage.", "error");
+          onTriggerToast("Server refused asset storage.", "error");
         }
       } catch (err) {
         onTriggerToast("Gateway error uploading image.", "error");
@@ -392,9 +419,13 @@ if (!token) {
 
       if (res.ok) {
         const resData = await res.json();
-        setProfile(resData.profile);
-        setOriginalProfile(JSON.parse(JSON.stringify(resData.profile)));
+        const data = normalizeHeroData(resData.profile);
+        setProfile(data);
+        setOriginalProfile(JSON.parse(JSON.stringify(data)));
+        setHistory([JSON.parse(JSON.stringify(data))]);
+        setCurrentHistoryIndex(0);
         onTriggerToast(`Removed Hero ${type} image successfully.`, "success");
+        notifyCmsUpdate();
         if (onHeroUpdated) {
           onHeroUpdated();
         }

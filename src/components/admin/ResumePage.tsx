@@ -85,7 +85,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
     };
   };
 
-  // Fetch resumes with cache buster
+  // Fetch resumes with cache buster and local document hydration
   const fetchResumes = async () => {
     setLoading(true);
     try {
@@ -94,7 +94,39 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       });
       if (res.ok) {
         const data = await res.json();
-        setResumes(Array.isArray(data) ? data : []);
+        let list: ResumeItem[] = Array.isArray(data) ? data : [];
+
+        // Merge local cache for base64 file attachments
+        try {
+          const cachedStr = localStorage.getItem('cms_resumes_cache');
+          if (cachedStr) {
+            const cachedList: ResumeItem[] = JSON.parse(cachedStr);
+            if (Array.isArray(cachedList)) {
+              list = list.map((item) => {
+                const match = cachedList.find(c => c.id === item.id || c.version === item.version);
+                if (match && match.fileUrl && match.fileUrl.startsWith('data:')) {
+                  return { ...item, fileUrl: match.fileUrl, fileName: match.fileName || item.fileName };
+                }
+                return item;
+              });
+
+              // Also include any new locally uploaded items not yet present
+              cachedList.forEach((cachedItem) => {
+                if (!list.some(l => l.id === cachedItem.id || l.version === cachedItem.version)) {
+                  list.push(cachedItem);
+                }
+              });
+            }
+          }
+        } catch (err) {}
+
+        setResumes(list);
+        const active = list.find(r => r.isActive);
+        if (active) {
+          try {
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(active));
+          } catch (e) {}
+        }
       } else {
         onTriggerToast('Failed to retrieve resume files.', 'error');
       }
@@ -243,7 +275,28 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       });
 
       if (res.ok) {
+        const savedData = await res.json();
         setUploadProgress(100);
+        
+        // Persist to local cache with full dataUrl for immediate availability
+        try {
+          const itemToCache: ResumeItem = {
+            ...savedData,
+            fileUrl: fileDataUrl,
+            fileName: uploadFile.name,
+            fileSize: uploadFile.size
+          };
+          const cachedStr = localStorage.getItem('cms_resumes_cache');
+          let cachedList: ResumeItem[] = cachedStr ? JSON.parse(cachedStr) : [];
+          cachedList = cachedList.filter(c => c.id !== itemToCache.id && c.version !== itemToCache.version);
+          if (itemToCache.isActive) {
+            cachedList.forEach(c => { c.isActive = false; });
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(itemToCache));
+          }
+          cachedList.unshift(itemToCache);
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+        } catch (e) {}
+
         onTriggerToast(`Uploaded version ${uploadVersion} successfully and published live.`, 'success');
         setIsUploadOpen(false);
         resetUploadForm();
@@ -328,7 +381,27 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       });
 
       if (res.ok) {
+        const savedData = await res.json();
         setReplaceProgress(100);
+        
+        try {
+          const itemToCache: ResumeItem = {
+            ...savedData,
+            fileUrl: fileDataUrl,
+            fileName: replaceFile.name,
+            fileSize: replaceFile.size
+          };
+          const cachedStr = localStorage.getItem('cms_resumes_cache');
+          let cachedList: ResumeItem[] = cachedStr ? JSON.parse(cachedStr) : [];
+          cachedList = cachedList.filter(c => c.id !== itemToCache.id && c.version !== itemToCache.version);
+          if (itemToCache.isActive) {
+            cachedList.forEach(c => { c.isActive = false; });
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(itemToCache));
+          }
+          cachedList.unshift(itemToCache);
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+        } catch (e) {}
+
         onTriggerToast(
           replaceMode === 'new_version'
             ? `Published new revision v${replaceVersion} replacing previous draft.`
@@ -395,6 +468,24 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       });
 
       if (res.ok) {
+        const savedData = await res.json();
+        try {
+          const itemToCache: ResumeItem = {
+            ...savedData,
+            fileUrl: fileDataUrl || selectedResume.fileUrl,
+            fileName: detectedName || selectedResume.fileName,
+            fileSize: detectedSize || selectedResume.fileSize
+          };
+          const cachedStr = localStorage.getItem('cms_resumes_cache');
+          let cachedList: ResumeItem[] = cachedStr ? JSON.parse(cachedStr) : [];
+          cachedList = cachedList.map(c => (c.id === itemToCache.id ? itemToCache : c));
+          if (itemToCache.isActive) {
+            cachedList.forEach(c => { if (c.id !== itemToCache.id) c.isActive = false; });
+            localStorage.setItem('cms_custom_active_resume', JSON.stringify(itemToCache));
+          }
+          localStorage.setItem('cms_resumes_cache', JSON.stringify(cachedList));
+        } catch (e) {}
+
         onTriggerToast(
           editFile 
             ? 'Updated resume details and replaced attached document successfully.' 
@@ -1698,24 +1789,74 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={`/api/resume/${previewModalResume.id}/download?fileName=${encodeURIComponent(previewModalResume.fileName)}&t=${Date.now()}`}
-                  download={previewModalResume.fileName}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!previewModalResume) return;
+                    const fileName = previewModalResume.fileName || 'Resume.pdf';
+                    if (previewModalResume.fileUrl && previewModalResume.fileUrl.startsWith('data:')) {
+                      try {
+                        const commaIndex = previewModalResume.fileUrl.indexOf(',');
+                        const base64Data = previewModalResume.fileUrl.substring(commaIndex + 1);
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                          byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: previewModalResume.fileType || 'application/pdf' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = fileName;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+                        onTriggerToast('Downloaded CV document successfully.', 'success');
+                        return;
+                      } catch (err) {}
+                    }
+                    const dlUrl = `/api/resume/${previewModalResume.id}/download?fileName=${encodeURIComponent(fileName)}&t=${Date.now()}`;
+                    window.open(dlUrl, '_blank');
+                  }}
                   className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Download</span>
-                </a>
+                </button>
 
-                <a
-                  href={`/api/resume/${previewModalResume.id}/file?t=${Date.now()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!previewModalResume) return;
+                    if (previewModalResume.fileUrl && previewModalResume.fileUrl.startsWith('data:')) {
+                      try {
+                        const commaIndex = previewModalResume.fileUrl.indexOf(',');
+                        const base64Data = previewModalResume.fileUrl.substring(commaIndex + 1);
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                          byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: previewModalResume.fileType || 'application/pdf' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        window.open(blobUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                      } catch (err) {}
+                    }
+                    const viewUrl = `/api/resume/${previewModalResume.id}/file?t=${Date.now()}`;
+                    window.open(viewUrl, '_blank', 'noopener,noreferrer');
+                  }}
                   className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors cursor-pointer"
                   title="Open in new window"
                 >
                   <ExternalLink className="w-4 h-4" />
-                </a>
+                </button>
 
                 <button
                   type="button"
@@ -1730,7 +1871,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
             {/* Live Document Viewer Iframe / Object */}
             <div className="flex-1 bg-slate-950 relative overflow-hidden flex flex-col items-center justify-center">
               <iframe
-                src={`/api/resume/${previewModalResume.id}/file?t=${Date.now()}#toolbar=1`}
+                src={previewModalResume.fileUrl && previewModalResume.fileUrl.startsWith('data:') ? `${previewModalResume.fileUrl}#toolbar=1` : `/api/resume/${previewModalResume.id}/file?t=${Date.now()}#toolbar=1`}
                 title={`Live Preview of ${previewModalResume.title}`}
                 className="w-full h-full border-0 bg-slate-900"
               />
