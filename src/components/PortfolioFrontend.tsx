@@ -1262,8 +1262,23 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         }
       } catch (e) {}
 
+      let finalProfile = data.profile;
+      try {
+        const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+        if (deletedStr) {
+          const deleted = JSON.parse(deletedStr);
+          if (deleted.heroBackground && finalProfile) finalProfile = { ...finalProfile, heroBackground: "" };
+          if (deleted.heroAvatar && finalProfile) finalProfile = { ...finalProfile, heroAvatar: "" };
+        }
+        const overridesStr = localStorage.getItem('cms_profile_overrides');
+        if (overridesStr && finalProfile) {
+          const overrides = JSON.parse(overridesStr);
+          finalProfile = { ...finalProfile, ...overrides };
+        }
+      } catch (e) {}
+
       setActiveResume(finalActiveResume);
-      setProfile(data.profile);
+      setProfile(finalProfile);
 
       // Read URL Query Params for theme mode or section jump
       const searchParams = new URLSearchParams(window.location.search);

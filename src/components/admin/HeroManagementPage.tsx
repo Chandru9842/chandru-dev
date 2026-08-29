@@ -109,7 +109,24 @@ const getJwtToken = () =>
       const res = await fetch(`/api/profile?${cacheBuster}`);
       if (res.ok) {
         const raw: any = await res.json();
-        const data = normalizeHeroData(raw);
+        let data = normalizeHeroData(raw);
+
+        // Check local storage overrides and deletions
+        try {
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          if (deletedStr) {
+            const deleted = JSON.parse(deletedStr);
+            if (deleted.heroBackground) data.heroBackground = "";
+            if (deleted.heroAvatar) data.heroAvatar = "";
+          }
+          const overridesStr = localStorage.getItem('cms_profile_overrides');
+          if (overridesStr) {
+            const overrides = JSON.parse(overridesStr);
+            data = { ...data, ...overrides };
+            if (overrides.heroBackground !== undefined) data.heroBackground = overrides.heroBackground;
+            if (overrides.heroAvatar !== undefined) data.heroAvatar = overrides.heroAvatar;
+          }
+        } catch (e) {}
 
         setProfile(data);
         setOriginalProfile(JSON.parse(JSON.stringify(data)));
@@ -321,6 +338,17 @@ if (!token) {
         setHistory([JSON.parse(JSON.stringify(data))]);
         setCurrentHistoryIndex(0);
 
+        try {
+          localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+          if (data.heroBackground) delete deleted.heroBackground;
+          else deleted.heroBackground = true;
+          if (data.heroAvatar) delete deleted.heroAvatar;
+          else deleted.heroAvatar = true;
+          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+        } catch (e) {}
+
         if (data.quickStats && data.quickStats.trim()) {
           const parsedStats = data.quickStats.split('|').map(item => {
             const parts = item.trim().split(' ');
@@ -386,6 +414,20 @@ if (!token) {
           setOriginalProfile(JSON.parse(JSON.stringify(data)));
           setHistory([JSON.parse(JSON.stringify(data))]);
           setCurrentHistoryIndex(0);
+
+          try {
+            const field = type === 'avatar' ? 'heroAvatar' : 'heroBackground';
+            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+            const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+            delete deleted[field];
+            localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+
+            const overridesStr = localStorage.getItem('cms_profile_overrides');
+            const overrides = overridesStr ? JSON.parse(overridesStr) : {};
+            overrides[field] = data[field];
+            localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
+          } catch (e) {}
+
           onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
           notifyCmsUpdate();
           if (onHeroUpdated) {
@@ -404,36 +446,50 @@ if (!token) {
   const handleDeleteImage = async (type: 'avatar' | 'background') => {
     if (!profile) return;
 
-    const token = getJwtToken();
+    // 1. Immediately update UI state
+    const field = type === 'avatar' ? 'heroAvatar' : 'heroBackground';
+    const updatedData: HeroProfileData = {
+      ...profile,
+      [field]: ""
+    };
+    setProfile(updatedData);
+    setOriginalProfile(JSON.parse(JSON.stringify(updatedData)));
+    setHistory([JSON.parse(JSON.stringify(updatedData))]);
+    setCurrentHistoryIndex(0);
 
-    if (!token) return;
-
+    // 2. Persist deletion in local storage trackers
     try {
-      const deleteRoute = `/api/profile/${type === 'avatar' ? 'hero-avatar' : 'hero-background'}`;
-      const res = await fetch(deleteRoute, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+      const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+      deleted[field] = true;
+      localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
 
-      if (res.ok) {
-        const resData = await res.json();
-        const data = normalizeHeroData(resData.profile);
-        setProfile(data);
-        setOriginalProfile(JSON.parse(JSON.stringify(data)));
-        setHistory([JSON.parse(JSON.stringify(data))]);
-        setCurrentHistoryIndex(0);
-        onTriggerToast(`Removed Hero ${type} image successfully.`, "success");
-        notifyCmsUpdate();
-        if (onHeroUpdated) {
-          onHeroUpdated();
-        }
-      } else {
-        onTriggerToast(`Failed to delete ${type} image.`, "error");
+      const overridesStr = localStorage.getItem('cms_profile_overrides');
+      const overrides = overridesStr ? JSON.parse(overridesStr) : {};
+      overrides[field] = "";
+      localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
+    } catch (e) {}
+
+    onTriggerToast(`Removed Hero ${type} image successfully.`, "success");
+    notifyCmsUpdate();
+    if (onHeroUpdated) {
+      onHeroUpdated();
+    }
+
+    // 3. Purge from backend API
+    const token = getJwtToken();
+    if (token) {
+      try {
+        const deleteRoute = `/api/profile/${type === 'avatar' ? 'hero-avatar' : 'hero-background'}`;
+        await fetch(deleteRoute, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.warn("Backend asset purge error:", err);
       }
-    } catch (err) {
-      onTriggerToast("Gateway error purging image asset.", "error");
     }
   };
 
@@ -976,11 +1032,20 @@ if (!token) {
         isOpen={mediaModalTarget !== null}
         onClose={() => setMediaModalTarget(null)}
         onSelectMedia={(media) => {
-          if (mediaModalTarget === 'avatar') {
-            updateProfileWithHistory({ ...profile, heroAvatar: media.url });
-          } else if (mediaModalTarget === 'background') {
-            updateProfileWithHistory({ ...profile, heroBackground: media.url });
-          }
+          const field = mediaModalTarget === 'avatar' ? 'heroAvatar' : 'heroBackground';
+          const updated = { ...profile, [field]: media.url };
+          updateProfileWithHistory(updated);
+          try {
+            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+            const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+            delete deleted[field];
+            localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+
+            const overridesStr = localStorage.getItem('cms_profile_overrides');
+            const overrides = overridesStr ? JSON.parse(overridesStr) : {};
+            overrides[field] = media.url;
+            localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
+          } catch (e) {}
           setMediaModalTarget(null);
           onTriggerToast(`Selected "${media.title}" from Media Library`, 'success');
         }}
