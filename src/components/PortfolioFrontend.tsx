@@ -1951,12 +1951,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             {/* Top Badges & Status Container */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 shrink-0">
               {/* Developer Badge */}
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-bold whitespace-nowrap">
-                  {profile?.heroBadge || "Full Stack Java Developer"}
-                </span>
-              </div>
+              {profile?.heroBadge && profile.heroBadge.trim() !== "" && (
+                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-bold whitespace-nowrap">
+                    {profile.heroBadge}
+                  </span>
+                </div>
+              )}
 
               {/* Dynamic Highlight Tags */}
               {profile?.highlightTags && profile.highlightTags.trim() && (
@@ -1977,7 +1979,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               )}
 
               {/* Optional Avatar & Online Status */}
-              {profile?.heroAvatar && (
+              {profile?.heroAvatar && profile.heroAvatar.trim() !== "" && (
                 <div className="inline-flex items-center gap-2 bg-slate-900/80 border border-white/[0.08] px-3 py-1 rounded-full shadow-sm">
                   <img
                     src={profile.heroAvatar}
@@ -1988,7 +1990,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <div className="text-left flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-                      {profile?.statusBadgeText || profile?.onlineStatus || "Founder Online"}
+                      {profile?.statusBadgeText || profile?.onlineStatus || "Online"}
                     </span>
                   </div>
                 </div>
@@ -1997,30 +1999,42 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
             {/* Name, Professional Eyebrow, Title & Subtitle */}
             <div className="flex flex-col gap-2 sm:gap-2.5 w-full">
-              <span className="text-[10px] sm:text-xs font-mono text-emerald-400/90 uppercase tracking-widest block font-bold">
-                {profile?.professionalLabel || "Systems Architect"}
-              </span>
+              {profile?.professionalLabel && profile.professionalLabel.trim() !== "" && (
+                <span className="text-[10px] sm:text-xs font-mono text-emerald-400/90 uppercase tracking-widest block font-bold">
+                  {profile.professionalLabel}
+                </span>
+              )}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">
-                {profile?.heroName || profile?.fullName || "Chandru M"}
+                {profile?.heroName || profile?.fullName || "CHANDRU M"}
               </h1>
-              <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
-                {profile?.heroTitle || profile?.title || "Principal Systems Architect"}
-              </p>
-              <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug flex flex-wrap items-center gap-1.5 justify-center lg:justify-start">
-                <span>{profile?.heroSubtitle || profile?.shortTagline || "Ecosystem Architect & Product Pioneer"}</span>
-                {profile?.typingText && (
-                  <>
-                    <span className="text-slate-600 hidden sm:inline">•</span>
-                    <HeroTypewriter wordsString={profile.typingText} />
-                  </>
-                )}
-              </h2>
+              {(profile?.heroTitle || profile?.title) && (
+                <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
+                  {profile?.heroTitle || profile?.title}
+                </p>
+              )}
+              {(profile?.heroSubtitle || profile?.shortTagline || profile?.typingText) && (
+                <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug flex flex-wrap items-center gap-1.5 justify-center lg:justify-start">
+                  {(profile?.heroSubtitle || profile?.shortTagline) && (
+                    <span>{profile?.heroSubtitle || profile?.shortTagline}</span>
+                  )}
+                  {profile?.typingText && (
+                    <>
+                      {(profile?.heroSubtitle || profile?.shortTagline) && (
+                        <span className="text-slate-600 hidden sm:inline">•</span>
+                      )}
+                      <HeroTypewriter wordsString={profile.typingText} />
+                    </>
+                  )}
+                </h2>
+              )}
             </div>
 
             {/* Short Introduction */}
-            <p className="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
-              {profile?.heroDescription || profile?.shortIntroduction || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."}
-            </p>
+            {(profile?.heroDescription || profile?.shortIntroduction) && (
+              <p className="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
+                {profile?.heroDescription || profile?.shortIntroduction}
+              </p>
+            )}
 
             {/* Primary Buttons */}
             <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-1 sm:pt-2 w-full">
