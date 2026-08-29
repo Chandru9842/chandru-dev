@@ -530,6 +530,49 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
 
+  const projectHoverTimeoutRef = React.useRef<any>(null);
+  const articleHoverTimeoutRef = React.useRef<any>(null);
+
+  const handleProjectMouseEnter = () => {
+    setIsProjectHovered(true);
+    if (projectHoverTimeoutRef.current) clearTimeout(projectHoverTimeoutRef.current);
+    projectHoverTimeoutRef.current = setTimeout(() => {
+      setIsProjectHovered(false);
+    }, 6000); // Automatically resume after 6s of inactivity
+  };
+
+  const handleProjectMouseLeave = () => {
+    if (projectHoverTimeoutRef.current) clearTimeout(projectHoverTimeoutRef.current);
+    setIsProjectHovered(false);
+  };
+
+  const handleArticleMouseEnter = () => {
+    setIsArticleHovered(true);
+    if (articleHoverTimeoutRef.current) clearTimeout(articleHoverTimeoutRef.current);
+    articleHoverTimeoutRef.current = setTimeout(() => {
+      setIsArticleHovered(false);
+    }, 6000); // Automatically resume after 6s of inactivity
+  };
+
+  const handleArticleMouseLeave = () => {
+    if (articleHoverTimeoutRef.current) clearTimeout(articleHoverTimeoutRef.current);
+    setIsArticleHovered(false);
+  };
+
+  // Auto-reset hover states on window scroll / touch interaction to prevent permanent pause locks
+  useEffect(() => {
+    const handleResetHover = () => {
+      setIsProjectHovered(false);
+      setIsArticleHovered(false);
+    };
+    window.addEventListener('scroll', handleResetHover, { passive: true });
+    window.addEventListener('touchstart', handleResetHover, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleResetHover);
+      window.removeEventListener('touchstart', handleResetHover);
+    };
+  }, []);
+
   const handleToggleSound = () => {
     const newMuted = soundFx.toggleMute();
     setIsSoundMuted(newMuted);
@@ -2798,8 +2841,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                   return (
                     <div
-                      onMouseEnter={() => setIsProjectHovered(true)}
-                      onMouseLeave={() => setIsProjectHovered(false)}
+                      onMouseEnter={handleProjectMouseEnter}
+                      onMouseLeave={handleProjectMouseLeave}
                       className="relative"
                     >
                       <AnimatePresence mode="wait">
@@ -2977,9 +3020,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       Click to jump to any project subsystem:
                     </span>
                     {isProjectHovered && (
-                      <span className="text-[10px] font-mono text-amber-400/80 flex items-center gap-1">
-                        <Pause className="w-3 h-3" /> Autoplay Paused (Hovering)
-                      </span>
+                      <button
+                        onClick={() => setIsProjectHovered(false)}
+                        className="text-[10px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Click to resume autoplay rotation"
+                      >
+                        <Pause className="w-3 h-3" /> Autoplay Paused (Click to Resume)
+                      </button>
                     )}
                   </div>
 
@@ -3304,8 +3351,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                     return (
                       <div
-                        onMouseEnter={() => setIsArticleHovered(true)}
-                        onMouseLeave={() => setIsArticleHovered(false)}
+                        onMouseEnter={handleArticleMouseEnter}
+                        onMouseLeave={handleArticleMouseLeave}
                         className="relative"
                       >
                         <AnimatePresence mode="wait">
@@ -3456,9 +3503,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         Click to jump to any engineering publication:
                       </span>
                       {isArticleHovered && (
-                        <span className="text-[10px] font-mono text-amber-400/80 flex items-center gap-1">
-                          <Pause className="w-3 h-3" /> Autoplay Paused (Hovering)
-                        </span>
+                        <button
+                          onClick={() => setIsArticleHovered(false)}
+                          className="text-[10px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Click to resume autoplay rotation"
+                        >
+                          <Pause className="w-3 h-3" /> Autoplay Paused (Click to Resume)
+                        </button>
                       )}
                     </div>
 
