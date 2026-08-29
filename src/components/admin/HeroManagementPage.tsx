@@ -73,18 +73,18 @@ const getJwtToken = () =>
       id: raw?.id || 1,
       heroBadge: raw?.heroBadge !== undefined ? raw.heroBadge : "",
       professionalLabel: raw?.professionalLabel !== undefined ? raw.professionalLabel : "",
-      heroName: raw?.heroName !== undefined ? raw.heroName : (raw?.fullName || "CHANDRU M"),
-      fullName: raw?.fullName !== undefined ? raw.fullName : (raw?.heroName || "CHANDRU M"),
+      heroName: raw?.heroName !== undefined ? raw.heroName : (raw?.fullName !== undefined ? raw.fullName : "CHANDRU M"),
+      fullName: raw?.fullName !== undefined ? raw.fullName : (raw?.heroName !== undefined ? raw.heroName : "CHANDRU M"),
       displayName: raw?.displayName || raw?.heroName || raw?.fullName || "Chandru Dev",
-      heroTitle: raw?.heroTitle !== undefined ? raw.heroTitle : (raw?.title || ""),
-      title: raw?.title !== undefined ? raw.title : (raw?.heroTitle || ""),
+      heroTitle: raw?.heroTitle !== undefined ? raw.heroTitle : (raw?.title !== undefined ? raw.title : ""),
+      title: raw?.title !== undefined ? raw.title : (raw?.heroTitle !== undefined ? raw.heroTitle : ""),
       subtitle: raw?.subtitle || "",
       shortBio: raw?.shortBio || "",
       aboutDescription: raw?.aboutDescription || "",
-      heroSubtitle: raw?.heroSubtitle !== undefined ? raw.heroSubtitle : (raw?.shortTagline || ""),
-      shortTagline: raw?.shortTagline !== undefined ? raw.shortTagline : (raw?.heroSubtitle || ""),
-      heroDescription: raw?.heroDescription !== undefined ? raw.heroDescription : (raw?.shortIntroduction || ""),
-      shortIntroduction: raw?.shortIntroduction !== undefined ? raw.shortIntroduction : (raw?.heroDescription || ""),
+      heroSubtitle: raw?.heroSubtitle !== undefined ? raw.heroSubtitle : (raw?.shortTagline !== undefined ? raw.shortTagline : ""),
+      shortTagline: raw?.shortTagline !== undefined ? raw.shortTagline : (raw?.heroSubtitle !== undefined ? raw.heroSubtitle : ""),
+      heroDescription: raw?.heroDescription !== undefined ? raw.heroDescription : (raw?.shortIntroduction !== undefined ? raw.shortIntroduction : ""),
+      shortIntroduction: raw?.shortIntroduction !== undefined ? raw.shortIntroduction : (raw?.heroDescription !== undefined ? raw.heroDescription : ""),
       primaryCtaText: raw?.primaryCtaText !== undefined ? raw.primaryCtaText : "Explore Engineering",
       primaryCtaUrl: raw?.primaryCtaUrl !== undefined ? raw.primaryCtaUrl : "#projects",
       secondaryCtaText: raw?.secondaryCtaText !== undefined ? raw.secondaryCtaText : "Get in Touch",
@@ -92,8 +92,8 @@ const getJwtToken = () =>
       resumeDownloadText: raw?.resumeDownloadText !== undefined ? raw.resumeDownloadText : (raw?.downloadCtaText || "Download CV"),
       statusBadgeText: raw?.statusBadgeText !== undefined ? raw.statusBadgeText : "",
       onlineStatus: raw?.onlineStatus !== undefined ? raw.onlineStatus : "Online",
-      versionText: raw?.versionText !== undefined ? raw.versionText : "Version 2.4.0",
-      updateText: raw?.updateText !== undefined ? raw.updateText : "Updated Recently",
+      versionText: raw?.versionText !== undefined ? raw.versionText : "",
+      updateText: raw?.updateText !== undefined ? raw.updateText : "",
       typingText: raw?.typingText !== undefined ? raw.typingText : "",
       highlightTags: raw?.highlightTags !== undefined ? raw.highlightTags : "",
       heroVisibility: raw?.heroVisibility !== false,
@@ -110,7 +110,20 @@ const getJwtToken = () =>
       const cacheBuster = `t=${Date.now()}`;
       const res = await fetch(`/api/profile?${cacheBuster}`);
       if (res.ok) {
-        const raw: any = await res.json();
+        let raw: any = await res.json();
+        try {
+          const overridesStr = localStorage.getItem('cms_profile_overrides');
+          if (overridesStr) {
+            const overrides = JSON.parse(overridesStr);
+            raw = { ...raw, ...overrides };
+          }
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          if (deletedStr) {
+            const deleted = JSON.parse(deletedStr);
+            if (deleted.heroBackground) raw.heroBackground = "";
+            if (deleted.heroAvatar) raw.heroAvatar = "";
+          }
+        } catch (e) {}
         const data = normalizeHeroData(raw);
 
         setProfile(data);
@@ -1005,6 +1018,75 @@ const getJwtToken = () =>
         </div>
 
       </div>
+
+      {/* Bottom Save / Publish Action Bar */}
+      <div className="bg-slate-900/40 border border-slate-900 p-5 rounded-3xl backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+          <span className={`w-2 h-2 rounded-full ${isDirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+          <span>{isDirty ? 'Unsaved Hero modifications detected' : 'Hero settings synchronized with live portfolio'}</span>
+        </div>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={handleResetToBaseline}
+            className="px-4 py-2 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex-1 sm:flex-none"
+          >
+            Reset Defaults
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveHero}
+            disabled={!isDirty || saving}
+            className={`px-6 py-2.5 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-none ${
+              isDirty 
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20' 
+                : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            {saving ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Publishing Live...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5" />
+                <span>Publish Live Changes</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Sticky Floating Save Bar when changes are made */}
+      {isDirty && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-slate-900/95 border border-emerald-500/50 backdrop-blur-xl p-3.5 rounded-2xl shadow-2xl shadow-emerald-500/20 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-mono text-white font-bold">Unsaved Hero Changes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleResetToBaseline}
+                className="px-3 py-1.5 border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 text-xs font-mono rounded-xl transition cursor-pointer"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleSaveHero}
+                disabled={saving}
+                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                <span>Publish Live</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Media Picker Modal */}
       <MediaLibraryModal
