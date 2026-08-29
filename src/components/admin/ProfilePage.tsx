@@ -2464,82 +2464,67 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
             </div>
           )}
 
-          {/* 5. SECURITY & AUTOSAVE */}
-          {activeSubTab === 'security' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-                <Shield className="w-4.5 h-4.5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-mono">Administrative Integrity & Backup Loops</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Autosave Switcher Card */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-5 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Autosave Engine Loop</h4>
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">Commit modifications silently to local memory buffers or secure APIs.</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        checked={isAutosaveEnabled}
-                        onChange={(e) => setIsAutosaveEnabled(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:bg-slate-950 peer-checked:bg-emerald-500"></div>
-                    </label>
-                  </div>
-
-                  <div className="bg-slate-950/80 border border-slate-900 rounded-xl p-3 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>Engine Pulse Status:</span>
-                    <span className={isAutosaveEnabled ? 'text-emerald-400 font-bold' : 'text-slate-600'}>
-                      {isAutosaveEnabled ? '● ACTIVE POLLING' : 'OFFLINE'}
-                    </span>
-                  </div>
-
-                  {isAutosaveEnabled && lastAutosavedTime && (
-                    <p className="text-[10px] text-emerald-400/80 font-mono flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Last automated background sync: {lastAutosavedTime}</span>
-                    </p>
-                  )}
-                </div>
-
-                {/* Undo changes details */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-5 space-y-3 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold font-mono text-slate-200 font-bold">State Histology Stack</h4>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">The application keeps track of your draft states. You can traverse back in time.</p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleUndo}
-                      disabled={currentHistoryIndex <= 0}
-                      className="px-3 py-1.5 border border-slate-800 bg-slate-900 text-slate-300 hover:text-slate-100 disabled:opacity-35 disabled:hover:bg-slate-900 rounded-lg text-xs font-mono transition cursor-pointer flex-1"
-                    >
-                      Undo Action
-                    </button>
-                    <button
-                      onClick={handleRedo}
-                      disabled={currentHistoryIndex >= history.length - 1}
-                      className="px-3 py-1.5 border border-slate-800 bg-slate-900 text-slate-300 hover:text-slate-100 disabled:opacity-35 disabled:hover:bg-slate-900 rounded-lg text-xs font-mono transition cursor-pointer flex-1"
-                    >
-                      Redo Action
-                    </button>
-                  </div>
-
-                  <p className="text-[9px] text-slate-500 font-mono text-center">
-                    Current Position: {currentHistoryIndex + 1} / {history.length} states stacked
-                  </p>
-                </div>
-
-              </div>
+          {/* Bottom Save / Publish Action Bar inside the card container */}
+          <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span className={`w-2 h-2 rounded-full ${isProfileDirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
+              <span>{isProfileDirty ? 'Unsaved draft modifications detected' : 'Profile synchronized with live portfolio'}</span>
             </div>
-          )}
 
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={!isProfileDirty}
+                className="px-4 py-2 border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-slate-200 disabled:opacity-40 text-xs font-mono rounded-xl transition cursor-pointer flex-1 sm:flex-none"
+              >
+                Discard Changes
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSaveProfile(false)}
+                disabled={saving}
+                className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-none"
+              >
+                {saving ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>Publish Live Changes</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* Sticky Floating Save Bar when changes are made */}
+      {isProfileDirty && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-slate-900/95 border border-emerald-500/50 backdrop-blur-xl p-3.5 rounded-2xl shadow-2xl shadow-emerald-500/20 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-xs font-mono text-white font-bold">Unpublished Changes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleReset}
+                className="px-3 py-1.5 border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 text-xs font-mono rounded-xl transition cursor-pointer"
+              >
+                Discard
+              </button>
+              <button
+                onClick={() => handleSaveProfile(false)}
+                disabled={saving}
+                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                <span>Publish Live</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
