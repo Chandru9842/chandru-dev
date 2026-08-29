@@ -236,8 +236,8 @@
     }
   ],
   "analytics": {
-    "pageViews": 12450,
-    "uniqueVisitors": 4120,
+    "pageViews": 12453,
+    "uniqueVisitors": 4121,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
     "viewsHistory": [
@@ -275,6 +275,11 @@
         "date": "Jul 09",
         "views": 2350,
         "visitors": 870
+      },
+      {
+        "date": "Aug 30",
+        "views": 3,
+        "visitors": 1
       }
     ],
     "referrals": [
@@ -290,7 +295,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 2180,
+        "count": 2183,
         "percentage": 17.5
       },
       {
@@ -311,7 +316,7 @@
       },
       {
         "country": "India",
-        "count": 2120
+        "count": 2123
       },
       {
         "country": "Germany",
@@ -333,7 +338,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7450
+        "count": 7453
       },
       {
         "browser": "Safari",
@@ -355,7 +360,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 8590
+        "count": 8593
       },
       {
         "device": "Mobile",
@@ -564,7 +569,7 @@
     "fullName": "Chandru Mohan",
     "displayName": "Chandru Dev",
     "title": "Principal Systems Architect",
-    "subtitle": "Designing high-throughput distributed architectures & interactive visual frameworks.",
+    "subtitle": "Interactive Portfolio",
     "typingText": "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
     "shortBio": "Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
     "aboutDescription": "With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
@@ -626,7 +631,11 @@
     "codeforcesUrl": "https://codeforces.com/profile/username",
     "portfolioUrl": "https://example.com",
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-07-09T04:40:00.000Z"
+    "updatedAt": "2026-08-29T19:15:39.732Z",
+    "username": "chandru",
+    "phoneNumber": "+919655384140",
+    "backupEmail": "",
+    "recoveryPhoneNumber": ""
   },
   "themeSettings": {
     "id": 1,
@@ -1442,19 +1451,240 @@
       "id": 1,
       "name": "Chandru Mohan",
       "email": "chandrumohan550@gmail.com",
-      "passwordHash": "$2b$10$dN9yHc53KeJ9VCkEuyPB4.wHUEljCd2zOL9ZsPVhbJBprDzVB5Lrm",
+      "passwordHash": "$2b$10$iPvgmSSd0byRxxlqU896A./Ro9itQIwDe2h/lH5RKR4/xywNGFk4S",
       "role": "ROLE_ADMIN",
       "createdAt": "2026-08-29T18:43:56.816Z",
-      "updatedAt": "2026-08-29T18:43:56.816Z",
-      "lastLogin": null,
+      "updatedAt": "2026-08-29T19:15:39.732Z",
+      "lastLogin": "2026-08-29T19:10:33.450Z",
       "isActive": true,
       "failedAttempts": 0,
-      "lockUntil": null
+      "lockUntil": null,
+      "phoneNumber": "+91 9655384140",
+      "username": "chandru",
+      "backupEmail": "",
+      "recoveryPhoneNumber": ""
     }
   ],
-  "auditLogs": [],
-  "activityHistory": [],
-  "refreshTokens": [],
+  "auditLogs": [
+    {
+      "id": 1,
+      "createdAt": "2026-08-29T19:08:40.011Z",
+      "action": "LOGIN_FAILED",
+      "email": "admin@college.edu4723104029",
+      "success": false,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "details": "User not found"
+    },
+    {
+      "id": 2,
+      "createdAt": "2026-08-29T19:10:33.450Z",
+      "action": "DIRECT_LOGIN_SUCCESS",
+      "email": "chandrumohan550@gmail.com",
+      "success": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "details": "Successfully logged in directly as ROLE_ADMIN"
+    }
+  ],
+  "activityHistory": [
+    {
+      "id": 1,
+      "action": "Login Failed",
+      "module": "Authentication",
+      "description": "Unregistered user attempt with identifier: admin@college.edu4723104029",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "admin@college.edu4723104029",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "New York, USA",
+      "status": "ERROR",
+      "createdAt": "2026-08-29T19:08:40.013Z"
+    },
+    {
+      "id": 2,
+      "action": "Login Success",
+      "module": "Authentication",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "oldValue": null,
+      "newValue": null,
+      "performedBy": "chandrumohan550@gmail.com",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "New York, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-29T19:10:33.451Z"
+    },
+    {
+      "id": 3,
+      "action": "Profile Updated",
+      "module": "Profile",
+      "description": "Founder updated profile and hero presentation details.",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"\",\"heroAvatar\":\"\",\"heroBadge\":\"Full Stack Java Developer\",\"heroName\":\"CHANDRU M\",\"heroTitle\":\"PRINCIPAL SYSTEMS ARCHITECT\",\"heroSubtitle\":\"Java Full Stack Developer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"fullName\":\"Chandru Mohan\",\"displayName\":\"Chandru Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Designing high-throughput distributed architectures & interactive visual frameworks.\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"shortTagline\":\"Ecosystem Architect & Product Pioneer\",\"shortIntroduction\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"biography\":\"I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.\",\"careerObjective\":\"To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.\",\"aboutHeading\":\"A Journey of Technical Rigor & Aesthetic Execution\",\"experienceSummary\":\"Crafting Clean Systems & Interactive Developer Tools\",\"skillsSummary\":\"Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation\",\"quickStats\":\"8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written\",\"seoTitle\":\"Chandru Mohan | Principal Systems Architect & Portfolio\",\"seoDescription\":\"The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.\",\"seoKeywords\":\"Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard\",\"primaryCtaText\":\"Explore Engineering\",\"primaryCtaUrl\":\"#projects\",\"primaryCtaIcon\":\"ChevronRight\",\"primaryCtaVisible\":true,\"secondaryCtaText\":\"Get in Touch\",\"secondaryCtaUrl\":\"#contact\",\"secondaryCtaIcon\":\"Mail\",\"secondaryCtaVisible\":true,\"resumeCtaText\":\"View Resume\",\"resumeCtaVisible\":true,\"downloadCtaText\":\"Download CV\",\"downloadCtaVisible\":true,\"versionText\":\"Version 2.4.0\",\"updateText\":\"Updated Recently\",\"floatingIconsVisible\":true,\"heroVisibility\":true,\"contactHeading\":\"Let's coordinate on new paradigms\",\"contactDescription\":\"Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry.\",\"contactSectionVisible\":true,\"apiStatusCardVisible\":true,\"apiStatusText\":\"REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED\",\"dynamicChannelsVisible\":true,\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"+91 9655384140\",\"whatsapp\":\"+91 9655384140\",\"resumeUrl\":\"/api/resume/download\",\"resumeDownloadText\":\"Download CV\",\"onlineStatus\":\"Online\",\"location\":\"Bengaluru, India\",\"country\":\"India\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1998-04-09\",\"resumeId\":1,\"githubUrl\":\"https://github.com/Chandru9842\",\"linkedinUrl\":\"https://www.linkedin.com/in/chandru9842/\",\"instagramUrl\":\"https://instagram.com/chandru_kmn\",\"twitterUrl\":\"https://x.com/chandru_kmn\",\"youtubeUrl\":\"https://youtube.com\",\"leetcodeUrl\":\"https://leetcode.com/username\",\"hackerrankUrl\":\"https://hackerrank.com/username\",\"codechefUrl\":\"https://codechef.com/users/username\",\"codeforcesUrl\":\"https://codeforces.com/profile/username\",\"portfolioUrl\":\"https://example.com\",\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-07-09T04:40:00.000Z\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"\",\"heroAvatar\":\"\",\"heroBadge\":\"Full Stack Java Developer\",\"heroName\":\"CHANDRU M\",\"heroTitle\":\"PRINCIPAL SYSTEMS ARCHITECT\",\"heroSubtitle\":\"Java Full Stack Developer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"fullName\":\"Chandru Mohan\",\"displayName\":\"Chandru Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Interactive Portfolio\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"shortTagline\":\"Ecosystem Architect & Product Pioneer\",\"shortIntroduction\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"biography\":\"I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.\",\"careerObjective\":\"To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.\",\"aboutHeading\":\"A Journey of Technical Rigor & Aesthetic Execution\",\"experienceSummary\":\"Crafting Clean Systems & Interactive Developer Tools\",\"skillsSummary\":\"Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation\",\"quickStats\":\"8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written\",\"seoTitle\":\"Chandru Mohan | Principal Systems Architect & Portfolio\",\"seoDescription\":\"The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.\",\"seoKeywords\":\"Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard\",\"primaryCtaText\":\"Explore Engineering\",\"primaryCtaUrl\":\"#projects\",\"primaryCtaIcon\":\"ChevronRight\",\"primaryCtaVisible\":true,\"secondaryCtaText\":\"Get in Touch\",\"secondaryCtaUrl\":\"#contact\",\"secondaryCtaIcon\":\"Mail\",\"secondaryCtaVisible\":true,\"resumeCtaText\":\"View Resume\",\"resumeCtaVisible\":true,\"downloadCtaText\":\"Download CV\",\"downloadCtaVisible\":true,\"versionText\":\"Version 2.4.0\",\"updateText\":\"Updated Recently\",\"floatingIconsVisible\":true,\"heroVisibility\":true,\"contactHeading\":\"Let's coordinate on new paradigms\",\"contactDescription\":\"Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry.\",\"contactSectionVisible\":true,\"apiStatusCardVisible\":true,\"apiStatusText\":\"REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED\",\"dynamicChannelsVisible\":true,\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"+91 9655384140\",\"whatsapp\":\"+91 9655384140\",\"resumeUrl\":\"/api/resume/download\",\"resumeDownloadText\":\"Download CV\",\"onlineStatus\":\"Online\",\"location\":\"Bengaluru, India\",\"country\":\"India\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1998-04-09\",\"resumeId\":1,\"githubUrl\":\"https://github.com/Chandru9842\",\"linkedinUrl\":\"https://www.linkedin.com/in/chandru9842/\",\"instagramUrl\":\"https://instagram.com/chandru_kmn\",\"twitterUrl\":\"https://x.com/chandru_kmn\",\"youtubeUrl\":\"https://youtube.com\",\"leetcodeUrl\":\"https://leetcode.com/username\",\"hackerrankUrl\":\"https://hackerrank.com/username\",\"codechefUrl\":\"https://codechef.com/users/username\",\"codeforcesUrl\":\"https://codeforces.com/profile/username\",\"portfolioUrl\":\"https://example.com\",\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-29T19:15:39.732Z\",\"username\":\"chandru\",\"phoneNumber\":\"+919655384140\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\"}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-29T19:15:39.752Z"
+    }
+  ],
+  "refreshTokens": [
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODgwMzA2MzMsImV4cCI6MTc4ODYzNTQzM30.ogZ_XtdRDSNTdz40-1FaQDG3igeTvL6oEc1qKtrDX6c",
+      "userId": 1,
+      "createdAt": "2026-08-29T19:10:33.450Z",
+      "expiresAt": "2026-09-05T19:10:33.450Z"
+    }
+  ],
   "otps": [],
-  "codingProfiles": []
+  "codingProfiles": [],
+  "notifications": [
+    {
+      "id": "evt-1788030939753-854",
+      "eventId": "EVT-1788030939753",
+      "module": "Profile",
+      "action": "Profile Updated",
+      "title": "Profile Updated",
+      "description": "Founder updated profile and hero presentation details.",
+      "message": "Founder updated profile and hero presentation details.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-08-29T19:15:39.753Z",
+      "createdAt": "2026-08-29T19:15:39.753Z",
+      "severity": "Success",
+      "category": "Profile",
+      "type": "PROFILE",
+      "icon": "User",
+      "color": "#8b5cf6",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "California, USA"
+      }
+    },
+    {
+      "id": "evt-1788030633451-103",
+      "eventId": "EVT-1788030633451",
+      "module": "Authentication",
+      "action": "Login Success",
+      "title": "Login Success",
+      "description": "Administrative session initialized. Timeout: Never.",
+      "message": "Administrative session initialized. Timeout: Never.",
+      "performedBy": "chandrumohan550@gmail.com",
+      "timestamp": "2026-08-29T19:10:33.451Z",
+      "createdAt": "2026-08-29T19:10:33.451Z",
+      "severity": "Success",
+      "category": "Security",
+      "type": "SECURITY",
+      "icon": "ShieldAlert",
+      "color": "#eab308",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "New York, USA"
+      }
+    },
+    {
+      "id": "evt-1788030520024-359",
+      "eventId": "EVT-1788030520024",
+      "module": "Authentication",
+      "action": "Login Failed",
+      "title": "Login Failed",
+      "description": "Unregistered user attempt with identifier: admin@college.edu4723104029",
+      "message": "Unregistered user attempt with identifier: admin@college.edu4723104029",
+      "performedBy": "admin@college.edu4723104029",
+      "timestamp": "2026-08-29T19:08:40.024Z",
+      "createdAt": "2026-08-29T19:08:40.024Z",
+      "severity": "Error",
+      "category": "Security",
+      "type": "SECURITY",
+      "icon": "ShieldAlert",
+      "color": "#ef4444",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "New York, USA"
+      }
+    }
+  ],
+  "loginHistory": [
+    {
+      "id": 1,
+      "eventType": "Login Failed",
+      "username": "admin@college.edu4723104029",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "FAILURE",
+      "details": "Identifier not found in register.",
+      "date": "30/8/2026",
+      "time": "12:38:40 am",
+      "createdAt": "2026-08-29T19:08:40.027Z"
+    },
+    {
+      "id": 2,
+      "eventType": "Login",
+      "username": "chandru",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "status": "SUCCESS",
+      "details": "Direct credentials verification success. Timeout: Never.",
+      "date": "30/8/2026",
+      "time": "12:40:33 am",
+      "createdAt": "2026-08-29T19:10:33.451Z"
+    }
+  ],
+  "notificationSettings": {
+    "toastAlerts": true,
+    "soundEnabled": false,
+    "emailAlertsOnCritical": true,
+    "desktopAlerts": false,
+    "retentionDays": 60,
+    "enabledCategories": [
+      "Projects",
+      "Profile",
+      "Media",
+      "Security",
+      "System",
+      "Deployment",
+      "Email",
+      "Tasks",
+      "Announcements"
+    ]
+  }
 }

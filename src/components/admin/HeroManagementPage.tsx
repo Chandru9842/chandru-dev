@@ -324,8 +324,16 @@ const getJwtToken = () =>
         setHistory([JSON.parse(JSON.stringify(data))]);
         setCurrentHistoryIndex(0);
 
-        localStorage.removeItem('cms_profile_overrides');
-        localStorage.removeItem('cms_deleted_hero_assets');
+        try {
+          localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+          if (data.heroBackground === "") deleted.heroBackground = true;
+          else delete deleted.heroBackground;
+          if (data.heroAvatar === "") deleted.heroAvatar = true;
+          else delete deleted.heroAvatar;
+          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+        } catch (e) {}
 
         if (data.quickStats && data.quickStats.trim()) {
           const parsedStats = data.quickStats.split('|').map(item => {
@@ -394,8 +402,13 @@ const getJwtToken = () =>
           setHistory([JSON.parse(JSON.stringify(data))]);
           setCurrentHistoryIndex(0);
 
-          localStorage.removeItem('cms_profile_overrides');
-          localStorage.removeItem('cms_deleted_hero_assets');
+          try {
+            localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
+            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+            const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+            delete deleted[type === 'avatar' ? 'heroAvatar' : 'heroBackground'];
+            localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+          } catch (e) {}
 
           onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
           notifyCmsUpdate();
@@ -427,8 +440,13 @@ const getJwtToken = () =>
     setHistory([JSON.parse(JSON.stringify(updatedData))]);
     setCurrentHistoryIndex(0);
 
-    localStorage.removeItem('cms_profile_overrides');
-    localStorage.removeItem('cms_deleted_hero_assets');
+    try {
+      localStorage.setItem('cms_profile_overrides', JSON.stringify(updatedData));
+      const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+      const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+      deleted[field] = true;
+      localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+    } catch (e) {}
 
     // 2. Purge from backend API
     const token = getJwtToken();

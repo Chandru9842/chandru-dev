@@ -1400,7 +1400,23 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         }
       } catch (e) {}
 
-      const finalProfile = data.profile || initialProfile;
+      let finalProfile = data.profile || initialProfile;
+      try {
+        const localOverrides = localStorage.getItem('cms_profile_overrides');
+        if (localOverrides) {
+          const parsed = JSON.parse(localOverrides);
+          finalProfile = { ...finalProfile, ...parsed };
+        }
+        const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+        if (deletedStr) {
+          const deleted = JSON.parse(deletedStr);
+          if (deleted.heroBackground) finalProfile.heroBackground = "";
+          if (deleted.heroAvatar) finalProfile.heroAvatar = "";
+          if (deleted.aboutImage) finalProfile.aboutImage = "";
+          if (deleted.coverImage) finalProfile.coverImage = "";
+          if (deleted.profileImage) finalProfile.profileImage = "";
+        }
+      } catch (e) {}
       setActiveResume(finalActiveResume);
       setProfile(finalProfile);
 

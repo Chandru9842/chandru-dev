@@ -165,7 +165,23 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       // Load profile
       const profileRes = await fetch(`/api/profile?${cacheBuster}`);
       if (profileRes.ok) {
-        const data = await profileRes.json();
+        let data = await profileRes.json();
+        try {
+          const overridesStr = localStorage.getItem('cms_profile_overrides');
+          if (overridesStr) {
+            const overrides = JSON.parse(overridesStr);
+            data = { ...data, ...overrides };
+          }
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          if (deletedStr) {
+            const deleted = JSON.parse(deletedStr);
+            if (deleted.heroBackground) data.heroBackground = "";
+            if (deleted.heroAvatar) data.heroAvatar = "";
+            if (deleted.aboutImage) data.aboutImage = "";
+            if (deleted.coverImage) data.coverImage = "";
+            if (deleted.profileImage) data.profileImage = "";
+          }
+        } catch (e) {}
         setProfile(data);
         setOriginalProfile(JSON.parse(JSON.stringify(data)));
         setHistory([JSON.parse(JSON.stringify(data))]);
@@ -505,8 +521,20 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         const savedData = await res.json();
         setProfile(savedData);
         setOriginalProfile(JSON.parse(JSON.stringify(savedData)));
-        localStorage.removeItem('cms_profile_overrides');
-        localStorage.removeItem('cms_deleted_hero_assets');
+        try {
+          localStorage.setItem('cms_profile_overrides', JSON.stringify(savedData));
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+          if (savedData.heroBackground === "") deleted.heroBackground = true;
+          else delete deleted.heroBackground;
+          if (savedData.heroAvatar === "") deleted.heroAvatar = true;
+          else delete deleted.heroAvatar;
+          if (savedData.aboutImage === "") deleted.aboutImage = true;
+          else delete deleted.aboutImage;
+          if (savedData.profileImage === "") deleted.profileImage = true;
+          else delete deleted.profileImage;
+          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+        } catch (e) {}
         if (onProfileUpdated) {
           onProfileUpdated(savedData);
         }
@@ -614,9 +642,17 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           });
           if (res.ok) {
             const data = await res.json();
-            setProfile(data.profile);
-            setOriginalProfile(JSON.parse(JSON.stringify(data.profile)));
-            if (onProfileUpdated) onProfileUpdated(data.profile);
+            const returnedProfile = data.profile || data;
+            setProfile(returnedProfile);
+            setOriginalProfile(JSON.parse(JSON.stringify(returnedProfile)));
+            try {
+              localStorage.setItem('cms_profile_overrides', JSON.stringify(returnedProfile));
+              const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+              const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+              deleted[field] = true;
+              localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+            } catch (e) {}
+            if (onProfileUpdated) onProfileUpdated(returnedProfile);
             notifyCmsUpdate();
             onTriggerToast(`Asset successfully deleted from server and published!`, "success");
             return;
@@ -819,12 +855,21 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         body: JSON.stringify({ image: compressedDataUrl })
       });
       if (uploadRes.ok) {
-        const resData = await uploadRes.json();
-        if (resData?.profile) {
-          setProfile(resData.profile);
-          setOriginalProfile(JSON.parse(JSON.stringify(resData.profile)));
+        const returnedProfile = resData?.profile || resData;
+        if (returnedProfile) {
+          setProfile(returnedProfile);
+          setOriginalProfile(JSON.parse(JSON.stringify(returnedProfile)));
+          try {
+            localStorage.setItem('cms_profile_overrides', JSON.stringify(returnedProfile));
+            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+            if (deletedStr) {
+              const deleted = JSON.parse(deletedStr);
+              delete deleted[imageField];
+              localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+            }
+          } catch (e) {}
           if (onProfileUpdated) {
-            onProfileUpdated(resData.profile);
+            onProfileUpdated(returnedProfile);
           }
         }
       }
