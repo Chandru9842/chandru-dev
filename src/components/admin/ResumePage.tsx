@@ -247,18 +247,18 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
       setUploadProgress(95);
 
       const payload = {
-        title: uploadTitle.trim(),
-        version: uploadVersion.trim(),
+        title: uploadTitle.trim() || `Chandru Mohan - Resume ${uploadVersion.trim() || 'v2.4.1'}`,
+        version: uploadVersion.trim() || `2.4.${resumes.length + 1}`,
         description: uploadDescription.trim(),
         fileName: uploadFile.name,
         fileUrl: fileDataUrl,
         fileType: uploadFile.type || (uploadFile.name.toLowerCase().endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf'),
         fileSize: uploadFile.size,
-        cloudinaryPublicId: `portfolio/resume/chandru_mohan_resume_${Date.now()}_${uploadVersion.replace(/\./g, '_')}`,
+        cloudinaryPublicId: `portfolio/resume/chandru_mohan_resume_${Date.now()}`,
         thumbnailImage: `https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=260&auto=format&fit=crop`,
         isActive: uploadIsActive,
         isDownloadEnabled: uploadIsDownloadEnabled,
-        overwrite: true
+        overwrite: false
       };
 
       const res = await fetch('/api/resume', {
@@ -1051,10 +1051,19 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
             <p className="text-xs font-mono text-slate-500">Connecting to dynamic storage pool...</p>
           </div>
         ) : filteredResumes.length === 0 ? (
-          <div className="py-20 text-center space-y-2">
-            <AlertCircle className="w-8 h-8 text-slate-600 mx-auto" />
-            <h4 className="text-xs font-bold text-slate-400">No Resume records matching filter</h4>
-            <p className="text-[10px] text-slate-600 font-mono">Upload your document or reset filters to begin</p>
+          <div className="py-16 text-center space-y-3 px-4">
+            <AlertCircle className="w-8 h-8 text-emerald-500/60 mx-auto" />
+            <h4 className="text-sm font-bold text-slate-200">No Resumes in Database</h4>
+            <p className="text-xs text-slate-400 font-mono max-w-sm mx-auto">
+              Upload your custom PDF or DOCX resume to publish it across all live portfolio access points.
+            </p>
+            <button
+              onClick={() => setIsUploadOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/10 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Upload New Resume</span>
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-slate-900">
@@ -2073,9 +2082,11 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
             </div>
             
             <div>
-              <h4 className="text-sm font-bold text-slate-100">Purge Resume record?</h4>
+              <h4 className="text-sm font-bold text-slate-100">
+                Delete {resumes.find(r => r.id === confirmDeleteId)?.title || `Version ${resumes.find(r => r.id === confirmDeleteId)?.version}`}?
+              </h4>
               <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-                Are you sure you want to permanently delete this resume revision? This action will purge the metadata from your databases and is <span className="text-rose-400 font-semibold">irreversible</span>.
+                Permanently remove <span className="text-slate-200 font-bold">"{resumes.find(r => r.id === confirmDeleteId)?.fileName || 'this resume'}"</span> (v{resumes.find(r => r.id === confirmDeleteId)?.version}) from your portfolio? Other uploaded versions will be preserved.
               </p>
             </div>
 
@@ -2090,7 +2101,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
                 onClick={() => confirmDeleteId !== null && handleDelete(confirmDeleteId)}
                 className="px-4 py-1.5 bg-rose-500 hover:bg-rose-400 text-slate-100 rounded-lg text-xs font-bold transition-all cursor-pointer"
               >
-                Yes, Purge Draft
+                Yes, Delete
               </button>
             </div>
           </div>
