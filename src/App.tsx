@@ -188,28 +188,39 @@ export default function App() {
   };
 
   const handleEnterCMS = () => {
-    // Show the Recruiter & Reviewer Demo Gate modal directly
     setShowDemoGate(true);
   };
 
   const handleConfirmDemoEntry = () => {
-    // Activate Recruiter / Guest Demo Mode
-    const mockToken = 'demo_guest_token_' + Date.now();
-    sessionStorage.setItem('admin_token', mockToken);
-    sessionStorage.setItem('alex_dev_jwt_token', mockToken);
-    sessionStorage.setItem('admin_user', JSON.stringify({
-      id: 99999,
+    // Activate 1-Click Recruiter Tour mode
+    const token = 'demo_guest_token_' + Date.now();
+    sessionStorage.setItem('admin_token', token);
+    localStorage.setItem('admin_token', token);
+    sessionStorage.setItem('alex_dev_jwt_token', token);
+    localStorage.setItem('alex_dev_jwt_token', token);
+    const demoUser = JSON.stringify({
+      id: 999,
       name: 'Recruiter Guest',
-      email: 'guest@recruiter.demo',
-      role: 'ROLE_ADMIN',
-      username: 'recruiter_guest',
+      email: 'recruiter@tour.dev',
+      role: 'ROLE_GUEST',
+      username: 'recruiter',
       isDemo: true
-    }));
+    });
+    sessionStorage.setItem('admin_user', demoUser);
+    localStorage.setItem('admin_user', demoUser);
     sessionStorage.setItem('is_demo_session', 'true');
+    localStorage.setItem('is_demo_session', 'true');
+    sessionStorage.setItem('is_recruiter_tour', 'true');
     sessionStorage.setItem('is_fresh_login', 'true');
+    sessionStorage.removeItem('dashboard_welcomed');
     setShowDemoGate(false);
     setIsAuthenticated(true);
     navigate('/admin/dashboard');
+  };
+
+  const handleAdminLoginRedirect = () => {
+    setShowDemoGate(false);
+    navigate('/admin/login');
   };
 
   const handleLoginSuccess = (token: string, refreshToken: string, user: any) => {
@@ -274,6 +285,7 @@ export default function App() {
           isOpen={showDemoGate}
           onClose={() => setShowDemoGate(false)}
           onEnterDemo={handleConfirmDemoEntry}
+          onAdminLogin={handleAdminLoginRedirect}
         />
       </>
     );

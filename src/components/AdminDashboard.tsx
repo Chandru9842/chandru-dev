@@ -5,7 +5,7 @@ import {
   BarChart3, Mail, Settings, RefreshCw, Terminal, LogOut, Code2, Database, ShieldAlert,
   Share2, FileText, User, Palette, AlertTriangle, Trophy, Shield, History,
   Menu, X, Folder, Eye, Sparkles, Search, Bell, HardDrive, ShieldCheck, Activity, Globe, Lock,
-  MessageSquareQuote, BookOpenCheck, MessageSquare, Quote
+  MessageSquareQuote, BookOpenCheck, MessageSquare, Quote, KeyRound
 } from 'lucide-react';
 
 // Subpages
@@ -100,6 +100,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
   // Sync / loading status
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTourBanner, setShowTourBanner] = useState(true);
 
   // Detect Recruiter / Guest Demo Mode session
   const isDemoSession = React.useMemo(() => {
@@ -243,6 +244,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     fetchAllData();
     fetchNotifications();
 
+    const handleDataUpdate = () => {
+      fetchAllData();
+      fetchNotifications();
+    };
+
+    window.addEventListener('cms-data-updated', handleDataUpdate);
+    window.addEventListener('storage', handleDataUpdate);
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'CMS_DATA_UPDATED') {
+        handleDataUpdate();
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
     // Trigger Welcome notification on dashboard mount
     const isFresh = sessionStorage.getItem('is_fresh_login');
     if (isFresh === 'true' || !sessionStorage.getItem('dashboard_welcomed')) {
@@ -250,12 +265,18 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       sessionStorage.setItem('dashboard_welcomed', 'true');
       setTimeout(() => {
         if (isDemoSession) {
-          triggerToast('👋 Welcome to the Recruiter Mode! (Read-Only Demo Active)', 'success');
+          triggerToast('👋 Welcome to the Demo Tour! Explore the architecture in read-only sandbox mode.', 'success');
         } else {
           triggerToast('👋 Welcome Chandru! CMS Dashboard operational.', 'success');
         }
       }, 300);
     }
+
+    return () => {
+      window.removeEventListener('cms-data-updated', handleDataUpdate);
+      window.removeEventListener('storage', handleDataUpdate);
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   const fetchNotifications = async () => {
@@ -1836,43 +1857,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   return (
     <div className="flex flex-col w-full min-h-[580px] bg-slate-950 border border-slate-900 rounded-3xl overflow-hidden shadow-2xl relative text-slate-100">
       
-      {/* Recruiter / Guest Demo Mode Banner */}
-      {isDemoSession && (
-        <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900/95 to-cyan-950/90 border-b border-emerald-500/30 px-4 py-2 text-xs font-mono flex flex-wrap items-center justify-between gap-2 shadow-lg z-40 backdrop-blur-md">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="font-extrabold uppercase tracking-wider text-emerald-400 text-[11px] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              Recruiter Demo Mode (Read-Only)
-            </span>
-            <span className="text-slate-400 text-[11px] hidden lg:inline">
-              — Exploring portfolio CMS in verified read-only mode.
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest">
-              Demo Read-Only
-            </span>
-            <button
-              onClick={() => {
-                sessionStorage.removeItem('is_demo_session');
-                localStorage.removeItem('admin_token');
-                sessionStorage.removeItem('admin_token');
-                window.location.hash = '#/admin';
-                window.location.reload();
-              }}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-emerald-500/10"
-            >
-              <Lock className="w-3 h-3" />
-              <span>Switch to Master Admin (/admin)</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col md:flex-row flex-1 relative">
       
       {/* Mobile Nav Top Bar */}
@@ -1975,10 +1959,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-xs font-black text-slate-100 uppercase tracking-wide truncate">
-                {isDemoSession ? "Recruiter Guest" : (profile?.fullName || profile?.heroName || "Chandru Mohan")}
+                {profile?.fullName || profile?.heroName || "Chandru Mohan"}
               </h2>
               <p className="text-[10px] font-medium text-slate-400 truncate">
-                {isDemoSession ? "Recruiter Mode (Read-Only)" : (profile?.title || "Principal Systems Architect")}
+                {profile?.title || "Principal Systems Architect"}
               </p>
               <div className="mt-1 flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${
@@ -2079,6 +2063,99 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
       {/* Main active workspace page panel */}
       <section className="flex-1 p-5 sm:p-7 bg-slate-950/20 overflow-x-hidden min-h-[500px]">
+        {/* Recruiter / Guest Demo Tour Welcome Banner */}
+        {isDemoSession && showTourBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900/95 to-cyan-950/70 border border-emerald-500/40 p-4 sm:p-5 shadow-2xl shadow-emerald-500/10 backdrop-blur-xl"
+          >
+            {/* Top accent running gradient bar */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500" />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    Recruiter Tour Active
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Safe Read-Only Sandbox
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+                  <span>👋 Welcome to the Demo Tour!</span>
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  You are exploring Chandru Mohan's full-stack CMS architecture. Feel free to inspect live analytics, database tables, theme customizers, system health, and code structure.
+                </p>
+                
+                {/* Quick Navigation Tour Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">Quick Jump:</span>
+                  <button
+                    onClick={() => setActiveTab('Dashboard')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      activeTab === 'Dashboard' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                    }`}
+                  >
+                    📊 Live Analytics
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Projects')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      activeTab === 'Projects' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                    }`}
+                  >
+                    🚀 Projects DB
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Tech Stack')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      activeTab === 'Tech Stack' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                    }`}
+                  >
+                    🛠️ Tech Stack
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Theme & Appearance')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      activeTab === 'Theme & Appearance' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                    }`}
+                  >
+                    🎨 Theme Engine
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Security Settings')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      activeTab === 'Security Settings' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                    }`}
+                  >
+                    🛡️ Security & Logs
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Admin Login</span>
+                </button>
+                <button
+                  onClick={() => setShowTourBanner(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition cursor-pointer"
+                  title="Dismiss banner"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
         {activeTab === 'Dashboard' && (
           <DashboardPage 
             analytics={analytics} 

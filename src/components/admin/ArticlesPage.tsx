@@ -232,8 +232,10 @@ export default function ArticlesPage({
 
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId === null || draggedId === id) return;
-    setDragOverId(id);
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent, targetId: number) => {
@@ -544,13 +546,15 @@ export default function ArticlesPage({
             const isDragging = draggedId === article.id;
             const isOver = dragOverId === article.id;
 
+            const isDraggable = !searchTerm.trim();
+
             return (
             <div
               key={article.id}
-              draggable={!searchTerm.trim() && filterCategory === 'all' && filterStatus === 'all'}
-              onDragStart={(e) => handleDragStart(e, article.id)}
-              onDragOver={(e) => handleDragOver(e, article.id)}
-              onDrop={(e) => handleDrop(e, article.id)}
+              draggable={isDraggable}
+              onDragStart={(e) => isDraggable && handleDragStart(e, article.id)}
+              onDragOver={(e) => isDraggable && handleDragOver(e, article.id)}
+              onDrop={(e) => isDraggable && handleDrop(e, article.id)}
               onDragEnd={() => {
                 setDraggedId(null);
                 setDragOverId(null);
@@ -563,7 +567,14 @@ export default function ArticlesPage({
                 {/* Drag Handle & Priority Bar */}
                 <div className="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/60 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <div className="flex items-center gap-1.5">
-                    <GripVertical className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors cursor-grab active:cursor-grabbing" />
+                    <div
+                      className={`cursor-grab active:cursor-grabbing p-0.5 -ml-1 transition-colors ${
+                        isDraggable ? 'text-slate-500 group-hover:text-emerald-400' : 'text-slate-700 cursor-not-allowed'
+                      }`}
+                      title={isDraggable ? "Drag to reorder article" : "Clear search to reorder"}
+                    >
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </div>
                     <span className="font-bold text-emerald-400">#{article.displayOrder ?? article.order ?? (index + 1)}</span>
                     <span className="text-slate-500">Priority</span>
                   </div>
@@ -593,7 +604,8 @@ export default function ArticlesPage({
                   <img
                     src={article.coverImageUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80'}
                     alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+                    draggable={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100 select-none"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
 

@@ -4,14 +4,19 @@ import {
   Layers, Cpu, Database, Award, Briefcase, GraduationCap, 
   Mail, Github, ExternalLink, ShieldAlert, Activity, ChevronRight, 
   Send, Check, MapPin, Calendar, ArrowDown, ArrowUp, Globe, Eye, Users, ShieldCheck,
-  Code2, Sparkles, MessageSquare, Terminal, X, ChevronLeft, Video, Play, Film,
+  Code2, Sparkles, MessageSquare, Terminal, X, ChevronLeft, Video, Play, Film, Pause, LayoutGrid, Gauge, Zap, ArrowRight, RotateCcw,
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
-  Menu, XCircle, AlertCircle, Star, Wrench, Search, BookOpen, BookOpenCheck, MessageSquareQuote, Quote, Clock, Share2
+  Menu, XCircle, AlertCircle, Star, Wrench, Search, BookOpen, BookOpenCheck, MessageSquareQuote, Quote, Clock, Share2,
+  Volume2, VolumeX
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
+import { AnimatedProfileAvatar } from './AnimatedProfileAvatar';
+import { GitHubActivitySync } from './GitHubActivitySync';
+import { soundFx } from '../utils/soundEffects';
+import { notifyCmsUpdate } from '../utils/notifyCmsSync';
 const AIPortfolioChat = React.lazy(() => import('./AIPortfolioChat'));
 const DeveloperTerminalModal = React.lazy(() => import('./DeveloperTerminalModal'));
 
@@ -234,6 +239,7 @@ const desktopNavItems = [
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
   { id: "articles", label: "Articles" },
+  { id: "github-activity", label: "GitHub Live" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools" },
@@ -250,6 +256,7 @@ const mobileNavItems = [
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
   { id: "articles", label: "Articles & Blog" },
+  { id: "github-activity", label: "GitHub Live Activity" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools & Technologies" },
@@ -281,21 +288,13 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
     });
   };
 
-  const projectCardVariants = {
-    hidden: prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      }
-    }
-  };
+  const projectSkills = (proj.skills || (proj as any).tags || []) as string[];
 
   return (
     <motion.article 
-      variants={projectCardVariants}
+      initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -384,7 +383,7 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
 
         <div className="space-y-5">
           <div className="flex flex-wrap gap-1.5">
-            {proj.skills.map((skill, idx) => (
+            {projectSkills.map((skill, idx) => (
               <span 
                 key={idx} 
                 className="text-[9px] font-mono bg-white/[0.03] border border-white/[0.04] px-2 py-0.5 rounded text-slate-300"
@@ -502,6 +501,22 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [activeTestimonialIndex, setActiveTestimonialIndex] = useState<number>(0);
   const [isTestimonialAutoplay, setIsTestimonialAutoplay] = useState<boolean>(true);
 
+  // Article Autoplay, Speed Control & Interactive Showcase State
+  const [activeArticleIndex, setActiveArticleIndex] = useState<number>(0);
+  const [isArticleAutoplay, setIsArticleAutoplay] = useState<boolean>(true);
+  const [articleAutoplaySpeed, setArticleAutoplaySpeed] = useState<number>(5000); // 5.0s default (1.0x)
+  const [articleDisplayMode, setArticleDisplayMode] = useState<'showcase' | 'grid'>('showcase');
+  const [isArticleHovered, setIsArticleHovered] = useState<boolean>(false);
+
+  // Project Autoplay, Speed Control & Interactive Showcase State
+  const [activeProjectIndex, setActiveProjectIndex] = useState<number>(0);
+  const [isProjectAutoplay, setIsProjectAutoplay] = useState<boolean>(true);
+  const [projectAutoplaySpeed, setProjectAutoplaySpeed] = useState<number>(4500); // 4.5s default (1.0x)
+  const [projectDisplayMode, setProjectDisplayMode] = useState<'showcase' | 'grid'>('showcase');
+  const [selectedProjectCategory, setSelectedProjectCategory] = useState<string>('All');
+  const [projectSearchQuery, setProjectSearchQuery] = useState<string>('');
+  const [isProjectHovered, setIsProjectHovered] = useState<boolean>(false);
+
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [render3D, setRender3D] = useState<boolean>(false);
@@ -511,8 +526,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
+  const [isSoundMuted, setIsSoundMuted] = useState<boolean>(() => soundFx.isMuted());
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
+
+  const handleToggleSound = () => {
+    const newMuted = soundFx.toggleMute();
+    setIsSoundMuted(newMuted);
+  };
 
   // Defer 3D on desktop and chat assistant until after initial paint
   useEffect(() => {
@@ -818,6 +839,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   };
 
   const handleNavLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    soundFx.playTab(880);
     scrollToSection(targetId, e);
   };
 
@@ -900,14 +922,68 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return displayArticles.filter(a => {
       const matchesCategory = selectedArticleCategory === 'All' || a.category === selectedArticleCategory;
       const q = articleSearchQuery.trim().toLowerCase();
-      const matchesSearch = !q || 
+      return (!matchesCategory ? false : true) && (!q || 
         a.title.toLowerCase().includes(q) || 
         ((a.excerpt || (a as any).summary || '').toLowerCase().includes(q)) || 
         (a.tags && a.tags.some(tag => tag.toLowerCase().includes(q))) ||
-        (a.category && a.category.toLowerCase().includes(q));
-      return matchesCategory && matchesSearch;
+        (a.category && a.category.toLowerCase().includes(q)));
     });
   }, [displayArticles, selectedArticleCategory, articleSearchQuery]);
+
+  // Article Autoplay interval with speed control & pause-on-hover
+  useEffect(() => {
+    if (!isArticleAutoplay || isArticleHovered || filteredArticles.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveArticleIndex(prev => (prev + 1) % filteredArticles.length);
+    }, articleAutoplaySpeed);
+    return () => clearInterval(interval);
+  }, [isArticleAutoplay, isArticleHovered, filteredArticles.length, articleAutoplaySpeed]);
+
+  // Ensure active article index stays within bounds when category/search filter changes
+  useEffect(() => {
+    if (activeArticleIndex >= filteredArticles.length && filteredArticles.length > 0) {
+      setActiveArticleIndex(0);
+    }
+  }, [filteredArticles.length, activeArticleIndex]);
+
+  const displayProjects = useMemo(() => {
+    return projects.length > 0 ? projects : initialProjects;
+  }, [projects]);
+
+  const projectCategories = useMemo(() => {
+    const cats = Array.from(new Set(displayProjects.map(p => p.category).filter(Boolean)));
+    return ['All', ...cats];
+  }, [displayProjects]);
+
+  const filteredProjects = useMemo(() => {
+    return displayProjects.filter(p => {
+      const matchesCategory = selectedProjectCategory === 'All' || p.category === selectedProjectCategory;
+      const q = projectSearchQuery.trim().toLowerCase();
+      const projectTags = (p as any).tags || p.skills || [];
+      const matchesSearch = !q || 
+        p.title.toLowerCase().includes(q) || 
+        ((p.description || '').toLowerCase().includes(q)) || 
+        (projectTags.some((tag: string) => tag.toLowerCase().includes(q))) ||
+        (p.category && p.category.toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    });
+  }, [displayProjects, selectedProjectCategory, projectSearchQuery]);
+
+  // Project Autoplay interval with speed control & pause-on-hover
+  useEffect(() => {
+    if (!isProjectAutoplay || isProjectHovered || filteredProjects.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveProjectIndex(prev => (prev + 1) % filteredProjects.length);
+    }, projectAutoplaySpeed);
+    return () => clearInterval(interval);
+  }, [isProjectAutoplay, isProjectHovered, filteredProjects.length, projectAutoplaySpeed]);
+
+  // Ensure active index stays within bounds when category/search filter changes
+  useEffect(() => {
+    if (activeProjectIndex >= filteredProjects.length && filteredProjects.length > 0) {
+      setActiveProjectIndex(0);
+    }
+  }, [filteredProjects.length, activeProjectIndex]);
 
   const displayTestimonials = useMemo(() => {
     return testimonials.length > 0 ? testimonials : initialTestimonials;
@@ -1482,9 +1558,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           senderName: formName,
+          name: formName,
           senderEmail: formEmail,
+          email: formEmail,
           subject: formSubject,
-          messageContent: formMessage
+          messageContent: formMessage,
+          message: formMessage
         })
       });
 
@@ -1495,16 +1574,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         setFormSubject('');
         setFormMessage('');
         
+        // Notify admin panel & open tabs immediately
+        notifyCmsUpdate();
+
         // Refresh analytics stats as form sending increments contact conversion rate
-        const analyticsRes = await fetch('/api/analytics');
-        const analyticsData = await analyticsRes.json();
-        setAnalytics(analyticsData);
+        try {
+          const analyticsRes = await fetch('/api/analytics');
+          if (analyticsRes.ok) {
+            const analyticsData = await analyticsRes.json();
+            setAnalytics(analyticsData);
+          }
+        } catch (e) {}
 
         // Auto trigger a brief visual success alert
-        setFeedbackToast("Your message has been sent successfully and delivered to Chandru's Admin Inbox!");
-        setTimeout(() => setFeedbackToast(null), 5000);
+        setFeedbackToast("✓ Your message has been sent successfully and delivered to Chandru's Admin Inbox!");
+        setTimeout(() => setFeedbackToast(null), 6000);
       } else {
-        setFormError('Endpoint rejected transaction. Please verify backend state.');
+        const errorData = await response.json().catch(() => ({}));
+        setFormError(errorData.error || 'Endpoint rejected transaction. Please verify backend state.');
       }
     } catch (err) {
       setFormError('API timeout or connection failure. Please try again.');
@@ -1849,18 +1936,33 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               />
             ))}
 
+            {/* Sound Effects Audio Feedback Toggle */}
+            <button
+              onClick={handleToggleSound}
+              className={`p-1.5 sm:p-2 rounded-lg border transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0 ${
+                !isSoundMuted
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)] hover:bg-emerald-500/20 hover:border-emerald-500/60'
+                  : 'border-white/[0.08] bg-slate-900/60 text-slate-500 hover:text-slate-300 hover:border-white/[0.15]'
+              }`}
+              title={!isSoundMuted ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted (Click to Enable)'}
+              aria-label={!isSoundMuted ? 'Mute Sound FX' : 'Unmute Sound FX'}
+              id="btn-sound-toggle-header"
+            >
+              {!isSoundMuted ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
             {/* Desktop Dashboard Access Button */}
             <button
               onClick={onEnterCMS}
               className="group relative hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
-              title="Recruiter Demo / CMS Access"
-              aria-label="Recruiter Demo / CMS Access"
+              title="Admin & Recruiter Portal"
+              aria-label="Admin & Recruiter Portal"
               id="btn-access-cms-terminal"
             >
               <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[11px] font-mono font-semibold tracking-wide">Demo</span>
+              <span className="text-[11px] font-mono font-semibold tracking-wide">Portal</span>
               <span className="absolute top-full right-0 mt-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[10px] font-mono py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                Recruiter & Demo Mode (CMS)
+                Admin & Recruiter Portal
               </span>
             </button>
 
@@ -1921,11 +2023,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     onEnterCMS();
                   }}
                   className="px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all flex items-center gap-2 text-xs font-mono font-semibold cursor-pointer"
-                  title="Recruiter Demo / CMS Access"
-                  aria-label="Recruiter Demo / CMS Access"
+                  title="Admin & Recruiter Portal"
+                  aria-label="Admin & Recruiter Portal"
                 >
                   <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Demo Tour</span>
+                  <span>Admin Portal</span>
                 </button>
               </div>
             </motion.div>
@@ -1988,19 +2090,20 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
               )}
 
-              {/* Optional Avatar & Online Status */}
+              {/* Optional Animated Avatar & Online Status */}
               {profile?.heroAvatar && profile.heroAvatar.trim() !== "" && (
-                <div className="inline-flex items-center gap-2 bg-slate-900/80 border border-white/[0.08] px-3 py-1 rounded-full shadow-sm">
-                  <img
+                <div className="inline-flex items-center gap-2.5 bg-slate-900/90 border border-emerald-500/30 px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/10 backdrop-blur-md">
+                  <AnimatedProfileAvatar
                     src={profile.heroAvatar}
                     alt={profile?.heroName || profile?.fullName || "Founder"}
-                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-emerald-500/40"
-                    referrerPolicy="no-referrer"
+                    size="xs"
+                    showStatus={false}
+                    glowIntensity="subtle"
+                    shape="circle"
                   />
                   <div className="text-left flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-                      {profile?.statusBadgeText || profile?.onlineStatus || "Online"}
+                      {profile?.statusBadgeText || profile?.onlineStatus || "Systems Architect"}
                     </span>
                   </div>
                 </div>
@@ -2310,28 +2413,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
               {/* Image & Stats side */}
               <div className="lg:col-span-5 space-y-6">
-                <div className="relative group w-full aspect-square rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-900/40 p-4">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  {profile?.aboutImage ? (
-                    <SkillMediaRenderer 
-                      src={profile.aboutImage} 
-                      alt={profile?.fullName || "Founder"} 
-                      variant="cover"
-                      className="rounded-xl border border-white/[0.04]"
-                    />
-                  ) : profile?.profileImage ? (
-                    <SkillMediaRenderer 
-                      src={profile.profileImage} 
-                      alt={profile?.fullName || "Founder"} 
-                      variant="cover"
-                      className="rounded-xl border border-white/[0.04]"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-xl bg-slate-950/80 border border-dashed border-white/[0.08] flex flex-col items-center justify-center gap-3 text-slate-500">
-                      <Code2 className="w-10 h-10 text-emerald-400" />
-                      <span className="text-[10px] font-mono tracking-widest uppercase">Node Founder</span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-center w-full">
+                  <AnimatedProfileAvatar
+                    src={profile?.aboutImage || profile?.profileImage}
+                    alt={profile?.fullName || "Founder"}
+                    size="about"
+                    shape="squircle"
+                    glowIntensity="vibrant"
+                    showStatus={false}
+                    showBadge={false}
+                    enableTilt={true}
+                  />
                 </div>
 
                 {/* Quick Statistics block */}
@@ -2482,36 +2574,503 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </div>
           </motion.section>
 
-          {/* Featured Projects Section */}
+          {/* Featured Projects Section with Autoplay Showcase & Grid Mode */}
           <motion.section 
             id="projects" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={projectsSectionVariants}
           >
-            <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Featured Subsystems</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Committed Projects</h2>
-              <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+            {/* Header, Search & Mode Toggle */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Featured Subsystems & Case Studies</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Committed Projects</h2>
+                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                  High-throughput distributed systems, production architectures, and full-stack solutions. Explore via interactive autoplay or browse the full database.
+                </p>
+              </div>
+
+              {/* View Switcher & Search */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search Box */}
+                <div className="relative w-full sm:w-60 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={projectSearchQuery}
+                    onChange={(e) => {
+                      setProjectSearchQuery(e.target.value);
+                      setActiveProjectIndex(0);
+                    }}
+                    placeholder="Search projects, stack..."
+                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                  />
+                  {projectSearchQuery && (
+                    <button
+                      onClick={() => {
+                        setProjectSearchQuery('');
+                        setActiveProjectIndex(0);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Display Mode Toggle */}
+                <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-white/[0.08] shadow-inner">
+                  <button
+                    onClick={() => {
+                      soundFx.playToggle(true);
+                      setProjectDisplayMode('showcase');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      projectDisplayMode === 'showcase'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Autoplay Showcase Carousel"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Showcase</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      soundFx.playToggle(false);
+                      setProjectDisplayMode('grid');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      projectDisplayMode === 'grid'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="All Projects Grid View"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <motion.div 
-              variants={projectGridVariants}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {projects.map((proj) => (
-                <ProjectCard
-                  key={proj.id}
-                  proj={proj}
-                  prefersReduced={prefersReduced}
-                  setSelectedProjectForModal={setSelectedProjectForModal}
-                  setActiveSlideIndex={setActiveSlideIndex}
-                  trackProjectView={trackProjectView}
-                />
-              ))}
-            </motion.div>
+            {/* Category Filter Pills */}
+            {projectCategories.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {projectCategories.map((cat) => {
+                  const isActive = selectedProjectCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        soundFx.playTab(780);
+                        setSelectedProjectCategory(cat);
+                        setActiveProjectIndex(0);
+                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
+                          : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* OPTION 1: AUTOPLAY SHOWCASE CAROUSEL MODE                                  */}
+            {/* ========================================================================= */}
+            {projectDisplayMode === 'showcase' && filteredProjects.length > 0 && (
+              <div className="space-y-6">
+                {/* Autoplay Speed & Navigation Control Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/60 border border-white/[0.06] backdrop-blur-xl">
+                  {/* Left: Previous / Next & Play / Pause */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        soundFx.playClick(950);
+                        setActiveProjectIndex(prev => (prev === 0 ? filteredProjects.length - 1 : prev - 1));
+                      }}
+                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                      title="Previous Project"
+                      aria-label="Previous Project"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        soundFx.playClick(1150);
+                        setActiveProjectIndex(prev => (prev + 1) % filteredProjects.length);
+                      }}
+                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                      title="Next Project"
+                      aria-label="Next Project"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        soundFx.playToggle(!isProjectAutoplay);
+                        setIsProjectAutoplay(prev => !prev);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isProjectAutoplay
+                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                          : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
+                      }`}
+                      title="Toggle Autoplay Rotation"
+                    >
+                      {isProjectAutoplay ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Autoplay ON</span>
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-3 h-3 text-slate-400" />
+                          <span>Autoplay OFF</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Center/Right: Speed Presets Selection */}
+                  <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+                    <div className="flex items-center gap-1 px-2 text-[10px] font-mono text-slate-400 uppercase font-semibold">
+                      <Gauge className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="hidden sm:inline">Speed:</span>
+                    </div>
+
+                    {[
+                      { label: '0.5x', name: 'Slow', ms: 8000, mult: 0.5 },
+                      { label: '1.0x', name: 'Normal', ms: 4500, mult: 1.0 },
+                      { label: '1.5x', name: 'Fast', ms: 3000, mult: 1.5 },
+                      { label: '2.0x', name: 'Turbo', ms: 1800, mult: 2.0 }
+                    ].map((preset) => {
+                      const isSelected = projectAutoplaySpeed === preset.ms;
+                      return (
+                        <button
+                          key={preset.label}
+                          onClick={() => {
+                            soundFx.playSpeedChange(preset.mult);
+                            setProjectAutoplaySpeed(preset.ms);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                          }`}
+                          title={`Autoplay speed: ${preset.name} (${preset.ms / 1000}s)`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Counter & Indicator */}
+                  <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
+                    <span className="text-emerald-400 font-bold">
+                      {String(activeProjectIndex + 1).padStart(2, '0')}
+                    </span>
+                    <span>/</span>
+                    <span>{String(filteredProjects.length).padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+                {/* Main Showcase Featured Card with AnimatePresence */}
+                {(() => {
+                  const currentProj = filteredProjects[activeProjectIndex] || filteredProjects[0];
+                  if (!currentProj) return null;
+
+                  return (
+                    <div
+                      onMouseEnter={() => setIsProjectHovered(true)}
+                      onMouseLeave={() => setIsProjectHovered(false)}
+                      className="relative"
+                    >
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={currentProj.id || `proj-${activeProjectIndex}`}
+                          initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                          className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/70 to-slate-950/95 shadow-2xl shadow-emerald-500/10 relative group"
+                        >
+                          {/* Live Dynamic Autoplay Progress Countdown Bar */}
+                          {isProjectAutoplay && !isProjectHovered && (
+                            <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-900 overflow-hidden z-30">
+                              <motion.div
+                                key={`progress-${activeProjectIndex}-${projectAutoplaySpeed}`}
+                                initial={{ width: '0%' }}
+                                animate={{ width: '100%' }}
+                                transition={{ duration: projectAutoplaySpeed / 1000, ease: 'linear' }}
+                                className="h-full bg-gradient-to-r from-emerald-500 via-teal-300 to-cyan-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                              />
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                            {/* Left Viewport / Image Container */}
+                            <div className="lg:col-span-6 relative bg-slate-950 min-h-[260px] sm:min-h-[340px] lg:min-h-[420px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
+                              <SkillMediaRenderer
+                                src={currentProj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"}
+                                alt={currentProj.title}
+                                variant="cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
+                              />
+
+                              {/* Gradient Overlay for Vignette */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/40 pointer-events-none" />
+
+                              {/* Top Badges */}
+                              <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
+                                <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg">
+                                  {currentProj.category || "Full-Stack"}
+                                </span>
+                                <span className={`backdrop-blur-md font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-lg ${
+                                  currentProj.status === 'Completed' ? 'bg-emerald-950/85 text-emerald-400 border-emerald-500/30' :
+                                  currentProj.status === 'In Development' ? 'bg-amber-950/85 text-amber-400 border-amber-500/30' :
+                                  currentProj.status === 'Concept' ? 'bg-purple-950/85 text-purple-400 border-purple-500/30' :
+                                  'bg-sky-950/85 text-sky-400 border-sky-500/30'
+                                }`}>
+                                  {currentProj.status || "Completed"}
+                                </span>
+                              </div>
+
+                              {currentProj.isFeatured && (
+                                <div className="absolute top-4 right-4 bg-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-400/30 uppercase tracking-widest shadow-xl flex items-center gap-1.5 z-20">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Featured</span>
+                                </div>
+                              )}
+
+                              {/* Overlay Quick-Open Modal Trigger */}
+                              <button
+                                onClick={() => {
+                                  setSelectedProjectForModal(currentProj);
+                                  setActiveSlideIndex(0);
+                                  trackProjectView(currentProj.slug, currentProj.title);
+                                }}
+                                className="absolute bottom-4 left-4 right-4 sm:right-auto px-4 py-2 rounded-xl bg-slate-950/90 hover:bg-emerald-500/20 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center justify-center gap-2 cursor-pointer shadow-xl z-20"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Inspect Full Architecture Modal</span>
+                              </button>
+                            </div>
+
+                            {/* Right Project Details & Actions Container */}
+                            <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+                              <div className="space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
+                                  <span className="text-emerald-400 font-semibold">{currentProj.startDate} — {currentProj.endDate || 'Present'}</span>
+                                  {currentProj.gallery && currentProj.gallery.length > 0 && (
+                                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
+                                      +{currentProj.gallery.length} Screenshots
+                                    </span>
+                                  )}
+                                </div>
+
+                                <h3 className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-emerald-300 transition-colors tracking-tight">
+                                  {currentProj.title}
+                                </h3>
+
+                                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-4">
+                                  {currentProj.description}
+                                </p>
+
+                                {/* Key Highlights / Architectural Milestones */}
+                                {(currentProj as any).highlights && (currentProj as any).highlights.length > 0 && (
+                                  <div className="space-y-1.5 pt-2">
+                                    <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">Key Architectural Milestones:</span>
+                                    <ul className="space-y-1">
+                                      {((currentProj as any).highlights as string[]).slice(0, 2).map((hl: string, hIdx: number) => (
+                                        <li key={hIdx} className="text-xs text-slate-300 flex items-start gap-2">
+                                          <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
+                                          <span className="line-clamp-1">{hl}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {/* Technologies & Tech Stack Tags */}
+                                <div className="space-y-1.5 pt-2">
+                                  <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Subsystem Technologies:</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {((currentProj as any).tags || currentProj.skills || []).map((tag: string, idx: number) => (
+                                      <span
+                                        key={idx}
+                                        className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-900 border border-white/[0.08] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 transition-colors"
+                                      >
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Interactive Action Buttons */}
+                              <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
+                                <button
+                                  onClick={() => {
+                                    setSelectedProjectForModal(currentProj);
+                                    setActiveSlideIndex(0);
+                                    trackProjectView(currentProj.slug, currentProj.title);
+                                  }}
+                                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Layers className="w-4 h-4" />
+                                  <span>View Architecture Details</span>
+                                </button>
+
+                                {(currentProj.liveUrl || (currentProj as any).demoUrl) && (currentProj.liveUrl || (currentProj as any).demoUrl) !== '#' && (
+                                  <a
+                                    href={currentProj.liveUrl || (currentProj as any).demoUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>Live Demo</span>
+                                  </a>
+                                )}
+
+                                {currentProj.githubUrl && currentProj.githubUrl !== '#' && (
+                                  <a
+                                    href={currentProj.githubUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <Github className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Source Code</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  );
+                })()}
+
+                {/* Thumbnails Quick-Jump Carousel Strip */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between pb-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
+                      Click to jump to any project subsystem:
+                    </span>
+                    {isProjectHovered && (
+                      <span className="text-[10px] font-mono text-amber-400/80 flex items-center gap-1">
+                        <Pause className="w-3 h-3" /> Autoplay Paused (Hovering)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {filteredProjects.map((p, idx) => {
+                      const isActive = activeProjectIndex === idx;
+                      return (
+                        <button
+                          key={p.id || idx}
+                          onClick={() => setActiveProjectIndex(idx)}
+                          className={`p-2.5 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                            isActive
+                              ? 'bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/15 scale-[1.02]'
+                              : 'bg-slate-900/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[10px] font-mono">
+                            <span className={isActive ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                            {isActive && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            )}
+                          </div>
+
+                          <div className="font-semibold text-xs text-white line-clamp-1">
+                            {p.title}
+                          </div>
+
+                          <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider line-clamp-1">
+                            {p.category || 'Architecture'}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* OPTION 2: ALL PROJECTS GRID MODE                                          */}
+            {/* ========================================================================= */}
+            {projectDisplayMode === 'grid' && filteredProjects.length > 0 && (
+              <motion.div 
+                key="projects-grid-mode"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {filteredProjects.map((proj, pIdx) => (
+                  <motion.div
+                    key={proj.id || `grid-proj-${pIdx}`}
+                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: Math.min(pIdx * 0.05, 0.3) }}
+                    className="h-full"
+                  >
+                    <ProjectCard
+                      proj={proj}
+                      prefersReduced={prefersReduced}
+                      setSelectedProjectForModal={setSelectedProjectForModal}
+                      setActiveSlideIndex={setActiveSlideIndex}
+                      trackProjectView={trackProjectView}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Empty State when filter query yields zero projects */}
+            {filteredProjects.length === 0 && (
+              <div className="text-center py-16 px-4 bg-slate-900/40 rounded-3xl border border-white/[0.04]">
+                <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <h3 className="text-sm font-bold text-slate-200">No project subsystems found</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  No projects match your current search query or category filter.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedProjectCategory('All');
+                    setProjectSearchQuery('');
+                    setActiveProjectIndex(0);
+                  }}
+                  className="mt-4 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                >
+                  Reset Project Filters
+                </button>
+              </div>
+            )}
           </motion.section>
 
           {/* Engineering Blog & Technical Articles Section */}
@@ -2524,6 +3083,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               viewport={{ once: true, margin: "-100px" }}
               variants={sectionVariants}
             >
+              {/* Header, Search & Mode Toggle */}
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -2538,24 +3098,67 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   </p>
                 </div>
 
-                {/* Article Search Input */}
-                <div className="relative w-full md:w-72 shrink-0">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={articleSearchQuery}
-                    onChange={(e) => setArticleSearchQuery(e.target.value)}
-                    placeholder="Search articles, tags, topics..."
-                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
-                  />
-                  {articleSearchQuery && (
+                {/* View Switcher & Search */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Article Search Input */}
+                  <div className="relative w-full sm:w-60 shrink-0">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={articleSearchQuery}
+                      onChange={(e) => {
+                        setArticleSearchQuery(e.target.value);
+                        setActiveArticleIndex(0);
+                      }}
+                      placeholder="Search articles, stack..."
+                      className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                    />
+                    {articleSearchQuery && (
+                      <button
+                        onClick={() => {
+                          setArticleSearchQuery('');
+                          setActiveArticleIndex(0);
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Display Mode Toggle */}
+                  <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-white/[0.08] shadow-inner">
                     <button
-                      onClick={() => setArticleSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+                      onClick={() => {
+                        soundFx.playToggle(true);
+                        setArticleDisplayMode('showcase');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        articleDisplayMode === 'showcase'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Autoplay Article Showcase"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Showcase</span>
                     </button>
-                  )}
+                    <button
+                      onClick={() => {
+                        soundFx.playToggle(false);
+                        setArticleDisplayMode('grid');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        articleDisplayMode === 'grid'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="All Articles Grid View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Grid</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2567,10 +3170,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     return (
                       <button
                         key={cat}
-                        onClick={() => setSelectedArticleCategory(cat)}
+                        onClick={() => {
+                          soundFx.playTab(780);
+                          setSelectedArticleCategory(cat);
+                          setActiveArticleIndex(0);
+                        }}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
                           isActive
-                            ? 'bg-emerald-500 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20'
+                            ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
                             : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
                         }`}
                       >
@@ -2581,29 +3188,332 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </div>
               )}
 
-              {/* Articles Grid */}
-              {filteredArticles.length === 0 ? (
-                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
-                  <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-300">No matching articles found</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    No publications match your filter query. Try searching for different keywords or reset the filter.
-                  </p>
-                  {(articleSearchQuery || selectedArticleCategory !== 'All') && (
-                    <button
-                      onClick={() => {
-                        setSelectedArticleCategory('All');
-                        setArticleSearchQuery('');
-                      }}
-                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                    >
-                      Reset Filters
-                    </button>
-                  )}
+              {/* ========================================================================= */}
+              {/* OPTION 1: ARTICLE AUTOPLAY SHOWCASE CAROUSEL MODE                         */}
+              {/* ========================================================================= */}
+              {articleDisplayMode === 'showcase' && filteredArticles.length > 0 && (
+                <div className="space-y-6">
+                  {/* Autoplay Speed & Navigation Control Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/60 border border-white/[0.06] backdrop-blur-xl">
+                    {/* Left: Previous / Next & Play / Pause */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          soundFx.playClick(950);
+                          setActiveArticleIndex(prev => (prev === 0 ? filteredArticles.length - 1 : prev - 1));
+                        }}
+                        className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                        title="Previous Article"
+                        aria-label="Previous Article"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          soundFx.playClick(1150);
+                          setActiveArticleIndex(prev => (prev + 1) % filteredArticles.length);
+                        }}
+                        className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
+                        title="Next Article"
+                        aria-label="Next Article"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          soundFx.playToggle(!isArticleAutoplay);
+                          setIsArticleAutoplay(prev => !prev);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          isArticleAutoplay
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                            : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
+                        }`}
+                        title="Toggle Article Autoplay"
+                      >
+                        {isArticleAutoplay ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Autoplay ON</span>
+                          </>
+                        ) : (
+                          <>
+                            <Pause className="w-3 h-3 text-slate-400" />
+                            <span>Autoplay OFF</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Center: Speed Presets Selection */}
+                    <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-1 px-2 text-[10px] font-mono text-slate-400 uppercase font-semibold">
+                        <Gauge className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="hidden sm:inline">Speed:</span>
+                      </div>
+
+                      {[
+                        { label: '0.5x', name: 'Slow', ms: 8000, mult: 0.5 },
+                        { label: '1.0x', name: 'Normal', ms: 5000, mult: 1.0 },
+                        { label: '1.5x', name: 'Fast', ms: 3500, mult: 1.5 },
+                        { label: '2.0x', name: 'Turbo', ms: 2000, mult: 2.0 }
+                      ].map((preset) => {
+                        const isSelected = articleAutoplaySpeed === preset.ms;
+                        return (
+                          <button
+                            key={preset.label}
+                            onClick={() => {
+                              soundFx.playSpeedChange(preset.mult);
+                              setArticleAutoplaySpeed(preset.ms);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                            }`}
+                            title={`Article rotation speed: ${preset.name} (${preset.ms / 1000}s)`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Counter & Indicator */}
+                    <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
+                      <span className="text-emerald-400 font-bold">
+                        {String(activeArticleIndex + 1).padStart(2, '0')}
+                      </span>
+                      <span>/</span>
+                      <span>{String(filteredArticles.length).padStart(2, '0')}</span>
+                    </div>
+                  </div>
+
+                  {/* Main Showcase Article Card with AnimatePresence */}
+                  {(() => {
+                    const currentArt = filteredArticles[activeArticleIndex] || filteredArticles[0];
+                    if (!currentArt) return null;
+
+                    const coverImg = currentArt.coverImageUrl || (currentArt as any).coverImage || "";
+                    const excerptText = currentArt.excerpt || (currentArt as any).summary || "";
+                    const authorName = currentArt.author || (currentArt as any).authorName || "Chandru Mohan";
+                    const isFeatured = currentArt.isFeatured ?? (currentArt as any).featured ?? false;
+                    const readMins = currentArt.readTimeMinutes || 5;
+
+                    return (
+                      <div
+                        onMouseEnter={() => setIsArticleHovered(true)}
+                        onMouseLeave={() => setIsArticleHovered(false)}
+                        className="relative"
+                      >
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={currentArt.id || `art-${activeArticleIndex}`}
+                            initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                            className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/70 to-slate-950/95 shadow-2xl shadow-emerald-500/10 relative group"
+                          >
+                            {/* Live Dynamic Autoplay Progress Countdown Bar */}
+                            {isArticleAutoplay && !isArticleHovered && (
+                              <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-900 overflow-hidden z-30">
+                                <motion.div
+                                  key={`art-progress-${activeArticleIndex}-${articleAutoplaySpeed}`}
+                                  initial={{ width: '0%' }}
+                                  animate={{ width: '100%' }}
+                                  transition={{ duration: articleAutoplaySpeed / 1000, ease: 'linear' }}
+                                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-300 to-cyan-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                                />
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                              {/* Left Cover Photo Container */}
+                              <div className="lg:col-span-6 relative bg-slate-950 min-h-[260px] sm:min-h-[320px] lg:min-h-[380px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
+                                {coverImg ? (
+                                  <img
+                                    src={coverImg}
+                                    alt={currentArt.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
+                                    <BookOpenCheck className="w-16 h-16 text-emerald-400/40 mb-2" />
+                                    <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest">Engineering Publication</span>
+                                  </div>
+                                )}
+
+                                {/* Gradient Vignette */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/40 pointer-events-none" />
+
+                                {/* Top Badges */}
+                                <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
+                                  <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg">
+                                    {currentArt.category || "Architecture"}
+                                  </span>
+                                  {isFeatured && (
+                                    <span className="bg-emerald-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-emerald-400/30 uppercase tracking-widest shadow-xl flex items-center gap-1.5">
+                                      <Sparkles className="w-3 h-3" />
+                                      <span>Featured</span>
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-[11px] font-mono text-slate-300 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/[0.08] shadow-lg z-20">
+                                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>{readMins} min technical read</span>
+                                </div>
+
+                                {/* Overlay Quick Read Trigger */}
+                                <button
+                                  onClick={() => setSelectedArticleForModal(currentArt)}
+                                  className="absolute bottom-4 right-4 px-3.5 py-1.5 rounded-xl bg-slate-950/90 hover:bg-emerald-500/20 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center gap-1.5 cursor-pointer shadow-xl z-20"
+                                >
+                                  <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>Open Reader</span>
+                                </button>
+                              </div>
+
+                              {/* Right Article Details & Summary */}
+                              <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+                                <div className="space-y-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
+                                        {profile?.profileImage ? (
+                                          <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                          <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                                        )}
+                                      </div>
+                                      <span className="text-slate-200 font-semibold">{authorName}</span>
+                                    </div>
+                                    <span className="text-emerald-400/90">
+                                      {new Date(currentArt.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  </div>
+
+                                  <h3 
+                                    onClick={() => setSelectedArticleForModal(currentArt)}
+                                    className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-emerald-300 transition-colors tracking-tight leading-snug cursor-pointer"
+                                  >
+                                    {currentArt.title}
+                                  </h3>
+
+                                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-4">
+                                    {excerptText}
+                                  </p>
+
+                                  {/* Tags & Topics */}
+                                  {currentArt.tags && currentArt.tags.length > 0 && (
+                                    <div className="space-y-1.5 pt-2">
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Topics & Core Themes:</span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {currentArt.tags.map((tag: string, idx: number) => (
+                                          <span
+                                            key={idx}
+                                            className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-900 border border-white/[0.08] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 transition-colors"
+                                          >
+                                            #{tag}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
+                                  <button
+                                    onClick={() => setSelectedArticleForModal(currentArt)}
+                                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <BookOpenCheck className="w-4 h-4" />
+                                    <span>Read Full Publication</span>
+                                  </button>
+
+                                  <div className="flex items-center gap-2 text-xs font-mono text-slate-400 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/[0.06]">
+                                    <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                                    <span>{currentArt.viewsCount || 428} Reads</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Quick-Jump Article Thumbnails Strip */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between pb-2">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
+                        Click to jump to any engineering publication:
+                      </span>
+                      {isArticleHovered && (
+                        <span className="text-[10px] font-mono text-amber-400/80 flex items-center gap-1">
+                          <Pause className="w-3 h-3" /> Autoplay Paused (Hovering)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {filteredArticles.map((art, idx) => {
+                        const isActive = activeArticleIndex === idx;
+                        return (
+                          <button
+                            key={art.id || idx}
+                            onClick={() => setActiveArticleIndex(idx)}
+                            className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                              isActive
+                                ? 'bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/15 scale-[1.02]'
+                                : 'bg-slate-900/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-[10px] font-mono">
+                              <span className={isActive ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                                {String(idx + 1).padStart(2, '0')}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-slate-400">{art.readTimeMinutes || 5}m</span>
+                                {isActive && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="font-semibold text-xs text-white line-clamp-1">
+                              {art.title}
+                            </div>
+
+                            <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider line-clamp-1">
+                              {art.category || 'Architecture'}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredArticles.map((art) => {
+              )}
+
+              {/* ========================================================================= */}
+              {/* OPTION 2: ANIMATED ARTICLES GRID MODE                                     */}
+              {/* ========================================================================= */}
+              {articleDisplayMode === 'grid' && filteredArticles.length > 0 && (
+                <motion.div 
+                  key="articles-grid-mode"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                  {filteredArticles.map((art, aIdx) => {
                     const coverImg = art.coverImageUrl || (art as any).coverImage || "";
                     const excerptText = art.excerpt || (art as any).summary || "";
                     const authorName = art.author || (art as any).authorName || "Chandru Mohan";
@@ -2612,17 +3522,22 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                     return (
                       <motion.article
-                        key={art.id}
-                        whileHover={{ y: -6 }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 ${
+                        key={art.id || `grid-art-${aIdx}`}
+                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, delay: Math.min(aIdx * 0.05, 0.3) }}
+                        whileHover={prefersReduced ? {} : { y: -6, transition: { duration: 0.25, ease: 'easeOut' } }}
+                        className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 h-full ${
                           isFeatured
                             ? 'border-emerald-500/40 bg-emerald-500/[0.02] shadow-xl shadow-emerald-500/5'
                             : 'border-white/[0.05] bg-slate-900/40 hover:border-emerald-500/30'
                         }`}
                       >
                         {/* Card Cover Image */}
-                        <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
+                        <div 
+                          onClick={() => setSelectedArticleForModal(art)}
+                          className="relative h-48 bg-slate-950 overflow-hidden shrink-0 cursor-pointer"
+                        >
                           {coverImg ? (
                             <img
                               src={coverImg}
@@ -2712,10 +3627,36 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       </motion.article>
                     );
                   })}
+                </motion.div>
+              )}
+
+              {/* Empty State when filter query yields zero articles */}
+              {filteredArticles.length === 0 && (
+                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
+                  <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-slate-300">No matching articles found</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    No publications match your filter query. Try searching for different keywords or reset the filter.
+                  </p>
+                  {(articleSearchQuery || selectedArticleCategory !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setSelectedArticleCategory('All');
+                        setArticleSearchQuery('');
+                        setActiveArticleIndex(0);
+                      }}
+                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
                 </div>
               )}
             </motion.section>
           )}
+
+          {/* GitHub Live Activity & Repository Synchronization Section */}
+          <GitHubActivitySync prefersReduced={prefersReduced} />
 
           {/* Coding Profiles Section */}
           <motion.section 
@@ -2727,7 +3668,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             variants={sectionVariants}
           >
               <div className="space-y-2.5">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {codingProfiles.length} Profiles
+                  </span>
+                </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">
                   Competitive Programming & Developer Profiles
                 </h2>
@@ -2739,43 +3685,50 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
               {/* Grid Layout for Coding Profile Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 font-sans">
-                {codingProfiles.map((p) => {
+                {codingProfiles.map((p, pIdx) => {
                   const IconComponent = getCodingPlatformIconComponent(p.platformType);
                   
                   // Premium colors per platform
                   const platformBorderGlow = p.featured
-                    ? 'border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.08)] hover:shadow-[0_0_30px_rgba(245,158,11,0.15)] hover:border-amber-500/60'
-                    : p.platformType === 'GitHub' ? 'hover:shadow-slate-500/5 hover:border-slate-800' :
-                      p.platformType === 'LeetCode' ? 'hover:shadow-amber-500/5 hover:border-amber-500/20' :
-                      p.platformType === 'GeeksforGeeks' ? 'hover:shadow-emerald-500/5 hover:border-emerald-500/20' :
-                      p.platformType === 'Codeforces' ? 'hover:shadow-red-500/5 hover:border-red-500/20' :
-                      p.platformType === 'CodeChef' ? 'hover:shadow-amber-700/5 hover:border-amber-700/20' :
-                      p.platformType === 'HackerRank' ? 'hover:shadow-emerald-400/5 hover:border-emerald-400/20' :
-                      p.platformType === 'HackerEarth' ? 'hover:shadow-violet-400/5 hover:border-violet-400/20' :
-                      'hover:shadow-emerald-500/5 hover:border-emerald-500/20';
+                    ? 'border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.12)] hover:shadow-[0_0_30px_rgba(245,158,11,0.25)] hover:border-amber-500/70'
+                    : p.platformType === 'GitHub' ? 'hover:shadow-slate-500/10 hover:border-slate-700' :
+                      p.platformType === 'LeetCode' ? 'hover:shadow-amber-500/15 hover:border-amber-500/40' :
+                      p.platformType === 'GeeksforGeeks' ? 'hover:shadow-emerald-500/15 hover:border-emerald-500/40' :
+                      p.platformType === 'Codeforces' ? 'hover:shadow-red-500/15 hover:border-red-500/40' :
+                      p.platformType === 'CodeChef' ? 'hover:shadow-amber-700/15 hover:border-amber-700/40' :
+                      p.platformType === 'HackerRank' ? 'hover:shadow-emerald-400/15 hover:border-emerald-400/40' :
+                      p.platformType === 'HackerEarth' ? 'hover:shadow-violet-400/15 hover:border-violet-400/40' :
+                      'hover:shadow-emerald-500/15 hover:border-emerald-500/40';
 
                   const cardScale = p.featured 
-                    ? 'scale-[1.02] md:scale-[1.03] border-amber-500/30' 
-                    : 'border-white/[0.03]';
+                    ? 'border-amber-500/30 bg-gradient-to-b from-amber-500/[0.03] to-transparent' 
+                    : 'border-white/[0.04] bg-slate-900/40';
 
                   return (
                     <motion.div
                       key={p.id}
-                      className={`relative bg-slate-900/30 border rounded-2xl p-4 sm:p-5 lg:p-6 hover:bg-white/[0.02] transition-all duration-300 flex flex-col justify-between group shadow-lg ${platformBorderGlow} ${cardScale}`}
-                      whileHover={{ y: -6, scale: p.featured ? 1.04 : 1.015 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.4, delay: Math.min(pIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                      whileHover={prefersReduced ? {} : { y: -8, scale: p.featured ? 1.03 : 1.02 }}
+                      className={`relative backdrop-blur-md border rounded-2xl p-4 sm:p-5 lg:p-6 hover:bg-slate-900/70 transition-all duration-300 flex flex-col justify-between group shadow-lg overflow-hidden ${platformBorderGlow} ${cardScale}`}
                     >
+                      {/* Ambient background hover shine */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
                       {/* Featured Badge */}
                       {p.featured && (
-                        <span className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[9px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm animate-pulse">
-                          ★ Featured
-                        </span>
+                        <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 flex items-center gap-1 px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                          <span>★ Featured</span>
+                        </div>
                       )}
 
                       <div>
                         {/* Card Header */}
                         <div className="flex items-start gap-3 sm:gap-4 mb-2.5 sm:mb-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-center p-2 sm:p-2.5 shrink-0 transition-transform group-hover:scale-110 duration-300 shadow-inner">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-950/80 border border-white/[0.08] flex items-center justify-center p-2 sm:p-2.5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shadow-inner group-hover:border-emerald-500/40">
                             {p.logoUrl ? (
                               <img 
                                 src={p.logoUrl} 
@@ -2792,14 +3745,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             <h3 className="text-sm sm:text-base font-extrabold text-slate-100 font-luxury tracking-wide truncate group-hover:text-emerald-400 transition-colors duration-300">
                               {p.displayName}
                             </h3>
-                            <p className="text-[9px] sm:text-[10px] font-mono text-slate-500 uppercase tracking-widest truncate">
+                            <p className="text-[9px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-widest truncate">
                               {p.platformType}
                             </p>
                           </div>
                         </div>
 
                         {/* Username Display Box */}
-                        <div className="bg-slate-950/40 border border-white/[0.02] rounded-xl px-3 py-2 sm:px-4 sm:py-3 mb-2.5 sm:mb-4 font-mono text-center">
+                        <div className="bg-slate-950/60 border border-white/[0.04] group-hover:border-emerald-500/30 rounded-xl px-3 py-2 sm:px-4 sm:py-3 mb-2.5 sm:mb-4 font-mono text-center transition-colors">
                           <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">Handle / Username</p>
                           <p className="text-xs sm:text-sm font-bold text-slate-200 truncate tracking-wide group-hover:text-emerald-400 transition-colors duration-300">
                             {p.username}
@@ -2808,8 +3761,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                         {/* Optional Description / Badge */}
                         {p.description && (
-                          <div className="mb-3 sm:mb-5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/[0.01] border border-white/[0.03] rounded-xl text-xs text-slate-400 font-sans leading-relaxed flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                          <div className="mb-3 sm:mb-5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/[0.02] border border-white/[0.04] rounded-xl text-xs text-slate-400 font-sans leading-relaxed flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0 animate-pulse" />
                             <p className="flex-1 font-mono text-[10px] sm:text-[11px] font-medium tracking-wide">
                               {p.description}
                             </p>
@@ -2823,10 +3776,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         target={p.openInNewTab !== false ? "_blank" : "_self"}
                         rel="noopener noreferrer"
                         aria-label={`Visit ${p.displayName || p.platformType || 'Coding'} Profile of ${p.username}`}
-                        className="w-full py-2 sm:py-2.5 bg-white/[0.02] hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.04] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/10"
+                        className="w-full py-2 sm:py-2.5 bg-slate-950/80 hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.06] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/20"
                       >
                         <span>Visit Profile</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </a>
                     </motion.div>
                   );
@@ -2846,21 +3799,26 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             <div id="techstack" className="absolute -top-24" />
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
               <div className="space-y-2.5">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Competency Ledger</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Competency Ledger</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {filteredSkills.length} Skills
+                  </span>
+                </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Expertise Matrix</h2>
                 <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
               </div>
 
               {/* Categorization controls */}
-              <div className="flex flex-wrap gap-1 bg-slate-900/60 border border-white/[0.04] rounded-lg p-1 text-xs">
+              <div className="flex flex-wrap gap-1 bg-slate-900/80 border border-white/[0.08] rounded-xl p-1 text-xs backdrop-blur-md shadow-inner">
                 {skillCategories.map(cat => (
                   <button
                     key={cat}
                     onClick={() => setSelectedSkillCategory(cat)}
-                    className={`px-3 py-1.5 rounded-md font-mono text-[11px] transition-all font-semibold cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-lg font-mono text-[11px] transition-all font-bold cursor-pointer ${
                       selectedSkillCategory === cat 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' 
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                   >
                     {cat}
@@ -2869,48 +3827,51 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-              {filteredSkills.map(skill => {
+            <motion.div 
+              key={`skills-grid-${selectedSkillCategory}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+            >
+              {filteredSkills.map((skill, sIdx) => {
                 const itemColor = skill.color || '#10b981';
                 
-                // Determine entrance animation props dynamically
-                let initialProps: any = { opacity: 0 };
-                let animateProps: any = { opacity: 1 };
-                
-                if (skill.animation === 'Slide In') {
-                  initialProps = { opacity: 0, x: -20 };
-                  animateProps = { opacity: 1, x: 0 };
-                } else if (skill.animation === 'Scale Up') {
-                  initialProps = { opacity: 0, scale: 0.95 };
-                  animateProps = { opacity: 1, scale: 1 };
-                }
-
-                // Determine continuous / hover classes & styles
+                // Determine continuous / hover animation styles
                 const isPulse = skill.animation === 'Pulse';
                 const isSpin = skill.animation === 'Spin Slow';
                 const isGlow = skill.animation === 'Glow';
 
                 return (
                   <motion.div 
-                    key={skill.id} 
-                    initial={initialProps}
-                    whileInView={animateProps}
-                    viewport={{ once: true }}
-                    whileHover={{ y: -6 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className={`glass-card rounded-xl p-3 sm:p-5 border border-white/[0.04] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-2.5 sm:gap-4 relative overflow-hidden ${
+                    key={skill.id || `skill-${sIdx}`} 
+                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.35, delay: Math.min(sIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={prefersReduced ? {} : { 
+                      y: -6, 
+                      scale: 1.02,
+                      transition: { duration: 0.2, ease: 'easeOut' }
+                    }}
+                    className={`glass-card rounded-2xl p-3.5 sm:p-5 border border-white/[0.05] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-2.5 sm:gap-4 relative overflow-hidden group bg-slate-900/50 ${
                       isPulse ? 'animate-pulse' : ''
                     }`}
                     style={{
-                      // fallback subtle outline shadow for beautiful glow effect
-                      boxShadow: isGlow ? `0 0 12px ${itemColor}05` : 'none'
+                      boxShadow: isGlow ? `0 0 16px ${itemColor}20` : undefined
                     }}
                   >
-                    <div className="flex items-center gap-2.5 sm:gap-4">
+                    {/* Hover Glow Gradient */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none rounded-2xl"
+                      style={{ background: `radial-gradient(circle at top right, ${itemColor}, transparent 70%)` }}
+                    />
+
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div 
-                        className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl border flex items-center justify-center shrink-0 transition-all duration-500 overflow-hidden bg-slate-950/60 p-1.5 sm:p-2"
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden bg-slate-950/80 p-2 shadow-inner"
                         style={{ 
-                          borderColor: `${itemColor}30`,
+                          borderColor: `${itemColor}40`,
+                          boxShadow: `0 0 12px ${itemColor}15`
                         }}
                       >
                         <SkillMediaRenderer 
@@ -2922,21 +3883,32 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         />
                       </div>
                       <div className="min-w-0 flex-grow">
-                        <span className="font-semibold text-white block text-xs sm:text-base truncate" title={skill.name}>{skill.name}</span>
-                        <span className="text-[8px] sm:text-[10px] font-mono text-slate-400 block uppercase tracking-wider truncate mt-0.5" style={{ color: itemColor }}>
+                        <span className="font-bold text-white block text-xs sm:text-base truncate group-hover:text-emerald-300 transition-colors" title={skill.name}>
+                          {skill.name}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 block uppercase tracking-wider truncate mt-0.5" style={{ color: itemColor }}>
                           {skill.category}
                         </span>
                       </div>
                     </div>
+
                     {skill.description && (
                       <p className="text-[10px] sm:text-xs text-slate-400 leading-snug sm:leading-relaxed line-clamp-2">
                         {skill.description}
                       </p>
                     )}
+
+                    {/* Skill Mastery Level Indicator */}
+                    {Boolean((skill as any).proficiency || (skill as any).level) && (
+                      <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[9px] font-mono">
+                        <span className="text-slate-500 uppercase tracking-widest">Mastery</span>
+                        <span className="font-bold text-emerald-400">{(skill as any).proficiency || (skill as any).level}</span>
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </motion.section>
 
           {/* Tools & Technologies Section */}
@@ -2976,7 +3948,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   {toolSearchQuery && (
                     <button
                       onClick={() => setToolSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -2993,9 +3965,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       <button
                         key={cat}
                         onClick={() => setSelectedToolCategory(cat)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
                           isActive
-                            ? 'bg-emerald-500 text-slate-950 font-semibold shadow-lg shadow-emerald-500/20'
+                            ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
                             : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
                         }`}
                       >
@@ -3027,36 +3999,51 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   )}
                 </div>
               ) : (
-                /* Tools Cards Grid (2-column compact on mobile for space optimization) */
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
-                  {filteredTools.map((tool) => {
+                /* Tools Cards Grid with Staggered Motion */
+                <motion.div 
+                  key={`tools-grid-${selectedToolCategory}-${toolSearchQuery}`}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5"
+                >
+                  {filteredTools.map((tool, tIdx) => {
                     const brandColor = tool.brandColor || '#10B981';
                     const hoverScale = tool.hoverScale || 1.02;
                     const hoverRotation = tool.hoverRotation || 0;
 
                     return (
                       <motion.div
-                        key={tool.id}
+                        key={tool.id || `tool-${tIdx}`}
+                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, delay: Math.min(tIdx * 0.03, 0.3) }}
                         whileHover={{ 
-                          y: -4, 
+                          y: -6, 
                           scale: hoverScale,
                           rotate: hoverRotation,
                           transition: { duration: 0.2, ease: "easeOut" } 
                         }}
-                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-xl sm:rounded-2xl border border-slate-800/90 p-3 sm:p-4 lg:p-5 hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-3 sm:p-4 lg:p-5 hover:border-emerald-500/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col justify-between shadow-lg overflow-hidden"
                         style={{
                           boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
                         }}
                       >
+                        {/* Top Subtle Ambient Glow */}
+                        <div 
+                          className="absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300 pointer-events-none"
+                          style={{ backgroundColor: brandColor }}
+                        />
+
                         <div className="space-y-1.5 sm:space-y-3">
                           {/* Header: Icon + Category Badge + Star if featured */}
                           <div className="flex items-start justify-between gap-1.5 sm:gap-2.5">
                             <div 
-                              className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300 shrink-0"
+                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shrink-0 shadow-inner bg-slate-950/80"
                               style={{ 
-                                backgroundColor: tool.backgroundColor || `${brandColor}15`,
-                                borderColor: tool.borderColor || `${brandColor}30`,
-                                borderWidth: '1px'
+                                borderColor: tool.borderColor || `${brandColor}40`,
+                                borderWidth: '1px',
+                                boxShadow: `0 0 10px ${brandColor}15`
                               }}
                             >
                               <ToolIconRenderer tool={tool} />
@@ -3068,7 +4055,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 </span>
                               )}
                               {tool.category && (
-                                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60 truncate max-w-[80px] sm:max-w-none">
+                                <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60 truncate max-w-[80px] sm:max-w-none">
                                   {tool.category}
                                 </span>
                               )}
@@ -3092,7 +4079,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         <div className="pt-2 mt-2 sm:pt-3.5 sm:mt-3 border-t border-slate-800/80 flex items-center justify-between text-[9px] sm:text-[11px] font-mono text-slate-400">
                           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
                             {tool.experienceLevel && (
-                              <span className="text-emerald-400 font-medium truncate">
+                              <span className="text-emerald-400 font-medium truncate flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                 {tool.experienceLevel}
                               </span>
                             )}
@@ -3112,14 +4100,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span className="hidden xs:inline">Website</span>
-                              <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform group-hover:translate-x-0.5" />
                             </a>
                           )}
                         </div>
                       </motion.div>
                     );
                   })}
-                </div>
+                </motion.div>
               )}
             </motion.section>
           )}
@@ -3135,7 +4123,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           >
             <div id="timeline" className="absolute -top-24" />
             <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Career & Education
+                </span>
+              </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Professional Timeline</h2>
               <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
             </div>
@@ -3145,36 +4138,47 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               {/* Professional Work Experience column */}
               <div className="lg:col-span-6 space-y-8 relative">
                 <div className="flex items-center gap-2.5 text-white mb-6">
-                  <Briefcase className="w-5 h-5 text-emerald-400" />
-                  <h3 className="text-lg font-bold font-display">Work milestones</h3>
+                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-sm">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold font-display">Work Milestones</h3>
                 </div>
 
-                <div className="border-l border-white/[0.05] pl-6 ml-3 space-y-10 relative">
-                  {experiences.map(exp => (
-                    <div key={exp.id} className="relative group space-y-2">
-                      {/* Timeline Dot */}
-                      <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-slate-950 border-2 border-emerald-500 transition-all group-hover:scale-125" />
+                <div className="border-l-2 border-emerald-500/20 pl-6 ml-3 space-y-10 relative">
+                  {experiences.map((exp, eIdx) => (
+                    <motion.div 
+                      key={exp.id} 
+                      initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.4, delay: Math.min(eIdx * 0.1, 0.4) }}
+                      className="relative group space-y-2 p-4 rounded-2xl bg-slate-900/40 border border-white/[0.04] hover:border-emerald-500/40 hover:bg-slate-900/70 transition-all duration-300 shadow-lg"
+                    >
+                      {/* Pulsing Animated Timeline Node */}
+                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-slate-950 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] transition-all group-hover:scale-125 z-10" />
+                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-emerald-400/30 animate-ping pointer-events-none" />
                       
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                          {exp.isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                           {exp.startDate} — {exp.isCurrent ? 'Present' : exp.endDate}
                         </span>
                         {exp.location && (
-                          <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
+                          <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1 bg-slate-950/60 px-2 py-0.5 rounded-md border border-white/[0.04]">
+                            <MapPin className="w-3 h-3 text-emerald-400" />
                             {exp.location}
                           </span>
                         )}
                       </div>
 
-                      <h4 className="text-sm font-bold text-white leading-tight">
-                        {exp.role} <span className="text-slate-500">at</span> <span className="text-emerald-400">{exp.company}</span>
+                      <h4 className="text-sm sm:text-base font-bold text-white leading-tight group-hover:text-emerald-300 transition-colors pt-1">
+                        {exp.role} <span className="text-slate-500 font-normal">at</span> <span className="text-emerald-400 font-bold">{exp.company}</span>
                       </h4>
 
-                      <p className="text-xs text-slate-400 leading-relaxed pr-2">
+                      <p className="text-xs text-slate-300 leading-relaxed">
                         {exp.description}
                       </p>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -3183,32 +4187,44 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <div className="lg:col-span-6 space-y-8 relative">
                 <div id="education" className="absolute -top-24" />
                 <div className="flex items-center gap-2.5 text-white mb-6">
-                  <GraduationCap className="w-5 h-5 text-emerald-400" />
+                  <div className="p-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 shadow-sm">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
                   <h3 className="text-lg font-bold font-display">Academic Background</h3>
                 </div>
 
-                <div className="border-l border-white/[0.05] pl-6 ml-3 space-y-10 relative">
-                  {education.map(edu => (
-                    <div key={edu.id} className="relative group space-y-2">
-                      {/* Timeline Dot */}
-                      <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-slate-950 border-2 border-emerald-500 transition-all group-hover:scale-125" />
+                <div className="border-l-2 border-teal-500/20 pl-6 ml-3 space-y-10 relative">
+                  {education.map((edu, edIdx) => (
+                    <motion.div 
+                      key={edu.id} 
+                      initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-50px" }}
+                      transition={{ duration: 0.4, delay: Math.min(edIdx * 0.1, 0.4) }}
+                      className="relative group space-y-2 p-4 rounded-2xl bg-slate-900/40 border border-white/[0.04] hover:border-teal-500/40 hover:bg-slate-900/70 transition-all duration-300 shadow-lg"
+                    >
+                      {/* Pulsing Animated Timeline Node */}
+                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-slate-950 border-2 border-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.8)] transition-all group-hover:scale-125 z-10" />
+                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-teal-400/30 animate-ping pointer-events-none" />
                       
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span className="text-[10px] font-mono text-teal-400 font-bold bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/30 shadow-sm">
                           {edu.startDate} — {edu.endDate}
                         </span>
                         {edu.grade && (
-                          <span className="text-[10px] font-mono text-slate-300 border border-white/[0.08] bg-white/[0.02] px-1.5 py-0.5 rounded">
-                            {edu.grade}
+                          <span className="text-[10px] font-mono text-emerald-300 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-md font-bold">
+                            Score / Grade: {edu.grade}
                           </span>
                         )}
                       </div>
 
-                      <h4 className="text-sm font-bold text-white leading-tight">
-                        {edu.degree} <span className="text-slate-500">in</span> <span className="text-emerald-400">{edu.fieldOfStudy}</span>
+                      <h4 className="text-sm sm:text-base font-bold text-white leading-tight group-hover:text-teal-300 transition-colors pt-1">
+                        {edu.degree} <span className="text-slate-500 font-normal">in</span> <span className="text-teal-400 font-bold">{edu.fieldOfStudy}</span>
                       </h4>
-                      <p className="text-xs text-slate-400 leading-normal">{edu.institution}</p>
-                    </div>
+                      <p className="text-xs text-slate-300 leading-normal flex items-center gap-1.5">
+                        <span className="text-slate-400 font-semibold">{edu.institution}</span>
+                      </p>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -3226,34 +4242,47 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             variants={sectionVariants}
           >
             <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Verified Badges</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Verified Badges</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {certificates.length} Credentials
+                </span>
+              </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Industry Certifications</h2>
               <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {certificates.map(cert => (
-                <div 
+              {certificates.map((cert, cIdx) => (
+                <motion.div 
                   key={cert.id} 
-                  className="glass-card rounded-2xl p-6 border border-white/[0.04] hover:border-emerald-500/20 transition-all duration-300 flex flex-col md:flex-row justify-between gap-6"
+                  initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: Math.min(cIdx * 0.08, 0.4) }}
+                  whileHover={prefersReduced ? {} : { y: -6, scale: 1.01 }}
+                  className="glass-card rounded-2xl p-6 border border-white/[0.05] hover:border-emerald-500/40 hover:bg-slate-900/70 transition-all duration-300 flex flex-col md:flex-row justify-between gap-6 shadow-xl relative overflow-hidden group"
                 >
+                  {/* Subtle Shimmer background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
                   <div className="space-y-3.5 flex-grow">
-                    <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
-                      <Award className="w-3 h-3" />
+                    <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold shadow-sm">
+                      <Award className="w-3.5 h-3.5 text-emerald-400" />
                       <span>{cert.issuingOrganization}</span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white">{cert.name}</h3>
+                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-300 transition-colors">{cert.name}</h3>
                     
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-mono text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-mono text-slate-400">
                       <span>Issued: {cert.issueDate}</span>
                       <span>•</span>
-                      <span>Expires: {cert.expirationDate || 'Never'}</span>
+                      <span>Expires: {cert.expirationDate || 'Lifetime'}</span>
                     </div>
 
                     {cert.credentialId && (
-                      <div className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded inline-block border border-white/[0.04]">
-                        ID: {cert.credentialId}
+                      <div className="text-[10px] font-mono text-slate-300 bg-slate-950/80 px-2.5 py-1 rounded-lg inline-block border border-white/[0.06]">
+                        Credential ID: <span className="text-emerald-400 font-bold">{cert.credentialId}</span>
                       </div>
                     )}
                   </div>
@@ -3264,14 +4293,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         href={cert.credentialUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="px-4 py-2 border border-white/[0.08] hover:border-emerald-500/30 bg-white/[0.02] hover:bg-emerald-500/5 text-slate-300 hover:text-emerald-400 font-medium text-xs rounded-xl transition-all flex items-center gap-1.5"
+                        className="px-4 py-2.5 border border-white/[0.08] hover:border-emerald-500/40 bg-slate-950/80 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-mono font-bold text-xs rounded-xl transition-all duration-300 flex items-center gap-2 shadow-md group-hover:shadow-emerald-500/10 cursor-pointer"
                       >
                         <span>Verify Credentials</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </a>
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.section>
@@ -3286,7 +4315,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             variants={sectionVariants}
           >
             <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Proven Milestones</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Proven Milestones</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {filteredAchievements.length} Awards
+                </span>
+              </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Achievements & Awards</h2>
               <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
             </div>
@@ -3300,8 +4334,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     onClick={() => setSelectedAchievementCategory(cat)}
                     className={`px-3.5 py-1.5 text-[10px] font-mono font-bold tracking-wider rounded-xl border transition-all cursor-pointer uppercase ${
                       selectedAchievementCategory === cat
-                        ? 'bg-emerald-500 text-slate-950 border-transparent shadow-lg shadow-emerald-500/15'
-                        : 'border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] text-slate-400 hover:text-slate-200'
+                        ? 'bg-emerald-500 text-slate-950 border-transparent shadow-lg shadow-emerald-500/20'
+                        : 'border-white/[0.04] bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {cat}
@@ -3311,43 +4345,53 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             )}
 
             {/* Grid layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAchievements.map((item) => (
-                <div 
-                  key={item.id}
+            <motion.div 
+              key={`achieve-grid-${selectedAchievementCategory}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filteredAchievements.map((item, aIdx) => (
+                <motion.div 
+                  key={item.id || `achieve-${aIdx}`}
+                  initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(aIdx * 0.05, 0.3) }}
+                  whileHover={prefersReduced ? {} : { y: -6, scale: 1.015 }}
                   onClick={() => setSelectedAchievementForModal(item)}
-                  className={`group rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-[1.01] cursor-pointer flex flex-col justify-between ${
+                  className={`group rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xl ${
                     item.featured 
-                      ? 'border-emerald-500/30 bg-emerald-500/[0.01] hover:border-emerald-500/50 shadow-2xl shadow-emerald-500/5' 
-                      : 'border-white/[0.04] bg-slate-900/40 hover:bg-slate-900/60 hover:border-white/[0.1]'
+                      ? 'border-emerald-500/40 bg-emerald-500/[0.02] hover:border-emerald-500/60 shadow-2xl shadow-emerald-500/10' 
+                      : 'border-white/[0.05] bg-slate-900/50 hover:bg-slate-900/80 hover:border-emerald-500/30'
                   }`}
                 >
                   {/* Card Banner Image / Header */}
-                  <div className="relative h-44 bg-slate-950/60 flex items-center justify-center overflow-hidden border-b border-white/[0.04]">
+                  <div className="relative h-44 bg-slate-950/80 flex items-center justify-center overflow-hidden border-b border-white/[0.04]">
                     {item.imageUrl ? (
                       <SkillMediaRenderer 
                         src={item.imageUrl} 
                         alt={item.title} 
                         variant="cover"
-                        className="group-hover:scale-105 transition-all duration-500"
+                        className="group-hover:scale-108 transition-all duration-700 opacity-90 group-hover:opacity-100"
                       />
                     ) : (
                       <div className="text-center p-6 text-slate-700 group-hover:text-slate-500 transition-colors">
-                        <Award className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                        <span className="text-[10px] font-mono tracking-wider">Milestone asset</span>
+                        <Award className="w-10 h-10 mx-auto mb-2 opacity-40 text-emerald-400" />
+                        <span className="text-[10px] font-mono tracking-wider text-slate-400">Milestone asset</span>
                       </div>
                     )}
 
                     {/* Gradient atmosphere overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent pointer-events-none" />
 
                     {/* Badge Pill layout */}
-                    <div className="absolute top-3.5 right-3.5 flex flex-wrap gap-1.5 items-center">
-                      <span className="text-[9px] font-mono font-bold tracking-wider bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase">
+                    <div className="absolute top-3.5 right-3.5 flex flex-wrap gap-1.5 items-center z-10">
+                      <span className="text-[9px] font-mono font-bold tracking-wider bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase shadow-md">
                         {item.category}
                       </span>
                       {item.featured && (
-                        <span className="text-[9px] font-bold tracking-wider bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full uppercase flex items-center gap-0.5 shadow-lg shadow-emerald-500/20">
+                        <span className="text-[9px] font-bold tracking-wider bg-emerald-500 text-slate-950 px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
                           <Sparkles className="w-2.5 h-2.5" />
                           Featured
                         </span>
@@ -3355,8 +4399,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </div>
 
                     {/* Organization Logo and details */}
-                    <div className="absolute bottom-3.5 left-3.5 flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="absolute bottom-3.5 left-3.5 flex items-center gap-2.5 z-10">
+                      <div className="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/[0.1] flex items-center justify-center overflow-hidden shrink-0 shadow-md">
                         {item.logoUrl ? (
                           <img src={item.logoUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" loading="lazy" />
                         ) : (
@@ -3364,8 +4408,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-mono text-slate-300 font-semibold leading-none truncate">{item.organization}</p>
-                        <p className="text-[9px] text-slate-500 font-mono mt-0.5 leading-none">
+                        <p className="text-[10px] font-mono text-slate-200 font-bold leading-none truncate">{item.organization}</p>
+                        <p className="text-[9px] text-emerald-400/90 font-mono mt-1 leading-none">
                           {new Date(item.achievementDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                         </p>
                       </div>
@@ -3376,11 +4420,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <div className="p-5 flex-1 flex flex-col justify-between gap-4">
                     <div className="space-y-2">
                       {item.badge && (
-                        <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.2 rounded font-mono font-bold uppercase tracking-wider">
+                        <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
                           {item.badge}
                         </span>
                       )}
-                      <h3 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug">
+                      <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors leading-snug">
                         {item.title}
                       </h3>
                       {item.subtitle && (
@@ -3398,7 +4442,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       {item.skills && item.skills.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {item.skills.slice(0, 3).map((sk, i) => (
-                            <span key={i} className="text-[8px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded-md border border-white/[0.04]">
+                            <span key={i} className="text-[8px] font-mono text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-white/[0.06]">
                               {sk}
                             </span>
                           ))}
@@ -3412,9 +4456,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                       {item.technologies && item.technologies.length > 0 && (
                         <div className="flex flex-wrap gap-1 items-center">
-                          <span className="text-[8px] font-mono text-slate-600">Tech:</span>
+                          <span className="text-[8px] font-mono text-slate-500">Tech:</span>
                           {item.technologies.slice(0, 3).map((tc, i) => (
-                            <span key={i} className="text-[8px] font-mono text-slate-400 px-1 py-0.2 bg-white/[0.02] border border-white/[0.04] rounded">
+                            <span key={i} className="text-[8px] font-mono text-slate-400 px-1.5 py-0.5 bg-slate-950/60 border border-white/[0.04] rounded">
                               {tc}
                             </span>
                           ))}
@@ -3422,9 +4466,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </motion.section>
 
           {/* Client & Peer Testimonials Section */}
@@ -3487,8 +4531,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               {/* Interactive Carousel Showcase */}
               <div className="relative overflow-hidden">
                 <AnimatePresence mode="wait">
-                  {displayTestimonials[activeTestimonialIndex] && (() => {
-                    const t = displayTestimonials[activeTestimonialIndex];
+                  {displayTestimonials.length > 0 && (() => {
+                    const t = displayTestimonials[activeTestimonialIndex] || displayTestimonials[0];
+                    if (!t) return null;
                     const authorName = t.name || (t as any).authorName || "Verified Client";
                     const authorRole = t.role || (t as any).authorTitle || "Technical Director";
                     const authorCompany = t.company || (t as any).authorCompany || "";
@@ -3500,7 +4545,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                     return (
                       <motion.div
-                        key={t.id}
+                        key={t.id || `test-${activeTestimonialIndex}`}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
@@ -3805,9 +4850,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   )}
 
                   {formSuccess && (
-                    <div className="p-3 bg-emerald-950/20 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 shrink-0" />
-                      <span>Message successfully written to server REST repository!</span>
+                    <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2.5 shadow-lg shadow-emerald-500/5">
+                      <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+                      <span>Message submitted successfully! Your message has been received and delivered to Chandru's Admin Inbox.</span>
                     </div>
                   )}
 
@@ -4036,17 +5081,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </div>
                   </div>
 
-                  {/* Admin & Demo Lock Button */}
+                  {/* Admin & Recruiter Portal Lock Button */}
                   <button 
                     onClick={onEnterCMS} 
                     className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer text-xs font-mono"
-                    title="Recruiter Demo / Admin Access"
-                    aria-label="Recruiter Demo / Admin Access"
+                    title="Admin & Recruiter Portal"
+                    aria-label="Admin & Recruiter Portal"
                   >
                     <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Demo / Admin</span>
+                    <span>Admin Portal</span>
                     <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[10px] font-mono py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                      Recruiter Demo & Admin Portal
+                      Admin & Recruiter Portal
                     </span>
                   </button>
                 </div>

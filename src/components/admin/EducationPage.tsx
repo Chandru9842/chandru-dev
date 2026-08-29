@@ -190,8 +190,10 @@ export default function EducationPage({ education, onAdd, onUpdate, onDelete, on
 
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId === null || draggedId === id) return;
-    setDragOverId(id);
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent, targetId: number) => {

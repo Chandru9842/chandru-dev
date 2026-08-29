@@ -5,6 +5,7 @@ import {
   RotateCcw, Eye, Download, Info, Globe, Mail, EyeOff, Plus, Folder
 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
+import { AnimatedProfileAvatar } from '../AnimatedProfileAvatar';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 import { isDemoSessionActive, checkAndBlockDemoAction } from '../../utils/demoAuthUtils';
 
@@ -110,24 +111,7 @@ const getJwtToken = () =>
       const res = await fetch(`/api/profile?${cacheBuster}`);
       if (res.ok) {
         const raw: any = await res.json();
-        let data = normalizeHeroData(raw);
-
-        // Check local storage overrides and deletions
-        try {
-          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-          if (deletedStr) {
-            const deleted = JSON.parse(deletedStr);
-            if (deleted.heroBackground) data.heroBackground = "";
-            if (deleted.heroAvatar) data.heroAvatar = "";
-          }
-          const overridesStr = localStorage.getItem('cms_profile_overrides');
-          if (overridesStr) {
-            const overrides = JSON.parse(overridesStr);
-            data = { ...data, ...overrides };
-            if (overrides.heroBackground !== undefined) data.heroBackground = overrides.heroBackground;
-            if (overrides.heroAvatar !== undefined) data.heroAvatar = overrides.heroAvatar;
-          }
-        } catch (e) {}
+        const data = normalizeHeroData(raw);
 
         setProfile(data);
         setOriginalProfile(JSON.parse(JSON.stringify(data)));
@@ -589,13 +573,14 @@ const getJwtToken = () =>
             <div className="space-y-2">
               <label className="block text-[11px] font-mono text-slate-400">Hero Avatar Photo</label>
               <div className="flex items-center gap-4 p-3 bg-slate-950/40 border border-slate-850 rounded-2xl">
-                <div className="w-12 h-12 rounded-full border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden shrink-0 relative group">
-                  {profile.heroAvatar ? (
-                    <img src={profile.heroAvatar} alt="Hero Avatar Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <User className="w-5 h-5 text-slate-600" />
-                  )}
-                </div>
+                <AnimatedProfileAvatar
+                  src={profile.heroAvatar}
+                  alt={profile.heroName || profile.fullName || "Hero Avatar"}
+                  size="sm"
+                  shape="circle"
+                  glowIntensity="vibrant"
+                  showStatus={false}
+                />
                 <div className="flex-grow space-y-1.5 min-w-0">
                   {profile.heroAvatar ? (
                     <div className="flex items-center gap-1.5">

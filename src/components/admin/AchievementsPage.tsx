@@ -3,7 +3,8 @@ import {
   Plus, Edit2, Trash2, Search, ArrowLeft, ArrowRight, ExternalLink, 
   Award, AlertCircle, Check, Loader2, Calendar, FileText, Eye, EyeOff,
   Star, ChevronUp, ChevronDown, CheckCircle2, ShieldAlert, Badge, 
-  Cpu, Sparkles, UploadCloud, Trash, Image as ImageIcon, CheckCircle, Sliders
+  Cpu, Sparkles, UploadCloud, Trash, Image as ImageIcon, CheckCircle, Sliders,
+  GripVertical
 } from 'lucide-react';
 import { AchievementItem } from '../../data/cmsMockData';
 
@@ -63,6 +64,8 @@ export default function AchievementsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sortBy, setSortBy] = useState('order_asc'); // order_asc, date_desc, date_asc, title_asc
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -310,34 +313,91 @@ export default function AchievementsPage({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (draggedId === null || draggedId === targetId || !onReorder) {
+      setDraggedId(null);
+      return;
+    }
+
+    const sourceIdx = achievements.findIndex(item => item.id === draggedId);
+    const targetIdx = achievements.findIndex(item => item.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newList = [...achievements];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    setDraggedId(null);
+    try {
+      await onReorder(reordered);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleMoveUp = async (index: number) => {
     if (index === 0) return;
-    const newList = [...filteredAchievements];
-    const item1 = newList[index];
-    const item2 = newList[index - 1];
+    const currentItem = filteredAchievements[index];
+    const targetItem = filteredAchievements[index - 1];
+    const sourceIdx = achievements.findIndex(a => a.id === currentItem.id);
+    const targetIdx = achievements.findIndex(a => a.id === targetItem.id);
+    if (sourceIdx === -1 || targetIdx === -1) return;
 
-    // Swap displayOrder
-    const temp = item1.displayOrder;
-    item1.displayOrder = item2.displayOrder;
-    item2.displayOrder = temp;
+    const newList = [...achievements];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
 
-    // Persist reorder
-    await onReorder(newList);
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    await onReorder(reordered);
   };
 
   const handleMoveDown = async (index: number) => {
     if (index === filteredAchievements.length - 1) return;
-    const newList = [...filteredAchievements];
-    const item1 = newList[index];
-    const item2 = newList[index + 1];
+    const currentItem = filteredAchievements[index];
+    const targetItem = filteredAchievements[index + 1];
+    const sourceIdx = achievements.findIndex(a => a.id === currentItem.id);
+    const targetIdx = achievements.findIndex(a => a.id === targetItem.id);
+    if (sourceIdx === -1 || targetIdx === -1) return;
 
-    // Swap displayOrder
-    const temp = item1.displayOrder;
-    item1.displayOrder = item2.displayOrder;
-    item2.displayOrder = temp;
+    const newList = [...achievements];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
 
-    // Persist reorder
-    await onReorder(newList);
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    await onReorder(reordered);
   };
 
   return (
@@ -903,15 +963,39 @@ export default function AchievementsPage({
               <div className="divide-y divide-slate-800/60">
                 {paginatedAchievements.map((item, index) => {
                   const absoluteIndex = (currentPage - 1) * itemsPerPage + index;
+                  const isDragging = draggedId === item.id;
+                  const isOver = dragOverId === item.id;
+                  const isDraggable = !searchQuery.trim();
+
                   return (
                     <div 
                       key={item.id} 
-                      className={`p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
+                      draggable={isDraggable}
+                      onDragStart={(e) => isDraggable && handleDragStart(e, item.id)}
+                      onDragOver={(e) => isDraggable && handleDragOver(e, item.id)}
+                      onDrop={(e) => isDraggable && handleDrop(e, item.id)}
+                      onDragEnd={() => {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                      }}
+                      className={`p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all group ${
                         item.featured ? 'bg-emerald-500/[0.01]' : 'hover:bg-slate-900/30'
+                      } ${isDragging ? 'opacity-40 bg-emerald-500/10 border-dashed border-emerald-500/50' : ''} ${
+                        isOver ? 'bg-emerald-500/10 ring-2 ring-emerald-500/50 scale-[1.005]' : ''
                       }`}
                     >
                       {/* Left: Move handles + details */}
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        {/* Drag Handle */}
+                        <div
+                          className={`p-1 rounded transition-colors shrink-0 cursor-grab active:cursor-grabbing ${
+                            isDraggable ? 'text-slate-600 group-hover:text-emerald-400' : 'text-slate-800 cursor-not-allowed'
+                          }`}
+                          title={isDraggable ? "Drag to reorder achievement" : "Clear search to reorder"}
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+
                         {/* Custom order trigger buttons */}
                         <div className="flex flex-col gap-0.5">
                           <button
@@ -938,7 +1022,7 @@ export default function AchievementsPage({
                         {/* Banner Thumbnail */}
                         <div className="w-16 h-10 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                            <img src={item.imageUrl} alt="" draggable={false} referrerPolicy="no-referrer" className="w-full h-full object-cover select-none" />
                           ) : (
                             <Award className="w-5 h-5 text-slate-700" />
                           )}

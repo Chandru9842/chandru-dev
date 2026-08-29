@@ -165,13 +165,12 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
         });
         if (res.ok) {
           const data = await res.json();
-          setIconUrl(data.url);
+          setIconUrl(data.url || base64);
         } else {
-          const errorData = await res.json().catch(() => ({}));
-          setUploadError(errorData.error || "Simulated Cloudinary secure upload gateway refused storage.");
+          setIconUrl(base64);
         }
       } catch (err) {
-        setUploadError("Gateway connection error uploading asset.");
+        setIconUrl(base64);
       } finally {
         setIsUploading(false);
       }
@@ -969,7 +968,7 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
               paginatedSkills.map((skill) => {
                 const isDragging = draggedId === skill.id;
                 const isDragOver = dragOverId === skill.id && draggedId !== skill.id;
-                const isDraggable = !searchQuery && filterCategory === 'All' && filterVisibility === 'All' && sortBy === 'displayOrder';
+                const isDraggable = !searchQuery.trim();
 
                 return (
                   <div 
@@ -998,14 +997,14 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
                       {/* Icon, tag labels & quick action controls */}
                       <div className="flex justify-between items-start mb-3.5 pt-1">
                         <div className="flex items-center gap-2">
-                          {isDraggable && (
-                            <div 
-                              className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-emerald-400 p-0.5 -ml-1 transition-colors shrink-0" 
-                              title="Drag to reorder competency"
-                            >
-                              <GripVertical className="w-4 h-4" />
-                            </div>
-                          )}
+                          <div 
+                            className={`cursor-grab active:cursor-grabbing p-0.5 -ml-1 transition-colors shrink-0 ${
+                              isDraggable ? 'text-slate-500 hover:text-emerald-400' : 'text-slate-700 cursor-not-allowed'
+                            }`}
+                            title={isDraggable ? "Drag to reorder competency" : "Clear search filter to reorder"}
+                          >
+                            <GripVertical className="w-4 h-4" />
+                          </div>
                           <div 
                             className="w-10 h-10 rounded-xl border flex items-center justify-center bg-slate-950 overflow-hidden shrink-0"
                             style={{ 

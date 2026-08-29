@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   MessageSquareQuote, Star, Plus, Edit2, Trash2, Eye, EyeOff, 
   MoveUp, MoveDown, Save, X, ExternalLink, ShieldCheck, 
-  Search, Filter, CheckCircle2, User, Building, HeartHandshake, Copy, Award
+  Search, Filter, CheckCircle2, User, Building, HeartHandshake, Copy, Award, GripVertical
 } from 'lucide-react';
 import { TestimonialItem } from '../../data/cmsMockData';
 
@@ -30,6 +30,8 @@ export default function TestimonialsPage({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -158,14 +160,68 @@ export default function TestimonialsPage({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (draggedId === null || draggedId === targetId || !onReorder) {
+      setDraggedId(null);
+      return;
+    }
+
+    const sourceIdx = testimonials.findIndex(item => item.id === draggedId);
+    const targetIdx = testimonials.findIndex(item => item.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newList = [...testimonials];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    setDraggedId(null);
+    try {
+      await onReorder(reordered);
+      showToast('↔️ Order updated successfully.');
+    } catch (err) {
+      showToast('❌ Failed to update order.');
+    }
+  };
+
   const handleMove = async (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= filteredTestimonials.length) return;
 
-    const newList = [...filteredTestimonials];
-    const temp = newList[index];
-    newList[index] = newList[targetIndex];
-    newList[targetIndex] = temp;
+    const currentItem = filteredTestimonials[index];
+    const targetItem = filteredTestimonials[targetIndex];
+    const sourceIdx = testimonials.findIndex(t => t.id === currentItem.id);
+    const targetIdx = testimonials.findIndex(t => t.id === targetItem.id);
+
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const newList = [...testimonials];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
 
     const updatedOrder = newList.map((item, idx) => ({
       ...item,
@@ -305,103 +361,127 @@ export default function TestimonialsPage({
             </button>
           </div>
         ) : (
-          filteredTestimonials.map((item, index) => (
-            <div
-              key={item.id}
-              className={`relative bg-slate-900/40 border rounded-2xl p-5 backdrop-blur-sm transition-all duration-200 flex flex-col justify-between ${
-                item.isVisible ? 'border-slate-800/80 hover:border-slate-700' : 'border-slate-800/30 opacity-60'
-              }`}
-            >
-              <div>
-                {/* Card Top: Author, Company, Rating, Status */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                      alt={item.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-700/60 bg-slate-800"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-white font-sans">{item.name}</h3>
-                        {item.linkedInUrl && (
-                          <a
-                            href={item.linkedInUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sky-400 hover:text-sky-300 p-0.5 hover:bg-sky-500/10 rounded transition-colors"
-                            title="Verified LinkedIn Profile"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
+          filteredTestimonials.map((item, index) => {
+            const isDragging = draggedId === item.id;
+            const isOver = dragOverId === item.id;
+            const isDraggable = !searchTerm.trim();
+
+            return (
+              <div
+                key={item.id}
+                draggable={isDraggable}
+                onDragStart={(e) => handleDragStart(e, item.id)}
+                onDragOver={(e) => handleDragOver(e, item.id)}
+                onDrop={(e) => handleDrop(e, item.id)}
+                onDragEnd={() => {
+                  setDraggedId(null);
+                  setDragOverId(null);
+                }}
+                className={`relative bg-slate-900/40 border rounded-2xl p-5 backdrop-blur-sm transition-all duration-200 flex flex-col justify-between group ${
+                  item.isVisible ? 'border-slate-800/80 hover:border-slate-700' : 'border-slate-800/30 opacity-60'
+                } ${isDragging ? 'opacity-40 scale-95 border-dashed border-emerald-500/80 shadow-2xl' : ''} ${
+                  isOver ? 'border-emerald-400 ring-2 ring-emerald-500/30 scale-[1.01] bg-slate-900/90' : ''
+                }`}
+              >
+                <div>
+                  {/* Card Top: Author, Company, Rating, Status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className={`p-1 -ml-2 rounded transition-colors shrink-0 cursor-grab active:cursor-grabbing ${
+                          isDraggable ? 'text-slate-500 group-hover:text-emerald-400' : 'text-slate-700 cursor-not-allowed'
+                        }`}
+                        title={isDraggable ? "Drag to reorder endorsement" : "Clear search to reorder"}
+                      >
+                        <GripVertical className="w-4 h-4" />
                       </div>
-                      <p className="text-xs text-slate-300 font-medium">{item.role}</p>
-                      <p className="text-[11px] text-emerald-400 font-mono">{item.company}</p>
+                      <img
+                        src={item.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                        alt={item.name}
+                        draggable={false}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-700/60 bg-slate-800 shrink-0 select-none"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-white font-sans">{item.name}</h3>
+                          {item.linkedInUrl && (
+                            <a
+                              href={item.linkedInUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sky-400 hover:text-sky-300 p-0.5 hover:bg-sky-500/10 rounded transition-colors"
+                              title="Verified LinkedIn Profile"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-300 font-medium">{item.role}</p>
+                        <p className="text-[11px] text-emerald-400 font-mono">{item.company}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1.5">
+                      {/* Star Rating */}
+                      <div className="flex items-center text-amber-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3.5 h-3.5 ${
+                              i < (item.rating || 5) ? 'fill-amber-400' : 'text-slate-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Featured Badge */}
+                      {item.isFeatured && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-semibold">
+                          Featured
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1.5">
-                    {/* Star Rating */}
-                    <div className="flex items-center text-amber-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3.5 h-3.5 ${
-                            i < (item.rating || 5) ? 'fill-amber-400' : 'text-slate-700'
-                          }`}
-                        />
-                      ))}
-                    </div>
+                  {/* Relationship Tag */}
+                  <div className="mt-3">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-400">
+                      <HeartHandshake className="w-3 h-3 text-emerald-400" />
+                      {item.relationship}
+                    </span>
+                  </div>
 
-                    {/* Featured Badge */}
-                    {item.isFeatured && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-semibold">
-                        Featured
-                      </span>
-                    )}
+                  {/* Testimonial Quote Text */}
+                  <div className="mt-3.5 relative">
+                    <p className="text-xs text-slate-300 leading-relaxed italic bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/50 font-sans">
+                      "{item.testimonialText}"
+                    </p>
                   </div>
                 </div>
 
-                {/* Relationship Tag */}
-                <div className="mt-3">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-400">
-                    <HeartHandshake className="w-3 h-3 text-emerald-400" />
-                    {item.relationship}
-                  </span>
-                </div>
-
-                {/* Testimonial Quote Text */}
-                <div className="mt-3.5 relative">
-                  <p className="text-xs text-slate-300 leading-relaxed italic bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/50 font-sans">
-                    "{item.testimonialText}"
-                  </p>
-                </div>
-              </div>
-
-              {/* Card Footer Actions */}
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleMove(index, 'up')}
-                    disabled={index === 0}
-                    className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors"
-                    title="Move Up"
-                  >
-                    <MoveUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleMove(index, 'down')}
-                    disabled={index === filteredTestimonials.length - 1}
-                    className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors"
-                    title="Move Down"
-                  >
-                    <MoveDown className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="text-[10px] font-mono text-slate-500 ml-1">
-                    #{item.displayOrder || index + 1}
-                  </span>
-                </div>
+                {/* Card Footer Actions */}
+                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleMove(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors"
+                      title="Move Up"
+                    >
+                      <MoveUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleMove(index, 'down')}
+                      disabled={index === filteredTestimonials.length - 1}
+                      className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors"
+                      title="Move Down"
+                    >
+                      <MoveDown className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-mono text-slate-500 ml-1">
+                      #{item.displayOrder || index + 1}
+                    </span>
+                  </div>
 
                 <div className="flex items-center gap-1.5">
                   <button
@@ -434,7 +514,8 @@ export default function TestimonialsPage({
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

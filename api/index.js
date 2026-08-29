@@ -2008,10 +2008,9 @@ function authenticateJWT(req, res, next) {
         isDemo: true
       };
       if (req.method !== "GET") {
-        return res.status(200).json({
-          status: "success",
-          isDemoSimulated: true,
-          message: "\u{1F6E1}\uFE0F Recruiter Demo Mode: Action was simulated in-session and your live production database remains 100% protected."
+        return res.status(403).json({
+          error: "You are in Recruiter / Demo mode (Read-Only access). Modifications and saving are disabled. Log in via /admin to make changes.",
+          isDemoBlocked: true
         });
       }
       return next();
@@ -2022,10 +2021,9 @@ function authenticateJWT(req, res, next) {
       }
       req.user = decoded;
       if (req.user?.isDemo && req.method !== "GET") {
-        return res.status(200).json({
-          status: "success",
-          isDemoSimulated: true,
-          message: "\u{1F6E1}\uFE0F Recruiter Demo Mode: Action was simulated in-session and your live production database remains 100% protected."
+        return res.status(403).json({
+          error: "You are in Recruiter / Demo mode (Read-Only access). Modifications and saving are disabled. Log in via /admin to make changes.",
+          isDemoBlocked: true
         });
       }
       next();
@@ -2800,10 +2798,10 @@ var getPortfolioCombinedHandler = (req, res) => {
   const projects = [...db.projects || initialProjects].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const skills = [...db.skills || initialSkills].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const tools = [...db.tools || initialTools].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
-  const certificates = db.certificates || initialCertificates;
+  const certificates = [...db.certificates || initialCertificates].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const achievements = [...db.achievements || initialAchievements].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
-  const experiences = db.experiences || initialExperiences;
-  const education = db.education || initialEducation;
+  const experiences = [...db.experiences || initialExperiences].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  const education = [...db.education || initialEducation].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const analytics = db.analytics || initialAnalytics;
   const settings = db.settings || initialSettings;
   const footer = db.footer || initialFooter;
@@ -2813,7 +2811,14 @@ var getPortfolioCombinedHandler = (req, res) => {
   const technologies = [...db.technologies || initialTechStack].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const portfolioMetrics = [...db.portfolioMetrics || initialPortfolioMetrics].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
   const testimonials = [...db.testimonials || initialTestimonials].sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
-  const articles = [...db.articles || initialArticles].sort((a, b) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
+  const articles = [...db.articles || initialArticles].sort((a, b) => {
+    const orderA = a.order ?? a.displayOrder;
+    const orderB = b.order ?? b.displayOrder;
+    if (orderA !== void 0 && orderB !== void 0 && orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+  });
   const profile = db.profile || initialProfile;
   const themeSettings = db.themeSettings || initialThemeSettings;
   const consolidatedData = {
@@ -2893,33 +2898,25 @@ app.put("/api/profile", authenticateJWT, (req, res) => {
       db.profile[key] = updated[key];
     }
   });
-  if (updated.heroName !== void 0) {
-    db.profile.fullName = updated.heroName;
-    db.profile.heroName = updated.heroName;
-  } else if (updated.fullName !== void 0) {
-    db.profile.fullName = updated.fullName;
+  if (updated.fullName !== void 0 && updated.heroName === void 0) {
     db.profile.heroName = updated.fullName;
+  } else if (updated.heroName !== void 0 && updated.fullName === void 0) {
+    db.profile.fullName = updated.heroName;
   }
-  if (updated.heroTitle !== void 0) {
-    db.profile.title = updated.heroTitle;
-    db.profile.heroTitle = updated.heroTitle;
-  } else if (updated.title !== void 0) {
-    db.profile.title = updated.title;
+  if (updated.title !== void 0 && updated.heroTitle === void 0) {
     db.profile.heroTitle = updated.title;
+  } else if (updated.heroTitle !== void 0 && updated.title === void 0) {
+    db.profile.title = updated.heroTitle;
   }
-  if (updated.heroSubtitle !== void 0) {
-    db.profile.shortTagline = updated.heroSubtitle;
-    db.profile.heroSubtitle = updated.heroSubtitle;
-  } else if (updated.shortTagline !== void 0) {
-    db.profile.shortTagline = updated.shortTagline;
+  if (updated.shortTagline !== void 0 && updated.heroSubtitle === void 0) {
     db.profile.heroSubtitle = updated.shortTagline;
+  } else if (updated.heroSubtitle !== void 0 && updated.shortTagline === void 0) {
+    db.profile.shortTagline = updated.heroSubtitle;
   }
-  if (updated.heroDescription !== void 0) {
-    db.profile.shortIntroduction = updated.heroDescription;
-    db.profile.heroDescription = updated.heroDescription;
-  } else if (updated.shortIntroduction !== void 0) {
-    db.profile.shortIntroduction = updated.shortIntroduction;
+  if (updated.shortIntroduction !== void 0 && updated.heroDescription === void 0) {
     db.profile.heroDescription = updated.shortIntroduction;
+  } else if (updated.heroDescription !== void 0 && updated.shortIntroduction === void 0) {
+    db.profile.shortIntroduction = updated.heroDescription;
   }
   if (updated.heroVisibility !== void 0) {
     db.profile.heroVisibility = updated.heroVisibility !== false;
@@ -2970,6 +2967,9 @@ var handleProfileImagePatch = (fieldName) => (req, res) => {
     processedUrl = processed.url;
   }
   db.profile[fieldName] = processedUrl;
+  if (fieldName === "websiteLogo") {
+    db.profile.logoUrl = processedUrl;
+  }
   db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   saveDatabase(db);
   res.json({ status: "success", profile: db.profile });
@@ -2978,6 +2978,9 @@ var handleProfileImageDelete = (fieldName) => (req, res) => {
   const db = loadDatabase();
   if (!db.profile) db.profile = { ...initialProfile };
   db.profile[fieldName] = "";
+  if (fieldName === "websiteLogo") {
+    db.profile.logoUrl = "";
+  }
   db.profile.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   saveDatabase(db);
   res.json({ status: "success", profile: db.profile });
@@ -2992,6 +2995,14 @@ app.patch("/api/profile/cover-image", authenticateJWT, handleProfileImagePatch("
 app.delete("/api/profile/cover-image", authenticateJWT, handleProfileImageDelete("coverImage"));
 app.patch("/api/profile/about-image", authenticateJWT, handleProfileImagePatch("aboutImage"));
 app.delete("/api/profile/about-image", authenticateJWT, handleProfileImageDelete("aboutImage"));
+app.patch("/api/profile/website-logo", authenticateJWT, handleProfileImagePatch("websiteLogo"));
+app.delete("/api/profile/website-logo", authenticateJWT, handleProfileImageDelete("websiteLogo"));
+app.patch("/api/profile/logo", authenticateJWT, handleProfileImagePatch("websiteLogo"));
+app.delete("/api/profile/logo", authenticateJWT, handleProfileImageDelete("websiteLogo"));
+app.patch("/api/profile/og-image", authenticateJWT, handleProfileImagePatch("ogImage"));
+app.delete("/api/profile/og-image", authenticateJWT, handleProfileImageDelete("ogImage"));
+app.patch("/api/profile/favicon", authenticateJWT, handleProfileImagePatch("faviconUrl"));
+app.delete("/api/profile/favicon", authenticateJWT, handleProfileImageDelete("faviconUrl"));
 app.get("/api/admin/database/export", authenticateJWT, (req, res) => {
   try {
     const db = loadDatabase();
@@ -3561,6 +3572,36 @@ app.delete("/api/projects/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
+var reorderProjectsHandler = (req, res) => {
+  const db = loadDatabase();
+  const payload = req.body.order || req.body.projects || req.body;
+  if (!Array.isArray(payload)) {
+    return res.status(400).json({ error: "Invalid request payload. Expected an array of projects or { order: [...] }" });
+  }
+  if (!db.projects) db.projects = [];
+  payload.forEach((item, idx) => {
+    const targetId = typeof item === "object" ? item.id : parseInt(item);
+    const newOrder = typeof item === "object" && typeof (item.displayOrder ?? item.order ?? item.priority) === "number" ? item.displayOrder ?? item.order ?? item.priority : idx + 1;
+    const proj = db.projects.find((p) => p.id === targetId);
+    if (proj) {
+      proj.displayOrder = newOrder;
+      proj.order = newOrder;
+      proj.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  });
+  db.projects.sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  recordActivity(req, db, {
+    action: "Projects Reordered",
+    module: "Projects",
+    description: "Updated custom priority and display ordering for projects.",
+    newValue: payload
+  });
+  saveDatabase(db);
+  res.json({ status: "success", projects: db.projects });
+};
+app.patch("/api/projects/order", authenticateJWT, reorderProjectsHandler);
+app.put("/api/projects/reorder", authenticateJWT, reorderProjectsHandler);
+app.post("/api/projects/order", authenticateJWT, reorderProjectsHandler);
 app.get("/api/skills", (req, res) => {
   const db = loadDatabase();
   res.json(db.skills);
@@ -3661,6 +3702,31 @@ app.delete("/api/skills/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
+var handleSkillsOrder = (req, res) => {
+  const db = loadDatabase();
+  const { orderedIds, orders, order } = req.body;
+  const itemsList = orders || order;
+  if (Array.isArray(itemsList) && db.skills) {
+    itemsList.forEach((item) => {
+      const s = db.skills.find((x) => x.id === item.id);
+      if (s) s.displayOrder = item.displayOrder ?? item.order ?? s.displayOrder;
+    });
+    db.skills.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    saveDatabase(db);
+  } else if (Array.isArray(orderedIds) && db.skills) {
+    db.skills = db.skills.map((s) => {
+      const idx = orderedIds.indexOf(s.id);
+      return idx !== -1 ? { ...s, displayOrder: idx + 1 } : s;
+    });
+    db.skills.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    saveDatabase(db);
+  }
+  res.json({ status: "success" });
+};
+app.post("/api/skills/order", authenticateJWT, handleSkillsOrder);
+app.patch("/api/skills/order", authenticateJWT, handleSkillsOrder);
+app.post("/api/skills/reorder", authenticateJWT, handleSkillsOrder);
+app.patch("/api/skills/reorder", authenticateJWT, handleSkillsOrder);
 app.get("/api/tools", (req, res) => {
   const db = loadDatabase();
   const tools = db.tools || [];
@@ -3963,6 +4029,36 @@ app.delete("/api/certificates/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
+var reorderCertificatesHandler = (req, res) => {
+  const db = loadDatabase();
+  const payload = req.body.order || req.body.certificates || req.body;
+  if (!Array.isArray(payload)) {
+    return res.status(400).json({ error: "Invalid request payload. Expected an array of certificates or { order: [...] }" });
+  }
+  if (!db.certificates) db.certificates = [];
+  payload.forEach((item, idx) => {
+    const targetId = typeof item === "object" ? item.id : parseInt(item);
+    const newOrder = typeof item === "object" && typeof (item.displayOrder ?? item.order ?? item.priority) === "number" ? item.displayOrder ?? item.order ?? item.priority : idx + 1;
+    const cert = db.certificates.find((c) => c.id === targetId);
+    if (cert) {
+      cert.displayOrder = newOrder;
+      cert.order = newOrder;
+      cert.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  });
+  db.certificates.sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  recordActivity(req, db, {
+    action: "Certificates Reordered",
+    module: "Certificates",
+    description: "Updated custom priority and display ordering for certificates.",
+    newValue: payload
+  });
+  saveDatabase(db);
+  res.json({ status: "success", certificates: db.certificates });
+};
+app.patch("/api/certificates/order", authenticateJWT, reorderCertificatesHandler);
+app.put("/api/certificates/reorder", authenticateJWT, reorderCertificatesHandler);
+app.post("/api/certificates/order", authenticateJWT, reorderCertificatesHandler);
 app.get("/api/achievements", (req, res) => {
   const db = loadDatabase();
   const achievements = db.achievements || [];
@@ -4102,53 +4198,108 @@ app.get(["/api/messages", "/messages"], (req, res) => {
   const sorted = [...messages].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   res.json(sorted);
 });
-app.post(["/api/messages", "/messages"], (req, res) => {
+app.post(["/api/messages", "/messages"], async (req, res) => {
   const db = loadDatabase();
-  const { senderName, senderEmail, subject, messageContent, name, email, message } = req.body || {};
-  const resolvedName = (senderName || name || "").trim();
-  const resolvedEmail = (senderEmail || email || "").trim();
-  const resolvedSubject = (subject || "Inbound Connection Request").trim();
-  const resolvedMessage = (messageContent || message || "").trim();
-  if (!resolvedName || !resolvedEmail || !resolvedMessage) {
+  const body = req.body || {};
+  const rawName = (body.senderName || body.name || "").trim() || "Recruiter / Visitor";
+  const rawEmail = (body.senderEmail || body.email || "").trim() || "visitor@example.com";
+  const rawSubject = (body.subject || "").trim() || "Inbound Connection Request";
+  const rawMessage = (body.messageContent || body.message || "").trim();
+  const rawPhone = (body.phone || "").trim();
+  if (!rawName || !rawEmail || !rawMessage) {
     return res.status(400).json({ error: "Name, email, and message content are required." });
   }
+  const sanitizedName = sanitizeInput(rawName);
+  const sanitizedEmail = sanitizeInput(rawEmail);
+  const sanitizedSubject = sanitizeInput(rawSubject);
+  const sanitizedMessage = sanitizeInput(rawMessage);
+  const sanitizedPhone = sanitizeInput(rawPhone);
   db.messages = db.messages || [];
-  const maxId = db.messages.reduce((max, m) => m.id > max ? m.id : max, 0);
+  const maxId = db.messages.reduce((max, m) => typeof m?.id === "number" && m.id > max ? m.id : max, 0);
   const now = (/* @__PURE__ */ new Date()).toISOString();
   const newMessage = {
     id: maxId + 1,
-    senderName: resolvedName,
-    senderEmail: resolvedEmail,
-    subject: resolvedSubject,
-    messageContent: resolvedMessage,
+    senderName: sanitizedName,
+    name: sanitizedName,
+    senderEmail: sanitizedEmail,
+    email: sanitizedEmail,
+    phone: sanitizedPhone,
+    subject: sanitizedSubject,
+    messageContent: sanitizedMessage,
+    message: sanitizedMessage,
     isRead: false,
     isStarred: false,
     createdAt: now,
     updatedAt: now
   };
   db.messages.unshift(newMessage);
-  if (db.analytics) {
-    db.analytics.contactConversionRate = Math.min(100, Number(((db.analytics.contactConversionRate || 2.8) + 0.1).toFixed(1)));
-  }
+  if (!db.analytics) db.analytics = { pageViews: 1, uniqueVisitors: 1, contactConversionRate: 100 };
+  db.analytics.pageViews = (db.analytics.pageViews || 0) + 1;
+  const totalMessages = db.messages.length;
+  const visitors = db.analytics.uniqueVisitors || 1;
+  db.analytics.contactConversionRate = parseFloat((totalMessages / visitors * 100).toFixed(1));
+  if (!db.notifications) db.notifications = [];
+  db.notifications.unshift({
+    id: `notif-${Date.now()}`,
+    type: "MESSAGE",
+    title: `\u{1F4EC} New Recruiter Inquiry: ${sanitizedName}`,
+    message: `"${sanitizedSubject}" from ${sanitizedEmail}`,
+    timestamp: now,
+    read: false,
+    link: "Messages"
+  });
   recordActivity(req, db, {
     action: "Message Sent",
     module: "Visitor Interaction",
-    description: `New inbound message from ${resolvedName} (${resolvedEmail}): "${resolvedSubject}"`,
+    description: `New inbound message from ${sanitizedName} (${sanitizedEmail}): "${sanitizedSubject}"`,
     newValue: newMessage
   });
-  publishNotification(db, {
-    module: "Email",
-    action: "Inbound Message Received",
-    title: `Message from ${resolvedName}`,
-    description: `${resolvedSubject}: ${resolvedMessage.substring(0, 100)}...`,
-    performedBy: resolvedName,
-    category: "Email",
-    icon: "Mail",
-    color: "#10b981",
-    severity: "Success"
-  });
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL || "chandrumohan550@gmail.com";
+  const smtpPass = (process.env.SMTP_PASS || process.env.APP_PASSWORD || "").trim();
+  if (smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        }
+      });
+      const targetEmail = db.profile?.email || "chandrumohan550@gmail.com";
+      await transporter.sendMail({
+        from: `"${sanitizedName}" <${smtpUser}>`,
+        replyTo: sanitizedEmail,
+        to: targetEmail,
+        subject: `\u{1F680} [Portfolio Inquiry] ${sanitizedSubject} - from ${sanitizedName}`,
+        text: `New Inquiry via Portfolio:
+
+Sender: ${sanitizedName}
+Email: ${sanitizedEmail}
+Phone: ${sanitizedPhone || "N/A"}
+Subject: ${sanitizedSubject}
+
+Message:
+${sanitizedMessage}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; background-color: #0b0f19; padding: 25px; color: #f1f5f9; border-radius: 12px;">
+              <h2 style="color: #10b981; margin-top: 0;">\u{1F4EC} New Portfolio / Recruiter Inquiry</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+                <tr><td style="padding: 8px; color: #94a3b8; width: 120px;"><strong>Sender Name:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedName}</td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Work Email:</strong></td><td style="padding: 8px; color: #38bdf8;"><a href="mailto:${sanitizedEmail}" style="color: #38bdf8; text-decoration: underline;">${sanitizedEmail}</a></td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Subject:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedSubject}</td></tr>
+                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Date:</strong></td><td style="padding: 8px; color: #94a3b8;">${(/* @__PURE__ */ new Date()).toLocaleString()}</td></tr>
+              </table>
+              <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${sanitizedMessage}</div>
+              <p style="font-size: 12px; color: #64748b; margin-top: 20px;">You can reply directly to this email to respond to ${sanitizedEmail}.</p>
+            </div>
+          `
+      });
+    } catch (err) {
+      console.warn(`[SMTP Email Warning] Message saved to DB, but Gmail SMTP dispatch failed:`, err.message);
+    }
+  }
   saveDatabase(db);
-  res.status(201).json({ status: "success", message: newMessage });
+  res.status(201).json(newMessage);
 });
 app.put(["/api/messages/:id/read", "/messages/:id/read"], authenticateJWT, (req, res) => {
   const db = loadDatabase();
@@ -4211,7 +4362,7 @@ app.delete(["/api/messages/:id", "/messages/:id"], authenticateJWT, (req, res) =
   recordActivity(req, db, {
     action: "Message Deleted",
     module: "Visitor Interaction",
-    description: `Purged inbox message "${oldValue?.subject || id}" from database.`,
+    description: `Deleted message from ${oldValue?.senderName || oldValue?.name || "Visitor"} (ID: ${id})`,
     oldValue
   });
   saveDatabase(db);
@@ -4266,6 +4417,36 @@ app.delete("/api/experiences/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
+var reorderExperiencesHandler = (req, res) => {
+  const db = loadDatabase();
+  const payload = req.body.order || req.body.experiences || req.body;
+  if (!Array.isArray(payload)) {
+    return res.status(400).json({ error: "Invalid request payload. Expected an array of experiences or { order: [...] }" });
+  }
+  if (!db.experiences) db.experiences = [];
+  payload.forEach((item, idx) => {
+    const targetId = typeof item === "object" ? item.id : parseInt(item);
+    const newOrder = typeof item === "object" && typeof (item.displayOrder ?? item.order ?? item.priority) === "number" ? item.displayOrder ?? item.order ?? item.priority : idx + 1;
+    const exp = db.experiences.find((e) => e.id === targetId);
+    if (exp) {
+      exp.displayOrder = newOrder;
+      exp.order = newOrder;
+      exp.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  });
+  db.experiences.sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  recordActivity(req, db, {
+    action: "Experience Reordered",
+    module: "Experience",
+    description: "Updated custom priority and display ordering for career experiences.",
+    newValue: payload
+  });
+  saveDatabase(db);
+  res.json({ status: "success", experiences: db.experiences });
+};
+app.patch(["/api/experiences/order", "/api/experience/order"], authenticateJWT, reorderExperiencesHandler);
+app.put(["/api/experiences/reorder", "/api/experience/reorder"], authenticateJWT, reorderExperiencesHandler);
+app.post(["/api/experiences/order", "/api/experience/order"], authenticateJWT, reorderExperiencesHandler);
 app.get("/api/education", (req, res) => {
   const db = loadDatabase();
   res.json(db.education);
@@ -4315,6 +4496,36 @@ app.delete("/api/education/:id", authenticateJWT, (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
+var reorderEducationHandler = (req, res) => {
+  const db = loadDatabase();
+  const payload = req.body.order || req.body.education || req.body;
+  if (!Array.isArray(payload)) {
+    return res.status(400).json({ error: "Invalid request payload. Expected an array of education items or { order: [...] }" });
+  }
+  if (!db.education) db.education = [];
+  payload.forEach((item, idx) => {
+    const targetId = typeof item === "object" ? item.id : parseInt(item);
+    const newOrder = typeof item === "object" && typeof (item.displayOrder ?? item.order ?? item.priority) === "number" ? item.displayOrder ?? item.order ?? item.priority : idx + 1;
+    const edu = db.education.find((e) => e.id === targetId);
+    if (edu) {
+      edu.displayOrder = newOrder;
+      edu.order = newOrder;
+      edu.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  });
+  db.education.sort((a, b) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0));
+  recordActivity(req, db, {
+    action: "Education Reordered",
+    module: "Education",
+    description: "Updated custom priority and display ordering for academic credentials.",
+    newValue: payload
+  });
+  saveDatabase(db);
+  res.json({ status: "success", education: db.education });
+};
+app.patch("/api/education/order", authenticateJWT, reorderEducationHandler);
+app.put("/api/education/reorder", authenticateJWT, reorderEducationHandler);
+app.post("/api/education/order", authenticateJWT, reorderEducationHandler);
 app.get("/api/settings", (req, res) => {
   const db = loadDatabase();
   res.json(db.settings);
@@ -4334,124 +4545,6 @@ app.put("/api/settings", authenticateJWT, (req, res) => {
   });
   saveDatabase(db);
   res.json({ status: "success", settings: db.settings });
-});
-app.get("/api/messages", authenticateJWT, (req, res) => {
-  const db = loadDatabase();
-  res.json(db.messages);
-});
-app.post("/api/messages", async (req, res) => {
-  const db = loadDatabase();
-  const msg = req.body;
-  const rawName = msg.name || msg.senderName || "Recruiter / Visitor";
-  const rawEmail = msg.email || msg.senderEmail || "visitor@example.com";
-  const rawSubject = msg.subject || "Interview Opportunity for Chandru";
-  const rawMessage = msg.message || msg.messageContent || "Hello Chandru, we are interested in discussing an engineering role with you.";
-  const sanitizedMsg = {
-    name: sanitizeInput(rawName),
-    email: sanitizeInput(rawEmail),
-    phone: sanitizeInput(msg.phone || ""),
-    subject: sanitizeInput(rawSubject),
-    message: sanitizeInput(rawMessage)
-  };
-  if (!db.messages) db.messages = [];
-  const newId = db.messages.length > 0 ? Math.max(...db.messages.map((m) => m.id)) + 1 : 1;
-  const created = {
-    ...sanitizedMsg,
-    id: newId,
-    isRead: false,
-    isStarred: false,
-    createdAt: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  db.messages.unshift(created);
-  if (!db.analytics) db.analytics = { pageViews: 1, uniqueVisitors: 1, contactConversionRate: 100 };
-  db.analytics.pageViews = (db.analytics.pageViews || 0) + 1;
-  const totalMessages = db.messages.length;
-  const visitors = db.analytics.uniqueVisitors || 1;
-  db.analytics.contactConversionRate = parseFloat((totalMessages / visitors * 100).toFixed(1));
-  if (!db.notifications) db.notifications = [];
-  db.notifications.unshift({
-    id: `notif-${Date.now()}`,
-    type: "MESSAGE",
-    title: `\u{1F4EC} New Recruiter Inquiry: ${sanitizedMsg.name}`,
-    message: `"${sanitizedMsg.subject}" from ${sanitizedMsg.email}`,
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    read: false,
-    link: "Messages"
-  });
-  recordActivity(req, db, {
-    action: "New Message Received",
-    module: "Messages",
-    description: `Inquiry from ${sanitizedMsg.name} (${sanitizedMsg.email}) re: "${sanitizedMsg.subject}"`,
-    newValue: { id: newId, sender: sanitizedMsg.name, email: sanitizedMsg.email }
-  });
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL || "chandrumohan550@gmail.com";
-  const smtpPass = (process.env.SMTP_PASS || process.env.APP_PASSWORD || "").trim();
-  if (smtpPass) {
-    try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: smtpUser,
-          pass: smtpPass
-        }
-      });
-      const targetEmail = db.profile?.email || "chandrumohan550@gmail.com";
-      const info = await transporter.sendMail({
-        from: `"${sanitizedMsg.name}" <${smtpUser}>`,
-        replyTo: sanitizedMsg.email,
-        to: targetEmail,
-        subject: `\u{1F680} [Portfolio Inquiry] ${sanitizedMsg.subject} - from ${sanitizedMsg.name}`,
-        text: `New Inquiry via Portfolio:
-
-Sender: ${sanitizedMsg.name}
-Email: ${sanitizedMsg.email}
-Phone: ${sanitizedMsg.phone || "N/A"}
-Subject: ${sanitizedMsg.subject}
-
-Message:
-${sanitizedMsg.message}`,
-        html: `
-            <div style="font-family: Arial, sans-serif; background-color: #0b0f19; padding: 25px; color: #f1f5f9; border-radius: 12px;">
-              <h2 style="color: #10b981; margin-top: 0;">\u{1F4EC} New Portfolio / Recruiter Inquiry</h2>
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-                <tr><td style="padding: 8px; color: #94a3b8; width: 120px;"><strong>Sender Name:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedMsg.name}</td></tr>
-                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Work Email:</strong></td><td style="padding: 8px; color: #38bdf8;"><a href="mailto:${sanitizedMsg.email}" style="color: #38bdf8; text-decoration: underline;">${sanitizedMsg.email}</a></td></tr>
-                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Subject:</strong></td><td style="padding: 8px; color: #ffffff;">${sanitizedMsg.subject}</td></tr>
-                <tr><td style="padding: 8px; color: #94a3b8;"><strong>Date:</strong></td><td style="padding: 8px; color: #94a3b8;">${(/* @__PURE__ */ new Date()).toLocaleString()}</td></tr>
-              </table>
-              <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${sanitizedMsg.message}</div>
-              <p style="font-size: 12px; color: #64748b; margin-top: 20px;">You can reply directly to this email to respond to ${sanitizedMsg.email}.</p>
-            </div>
-          `
-      });
-      console.log(`[SMTP Email Sent] Message #${newId} delivered to ${targetEmail}: ${info.messageId}`);
-    } catch (err) {
-      console.warn(`[SMTP Email Warning] Message saved to DB, but Gmail SMTP dispatch failed:`, err.message);
-    }
-  }
-  saveDatabase(db);
-  res.status(201).json(created);
-});
-app.put("/api/messages/:id/read", authenticateJWT, (req, res) => {
-  const db = loadDatabase();
-  const id = parseInt(req.params.id);
-  db.messages = db.messages.map((m) => m.id === id ? { ...m, isRead: !m.isRead } : m);
-  saveDatabase(db);
-  res.json({ status: "success" });
-});
-app.put("/api/messages/:id/star", authenticateJWT, (req, res) => {
-  const db = loadDatabase();
-  const id = parseInt(req.params.id);
-  db.messages = db.messages.map((m) => m.id === id ? { ...m, isStarred: !m.isStarred } : m);
-  saveDatabase(db);
-  res.json({ status: "success" });
-});
-app.delete("/api/messages/:id", authenticateJWT, (req, res) => {
-  const db = loadDatabase();
-  const id = parseInt(req.params.id);
-  db.messages = db.messages.filter((m) => m.id !== id);
-  saveDatabase(db);
-  res.json({ status: "success" });
 });
 app.get("/api/social-links", (req, res) => {
   const db = loadDatabase();
@@ -4703,7 +4796,7 @@ app.get("/api/portfolio-metrics", (req, res) => {
   list.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
   res.json(list);
 });
-app.post("/api/portfolio-metrics", (req, res) => {
+app.post("/api/portfolio-metrics", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   if (!db.portfolioMetrics) db.portfolioMetrics = [];
   const {
@@ -4754,7 +4847,7 @@ app.post("/api/portfolio-metrics", (req, res) => {
   saveDatabase(db);
   res.status(201).json(newMetric);
 });
-app.put("/api/portfolio-metrics/:id", (req, res) => {
+app.put("/api/portfolio-metrics/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.portfolioMetrics) db.portfolioMetrics = [];
@@ -4806,7 +4899,7 @@ app.put("/api/portfolio-metrics/:id", (req, res) => {
   saveDatabase(db);
   res.json(db.portfolioMetrics[index]);
 });
-app.delete("/api/portfolio-metrics/:id", (req, res) => {
+app.delete("/api/portfolio-metrics/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.portfolioMetrics) db.portfolioMetrics = [];
@@ -4824,7 +4917,7 @@ app.delete("/api/portfolio-metrics/:id", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
-app.post("/api/portfolio-metrics/bulk-delete", (req, res) => {
+app.post("/api/portfolio-metrics/bulk-delete", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const { ids } = req.body;
   if (!Array.isArray(ids)) {
@@ -4842,7 +4935,7 @@ app.post("/api/portfolio-metrics/bulk-delete", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success", deletedCount });
 });
-app.patch("/api/portfolio-metrics/bulk-visibility", (req, res) => {
+app.patch("/api/portfolio-metrics/bulk-visibility", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const { ids, visible } = req.body;
   if (!Array.isArray(ids) || typeof visible !== "boolean") {
@@ -4863,7 +4956,7 @@ app.patch("/api/portfolio-metrics/bulk-visibility", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
-app.patch("/api/portfolio-metrics/:id/visibility", (req, res) => {
+app.patch("/api/portfolio-metrics/:id/visibility", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   const { visible } = req.body;
@@ -4885,7 +4978,7 @@ app.patch("/api/portfolio-metrics/:id/visibility", (req, res) => {
   saveDatabase(db);
   res.json(db.portfolioMetrics[index]);
 });
-app.patch("/api/portfolio-metrics/order", (req, res) => {
+app.patch("/api/portfolio-metrics/order", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const { order } = req.body;
   if (!Array.isArray(order)) {
@@ -4908,7 +5001,7 @@ app.patch("/api/portfolio-metrics/order", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success", portfolioMetrics: db.portfolioMetrics });
 });
-app.post("/api/portfolio-metrics/:id/duplicate", (req, res) => {
+app.post("/api/portfolio-metrics/:id/duplicate", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.portfolioMetrics) db.portfolioMetrics = [];
@@ -4942,7 +5035,7 @@ app.get("/api/testimonials", (req, res) => {
   const sorted = [...list].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
   res.json(sorted);
 });
-app.post("/api/testimonials", (req, res) => {
+app.post("/api/testimonials", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   if (!db.testimonials) db.testimonials = [...initialTestimonials];
   const { name, role, company, avatarUrl, linkedInUrl, relationship, testimonialText, rating, isFeatured, isVisible, displayOrder } = req.body;
@@ -4976,7 +5069,7 @@ app.post("/api/testimonials", (req, res) => {
   saveDatabase(db);
   res.status(201).json(newTestimonial);
 });
-app.put("/api/testimonials/:id", (req, res) => {
+app.put("/api/testimonials/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.testimonials) db.testimonials = [...initialTestimonials];
@@ -5012,7 +5105,7 @@ app.put("/api/testimonials/:id", (req, res) => {
   saveDatabase(db);
   res.json(db.testimonials[index]);
 });
-app.delete("/api/testimonials/:id", (req, res) => {
+app.delete("/api/testimonials/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.testimonials) db.testimonials = [...initialTestimonials];
@@ -5030,7 +5123,7 @@ app.delete("/api/testimonials/:id", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
-app.patch("/api/testimonials/:id/visibility", (req, res) => {
+app.patch("/api/testimonials/:id/visibility", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   const { isVisible } = req.body;
@@ -5046,7 +5139,7 @@ app.patch("/api/testimonials/:id/visibility", (req, res) => {
   saveDatabase(db);
   res.json(db.testimonials[index]);
 });
-app.patch("/api/testimonials/order", (req, res) => {
+app.patch("/api/testimonials/order", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const { order } = req.body;
   if (!Array.isArray(order)) {
@@ -5081,15 +5174,16 @@ app.get("/api/articles/:slug", (req, res) => {
   saveDatabase(db);
   res.json(article);
 });
-app.post("/api/articles", (req, res) => {
+app.post("/api/articles", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   if (!db.articles) db.articles = [...initialArticles];
-  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured, displayOrder, order } = req.body;
   if (!title || !content) {
     return res.status(400).json({ error: "Title and content are required" });
   }
   const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   const maxId = db.articles.reduce((max, item) => typeof item?.id === "number" && item.id > max ? item.id : max, 0);
+  const assignedOrder = typeof (displayOrder ?? order) === "number" ? displayOrder ?? order : 1;
   const newArticle = {
     id: maxId + 1,
     title: String(title).trim(),
@@ -5097,11 +5191,13 @@ app.post("/api/articles", (req, res) => {
     excerpt: excerpt ? String(excerpt).trim() : String(content).substring(0, 150) + "...",
     content: String(content),
     coverImageUrl: coverImageUrl || "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80",
-    category: category || "System Design",
+    category: category && String(category).trim() || "System Design",
     tags: Array.isArray(tags) ? tags : typeof tags === "string" ? tags.split(",").map((t) => t.trim()).filter(Boolean) : ["Architecture", "Java"],
     readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : Math.max(1, Math.ceil(String(content).split(/\s+/).length / 200)),
     isPublished: isPublished !== void 0 ? Boolean(isPublished) : true,
     isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : false,
+    displayOrder: assignedOrder,
+    order: assignedOrder,
     viewsCount: 0,
     author: "Chandru Mohan",
     authorRole: "Principal Systems Architect",
@@ -5110,6 +5206,10 @@ app.post("/api/articles", (req, res) => {
     updatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   db.articles.unshift(newArticle);
+  db.articles.forEach((art, idx) => {
+    art.displayOrder = idx + 1;
+    art.order = idx + 1;
+  });
   recordActivity(req, db, {
     action: "Article Created",
     module: "Articles",
@@ -5119,7 +5219,7 @@ app.post("/api/articles", (req, res) => {
   saveDatabase(db);
   res.status(201).json(newArticle);
 });
-app.put("/api/articles/:id", (req, res) => {
+app.put("/api/articles/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.articles) db.articles = [...initialArticles];
@@ -5128,8 +5228,9 @@ app.put("/api/articles/:id", (req, res) => {
     return res.status(404).json({ error: "Article not found" });
   }
   const oldValue = { ...db.articles[index] };
-  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured } = req.body;
+  const { title, slug, excerpt, content, coverImageUrl, category, tags, readTimeMinutes, isPublished, isFeatured, displayOrder, order } = req.body;
   const computedSlug = slug ? String(slug).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : db.articles[index].slug;
+  const targetOrder = typeof (displayOrder ?? order) === "number" ? displayOrder ?? order : db.articles[index].displayOrder ?? db.articles[index].order ?? index + 1;
   db.articles[index] = {
     ...db.articles[index],
     title: title !== void 0 ? String(title).trim() : db.articles[index].title,
@@ -5137,11 +5238,13 @@ app.put("/api/articles/:id", (req, res) => {
     excerpt: excerpt !== void 0 ? String(excerpt).trim() : db.articles[index].excerpt,
     content: content !== void 0 ? String(content) : db.articles[index].content,
     coverImageUrl: coverImageUrl !== void 0 ? coverImageUrl : db.articles[index].coverImageUrl,
-    category: category !== void 0 ? category : db.articles[index].category,
+    category: category !== void 0 ? String(category).trim() : db.articles[index].category,
     tags: Array.isArray(tags) ? tags : typeof tags === "string" ? tags.split(",").map((t) => t.trim()).filter(Boolean) : db.articles[index].tags,
     readTimeMinutes: typeof readTimeMinutes === "number" ? readTimeMinutes : db.articles[index].readTimeMinutes,
     isPublished: isPublished !== void 0 ? Boolean(isPublished) : db.articles[index].isPublished,
     isFeatured: isFeatured !== void 0 ? Boolean(isFeatured) : db.articles[index].isFeatured,
+    displayOrder: targetOrder,
+    order: targetOrder,
     author: "Chandru Mohan",
     authorRole: "Principal Systems Architect",
     updatedAt: (/* @__PURE__ */ new Date()).toISOString()
@@ -5156,7 +5259,7 @@ app.put("/api/articles/:id", (req, res) => {
   saveDatabase(db);
   res.json(db.articles[index]);
 });
-app.delete("/api/articles/:id", (req, res) => {
+app.delete("/api/articles/:id", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   if (!db.articles) db.articles = [...initialArticles];
@@ -5174,7 +5277,44 @@ app.delete("/api/articles/:id", (req, res) => {
   saveDatabase(db);
   res.json({ status: "success" });
 });
-app.patch("/api/articles/:id/status", (req, res) => {
+var reorderArticlesHandler = (req, res) => {
+  const db = loadDatabase();
+  const payload = req.body.order || req.body.articles || req.body;
+  if (!Array.isArray(payload)) {
+    return res.status(400).json({ error: "Invalid request payload. Expected an array of articles or { order: [...] }" });
+  }
+  if (!db.articles) db.articles = [...initialArticles];
+  payload.forEach((item, idx) => {
+    const targetId = typeof item === "object" ? item.id : parseInt(item);
+    const newOrder = typeof item === "object" && typeof (item.displayOrder ?? item.order ?? item.priority) === "number" ? item.displayOrder ?? item.order ?? item.priority : idx + 1;
+    const art = db.articles.find((a) => a.id === targetId);
+    if (art) {
+      art.displayOrder = newOrder;
+      art.order = newOrder;
+      art.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    }
+  });
+  db.articles.sort((a, b) => {
+    const orderA = a.order ?? a.displayOrder;
+    const orderB = b.order ?? b.displayOrder;
+    if (orderA !== void 0 && orderB !== void 0 && orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+  });
+  recordActivity(req, db, {
+    action: "Articles Reordered",
+    module: "Articles",
+    description: "Updated custom priority and display ordering for engineering articles.",
+    newValue: payload
+  });
+  saveDatabase(db);
+  res.json({ status: "success", articles: db.articles });
+};
+app.patch("/api/articles/order", authenticateJWT, reorderArticlesHandler);
+app.put("/api/articles/reorder", authenticateJWT, reorderArticlesHandler);
+app.post("/api/articles/order", authenticateJWT, reorderArticlesHandler);
+app.patch("/api/articles/:id/status", authenticateJWT, (req, res) => {
   const db = loadDatabase();
   const id = parseInt(req.params.id);
   const { isPublished } = req.body;
@@ -7871,3 +8011,4 @@ export {
   server_default as default,
   startServer
 };
+//# sourceMappingURL=index.js.map

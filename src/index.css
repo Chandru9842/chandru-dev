@@ -99,3 +99,76 @@ body {
   will-change: transform;
 }
 
+/* =========================================================
+   LUXURY RUNNING WAVE & BORDER BEAM ANIMATIONS
+   ========================================================= */
+
+@keyframes border-beam {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes wave-aurora {
+  0%, 100% {
+    transform: rotate(0deg) scale(1.05);
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.18);
+    filter: hue-rotate(45deg) brightness(1.25);
+  }
+}
+
+.animate-wave-aurora {
+  animation: wave-aurora 8s ease-in-out infinite alternate;
+}
+
+@keyframes running-light {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.animate-running-light {
+  animation: running-light 4.5s linear infinite;
+}
+
+@keyframes ripple-wave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.14);
+    opacity: 0;
+  }
+}
+
+.animate-ripple-wave {
+  animation: ripple-wave 3s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes glass-sheen {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+  }
+  30%, 100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+.animate-glass-sheen {
+  animation: glass-sheen 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+

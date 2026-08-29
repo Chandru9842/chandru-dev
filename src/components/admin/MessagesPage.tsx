@@ -22,12 +22,14 @@ export default function MessagesPage({ messages, onToggleRead, onToggleStar, onD
 
   // Filter messages
   const filteredMsgs = useMemo(() => {
-    return messages.filter(m => 
-      m.senderName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.senderEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.messageContent.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return (messages || []).filter(m => {
+      const name = (m.senderName || (m as any).name || '').toLowerCase();
+      const email = (m.senderEmail || (m as any).email || '').toLowerCase();
+      const subject = (m.subject || '').toLowerCase();
+      const content = (m.messageContent || (m as any).message || '').toLowerCase();
+      const query = (searchQuery || '').toLowerCase();
+      return name.includes(query) || email.includes(query) || subject.includes(query) || content.includes(query);
+    });
   }, [messages, searchQuery]);
 
   // Paginated inbox
@@ -112,20 +114,20 @@ export default function MessagesPage({ messages, onToggleRead, onToggleStar, onD
 
                     <div className="flex justify-between items-start gap-2 pr-4">
                       <h4 className={`text-xs truncate ${!msg.isRead ? 'font-bold text-slate-100' : 'text-slate-300'}`}>
-                        {msg.senderName}
+                        {msg.senderName || (msg as any).name || 'Inbound Visitor'}
                       </h4>
                       <span className="text-[9px] font-mono text-slate-500 tracking-tighter shrink-0">
                         {new Date(msg.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{msg.senderEmail}</p>
+                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{msg.senderEmail || (msg as any).email || 'No email provided'}</p>
                     <p className={`text-xs mt-1.5 truncate ${!msg.isRead ? 'font-semibold text-slate-200' : 'text-slate-400'}`}>
-                      {msg.subject}
+                      {msg.subject || 'Inquiry'}
                     </p>
                     
                     <p className="text-[11px] text-slate-500 line-clamp-1 mt-1 leading-normal">
-                      {msg.messageContent}
+                      {msg.messageContent || (msg as any).message || ''}
                     </p>
 
                     {/* Star toggle indicator inside card */}
@@ -219,8 +221,8 @@ export default function MessagesPage({ messages, onToggleRead, onToggleStar, onD
               {/* Message Header info */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/30 p-4 border border-slate-800/80 rounded-xl">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">{activeMessage.senderName}</h3>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">{activeMessage.senderEmail}</p>
+                  <h3 className="text-sm font-bold text-slate-100">{activeMessage.senderName || (activeMessage as any).name || 'Inbound Visitor'}</h3>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">{activeMessage.senderEmail || (activeMessage as any).email || 'No email provided'}</p>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
                   <Clock className="w-3.5 h-3.5" />
@@ -231,21 +233,21 @@ export default function MessagesPage({ messages, onToggleRead, onToggleStar, onD
               {/* Subject */}
               <div className="space-y-1">
                 <span className="text-[9px] font-mono uppercase text-slate-500 tracking-wider">Subject Title</span>
-                <h4 className="text-sm font-bold text-slate-200">{activeMessage.subject}</h4>
+                <h4 className="text-sm font-bold text-slate-200">{activeMessage.subject || 'No subject'}</h4>
               </div>
 
               {/* Content Body */}
               <div className="space-y-2.5">
                 <span className="text-[9px] font-mono uppercase text-slate-500 tracking-wider">Message Content Body</span>
                 <div className="bg-slate-950/50 p-5 rounded-xl border border-slate-800/60 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
-                  {activeMessage.messageContent}
+                  {activeMessage.messageContent || (activeMessage as any).message || ''}
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
                 <a
-                  href={`mailto:${activeMessage.senderEmail}?subject=Re: ${activeMessage.subject}`}
+                  href={`mailto:${activeMessage.senderEmail || (activeMessage as any).email || ''}?subject=Re: ${activeMessage.subject || 'Portfolio Inquiry'}`}
                   className="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs text-slate-300 font-semibold flex items-center gap-2 transition-all"
                 >
                   <Reply className="w-3.5 h-3.5 text-slate-400" />

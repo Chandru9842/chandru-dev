@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Github, Code2, Terminal, Cpu, Braces, Activity, Layers, BarChart2, Award, Link, 
-  Plus, Edit2, Trash2, Eye, EyeOff, MoveUp, MoveDown, Save, X, AlertCircle, Info, ExternalLink, ShieldAlert
+  Plus, Edit2, Trash2, Eye, EyeOff, MoveUp, MoveDown, Save, X, AlertCircle, Info, ExternalLink, ShieldAlert,
+  GripVertical
 } from 'lucide-react';
 import { CodingProfileItem } from '../../data/cmsMockData';
 
@@ -63,6 +64,8 @@ export default function CodingProfilesPage({
   const [isOpenForm, setIsOpenForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   // Form Fields
   const [platformType, setPlatformType] = useState('GitHub');
@@ -214,12 +217,54 @@ export default function CodingProfilesPage({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (draggedId === null || draggedId === targetId || !onReorder) {
+      setDraggedId(null);
+      return;
+    }
+
+    const sourceIdx = profiles.findIndex(item => item.id === draggedId);
+    const targetIdx = profiles.findIndex(item => item.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newList = [...profiles];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1
+    }));
+
+    setDraggedId(null);
+    await onReorder(reordered);
+  };
+
   const handleMoveUp = async (index: number) => {
     if (index === 0) return;
     const newList = [...profiles];
-    const temp = newList[index];
-    newList[index] = newList[index - 1];
-    newList[index - 1] = temp;
+    const [movedItem] = newList.splice(index, 1);
+    newList.splice(index - 1, 0, movedItem);
 
     const reordered = newList.map((item, idx) => ({
       ...item,
@@ -231,9 +276,8 @@ export default function CodingProfilesPage({
   const handleMoveDown = async (index: number) => {
     if (index === profiles.length - 1) return;
     const newList = [...profiles];
-    const temp = newList[index];
-    newList[index] = newList[index + 1];
-    newList[index + 1] = temp;
+    const [movedItem] = newList.splice(index, 1);
+    newList.splice(index + 1, 0, movedItem);
 
     const reordered = newList.map((item, idx) => ({
       ...item,
@@ -572,29 +616,52 @@ export default function CodingProfilesPage({
                 {profiles.map((profile, idx) => {
                   const IconComp = getPlatformIconComponent(profile.platformType);
                   const colors = getPlatformColors(profile.platformType);
+                  const isDragging = draggedId === profile.id;
+                  const isOver = dragOverId === profile.id;
 
                   return (
-                    <tr key={profile.id} className="hover:bg-slate-900/10 transition-all">
+                    <tr 
+                      key={profile.id} 
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, profile.id)}
+                      onDragOver={(e) => handleDragOver(e, profile.id)}
+                      onDrop={(e) => handleDrop(e, profile.id)}
+                      onDragEnd={() => {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                      }}
+                      className={`hover:bg-slate-900/10 transition-all group ${
+                        isDragging ? 'opacity-40 bg-emerald-500/10' : ''
+                      } ${isOver ? 'bg-emerald-500/15 ring-2 ring-emerald-500' : ''}`}
+                    >
                       {/* Drag / Reorder column */}
                       <td className="py-3 px-4 text-center">
-                        <div className="flex flex-col items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => handleMoveUp(idx)}
-                            disabled={idx === 0}
-                            className="p-0.5 text-slate-600 hover:text-emerald-400 disabled:opacity-20 cursor-pointer transition-all"
-                            title="Move Up"
+                        <div className="flex items-center justify-center gap-1.5">
+                          <div 
+                            className="p-1 text-slate-600 group-hover:text-emerald-400 cursor-grab active:cursor-grabbing transition-colors"
+                            title="Drag to reorder profile"
                           >
-                            <MoveUp className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="text-[10px] font-mono font-bold text-slate-500">{profile.displayOrder}</span>
-                          <button
-                            onClick={() => handleMoveDown(idx)}
-                            disabled={idx === profiles.length - 1}
-                            className="p-0.5 text-slate-600 hover:text-emerald-400 disabled:opacity-20 cursor-pointer transition-all"
-                            title="Move Down"
-                          >
-                            <MoveDown className="w-3.5 h-3.5" />
-                          </button>
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <button
+                              onClick={() => handleMoveUp(idx)}
+                              disabled={idx === 0}
+                              className="p-0.5 text-slate-600 hover:text-emerald-400 disabled:opacity-20 cursor-pointer transition-all"
+                              title="Move Up"
+                            >
+                              <MoveUp className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-[10px] font-mono font-bold text-slate-500">{profile.displayOrder}</span>
+                            <button
+                              onClick={() => handleMoveDown(idx)}
+                              disabled={idx === profiles.length - 1}
+                              className="p-0.5 text-slate-600 hover:text-emerald-400 disabled:opacity-20 cursor-pointer transition-all"
+                              title="Move Down"
+                            >
+                              <MoveDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </td>
 
