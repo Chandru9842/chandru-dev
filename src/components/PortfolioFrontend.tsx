@@ -1159,6 +1159,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Chandru Mohan Portfolio"));
       document.title = seoTitle;
 
+      // Dynamic Favicon / Logo
+      const faviconTarget = data.profile?.faviconUrl || data.profile?.websiteLogo || data.profile?.logoUrl;
+      if (faviconTarget) {
+        let linkFavicon = document.querySelector('link[rel~="icon"]') as HTMLLinkElement;
+        if (!linkFavicon) {
+          linkFavicon = document.createElement('link');
+          linkFavicon.rel = 'icon';
+          document.head.appendChild(linkFavicon);
+        }
+        linkFavicon.href = faviconTarget;
+      }
+
       // Dynamic Meta Description
       let metaDesc = document.querySelector('meta[name="description"]');
       if (!metaDesc) {
@@ -1184,7 +1196,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         ogTitle.setAttribute('property', 'og:title');
         document.head.appendChild(ogTitle);
       }
-      ogTitle.setAttribute('content', seoTitle);
+      ogTitle.setAttribute('content', data.profile?.ogTitle || seoTitle);
 
       let ogDesc = document.querySelector('meta[property="og:description"]');
       if (!ogDesc) {
@@ -1192,7 +1204,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         ogDesc.setAttribute('property', 'og:description');
         document.head.appendChild(ogDesc);
       }
-      ogDesc.setAttribute('content', data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
+      ogDesc.setAttribute('content', data.profile?.ogDescription || data.profile?.seoDescription || data.settings?.siteDescription || "Professional Systems Architect and Engineering Portfolio.");
 
       let ogImage = document.querySelector('meta[property="og:image"]');
       if (!ogImage) {
@@ -1200,7 +1212,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         ogImage.setAttribute('property', 'og:image');
         document.head.appendChild(ogImage);
       }
-      ogImage.setAttribute('content', data.profile?.profileImage || "");
+      ogImage.setAttribute('content', data.profile?.ogImage || data.profile?.websiteLogo || data.profile?.profileImage || "");
 
       setSettings(data.settings);
 
@@ -1247,7 +1259,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       if (data.articles && Array.isArray(data.articles)) {
         const visibleArticles = data.articles
           .filter((a: any) => a.isPublished !== false)
-          .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+          .sort((a: any, b: any) => {
+            const orderA = a.displayOrder ?? a.order;
+            const orderB = b.displayOrder ?? b.order;
+            if (typeof orderA === 'number' && typeof orderB === 'number' && orderA !== orderB) {
+              return orderA - orderB;
+            }
+            return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+          });
         setArticles(visibleArticles);
       }
 
@@ -1262,21 +1281,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         }
       } catch (e) {}
 
-      let finalProfile = data.profile;
-      try {
-        const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-        if (deletedStr) {
-          const deleted = JSON.parse(deletedStr);
-          if (deleted.heroBackground && finalProfile) finalProfile = { ...finalProfile, heroBackground: "" };
-          if (deleted.heroAvatar && finalProfile) finalProfile = { ...finalProfile, heroAvatar: "" };
-        }
-        const overridesStr = localStorage.getItem('cms_profile_overrides');
-        if (overridesStr && finalProfile) {
-          const overrides = JSON.parse(overridesStr);
-          finalProfile = { ...finalProfile, ...overrides };
-        }
-      } catch (e) {}
-
+      const finalProfile = data.profile || initialProfile;
       setActiveResume(finalActiveResume);
       setProfile(finalProfile);
 
@@ -1753,18 +1758,22 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             className="flex items-center gap-2.5 min-w-0 shrink-0 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg p-0.5"
           >
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-emerald-500/60 transition-colors">
-              {profile?.profileImage ? (
+              {profile?.websiteLogo || profile?.logoUrl ? (
+                <img src={profile.websiteLogo || profile.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
+              ) : profile?.profileImage ? (
                 <img src={profile.profileImage} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <span className="font-luxury font-bold text-emerald-400 text-lg">A</span>
+                <span className="font-luxury font-bold text-emerald-400 text-lg">
+                  {profile?.logoText ? profile.logoText.charAt(0).toUpperCase() : (profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "C")}
+                </span>
               )}
             </div>
             <div className="min-w-0 flex-1 max-w-[210px] sm:max-w-[260px] md:max-w-none">
               <h2 className="text-[11px] xs:text-xs sm:text-sm font-bold tracking-tight text-white uppercase font-display truncate group-hover:text-emerald-400 transition-colors">
-                {profile?.displayName || (settings?.siteName ? settings.siteName.split('|')[0].trim() : "Alex Dev")}
+                {profile?.logoText || profile?.displayName || profile?.fullName || "Chandru Mohan"}
               </h2>
               <span className="text-[8px] xs:text-[9px] font-mono tracking-wider text-emerald-400/80 block uppercase font-bold truncate">
-                {profile?.title || "Systems Architect"}
+                {profile?.title || "Principal Systems Architect"}
               </span>
             </div>
           </a>
@@ -1843,14 +1852,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             {/* Desktop Dashboard Access Button */}
             <button
               onClick={onEnterCMS}
-              className="group relative hidden md:flex p-2.5 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
-              title="Admin Access"
-              aria-label="Admin Access"
+              className="group relative hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.25)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
+              title="Recruiter Demo / CMS Access"
+              aria-label="Recruiter Demo / CMS Access"
               id="btn-access-cms-terminal"
             >
-              <Lock className="w-4 h-4" />
-              <span className="absolute top-full right-0 mt-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                Admin Access
+              <Lock className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[11px] font-mono font-semibold tracking-wide">Demo</span>
+              <span className="absolute top-full right-0 mt-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[10px] font-mono py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                Recruiter & Demo Mode (CMS)
               </span>
             </button>
 
@@ -1904,18 +1914,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 })}
               </nav>
               <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Admin Control</span>
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Portal Access</span>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     onEnterCMS();
                   }}
-                  className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.01] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all flex items-center gap-2 text-xs font-mono cursor-pointer"
-                  title="Admin Access"
-                  aria-label="Admin Access"
+                  className="px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all flex items-center gap-2 text-xs font-mono font-semibold cursor-pointer"
+                  title="Recruiter Demo / CMS Access"
+                  aria-label="Recruiter Demo / CMS Access"
                 >
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  <span>Terminal CMS</span>
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Demo Tour</span>
                 </button>
               </div>
             </motion.div>
@@ -4026,16 +4036,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </div>
                   </div>
 
-                  {/* Admin Lock Button */}
+                  {/* Admin & Demo Lock Button */}
                   <button 
                     onClick={onEnterCMS} 
-                    className="group relative p-2 rounded-xl border border-white/[0.06] bg-white/[0.02] text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
-                    title="Admin Access"
-                    aria-label="Admin Access"
+                    className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer text-xs font-mono"
+                    title="Recruiter Demo / Admin Access"
+                    aria-label="Recruiter Demo / Admin Access"
                   >
-                    <Lock className="w-4 h-4" />
-                    <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[9px] font-mono py-1 px-2 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                      Admin Access
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Demo / Admin</span>
+                    <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[10px] font-mono py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                      Recruiter Demo & Admin Portal
                     </span>
                   </button>
                 </div>

@@ -243,13 +243,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     fetchAllData();
     fetchNotifications();
 
-    // Trigger Welcome Chandru notification on dashboard mount
+    // Trigger Welcome notification on dashboard mount
     const isFresh = sessionStorage.getItem('is_fresh_login');
     if (isFresh === 'true' || !sessionStorage.getItem('dashboard_welcomed')) {
       sessionStorage.removeItem('is_fresh_login');
       sessionStorage.setItem('dashboard_welcomed', 'true');
       setTimeout(() => {
-        triggerToast('👋 Welcome back, Chandru! CMS Dashboard operational.', 'success');
+        if (isDemoSession) {
+          triggerToast('👋 Welcome to the Recruiter Mode! (Read-Only Demo Active)', 'success');
+        } else {
+          triggerToast('👋 Welcome Chandru! CMS Dashboard operational.', 'success');
+        }
       }, 300);
     }
   }, []);
@@ -349,6 +353,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
+  const handleReorderProjects = async (reordered: ProjectItem[]) => {
+    if (checkDemoRestriction('Reorder Projects')) return;
+    setProjects(reordered);
+    try {
+      const res = await fetch('/api/projects/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Committed project priority hierarchy to database.', 'success');
+      } else {
+        const freshRes = await fetch('/api/projects');
+        setProjects(await freshRes.json());
+        triggerToast('Failed to save project display order.', 'error');
+      }
+    } catch (e) {
+      const freshRes = await fetch('/api/projects');
+      setProjects(await freshRes.json());
+      triggerToast('Network error saving project order.', 'error');
+    }
+  };
+
   // Skills CRUD
   const handleAddSkill = async (skill: Omit<SkillItem, 'id'>) => {
     if (checkDemoRestriction('Add Skill')) return;
@@ -405,6 +438,31 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
+  const handleReorderSkills = async (reordered: SkillItem[]) => {
+    if (checkDemoRestriction('Reorder Skills')) return;
+    setSkills(reordered);
+    try {
+      const res = await fetch('/api/skills/order', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          orderedIds: reordered.map(s => s.id),
+          orders: reordered.map((s, idx) => ({ id: s.id, displayOrder: idx + 1 }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Skills display order saved to database.', 'success');
+      } else {
+        await fetchAllData();
+        triggerToast('Failed to save skills order.', 'error');
+      }
+    } catch (e) {
+      await fetchAllData();
+      triggerToast('Network error saving skills order.', 'error');
+    }
+  };
+
   // Certificates CRUD
   const handleAddCertificate = async (cert: Omit<CertificateItem, 'id'>) => {
     if (checkDemoRestriction('Add Certificate')) return;
@@ -458,6 +516,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       }
     } catch (e) {
       triggerToast('Error deleting certificate.', 'error');
+    }
+  };
+
+  const handleReorderCertificates = async (reordered: CertificateItem[]) => {
+    if (checkDemoRestriction('Reorder Certificates')) return;
+    setCertificates(reordered);
+    try {
+      const res = await fetch('/api/certificates/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Committed certificates priority order to database.', 'success');
+      } else {
+        const freshRes = await fetch('/api/certificates');
+        setCertificates(await freshRes.json());
+        triggerToast('Failed to save certificate display order.', 'error');
+      }
+    } catch (e) {
+      const freshRes = await fetch('/api/certificates');
+      setCertificates(await freshRes.json());
+      triggerToast('Network error saving certificate order.', 'error');
     }
   };
 
@@ -764,6 +851,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
+  const handleReorderExperiences = async (reordered: ExperienceItem[]) => {
+    if (checkDemoRestriction('Reorder Experience')) return;
+    setExperiences(reordered);
+    try {
+      const res = await fetch('/api/experiences/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Committed experience priority order to database.', 'success');
+      } else {
+        const freshRes = await fetch('/api/experiences');
+        setExperiences(await freshRes.json());
+        triggerToast('Failed to save experience display order.', 'error');
+      }
+    } catch (e) {
+      const freshRes = await fetch('/api/experiences');
+      setExperiences(await freshRes.json());
+      triggerToast('Network error saving experience order.', 'error');
+    }
+  };
+
   // Education CRUD
   const handleAddEducation = async (edu: Omit<EducationItem, 'id'>) => {
     if (checkDemoRestriction('Add Education')) return;
@@ -817,6 +933,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       }
     } catch (e) {
       triggerToast('Error deleting education.', 'error');
+    }
+  };
+
+  const handleReorderEducation = async (reordered: EducationItem[]) => {
+    if (checkDemoRestriction('Reorder Education')) return;
+    setEducation(reordered);
+    try {
+      const res = await fetch('/api/education/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Committed academic education priority order to database.', 'success');
+      } else {
+        const freshRes = await fetch('/api/education');
+        setEducation(await freshRes.json());
+        triggerToast('Failed to save education display order.', 'error');
+      }
+    } catch (e) {
+      const freshRes = await fetch('/api/education');
+      setEducation(await freshRes.json());
+      triggerToast('Network error saving education order.', 'error');
     }
   };
 
@@ -1624,6 +1769,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     }
   };
 
+  const handleReorderArticles = async (reordered: ArticleItem[]) => {
+    if (checkDemoRestriction('Reorder Articles')) return;
+    setArticles(reordered);
+    try {
+      const res = await fetch('/api/articles/order', {
+        method: 'PATCH',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          order: reordered.map((item, index) => ({
+            id: item.id,
+            displayOrder: index + 1
+          }))
+        })
+      });
+      if (res.ok) {
+        notifyCmsUpdated();
+        triggerToast('Committed articles priority order to database.', 'success');
+      } else {
+        const freshRes = await fetch('/api/articles');
+        setArticles(await freshRes.json());
+        triggerToast('Failed to save article display order.', 'error');
+      }
+    } catch (e) {
+      const freshRes = await fetch('/api/articles');
+      setArticles(await freshRes.json());
+      triggerToast('Network error saving article order.', 'error');
+    }
+  };
+
   // Navigation config
   const navItems = [
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
@@ -1664,7 +1838,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
       
       {/* Recruiter / Guest Demo Mode Banner */}
       {isDemoSession && (
-        <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900/95 to-cyan-950/90 border-b border-emerald-500/30 px-4 py-2.5 text-xs font-mono flex flex-wrap items-center justify-between gap-2 shadow-lg z-40 backdrop-blur-md">
+        <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900/95 to-cyan-950/90 border-b border-emerald-500/30 px-4 py-2 text-xs font-mono flex flex-wrap items-center justify-between gap-2 shadow-lg z-40 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1672,16 +1846,29 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             </span>
             <span className="font-extrabold uppercase tracking-wider text-emerald-400 text-[11px] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              Recruiter Demo Tour Active
+              Recruiter Demo Mode (Read-Only)
             </span>
             <span className="text-slate-400 text-[11px] hidden lg:inline">
-              — Full read access to live CMS analytics, project schemas, system health, and theme controls.
+              — Exploring portfolio CMS in verified read-only mode.
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest">
-              Recruiter Sandbox Mode
+              Demo Read-Only
             </span>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('is_demo_session');
+                localStorage.removeItem('admin_token');
+                sessionStorage.removeItem('admin_token');
+                window.location.hash = '#/admin';
+                window.location.reload();
+              }}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-emerald-500/10"
+            >
+              <Lock className="w-3 h-3" />
+              <span>Switch to Master Admin (/admin)</span>
+            </button>
           </div>
         </div>
       )}
@@ -1788,10 +1975,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-xs font-black text-slate-100 uppercase tracking-wide truncate">
-                {profile?.fullName || profile?.heroName || "Chandru Mohan"}
+                {isDemoSession ? "Recruiter Guest" : (profile?.fullName || profile?.heroName || "Chandru Mohan")}
               </h2>
               <p className="text-[10px] font-medium text-slate-400 truncate">
-                {profile?.title || "Principal Systems Architect"}
+                {isDemoSession ? "Recruiter Mode (Read-Only)" : (profile?.title || "Principal Systems Architect")}
               </p>
               <div className="mt-1 flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${
@@ -1956,6 +2143,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onUpdate={handleUpdateArticle}
             onDelete={handleDeleteArticle}
             onToggleStatus={handleToggleArticleStatus}
+            onReorder={handleReorderArticles}
           />
         )}
 
@@ -1987,6 +2175,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onAdd={handleAddProject}
             onUpdate={handleUpdateProject}
             onDelete={handleDeleteProject}
+            onReorder={handleReorderProjects}
           />
         )}
 
@@ -1996,6 +2185,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onAdd={handleAddSkill}
             onUpdate={handleUpdateSkill}
             onDelete={handleDeleteSkill}
+            onReorder={handleReorderSkills}
           />
         )}
 
@@ -2017,6 +2207,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onAdd={handleAddCertificate}
             onUpdate={handleUpdateCertificate}
             onDelete={handleDeleteCertificate}
+            onReorder={handleReorderCertificates}
           />
         )}
 
@@ -2038,6 +2229,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onAdd={handleAddExperience}
             onUpdate={handleUpdateExperience}
             onDelete={handleDeleteExperience}
+            onReorder={handleReorderExperiences}
           />
         )}
 
@@ -2047,6 +2239,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onAdd={handleAddEducation}
             onUpdate={handleUpdateEducation}
             onDelete={handleDeleteEducation}
+            onReorder={handleReorderEducation}
           />
         )}
 

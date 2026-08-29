@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
+import { isDemoSessionActive, checkAndBlockDemoAction } from '../../utils/demoAuthUtils';
 
 interface HeroProfileData {
   id: number;
@@ -300,12 +301,13 @@ const getJwtToken = () =>
   // Save changes to database
   const handleSaveHero = async () => {
     if (!profile) return;
-   const token = getJwtToken();
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
 
-if (!token) {
-    onTriggerToast("Administrative session expired or locked. Please re-login.", "error");
-    return;
-}
+    const token = getJwtToken();
+    if (!token) {
+      onTriggerToast("Administrative session expired or locked. Please re-login.", "error");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -338,16 +340,8 @@ if (!token) {
         setHistory([JSON.parse(JSON.stringify(data))]);
         setCurrentHistoryIndex(0);
 
-        try {
-          localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
-          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
-          if (data.heroBackground) delete deleted.heroBackground;
-          else deleted.heroBackground = true;
-          if (data.heroAvatar) delete deleted.heroAvatar;
-          else deleted.heroAvatar = true;
-          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
-        } catch (e) {}
+        localStorage.removeItem('cms_profile_overrides');
+        localStorage.removeItem('cms_deleted_hero_assets');
 
         if (data.quickStats && data.quickStats.trim()) {
           const parsedStats = data.quickStats.split('|').map(item => {
@@ -362,7 +356,7 @@ if (!token) {
           setStats([]);
         }
 
-        onTriggerToast("Hero configuration successfully published to database!", "success");
+        onTriggerToast("Hero configuration successfully published live to database!", "success");
         notifyCmsUpdate();
         if (onHeroUpdated) {
           onHeroUpdated();
@@ -383,8 +377,9 @@ if (!token) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const token = getJwtToken();
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
 
+    const token = getJwtToken();
     if (!token) {
       onTriggerToast("Upload locked. Please unlock admin panel first.", "error");
       return;
@@ -415,18 +410,8 @@ if (!token) {
           setHistory([JSON.parse(JSON.stringify(data))]);
           setCurrentHistoryIndex(0);
 
-          try {
-            const field = type === 'avatar' ? 'heroAvatar' : 'heroBackground';
-            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-            const deleted = deletedStr ? JSON.parse(deletedStr) : {};
-            delete deleted[field];
-            localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
-
-            const overridesStr = localStorage.getItem('cms_profile_overrides');
-            const overrides = overridesStr ? JSON.parse(overridesStr) : {};
-            overrides[field] = data[field];
-            localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
-          } catch (e) {}
+          localStorage.removeItem('cms_profile_overrides');
+          localStorage.removeItem('cms_deleted_hero_assets');
 
           onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
           notifyCmsUpdate();
@@ -445,6 +430,7 @@ if (!token) {
 
   const handleDeleteImage = async (type: 'avatar' | 'background') => {
     if (!profile) return;
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
 
     // 1. Immediately update UI state
     const field = type === 'avatar' ? 'heroAvatar' : 'heroBackground';
@@ -457,26 +443,10 @@ if (!token) {
     setHistory([JSON.parse(JSON.stringify(updatedData))]);
     setCurrentHistoryIndex(0);
 
-    // 2. Persist deletion in local storage trackers
-    try {
-      const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-      const deleted = deletedStr ? JSON.parse(deletedStr) : {};
-      deleted[field] = true;
-      localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+    localStorage.removeItem('cms_profile_overrides');
+    localStorage.removeItem('cms_deleted_hero_assets');
 
-      const overridesStr = localStorage.getItem('cms_profile_overrides');
-      const overrides = overridesStr ? JSON.parse(overridesStr) : {};
-      overrides[field] = "";
-      localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
-    } catch (e) {}
-
-    onTriggerToast(`Removed Hero ${type} image successfully.`, "success");
-    notifyCmsUpdate();
-    if (onHeroUpdated) {
-      onHeroUpdated();
-    }
-
-    // 3. Purge from backend API
+    // 2. Purge from backend API
     const token = getJwtToken();
     if (token) {
       try {
@@ -490,6 +460,12 @@ if (!token) {
       } catch (err) {
         console.warn("Backend asset purge error:", err);
       }
+    }
+
+    onTriggerToast(`Removed Hero ${type} image successfully.`, "success");
+    notifyCmsUpdate();
+    if (onHeroUpdated) {
+      onHeroUpdated();
     }
   };
 

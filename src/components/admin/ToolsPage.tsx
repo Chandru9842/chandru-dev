@@ -4,7 +4,7 @@ import {
   Plus, Search, Edit3, Trash2, Copy, Eye, EyeOff, Star, ArrowUp, ArrowDown, 
   ExternalLink, Code2, Upload, Link as LinkIcon, Palette, Wrench, Check, X, 
   Sparkles, Layers, Sliders, FileCode, Atom, Server, Database, Box, Cloud, 
-  GitBranch, Send, Figma, Terminal, Cpu, Shield, Globe, RefreshCw, Folder
+  GitBranch, Send, Figma, Terminal, Cpu, Shield, Globe, RefreshCw, Folder, GripVertical
 } from 'lucide-react';
 import { ToolItem } from '../../data/cmsMockData';
 import MediaLibraryModal from './MediaLibraryModal';
@@ -123,6 +123,8 @@ export default function ToolsPage({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<ToolItem>>({
@@ -225,6 +227,44 @@ export default function ToolsPage({
       displayOrder: tools.length + 1
     };
     await onAdd(duplicated);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!draggedId || draggedId === targetId) return;
+
+    const sourceIdx = tools.findIndex(t => t.id === draggedId);
+    const targetIdx = tools.findIndex(t => t.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const updated = [...tools];
+    const [moved] = updated.splice(sourceIdx, 1);
+    updated.splice(targetIdx, 0, moved);
+
+    const reordered = updated.map((t, idx) => ({ ...t, displayOrder: idx + 1 }));
+    setDraggedId(null);
+    await onReorder(reordered);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
   };
 
   // Move up / down reorder
@@ -385,21 +425,44 @@ export default function ToolsPage({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredTools.map((tool, index) => {
           const brandColor = tool.brandColor || '#10B981';
+          const isDragging = draggedId === tool.id;
+          const isDragOver = dragOverId === tool.id && draggedId !== tool.id;
+          const isDraggable = !searchTerm && selectedCategory === 'All';
+
           return (
             <div
               key={tool.id}
+              draggable={isDraggable}
+              onDragStart={(e) => isDraggable && handleDragStart(e, tool.id)}
+              onDragOver={(e) => isDraggable && handleDragOver(e, tool.id)}
+              onDrop={(e) => isDraggable && handleDrop(e, tool.id)}
+              onDragEnd={handleDragEnd}
               className={`bg-slate-950/80 border rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 relative group ${
-                tool.isFeatured 
+                isDragging
+                  ? 'opacity-40 scale-95 border-dashed border-emerald-500/80 shadow-2xl'
+                  : isDragOver
+                  ? 'border-emerald-400 ring-2 ring-emerald-500/30 scale-[1.02] shadow-xl bg-slate-900/90'
+                  : tool.isFeatured 
                   ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
                   : 'border-slate-800/80 hover:border-slate-700'
               } ${!tool.isVisible ? 'opacity-50' : ''}`}
             >
               {/* Card Header Info */}
               <div>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {/* Drag Grip Handle */}
+                    {isDraggable && (
+                      <div 
+                        className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-emerald-400 p-0.5 -ml-1 transition-colors shrink-0" 
+                        title="Drag to reorder tool"
+                      >
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
+
                     <div 
-                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105"
                       style={{ 
                         backgroundColor: tool.backgroundColor || `${brandColor}15`,
                         borderColor: tool.borderColor || `${brandColor}40`,
@@ -418,14 +481,19 @@ export default function ToolsPage({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block">
-                        {tool.category}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block truncate">
+                          {tool.category}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">
+                          #{tool.displayOrder ?? index + 1}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Move Up/Down Controls */}
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 shrink-0">
                     <button
                       onClick={() => handleMove(index, 'up')}
                       disabled={index === 0}

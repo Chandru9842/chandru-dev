@@ -5,6 +5,7 @@ import {
   Mail, User, Phone, CheckCircle, ShieldAlert, Laptop,
   Database, Download, Upload
 } from 'lucide-react';
+import { checkAndBlockDemoAction, isDemoSessionActive } from '../../utils/demoAuthUtils';
 
 interface SecuritySettings {
   alwaysRequireLogin: boolean;
@@ -126,6 +127,8 @@ export default function SecuritySettingsPage() {
   // Save Account Profile Changes
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (checkAndBlockDemoAction((msg) => setErrorMsg(msg))) return;
+
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -183,6 +186,8 @@ export default function SecuritySettingsPage() {
   // Save Security Settings
   const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (checkAndBlockDemoAction((msg) => setErrorMsg(msg))) return;
+
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -219,6 +224,7 @@ export default function SecuritySettingsPage() {
 
   // Clear Login History Log
   const handleClearHistory = async () => {
+    if (checkAndBlockDemoAction((msg) => setErrorMsg(msg))) return;
     if (!window.confirm('Clear all login history? This action is recorded in the central audit logs.')) return;
     setErrorMsg(null);
     setSuccessMsg(null);

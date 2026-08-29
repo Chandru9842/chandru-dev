@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, Check, RefreshCw, ChevronUp, ChevronDown, 
-  Cpu, ShieldAlert, Eye, EyeOff
+  Cpu, ShieldAlert, Eye, EyeOff, Lock, GripVertical
 } from 'lucide-react';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
+import { isDemoSessionActive, checkAndBlockDemoAction } from '../../utils/demoAuthUtils';
 
 interface TechnologyItem {
   id: number;
@@ -31,6 +32,9 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   const [newTechName, setNewTechName] = useState('');
   const [editingTechId, setEditingTechId] = useState<number | null>(null);
   const [editingTechName, setEditingTechName] = useState('');
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const isDemo = isDemoSessionActive();
 
   const getJwtToken = () =>
     localStorage.getItem("alex_dev_jwt_token") ||
@@ -67,6 +71,8 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
       e.preventDefault();
     }
     if (isAdding) return;
+
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
 
     let targetName = newTechName;
     if (typeof e === 'string' && e.trim()) {
@@ -138,6 +144,11 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   };
 
   const handleUpdateTechnology = async (id: number, payload: Partial<TechnologyItem>) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setEditingTechId(null);
+      return;
+    }
+
     const token = getJwtToken();
     if (!token) {
       onTriggerToast("Administrative session locked. Please re-login.", "error");
@@ -175,12 +186,15 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
   };
 
   const handleToggleEnabled = async (tech: TechnologyItem) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     await handleUpdateTechnology(tech.id, {
       enabled: tech.enabled === false ? true : false
     });
   };
 
   const handleDeleteTechnology = async (id: number, name: string) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
+
     const token = getJwtToken();
     if (!token) {
       onTriggerToast("Administrative privileges locked.", "error");
@@ -212,7 +226,80 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
     }
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!draggedId || draggedId === targetId) return;
+
+    const sourceIdx = technologies.findIndex(t => t.id === draggedId);
+    const targetIdx = technologies.findIndex(t => t.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const updated = [...technologies];
+    const [moved] = updated.splice(sourceIdx, 1);
+    updated.splice(targetIdx, 0, moved);
+
+    setTechnologies(updated);
+    setDraggedId(null);
+
+    const token = getJwtToken();
+    if (!token) return;
+
+    setSavingOrder(true);
+    try {
+      const updatedOrders = updated.map((item, idx) => ({
+        id: item.id,
+        order: idx + 1,
+        displayOrder: idx + 1
+      }));
+
+      const res = await fetch("/api/technologies/reorder", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orders: updatedOrders }),
+      });
+
+      if (res.ok) {
+        onTriggerToast("Tech stack rendering hierarchy saved.", "success");
+        notifyCmsUpdate();
+        if (onTechStackUpdated) onTechStackUpdated();
+      } else {
+        onTriggerToast("Failed to sync hierarchy order with database.", "error");
+        await fetchTechnologies();
+      }
+    } catch (err) {
+      onTriggerToast("Gateway error saving hierarchy display order.", "error");
+      await fetchTechnologies();
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   const handleMoveTech = async (index: number, direction: 'up' | 'down') => {
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     if (direction === 'up' && index === 0) return;
     if (direction === 'down' && index === technologies.length - 1) return;
 
@@ -337,16 +424,35 @@ export default function TechStackPage({ onTriggerToast, onTechStackUpdated }: Te
             {technologies.map((tech, idx) => {
               const isEditing = editingTechId === tech.id;
               const isEnabled = tech.enabled !== false;
+              const isDragging = draggedId === tech.id;
+              const isDragOver = dragOverId === tech.id && draggedId !== tech.id;
+
               return (
                 <div 
-                  key={tech.id} 
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all hover:bg-slate-950/10 ${
-                    !isEnabled ? 'opacity-60' : ''
-                  }`}
+                  key={tech.id}
+                  draggable={!isEditing}
+                  onDragStart={(e) => !isEditing && handleDragStart(e, tech.id)}
+                  onDragOver={(e) => !isEditing && handleDragOver(e, tech.id)}
+                  onDrop={(e) => !isEditing && handleDrop(e, tech.id)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 transition-all rounded-xl ${
+                    isDragging
+                      ? 'opacity-40 scale-[0.98] border-dashed border-2 border-emerald-500/80 bg-slate-950/40 shadow-xl'
+                      : isDragOver
+                      ? 'border-2 border-emerald-400 bg-slate-900/90 ring-2 ring-emerald-500/30 scale-[1.01] shadow-lg'
+                      : 'hover:bg-slate-950/30 border border-transparent'
+                  } ${!isEnabled ? 'opacity-60' : ''}`}
                 >
                   
                   {/* Left Name Info */}
                   <div className="flex items-center gap-3.5 flex-grow min-w-0">
+                    <div 
+                      className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-emerald-400 p-0.5 -ml-1 transition-colors shrink-0" 
+                      title="Drag to reorder hero tech"
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+
                     <span className="text-[10px] font-mono text-slate-600 shrink-0 select-none bg-slate-950/50 border border-slate-900/80 w-6 h-6 rounded-lg flex items-center justify-center">
                       {idx + 1}
                     </span>

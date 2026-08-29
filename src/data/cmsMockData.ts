@@ -109,6 +109,9 @@ export interface CertificateItem {
   expirationDate: string;
   credentialId: string;
   credentialUrl: string;
+  displayOrder?: number;
+  order?: number;
+  priority?: number;
 }
 
 export interface ExperienceItem {
@@ -120,6 +123,9 @@ export interface ExperienceItem {
   startDate: string;
   endDate: string;
   isCurrent: boolean;
+  displayOrder?: number;
+  order?: number;
+  priority?: number;
 }
 
 export interface EducationItem {
@@ -131,6 +137,9 @@ export interface EducationItem {
   endDate: string;
   isCurrent: boolean;
   grade: string;
+  displayOrder?: number;
+  order?: number;
+  priority?: number;
 }
 
 export interface MessageItem {
@@ -178,6 +187,10 @@ export interface ArticleItem {
   authorAvatar: string;
   publishedAt: string;
   updatedAt: string;
+  displayOrder?: number;
+  order?: number;
+  priority?: number;
+  status?: string;
 }
 
 export interface AnalyticsMetric {

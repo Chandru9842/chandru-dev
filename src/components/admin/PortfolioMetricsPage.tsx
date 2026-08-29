@@ -6,9 +6,11 @@ import {
   Star, Shield, Terminal, Globe, Flame, Target, Rocket, Activity, CheckCircle2, 
   Layout, Database, Layers, Sparkles, TrendingUp, Check, X, RefreshCw, 
   SlidersHorizontal, Monitor, Smartphone, Tablet, HelpCircle, Info, Sparkle,
-  Upload, Link as LinkIcon, FileCode, CheckSquare, Square, ChevronLeft, ChevronRight
+  Upload, Link as LinkIcon, FileCode, CheckSquare, Square, ChevronLeft, ChevronRight, Lock,
+  GripVertical
 } from 'lucide-react';
 import { PortfolioMetricItem } from '../../data/cmsMockData';
+import { checkAndBlockDemoAction, isDemoSessionActive } from '../../utils/demoAuthUtils';
 
 export interface PortfolioMetricsPageProps {
   metrics: PortfolioMetricItem[];
@@ -366,6 +368,11 @@ export default function PortfolioMetricsPage({
       return;
     }
 
+    if (checkAndBlockDemoAction(triggerToast)) {
+      setIsAddModalOpen(false);
+      return;
+    }
+
     setFormSubmitting(true);
     try {
       if (editingMetric) {
@@ -398,6 +405,8 @@ export default function PortfolioMetricsPage({
 
   // Reorder Handler (Up / Down)
   const handleMove = async (id: number, direction: 'up' | 'down') => {
+    if (checkAndBlockDemoAction(triggerToast)) return;
+
     const sorted = [...metrics].sort((a, b) => a.displayOrder - b.displayOrder);
     const index = sorted.findIndex(m => m.id === id);
     if (index === -1) return;
@@ -429,6 +438,7 @@ export default function PortfolioMetricsPage({
   const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === dropIndex) return;
+    if (checkAndBlockDemoAction(triggerToast)) return;
 
     const reorderedList = [...filteredMetrics];
     const [draggedItem] = reorderedList.splice(draggedIndex, 1);
@@ -465,6 +475,8 @@ export default function PortfolioMetricsPage({
   // Bulk Actions
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
+    if (checkAndBlockDemoAction(triggerToast)) return;
+
     if (window.confirm(`Are you sure you want to delete ${selectedIds.length} metric(s)?`)) {
       if (onBulkDelete) {
         await onBulkDelete(selectedIds);
@@ -480,6 +492,8 @@ export default function PortfolioMetricsPage({
 
   const handleBulkToggleVisibility = async (visible: boolean) => {
     if (selectedIds.length === 0) return;
+    if (checkAndBlockDemoAction(triggerToast)) return;
+
     if (onBulkVisibility) {
       await onBulkVisibility(selectedIds, visible);
     } else {
@@ -491,6 +505,8 @@ export default function PortfolioMetricsPage({
   };
 
   const handleDuplicateMetric = async (id: number) => {
+    if (checkAndBlockDemoAction(triggerToast)) return;
+
     if (onDuplicate) {
       await onDuplicate(id);
       if (triggerToast) triggerToast('Duplicated metric item', 'success');
@@ -890,7 +906,10 @@ export default function PortfolioMetricsPage({
                       {/* Status Toggle */}
                       <td className="p-3.5 text-center">
                         <button
-                          onClick={() => onToggleVisibility(metric.id, !metric.visible)}
+                          onClick={() => {
+                            if (checkAndBlockDemoAction(triggerToast)) return;
+                            onToggleVisibility(metric.id, !metric.visible);
+                          }}
                           className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase border transition-all cursor-pointer ${
                             metric.visible 
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' 
@@ -921,10 +940,10 @@ export default function PortfolioMetricsPage({
                           </button>
 
                           <button
-                            onClick={() => {
+                            onClick={async () => {
+                              if (checkAndBlockDemoAction(triggerToast)) return;
                               if (window.confirm(`Delete metric "${metric.title}"?`)) {
-                                onDelete(metric.id);
-                                if (triggerToast) triggerToast(`Deleted "${metric.title}"`, 'success');
+                                await onDelete(metric.id);
                               }
                             }}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"

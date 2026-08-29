@@ -3,7 +3,7 @@ import {
   Plus, Edit2, Trash2, Search, ExternalLink, GitBranch, ArrowLeft, 
   ArrowRight, Sparkles, AlertCircle, Check, Loader2, Image as ImageIcon,
   Film, Layout, Eye, Cpu, Calendar, Clock, ListFilter, ArrowUp, ArrowDown,
-  ChevronLeft, ChevronRight, UploadCloud, X, Folder
+  ChevronLeft, ChevronRight, UploadCloud, X, Folder, GripVertical, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { ProjectItem } from '../../data/cmsMockData';
 import ImageUploader from '../ImageUploader';
@@ -14,6 +14,7 @@ interface ProjectsPageProps {
   onAdd: (project: Omit<ProjectItem, 'id'>) => Promise<void>;
   onUpdate: (project: ProjectItem) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+  onReorder?: (reorderedList: ProjectItem[]) => Promise<void>;
 }
 
 // Lightweight, non-blocking URL validator using native URL parser (prevents ReDoS freezes)
@@ -30,7 +31,7 @@ function isValidUrl(urlStr: string): boolean {
   }
 }
 
-export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: ProjectsPageProps) {
+export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete, onReorder }: ProjectsPageProps) {
   // Navigation & edit states
   const [isEditing, setIsEditing] = useState(false);
   const [currentProject, setCurrentProject] = useState<ProjectItem | null>(null);
@@ -42,6 +43,10 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
   const [filterFeatured, setFilterFeatured] = useState('All');
   const [sortBy, setSortBy] = useState<'displayOrder' | 'date' | 'title'>('displayOrder');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Drag & drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -139,6 +144,84 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
   }, [filteredProjects, currentPage]);
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage) || 1;
+
+  const handleMoveUp = async (id: number) => {
+    if (!onReorder) return;
+    const currentIndex = projects.findIndex(p => p.id === id);
+    if (currentIndex <= 0) return;
+    
+    const newList = [...projects];
+    const temp = newList[currentIndex];
+    newList[currentIndex] = newList[currentIndex - 1];
+    newList[currentIndex - 1] = temp;
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+    await onReorder(reordered);
+  };
+
+  const handleMoveDown = async (id: number) => {
+    if (!onReorder) return;
+    const currentIndex = projects.findIndex(p => p.id === id);
+    if (currentIndex === -1 || currentIndex >= projects.length - 1) return;
+    
+    const newList = [...projects];
+    const temp = newList[currentIndex];
+    newList[currentIndex] = newList[currentIndex + 1];
+    newList[currentIndex + 1] = temp;
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+    await onReorder(reordered);
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId === null || draggedId === id) return;
+    setDragOverId(id);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (draggedId === null || draggedId === targetId || !onReorder) {
+      setDraggedId(null);
+      return;
+    }
+
+    const sourceIdx = projects.findIndex(item => item.id === draggedId);
+    const targetIdx = projects.findIndex(item => item.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newList = [...projects];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+
+    setDraggedId(null);
+    await onReorder(reordered);
+  };
 
   // Auto-generate slug from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -889,11 +972,59 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
               </div>
             ) : (
               <div className="divide-y divide-slate-800/60">
-                {paginatedProjects.map((project) => (
-                  <div key={project.id} className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 hover:bg-slate-950/25 transition-all">
+                {paginatedProjects.map((project) => {
+                  const absoluteIndex = projects.findIndex(p => p.id === project.id);
+                  const isDragging = draggedId === project.id;
+                  const isOver = dragOverId === project.id;
+
+                  return (
+                  <div 
+                    key={project.id} 
+                    draggable={!searchQuery.trim() && filterCategory === 'All' && filterStatus === 'All' && filterFeatured === 'All'}
+                    onDragStart={(e) => handleDragStart(e, project.id)}
+                    onDragOver={(e) => handleDragOver(e, project.id)}
+                    onDrop={(e) => handleDrop(e, project.id)}
+                    onDragEnd={() => {
+                      setDraggedId(null);
+                      setDragOverId(null);
+                    }}
+                    className={`p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 transition-all ${
+                      isDragging ? 'opacity-40 bg-emerald-500/5' : 'hover:bg-slate-950/25'
+                    } ${isOver ? 'border-t-2 border-emerald-500 bg-emerald-500/10' : ''}`}
+                  >
                     
                     {/* Left details info */}
-                    <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                      {/* Drag & Priority Control Column */}
+                      <div className="flex flex-col items-center justify-center gap-1 shrink-0 bg-slate-950/80 border border-slate-800/80 rounded-xl p-1.5 self-center">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveUp(project.id)}
+                          disabled={absoluteIndex <= 0}
+                          className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-900 transition-colors disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                          title="Move Priority Up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        <div className="flex items-center gap-0.5" title="Display Priority Rank">
+                          <GripVertical className="w-3 h-3 text-slate-600 cursor-grab active:cursor-grabbing" />
+                          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                            #{absoluteIndex + 1}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDown(project.id)}
+                          disabled={absoluteIndex === -1 || absoluteIndex >= projects.length - 1}
+                          className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-900 transition-colors disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+                          title="Move Priority Down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
                       <div className="w-16 h-16 rounded-xl border border-slate-800 overflow-hidden bg-slate-950 shrink-0 flex items-center justify-center relative">
                         {project.imageUrl ? (
                           <img 
@@ -1018,7 +1149,8 @@ export default function ProjectsPage({ projects, onAdd, onUpdate, onDelete }: Pr
                     </div>
 
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

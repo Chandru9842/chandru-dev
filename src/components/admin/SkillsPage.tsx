@@ -4,7 +4,7 @@ import {
   Check, Loader2, Cpu, Layout, Database, Terminal, ShieldCheck, Sliders,
   Palette, Layers, Globe, Smartphone, Network, Braces, Cloud, Lock, Settings,
   Activity, Sparkles, Code2, ArrowUp, ArrowDown, ListFilter, RotateCcw,
-  Eye, EyeOff, Upload, Folder
+  Eye, EyeOff, Upload, Folder, GripVertical
 } from 'lucide-react';
 import { SkillItem } from '../../data/cmsMockData';
 import SkillMediaRenderer from '../SkillMediaRenderer';
@@ -15,12 +15,15 @@ interface SkillsPageProps {
   onAdd: (skill: Omit<SkillItem, 'id'>) => Promise<void>;
   onUpdate: (skill: SkillItem) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
+  onReorder?: (skills: SkillItem[]) => Promise<void>;
 }
 
-export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: SkillsPageProps) {
+export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorder }: SkillsPageProps) {
   // Navigation & form trigger
   const [isEditing, setIsEditing] = useState(false);
   const [currentSkill, setCurrentSkill] = useState<SkillItem | null>(null);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
   
   // Search, Filter, Sort state
   const [searchQuery, setSearchQuery] = useState('');
@@ -328,17 +331,70 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
     }
   };
 
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!draggedId || draggedId === targetId) return;
+
+    const sourceIdx = skills.findIndex(s => s.id === draggedId);
+    const targetIdx = skills.findIndex(s => s.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const updated = [...skills];
+    const [moved] = updated.splice(sourceIdx, 1);
+    updated.splice(targetIdx, 0, moved);
+
+    const reordered = updated.map((s, idx) => ({ ...s, displayOrder: idx + 1 }));
+    setDraggedId(null);
+
+    if (onReorder) {
+      await onReorder(reordered);
+    } else {
+      await onUpdate({ ...moved, displayOrder: targetIdx + 1 });
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   const handleShiftOrder = async (skill: SkillItem, direction: 'up' | 'down') => {
-    const shift = direction === 'up' ? -1 : 1;
-    const nextOrder = Math.max(1, (skill.displayOrder || 1) + shift);
-    
-    try {
+    const currentIndex = skills.findIndex(s => s.id === skill.id);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= skills.length) return;
+
+    const updated = [...skills];
+    const temp = updated[currentIndex];
+    updated[currentIndex] = updated[targetIndex];
+    updated[targetIndex] = temp;
+
+    const reordered = updated.map((s, idx) => ({ ...s, displayOrder: idx + 1 }));
+    if (onReorder) {
+      await onReorder(reordered);
+    } else {
+      const shift = direction === 'up' ? -1 : 1;
+      const nextOrder = Math.max(1, (skill.displayOrder || 1) + shift);
       await onUpdate({
         ...skill,
         displayOrder: nextOrder
       });
-    } catch (err) {
-      console.error("Reorder shift failed:", err);
     }
   };
 
@@ -910,115 +966,142 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete }: Skills
                 <p className="text-xs text-slate-500 mt-1">Try clearing search parameters or adjust sub-filters.</p>
               </div>
             ) : (
-              paginatedSkills.map((skill) => (
-                <div 
-                  key={skill.id} 
-                  className="bg-[#0b0f19] border border-slate-800/70 hover:border-slate-700/90 rounded-2xl p-4.5 transition-all group flex flex-col justify-between shadow-lg relative"
-                >
-                  
-                  {/* Subtle Accent Glow Indicator based on custom color setting */}
+              paginatedSkills.map((skill) => {
+                const isDragging = draggedId === skill.id;
+                const isDragOver = dragOverId === skill.id && draggedId !== skill.id;
+                const isDraggable = !searchQuery && filterCategory === 'All' && filterVisibility === 'All' && sortBy === 'displayOrder';
+
+                return (
                   <div 
-                    className="absolute top-0 inset-x-0 h-[3px] rounded-t-2xl opacity-70"
-                    style={{ backgroundColor: skill.color || '#10b981' }}
-                  />
+                    key={skill.id}
+                    draggable={isDraggable}
+                    onDragStart={(e) => isDraggable && handleDragStart(e, skill.id)}
+                    onDragOver={(e) => isDraggable && handleDragOver(e, skill.id)}
+                    onDrop={(e) => isDraggable && handleDrop(e, skill.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`bg-[#0b0f19] border rounded-2xl p-4.5 transition-all group flex flex-col justify-between shadow-lg relative ${
+                      isDragging
+                        ? 'opacity-40 scale-95 border-dashed border-emerald-500/80 shadow-2xl'
+                        : isDragOver
+                        ? 'border-emerald-400 ring-2 ring-emerald-500/30 scale-[1.02] shadow-xl bg-slate-900/90'
+                        : 'border-slate-800/70 hover:border-slate-700/90'
+                    }`}
+                  >
+                    
+                    {/* Subtle Accent Glow Indicator based on custom color setting */}
+                    <div 
+                      className="absolute top-0 inset-x-0 h-[3px] rounded-t-2xl opacity-70"
+                      style={{ backgroundColor: skill.color || '#10b981' }}
+                    />
 
-                  <div>
-                    {/* Icon, tag labels & quick action controls */}
-                    <div className="flex justify-between items-start mb-3.5 pt-1">
-                      <div 
-                        className="w-10 h-10 rounded-xl border flex items-center justify-center bg-slate-950 overflow-hidden"
-                        style={{ 
-                          borderColor: `${skill.color || '#10b981'}25`,
-                        }}
-                      >
-                        <SkillMediaRenderer 
-                          src={skill.iconUrl} 
-                          fallbackIcon={skill.iconName || 'Code2'} 
-                          fallbackColor={skill.color || '#10b981'} 
-                          isSpin={false} 
-                          alt={skill.name} 
-                        />
-                      </div>
-                      
-                      {/* Action edit/delete controls */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
-                        <button
-                          onClick={() => openEditForm(skill)}
-                          className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:text-emerald-400 text-slate-400 transition-all cursor-pointer"
-                          title="Edit Competency"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Are you absolutely sure you want to permanently delete competency: "${skill.name}"?`)) {
-                              onDelete(skill.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:text-rose-400 text-slate-400 transition-all cursor-pointer"
-                          title="Purge Competency"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Skill Meta Details */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 justify-between">
-                        <h4 className="text-sm font-bold text-slate-200 truncate pr-2 flex-grow" title={skill.name}>{skill.name}</h4>
-                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                          skill.visibility !== false ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-slate-800 text-slate-500 border border-slate-700/50"
-                        }`}>
-                          {skill.visibility !== false ? "Visible" : "Hidden"}
-                        </span>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-400">
-                        <span className="bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-emerald-400 font-semibold uppercase">
-                          {skill.category}
-                        </span>
+                    <div>
+                      {/* Icon, tag labels & quick action controls */}
+                      <div className="flex justify-between items-start mb-3.5 pt-1">
+                        <div className="flex items-center gap-2">
+                          {isDraggable && (
+                            <div 
+                              className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-emerald-400 p-0.5 -ml-1 transition-colors shrink-0" 
+                              title="Drag to reorder competency"
+                            >
+                              <GripVertical className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div 
+                            className="w-10 h-10 rounded-xl border flex items-center justify-center bg-slate-950 overflow-hidden shrink-0"
+                            style={{ 
+                              borderColor: `${skill.color || '#10b981'}25`,
+                            }}
+                          >
+                            <SkillMediaRenderer 
+                              src={skill.iconUrl} 
+                              fallbackIcon={skill.iconName || 'Code2'} 
+                              fallbackColor={skill.color || '#10b981'} 
+                              isSpin={false} 
+                              alt={skill.name} 
+                            />
+                          </div>
+                        </div>
                         
-                        {skill.animation && skill.animation !== 'None' && (
-                          <span className="text-slate-500 bg-white/[0.02] border border-white/[0.04] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-bold">
-                            <Sparkles className="w-2.5 h-2.5" /> {skill.animation}
+                        {/* Action edit/delete controls */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+                          <button
+                            onClick={() => openEditForm(skill)}
+                            className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:text-emerald-400 text-slate-400 transition-all cursor-pointer"
+                            title="Edit Competency"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you absolutely sure you want to permanently delete competency: "${skill.name}"?`)) {
+                                onDelete(skill.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:text-rose-400 text-slate-400 transition-all cursor-pointer"
+                            title="Purge Competency"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Skill Meta Details */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 justify-between">
+                          <h4 className="text-sm font-bold text-slate-200 truncate pr-2 flex-grow" title={skill.name}>{skill.name}</h4>
+                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                            skill.visibility !== false ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-slate-800 text-slate-500 border border-slate-700/50"
+                          }`}>
+                            {skill.visibility !== false ? "Visible" : "Hidden"}
                           </span>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-400">
+                          <span className="bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-emerald-400 font-semibold uppercase">
+                            {skill.category}
+                          </span>
+                          
+                          {skill.animation && skill.animation !== 'None' && (
+                            <span className="text-slate-500 bg-white/[0.02] border border-white/[0.04] px-1.5 py-0.5 rounded flex items-center gap-0.5 font-bold">
+                              <Sparkles className="w-2.5 h-2.5" /> {skill.animation}
+                            </span>
+                          )}
+                        </div>
+
+                        {skill.description && (
+                          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed pt-2">
+                            {skill.description}
+                          </p>
                         )}
                       </div>
-
-                      {skill.description && (
-                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed pt-2">
-                          {skill.description}
-                        </p>
-                      )}
                     </div>
-                  </div>
 
-                  {/* Bottom strip: Display index adjustment arrow triggers */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/40 flex justify-between items-center text-[10px] font-mono text-slate-500">
-                    <span>Display order: <b className="text-slate-300 font-semibold">{skill.displayOrder || 1}</b></span>
-                    
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleShiftOrder(skill, 'up')}
-                        disabled={skill.displayOrder <= 1}
-                        className="p-1 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-emerald-400 disabled:opacity-20 rounded transition-colors cursor-pointer border border-slate-900"
-                        title="Move priority up"
-                      >
-                        <ArrowUp className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => handleShiftOrder(skill, 'down')}
-                        className="p-1 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-emerald-400 rounded transition-colors cursor-pointer border border-slate-900"
-                        title="Move priority down"
-                      >
-                        <ArrowDown className="w-3 h-3" />
-                      </button>
+                    {/* Bottom strip: Display index adjustment arrow triggers */}
+                    <div className="mt-4 pt-3 border-t border-slate-800/40 flex justify-between items-center text-[10px] font-mono text-slate-500">
+                      <span>Display order: <b className="text-slate-300 font-semibold">#{skill.displayOrder || 1}</b></span>
+                      
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleShiftOrder(skill, 'up')}
+                          disabled={skill.displayOrder <= 1}
+                          className="p-1 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-emerald-400 disabled:opacity-20 rounded transition-colors cursor-pointer border border-slate-900"
+                          title="Move priority up"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleShiftOrder(skill, 'down')}
+                          className="p-1 bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-emerald-400 rounded transition-colors cursor-pointer border border-slate-900"
+                          title="Move priority down"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </div>
 

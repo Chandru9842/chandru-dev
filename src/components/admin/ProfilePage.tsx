@@ -7,6 +7,7 @@ import {
 import { ResumeItem } from '../../data/cmsMockData';
 import MediaLibraryModal from './MediaLibraryModal';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
+import { isDemoSessionActive, checkAndBlockDemoAction, DEMO_RESTRICTION_MESSAGE } from '../../utils/demoAuthUtils';
 
 interface ProfileData {
   id: number;
@@ -35,9 +36,20 @@ interface ProfileData {
   experienceSummary?: string;
   skillsSummary?: string;
   quickStats?: string;
+  websiteLogo?: string;
+  logoUrl?: string;
+  logoText?: string;
+  faviconUrl?: string;
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogImageUrl?: string;
+  canonicalUrl?: string;
+  robotsTxt?: string;
+  allowIndexing?: boolean;
   primaryCtaText?: string;
   primaryCtaUrl?: string;
   secondaryCtaText?: string;
@@ -99,24 +111,14 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const [activeResume, setActiveResume] = useState<ResumeItem | null>(null);
 
   // Security & JWT Authentication States
-  const isDemoSession = React.useMemo(() => {
-    try {
-      const rawUser = localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
-      if (rawUser) {
-        const parsed = JSON.parse(rawUser);
-        if (parsed.isDemo === true) return true;
-        if (parsed.isDemo === false) return false;
-      }
-    } catch (e) {}
-    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || '';
-    if (token.startsWith('demo_guest_token_')) return true;
-    return sessionStorage.getItem('is_demo_session') === 'true';
-  }, []);
+  const isDemoSession = isDemoSessionActive();
   const [jwtToken, setJwtToken] = useState<string | null>(
-    localStorage.getItem('alex_dev_jwt_token') || 
-    localStorage.getItem('admin_token') || 
-    sessionStorage.getItem('admin_token') || 
-    sessionStorage.getItem('alex_dev_jwt_token')
+    isDemoSession ? null : (
+      localStorage.getItem('alex_dev_jwt_token') || 
+      localStorage.getItem('admin_token') || 
+      sessionStorage.getItem('admin_token') || 
+      sessionStorage.getItem('alex_dev_jwt_token')
+    )
   );
   const [usernameInput, setUsernameInput] = useState('admin');
   const [passwordInput, setPasswordInput] = useState('admin123');
@@ -132,7 +134,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const [cropModalConfig, setCropModalConfig] = useState<{
     isOpen: boolean;
     imageSrc: string;
-    imageType: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar';
+    imageType: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar' | 'website-logo' | 'og-image' | 'favicon';
     aspectRatio: number; // width / height
     originalFileName: string;
   } | null>(null);
@@ -146,7 +148,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
   // Draft vs Published flow states
   const [hasDraftChanges, setHasDraftChanges] = useState(false);
-  const [mediaModalField, setMediaModalField] = useState<'profileImage' | 'coverImage' | 'aboutImage' | 'heroBackground' | 'heroAvatar' | null>(null);
+  const [mediaModalField, setMediaModalField] = useState<'profileImage' | 'coverImage' | 'aboutImage' | 'heroBackground' | 'heroAvatar' | 'websiteLogo' | 'ogImage' | 'faviconUrl' | null>(null);
 
   // Load profile data & resumes
   const fetchProfileAndResumes = async () => {
@@ -202,13 +204,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
   const handleAddTechnology = async () => {
     if (!newTechName.trim()) return;
-    if (isDemoSession) {
-      const newTech = { id: Date.now(), name: newTechName.trim(), order: technologies.length + 1 };
-      setTechnologies(prev => [...prev, newTech]);
-      setNewTechName('');
-      onTriggerToast("🛡️ Recruiter Demo Mode: Technology added in sandbox session.", "success");
-      return;
-    }
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -227,6 +223,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         onTriggerToast(`Added technology: ${newTechName}`, "success");
         setNewTechName('');
         fetchTechnologies();
+        notifyCmsUpdate();
       } else {
         const errData = await res.json();
         onTriggerToast(errData.error || "Failed to add technology", "error");
@@ -237,12 +234,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   const handleUpdateTechnology = async (id: number, updates: any) => {
-    if (isDemoSession) {
-      setTechnologies(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-      setEditingTechId(null);
-      onTriggerToast("🛡️ Recruiter Demo Mode: Technology updated in sandbox session.", "success");
-      return;
-    }
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -260,6 +252,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       if (res.ok) {
         setEditingTechId(null);
         fetchTechnologies();
+        notifyCmsUpdate();
       } else {
         const errData = await res.json();
         onTriggerToast(errData.error || "Failed to update technology", "error");
@@ -270,11 +263,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   const handleDeleteTechnology = async (id: number) => {
-    if (isDemoSession) {
-      setTechnologies(prev => prev.filter(t => t.id !== id));
-      onTriggerToast("🛡️ Recruiter Demo Mode: Technology deleted in sandbox session.", "success");
-      return;
-    }
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     if (!jwtToken) {
       setShowLoginModal(true);
       onTriggerToast("Full administrative access is locked. Please log in first.", "error");
@@ -291,6 +280,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       if (res.ok) {
         onTriggerToast("Technology deleted successfully", "success");
         fetchTechnologies();
+        notifyCmsUpdate();
       } else {
         const errData = await res.json();
         onTriggerToast(errData.error || "Failed to delete technology", "error");
@@ -304,16 +294,12 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= technologies.length) return;
 
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
+
     const reordered = [...technologies];
     const temp = reordered[index];
     reordered[index] = reordered[targetIndex];
     reordered[targetIndex] = temp;
-
-    if (isDemoSession) {
-      setTechnologies(reordered);
-      onTriggerToast("🛡️ Recruiter Demo Mode: Technology reordered in sandbox session.", "success");
-      return;
-    }
 
     if (!jwtToken) {
       setShowLoginModal(true);
@@ -334,6 +320,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       });
       if (res.ok) {
         fetchTechnologies();
+        notifyCmsUpdate();
       } else {
         const errData = await res.json();
         onTriggerToast(errData.error || "Failed to reorder technologies", "error");
@@ -483,18 +470,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const handleSaveProfile = async (isAutosave = false) => {
     if (!profile) return;
 
-    if (isDemoSession) {
-      setOriginalProfile(JSON.parse(JSON.stringify(profile)));
-      if (onProfileUpdated) {
-        onProfileUpdated(profile);
-      }
-      if (isAutosave) {
-        setLastAutosavedTime(new Date().toLocaleTimeString());
-      } else {
-        onTriggerToast("🛡️ Recruiter Demo Mode: You are in Recruiter / Demo Mode. Profile changes are simulated in this session.", "success");
-      }
-      return;
-    }
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
 
     if (!jwtToken) {
       setShowLoginModal(true);
@@ -516,6 +492,8 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         const savedData = await res.json();
         setProfile(savedData);
         setOriginalProfile(JSON.parse(JSON.stringify(savedData)));
+        localStorage.removeItem('cms_profile_overrides');
+        localStorage.removeItem('cms_deleted_hero_assets');
         if (onProfileUpdated) {
           onProfileUpdated(savedData);
         }
@@ -524,7 +502,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         if (isAutosave) {
           setLastAutosavedTime(new Date().toLocaleTimeString());
         } else {
-          onTriggerToast("Profile details successfully saved and published live!", "success");
+          onTriggerToast("Profile details successfully saved and published live to portfolio!", "success");
         }
       } else {
         const errorData = await res.json();
@@ -540,6 +518,8 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   // Save Resume selections or download configuration
   const handleSaveResumeConfig = async (resumeId: number, isDownloadEnabled: boolean) => {
     if (!profile) return;
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
+
     const updated = { ...profile, resumeId, updatedAt: new Date().toISOString() };
     updateProfileStateWithHistory(updated);
     if (onProfileUpdated) {
@@ -581,7 +561,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         const active = resumesData.find((r: ResumeItem) => r.isActive);
         if (active) setActiveResume(active);
       }
-
+      notifyCmsUpdate();
       onTriggerToast("Successfully synchronized CV/Resume configurations.", "success");
     } catch (err) {
       onTriggerToast("Failed to save resume configuration.", "error");
@@ -589,20 +569,51 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   };
 
   // Image deletion handler
-  const handleDeleteImageField = async (field: 'profileImage' | 'coverImage' | 'aboutImage' | 'heroBackground' | 'heroAvatar') => {
+  const handleDeleteImageField = async (field: 'profileImage' | 'coverImage' | 'aboutImage' | 'heroBackground' | 'heroAvatar' | 'websiteLogo' | 'ogImage' | 'faviconUrl') => {
     if (!profile) return;
-    if (confirm(`Are you sure you want to delete this asset from your portfolio? It will fall back to a blank placeholder.`)) {
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
+
+    if (confirm(`Are you sure you want to delete this asset from your portfolio?`)) {
       const updated = { ...profile, [field]: "" };
       updateProfileStateWithHistory(updated);
-      onTriggerToast(`Cleared ${field.replace('Image', ' Asset')} from local draft. Publish to sync.`, "success");
+
+      if (jwtToken) {
+        try {
+          const deleteRoute = `/api/profile/${
+            field === 'profileImage' ? 'image' : 
+            field === 'aboutImage' ? 'about-image' : 
+            field === 'heroBackground' ? 'hero-background' : 
+            field === 'heroAvatar' ? 'hero-avatar' : 
+            field === 'websiteLogo' ? 'website-logo' :
+            field === 'ogImage' ? 'og-image' :
+            field === 'faviconUrl' ? 'favicon' :
+            'cover'
+          }`;
+          const res = await fetch(deleteRoute, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${jwtToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setProfile(data.profile);
+            setOriginalProfile(JSON.parse(JSON.stringify(data.profile)));
+            if (onProfileUpdated) onProfileUpdated(data.profile);
+            notifyCmsUpdate();
+            onTriggerToast(`Asset successfully deleted from server and published!`, "success");
+            return;
+          }
+        } catch (e) {}
+      }
+
+      onTriggerToast(`Cleared ${field.replace('Image', ' Asset')} from draft. Click "Publish Live" to commit.`, "success");
     }
   };
 
   // Image Drag and Drop Handlers
-  const triggerImageFileBrowse = (type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar', aspect: number) => {
+  const triggerImageFileBrowse = (type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar' | 'website-logo' | 'og-image' | 'favicon', aspect: number) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/png, image/jpeg, image/jpg, image/webp, image/svg+xml';
+    input.accept = 'image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, image/x-icon';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) handleImageFileSelected(file, type, aspect);
@@ -610,7 +621,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
     input.click();
   };
 
-  const handleImageFileSelected = (file: File, type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar', aspect: number) => {
+  const handleImageFileSelected = (file: File, type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar' | 'website-logo' | 'og-image' | 'favicon', aspect: number) => {
     // Validate file size limit 10MB
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
@@ -641,7 +652,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
     e.preventDefault();
   };
 
-  const handleImageDrop = (e: React.DragEvent, type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar', aspect: number) => {
+  const handleImageDrop = (e: React.DragEvent, type: 'profile' | 'cover' | 'about' | 'hero' | 'hero-avatar' | 'website-logo' | 'og-image' | 'favicon', aspect: number) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
@@ -672,6 +683,10 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   // Perform Image Crop, Zoom, and Compression via HTML5 Canvas
   const applyCropAndCompression = async () => {
     if (!cropModalConfig || !cropImageRef.current || !cropCanvasRef.current || !profile) return;
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setCropModalConfig(null);
+      return;
+    }
 
     const img = cropImageRef.current;
     const canvas = cropCanvasRef.current;
@@ -694,6 +709,15 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
     } else if (cropModalConfig.imageType === 'hero-avatar') {
       targetWidth = 400;
       targetHeight = 400;
+    } else if (cropModalConfig.imageType === 'website-logo') {
+      targetWidth = 400;
+      targetHeight = 400;
+    } else if (cropModalConfig.imageType === 'og-image') {
+      targetWidth = 1200;
+      targetHeight = 630;
+    } else if (cropModalConfig.imageType === 'favicon') {
+      targetWidth = 128;
+      targetHeight = 128;
     }
 
     canvas.width = targetWidth;
@@ -721,8 +745,12 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       targetWidth, targetHeight
     );
 
-    // Apply JPEG compression to generate optimized Cloudinary CDN representation
-    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85); // 85% high-quality compression
+    // Apply JPEG/PNG compression to generate optimized Cloudinary CDN representation
+    const isPngOrSvg = cropModalConfig.originalFileName?.toLowerCase().endsWith('.png') || 
+                       cropModalConfig.originalFileName?.toLowerCase().endsWith('.svg') || 
+                       cropModalConfig.imageType === 'website-logo' || 
+                       cropModalConfig.imageType === 'favicon';
+    const compressedDataUrl = canvas.toDataURL(isPngOrSvg ? 'image/png' : 'image/jpeg', isPngOrSvg ? 0.95 : 0.85);
     
     const originalSizeKb = Math.round((cropModalConfig.imageSrc.length * 0.75) / 1024);
     const compressedSizeKb = Math.round((compressedDataUrl.length * 0.75) / 1024);
@@ -736,6 +764,9 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           cropModalConfig.imageType === 'about' ? 'about-image' : 
           cropModalConfig.imageType === 'hero' ? 'hero-background' : 
           cropModalConfig.imageType === 'hero-avatar' ? 'hero-avatar' : 
+          cropModalConfig.imageType === 'website-logo' ? 'website-logo' : 
+          cropModalConfig.imageType === 'og-image' ? 'og-image' : 
+          cropModalConfig.imageType === 'favicon' ? 'favicon' : 
           'cover'
         }`;
         const uploadRes = await fetch(patchRoute, {
@@ -754,7 +785,8 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           if (onProfileUpdated) {
             onProfileUpdated(resData.profile);
           }
-          onTriggerToast(`Cloudinary upload & compression complete: ${percentageSaved}% storage saved!`, "success");
+          notifyCmsUpdate();
+          onTriggerToast(`Cloudinary upload & optimization complete: ${percentageSaved}% storage saved!`, "success");
         } else {
           onTriggerToast("Cloudinary secure upload gateway refused storage.", "error");
         }
@@ -763,15 +795,18 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       }
     } else {
       // Local draft update
-      const imageField = 
+      const imageField: any = 
         cropModalConfig.imageType === 'profile' ? 'profileImage' : 
         cropModalConfig.imageType === 'cover' ? 'coverImage' : 
         cropModalConfig.imageType === 'about' ? 'aboutImage' : 
         cropModalConfig.imageType === 'hero-avatar' ? 'heroAvatar' : 
+        cropModalConfig.imageType === 'website-logo' ? 'websiteLogo' :
+        cropModalConfig.imageType === 'og-image' ? 'ogImage' :
+        cropModalConfig.imageType === 'favicon' ? 'faviconUrl' :
         'heroBackground';
       const updated = { ...profile, [imageField]: compressedDataUrl, updatedAt: new Date().toISOString() };
       updateProfileStateWithHistory(updated);
-      onTriggerToast(`Asset compressed (${percentageSaved}% smaller) and staged in local draft. Publish to sync!`, "success");
+      onTriggerToast(`Asset processed (${percentageSaved}% smaller) and staged in local draft. Click "Publish Live" to commit!`, "success");
     }
 
     setCropModalConfig(null);
@@ -843,29 +878,49 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
       {/* Security Level Notification */}
       <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-300 ${
-        jwtToken 
-          ? 'bg-emerald-950/10 border-emerald-500/20 text-emerald-400' 
-          : 'bg-amber-950/10 border-amber-500/20 text-amber-400'
+        isDemoSession
+          ? 'bg-emerald-950/15 border-emerald-500/30 text-emerald-300'
+          : jwtToken 
+            ? 'bg-emerald-950/10 border-emerald-500/20 text-emerald-400' 
+            : 'bg-amber-950/10 border-amber-500/20 text-amber-400'
       }`}>
         <div className="flex items-start gap-3">
           <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
-            jwtToken ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+            isDemoSession
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              : jwtToken 
+                ? 'bg-emerald-500/10 border-emerald-500/20' 
+                : 'bg-amber-500/10 border-amber-500/20'
           }`}>
-            {jwtToken ? <Unlock className="w-4.5 h-4.5" /> : <Lock className="w-4.5 h-4.5" />}
+            {isDemoSession ? <Eye className="w-4.5 h-4.5 text-emerald-400" /> : jwtToken ? <Unlock className="w-4.5 h-4.5" /> : <Lock className="w-4.5 h-4.5" />}
           </div>
           <div>
             <h4 className="text-xs font-extrabold uppercase font-mono tracking-wider flex items-center gap-1.5">
-              {jwtToken ? '🔒 Administrator Full Write Access' : '🔑 Interactive Read-Only Preview'}
+              {isDemoSession 
+                ? '🛡️ Recruiter & Reviewer Mode (Read-Only Access)' 
+                : jwtToken 
+                  ? '🔒 Administrator Full Write Access' 
+                  : '🔑 Interactive Read-Only Preview'}
             </h4>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-              {jwtToken 
-                ? 'Your JWT auth token is loaded and verified. You can edit all profile structures, save changes, and trigger direct Cloudinary upload.' 
-                : 'CMS state edits are allowed inside memory drafts. Unlock with administrator credentials to upload images and publish changes to server db.'}
+              {isDemoSession
+                ? 'You are viewing the CMS in Recruiter Demo mode. All database records and assets are protected in read-only mode. To modify or publish live updates, please authenticate via /admin.'
+                : jwtToken 
+                  ? 'Your JWT auth token is loaded and verified. You can edit all profile structures, save changes, and trigger direct Cloudinary upload.' 
+                  : 'CMS state edits are allowed inside memory drafts. Unlock with administrator credentials to upload images and publish changes to server db.'}
             </p>
           </div>
         </div>
         <div className="shrink-0 flex items-center gap-2 w-full md:w-auto">
-          {jwtToken ? (
+          {isDemoSession ? (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-[10px] font-mono tracking-widest uppercase font-bold cursor-pointer transition shadow-lg shadow-emerald-500/10 flex items-center gap-1.5"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Login (/admin)</span>
+            </button>
+          ) : jwtToken ? (
             <button
               onClick={handleAdminLogout}
               className="px-3 py-1.5 border border-emerald-500/30 hover:bg-emerald-500/10 rounded-lg text-[10px] font-mono tracking-widest uppercase font-bold cursor-pointer text-emerald-400 transition"
@@ -1509,48 +1564,416 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
             </div>
           )}
 
-          {/* 8. SEO METADATA */}
+          {/* 8. SEO METADATA & WEBSITE LOGO / BRANDING */}
           {activeSubTab === 'seo' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-                <Globe className="w-4.5 h-4.5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-mono">Dynamic Browser SEO Settings</h3>
+            <div className="space-y-8">
+              {/* Section 1: Website Logo & Brand Identity */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4.5 h-4.5 text-emerald-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-100 font-mono">Website Logo & Visual Branding</h3>
+                      <p className="text-[10px] text-slate-500 font-mono">Displayed in header navbar, browser tabs, and brand watermarks</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono text-slate-500">Formats: SVG, PNG, WEBP (Transparent recommended)</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Website Brand Logo Card */}
+                  <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold font-mono text-slate-200">Main Header / Navbar Logo</h4>
+                        <p className="text-[10px] text-slate-500 font-mono">Top-left branding mark across all pages</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setMediaModalField('websiteLogo')}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Folder className="w-3 h-3" />
+                          Media Library
+                        </button>
+                        {(profile.websiteLogo || profile.logoUrl) && (
+                          <button 
+                            type="button"
+                            onClick={() => handleDeleteImageField('websiteLogo')}
+                            className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                            title="Delete logo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Logo Drop Area */}
+                    <div 
+                      onDragOver={handleImageDragOver}
+                      onDrop={(e) => handleImageDrop(e, 'website-logo', 1)}
+                      onClick={() => triggerImageFileBrowse('website-logo', 1)}
+                      className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    >
+                      {profile.websiteLogo || profile.logoUrl ? (
+                        <div className="relative group p-2 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-center min-w-[96px] min-h-[96px]">
+                          <img 
+                            src={profile.websiteLogo || profile.logoUrl} 
+                            alt="Website Logo" 
+                            referrerPolicy="no-referrer"
+                            className="max-h-20 max-w-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-500">
+                          <span className="font-mono text-xs font-bold text-emerald-400">
+                            {profile.logoText ? profile.logoText.slice(0, 2).toUpperCase() : (profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : "CM")}
+                          </span>
+                          <span className="text-[8px] font-mono text-slate-500 mt-1">No Logo Set</span>
+                        </div>
+                      )}
+                      <div className="text-center">
+                        <p className="text-xs font-semibold text-slate-300">Drag & drop logo file or <span className="text-emerald-400">browse</span></p>
+                        <p className="text-[9px] text-slate-500 mt-0.5">Recommended 400x400px or transparent SVG</p>
+                      </div>
+                    </div>
+
+                    {/* Direct URL Input */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-mono text-slate-400">Direct Logo Image URL / CDN Link</label>
+                      <input 
+                        type="text"
+                        value={profile.websiteLogo || profile.logoUrl || ""}
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, websiteLogo: e.target.value, logoUrl: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        placeholder="https://example.com/logo.png"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Brand Monogram / Text & Favicon Card */}
+                  <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-4">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">Brand Monogram & Favicon</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Navbar text title and browser tab icon</p>
+                    </div>
+
+                    {/* Monogram / Brand Text */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-mono text-slate-400">Navbar Brand / Monogram Text</label>
+                      <input 
+                        type="text" 
+                        value={profile.logoText || profile.displayName || profile.fullName || ""} 
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, logoText: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        placeholder="e.g. CHANDRU M or Chandru Dev"
+                      />
+                      <span className="text-[9px] text-slate-500 font-mono">Shown beside logo in the top navbar banner.</span>
+                    </div>
+
+                    {/* Browser Favicon */}
+                    <div className="space-y-2 pt-2 border-t border-slate-900">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] font-mono text-slate-400">Browser Tab Favicon Icon (.ico / .png / .svg)</label>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => triggerImageFileBrowse('favicon', 1)}
+                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono transition cursor-pointer"
+                          >
+                            Upload Favicon
+                          </button>
+                          {profile.faviconUrl && (
+                            <button 
+                              type="button"
+                              onClick={() => handleDeleteImageField('faviconUrl')}
+                              className="p-1 text-rose-400 hover:bg-rose-500/10 rounded transition"
+                              title="Remove Favicon"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                          {profile.faviconUrl || profile.websiteLogo ? (
+                            <img 
+                              src={profile.faviconUrl || profile.websiteLogo} 
+                              alt="Favicon" 
+                              className="w-6 h-6 object-contain"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <Globe className="w-4 h-4 text-emerald-400" />
+                          )}
+                        </div>
+                        <input 
+                          type="text" 
+                          value={profile.faviconUrl || ""} 
+                          onChange={(e) => updateProfileStateWithHistory({ ...profile, faviconUrl: e.target.value })}
+                          className="flex-1 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                          placeholder="https://example.com/favicon.png"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                {/* SEO Title */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Browser Page / Search Result Title</label>
-                  <input 
-                    type="text" 
-                    value={profile.seoTitle || ""} 
-                    onChange={(e) => updateProfileStateWithHistory({ ...profile, seoTitle: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                    placeholder="e.g. Alex Rivera | Principal Full-Stack Engineer Portfolio"
-                  />
+              {/* Section 2: Search Engine Optimization (SEO) */}
+              <div className="space-y-4 pt-4 border-t border-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4.5 h-4.5 text-emerald-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-100 font-mono">Dynamic Search Engine Optimization (SEO)</h3>
+                      <p className="text-[10px] text-slate-500 font-mono">Google search indexing, browser document title, and search previews</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* SEO Description */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Search Engine Meta Description</label>
-                  <textarea 
-                    value={profile.seoDescription || ""} 
-                    onChange={(e) => updateProfileStateWithHistory({ ...profile, seoDescription: e.target.value })}
-                    className="w-full h-18 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
-                    placeholder="Short description shown under search results link..."
-                  />
+                {/* Google Search Result Live Preview Snippet */}
+                <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 space-y-1.5">
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <Eye className="w-3 h-3" />
+                    Live Google Search Snippet Simulation
+                  </span>
+                  <div className="p-3 bg-white/[0.02] border border-slate-900 rounded-xl space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-sans">
+                      <Globe className="w-3 h-3 text-emerald-400" />
+                      <span className="text-slate-300">https://chandru-dev-lime.vercel.app</span>
+                      <span className="text-slate-600">›</span>
+                      <span className="text-slate-500">portfolio</span>
+                    </div>
+                    <div className="text-sm sm:text-base font-semibold text-blue-400 hover:underline cursor-pointer font-sans">
+                      {profile.seoTitle || `${profile.fullName || "Chandru Mohan"} | ${profile.title || "Principal Systems Architect"}`}
+                    </div>
+                    <div className="text-xs text-slate-400 font-sans line-clamp-2 leading-relaxed">
+                      {profile.seoDescription || "Senior Systems Architect & Full-Stack Java Developer portfolio showcasing enterprise microservices, cloud infrastructure, and distributed computing architectures."}
+                    </div>
+                  </div>
                 </div>
 
-                {/* SEO Keywords */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Meta Keywords (Separate with comma)</label>
-                  <input 
-                    type="text" 
-                    value={profile.seoKeywords || ""} 
-                    onChange={(e) => updateProfileStateWithHistory({ ...profile, seoKeywords: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                    placeholder="e.g. portfolio, backend architect, cloud, typescript"
-                  />
+                <div className="grid grid-cols-1 gap-4">
+                  {/* SEO Title with Character Count */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-mono text-slate-400">
+                        Browser Document Title & Search Result Title <span className="text-emerald-400">*</span>
+                      </label>
+                      <span className={`text-[10px] font-mono ${
+                        (profile.seoTitle?.length || 0) > 60 ? 'text-amber-400' : 'text-slate-500'
+                      }`}>
+                        {profile.seoTitle?.length || 0} / 60 characters (Recommended: 50-60)
+                      </span>
+                    </div>
+                    <input 
+                      type="text" 
+                      value={profile.seoTitle || ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, seoTitle: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Chandru Mohan | Principal Systems Architect & Full Stack Developer"
+                    />
+                  </div>
+
+                  {/* SEO Description with Character Count */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-mono text-slate-400">
+                        Search Engine Meta Description <span className="text-emerald-400">*</span>
+                      </label>
+                      <span className={`text-[10px] font-mono ${
+                        (profile.seoDescription?.length || 0) > 160 ? 'text-amber-400' : 'text-slate-500'
+                      }`}>
+                        {profile.seoDescription?.length || 0} / 160 characters (Recommended: 150-160)
+                      </span>
+                    </div>
+                    <textarea 
+                      value={profile.seoDescription || ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, seoDescription: e.target.value })}
+                      className="w-full h-20 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
+                      placeholder="Concise overview summarizing your core architectural competencies, Java/React skills, and contact opportunities..."
+                    />
+                  </div>
+
+                  {/* SEO Keywords */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Meta Keywords (Comma separated)</label>
+                    <input 
+                      type="text" 
+                      value={profile.seoKeywords || ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, seoKeywords: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. systems architect, java full stack, spring boot, react, microservices, bangalore"
+                    />
+                  </div>
+
+                  {/* Canonical URL & Indexing */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-mono text-slate-400">Canonical Website URL</label>
+                      <input 
+                        type="text" 
+                        value={profile.canonicalUrl || "https://chandru-dev-lime.vercel.app/"} 
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, canonicalUrl: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        placeholder="https://chandru-dev-lime.vercel.app/"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-mono text-slate-400">Search Robots Indexing</label>
+                      <select
+                        value={profile.allowIndexing === false ? "noindex" : "index"}
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, allowIndexing: e.target.value === "index" })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      >
+                        <option value="index">Index & Follow (Public search engine ranking)</option>
+                        <option value="noindex">No-Index (Private / Hidden from Google)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Open Graph (OG) & Social Card Previews */}
+              <div className="space-y-4 pt-4 border-t border-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Share2 className="w-4.5 h-4.5 text-emerald-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-100 font-mono">Open Graph (OG) & Social Share Preview</h3>
+                      <p className="text-[10px] text-slate-500 font-mono">Card format rendered when sharing portfolio URL on LinkedIn, WhatsApp, Twitter, Discord</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                  {/* Live Social Share Card Preview */}
+                  <div className="border border-slate-800 bg-slate-950/60 rounded-2xl overflow-hidden shadow-xl">
+                    <div className="aspect-[1.91/1] w-full bg-slate-900 relative overflow-hidden flex items-center justify-center border-b border-slate-800">
+                      {profile.ogImage || profile.websiteLogo || profile.profileImage ? (
+                        <img 
+                          src={profile.ogImage || profile.websiteLogo || profile.profileImage} 
+                          alt="OG Preview" 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-center p-4">
+                          <ImageIcon className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                          <span className="text-[10px] font-mono text-slate-500">No Social Image Configured</span>
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 bg-slate-950/80 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-mono text-emerald-400 border border-emerald-500/20">
+                        1200 x 630 OG Share
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-1 bg-slate-950">
+                      <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider block">chandru-dev-lime.vercel.app</span>
+                      <h4 className="text-xs font-bold text-slate-100 font-sans line-clamp-1">
+                        {profile.ogTitle || profile.seoTitle || `${profile.fullName || "Chandru Mohan"} | Portfolio`}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 font-sans line-clamp-2">
+                        {profile.ogDescription || profile.seoDescription || "Explore enterprise software architecture, full stack projects, and systems engineering portfolio."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* OG Card Inputs */}
+                  <div className="space-y-4">
+                    {/* Social Share Image Upload */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] font-mono text-slate-400">Social Card Share Image (OG Image)</label>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setMediaModalField('ogImage')}
+                            className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono transition cursor-pointer"
+                          >
+                            Media Library
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => triggerImageFileBrowse('og-image', 1.91)}
+                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono transition cursor-pointer"
+                          >
+                            Upload Image
+                          </button>
+                          {profile.ogImage && (
+                            <button 
+                              type="button"
+                              onClick={() => handleDeleteImageField('ogImage')}
+                              className="p-1 text-rose-400 hover:bg-rose-500/10 rounded transition"
+                              title="Delete OG Image"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <input 
+                        type="text" 
+                        value={profile.ogImage || ""} 
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, ogImage: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        placeholder="https://example.com/og-card-image.jpg"
+                      />
+                    </div>
+
+                    {/* Social Share Title */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-mono text-slate-400">Social Share Title (Optional override)</label>
+                      <input 
+                        type="text" 
+                        value={profile.ogTitle || ""} 
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, ogTitle: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        placeholder="Leave blank to use main SEO Title"
+                      />
+                    </div>
+
+                    {/* Social Share Description */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-mono text-slate-400">Social Share Description (Optional override)</label>
+                      <textarea 
+                        value={profile.ogDescription || ""} 
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, ogDescription: e.target.value })}
+                        className="w-full h-16 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
+                        placeholder="Leave blank to use main SEO Description"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Bar for SEO & Logo Tab */}
+              <div className="pt-4 border-t border-slate-900 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-mono text-slate-300">SEO & Brand settings will synchronize live to the portfolio upon saving.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-slate-800 transition cursor-pointer"
+                  >
+                    Revert Unsaved
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProfile(false)}
+                    disabled={saving}
+                    className="px-5 py-2 rounded-xl text-xs font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                    <span>Save & Publish Live</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1829,6 +2252,112 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     <div className="text-center">
                       <p className="text-xs font-semibold text-slate-300">Drag & drop hero wallpaper or <span className="text-emerald-400">browse</span></p>
                       <p className="text-[9px] text-slate-500 mt-0.5">High definition 16:9 widescreen wallpaper</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Website Logo - Aspect 1:1 or wide */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">Website Branding Logo</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Navbar brand emblem</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('websiteLogo')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
+                      </button>
+                      {(profile.websiteLogo || profile.logoUrl) && (
+                        <button 
+                          onClick={() => handleDeleteImageField('websiteLogo')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete logo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div 
+                    onDragOver={handleImageDragOver}
+                    onDrop={(e) => handleImageDrop(e, 'website-logo', 1)}
+                    onClick={() => triggerImageFileBrowse('website-logo', 1)}
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                  >
+                    {profile.websiteLogo || profile.logoUrl ? (
+                      <img 
+                        src={profile.websiteLogo || profile.logoUrl} 
+                        alt="Website Logo" 
+                        referrerPolicy="no-referrer"
+                        className="w-24 h-24 rounded-lg object-contain p-2 bg-slate-900 border border-slate-800"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <Globe className="w-8 h-8 text-emerald-400" />
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-300">Drag & drop website logo or <span className="text-emerald-400">browse</span></p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">Transparent PNG / SVG recommended</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Share OG Image */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">Social Share (OG) Image</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">1200x630 link preview thumbnail</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('ogImage')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Folder className="w-3 h-3" />
+                        From Media Manager
+                      </button>
+                      {profile.ogImage && (
+                        <button 
+                          onClick={() => handleDeleteImageField('ogImage')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete OG image"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div 
+                    onDragOver={handleImageDragOver}
+                    onDrop={(e) => handleImageDrop(e, 'og-image', 1.91)}
+                    onClick={() => triggerImageFileBrowse('og-image', 1.91)}
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                  >
+                    {profile.ogImage ? (
+                      <img 
+                        src={profile.ogImage} 
+                        alt="Social Share" 
+                        referrerPolicy="no-referrer"
+                        className="w-full max-h-24 rounded-lg object-cover border border-slate-800"
+                      />
+                    ) : (
+                      <div className="w-full h-24 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <Share2 className="w-8 h-8 text-emerald-400" />
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-300">Drag & drop OG image or <span className="text-emerald-400">browse</span></p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">1200x630 social card ratio</p>
                     </div>
                   </div>
                 </div>

@@ -213,7 +213,7 @@ export default function AdminLogin({ onLoginSuccess, onBackToPortfolio, initialM
   const handleDemoLogin = async () => {
     setIsLoading(true);
     setErrorMessage(null);
-    setSuccessMessage('Launching Recruiter Guest Demo Tour 🚀');
+    setSuccessMessage('Welcome to Recruiter Mode 🚀');
 
     try {
       // Clear persistent real admin credentials to ensure pure demo sandbox isolation

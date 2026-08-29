@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
+import { checkAndBlockDemoAction } from '../../utils/demoAuthUtils';
 
 interface ResumePageProps {
   onTriggerToast: (message: string, type: 'success' | 'error') => void;
@@ -221,6 +222,8 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   // Upload New Resume Form Submit
   const handleUploadResumeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
+
     if (!uploadFile) {
       onTriggerToast('Please select or drop a resume PDF file.', 'error');
       return;
@@ -424,6 +427,10 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
   const handleEditResumeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedResume) return;
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setIsEditOpen(false);
+      return;
+    }
 
     setIsEditing(true);
     try {
@@ -515,6 +522,7 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
 
   // Toggle Download Action
   const handleToggleDownload = async (resume: ResumeItem) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) return;
     const nextStatus = !resume.isDownloadEnabled;
     try {
       try {
@@ -554,6 +562,10 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
 
   // Activate Resume Version
   const handleActivate = async (id: number) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setConfirmActivateId(null);
+      return;
+    }
     try {
       try {
         const cachedStr = localStorage.getItem('cms_resumes_cache');
@@ -589,6 +601,11 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
 
   // Delete Action
   const handleDelete = async (id: number) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setConfirmDeleteId(null);
+      return;
+    }
+
     // 1. Immediately remove from local state
     setResumes(prev => {
       const remaining = prev.filter(r => r.id !== id);
@@ -645,6 +662,10 @@ export default function ResumePage({ onTriggerToast, onResumeUpdated }: ResumePa
 
   // Restore previous version
   const handleRestore = async (id: number) => {
+    if (checkAndBlockDemoAction(onTriggerToast)) {
+      setConfirmRestoreId(null);
+      return;
+    }
     try {
       try {
         const cachedStr = localStorage.getItem('cms_resumes_cache');

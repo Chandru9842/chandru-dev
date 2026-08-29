@@ -188,17 +188,7 @@ export default function App() {
   };
 
   const handleEnterCMS = () => {
-    // If the user already has an active Master Admin session, take them straight to dashboard
-    const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
-    const isMaster = token && sessionStorage.getItem('is_demo_session') !== 'true';
-
-    if (isMaster) {
-      setIsAuthenticated(true);
-      navigate('/admin/dashboard');
-      return;
-    }
-
-    // Show the Recruiter Demo Welcome Gate first
+    // Show the Recruiter & Reviewer Demo Gate modal directly
     setShowDemoGate(true);
   };
 

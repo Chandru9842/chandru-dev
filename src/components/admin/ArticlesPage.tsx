@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   BookOpenCheck, Plus, Edit2, Trash2, Eye, EyeOff, 
   Save, X, ExternalLink, Search, Filter, CheckCircle2, 
-  Clock, Tag, Sparkles, FileText, Share2, Layers, BarChart2
+  Clock, Tag, Sparkles, FileText, Share2, Layers, BarChart2,
+  GripVertical, ChevronUp, ChevronDown, Folder, Edit3, AlertCircle, Check
 } from 'lucide-react';
 import { ArticleItem } from '../../data/cmsMockData';
 
@@ -12,24 +13,73 @@ interface ArticlesPageProps {
   onUpdate: (item: ArticleItem) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
   onToggleStatus: (id: number, isPublished: boolean) => Promise<void>;
+  onReorder?: (reorderedList: ArticleItem[]) => Promise<void>;
 }
+
+export const PRESET_CATEGORIES = [
+  'System Design',
+  'Java Engineering',
+  'Database Architecture',
+  'Microservices',
+  'Cloud & DevOps',
+  'High Concurrency & Kafka'
+];
 
 export default function ArticlesPage({
   articles,
   onAdd,
   onUpdate,
   onDelete,
-  onToggleStatus
+  onToggleStatus,
+  onReorder
 }: ArticlesPageProps) {
   // State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Custom Category Input Mode in Form
+  const [isCustomCategoryMode, setIsCustomCategoryMode] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+
+  // Category Manager State (Rename / Add / Delete)
+  const [newCatName, setNewCatName] = useState('');
+  const [editingCategoryKey, setEditingCategoryKey] = useState<string | null>(null);
+  const [renameCatValue, setRenameCatValue] = useState('');
+  const [categoryActionFeedback, setCategoryActionFeedback] = useState<string | null>(null);
+
+  // Custom Categories list stored locally or in memory
+  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('cms_custom_article_categories');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cms_custom_article_categories', JSON.stringify(customCategories));
+    } catch {}
+  }, [customCategories]);
+
+  // Combined Unique Category List
+  const allCategories = useMemo(() => {
+    const articleCats = articles.map(a => a.category).filter(Boolean);
+    const combined = Array.from(new Set([...PRESET_CATEGORIES, ...customCategories, ...articleCats]));
+    return combined.sort((a, b) => a.localeCompare(b));
+  }, [articles, customCategories]);
+
+  // Drag & drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,6 +94,7 @@ export default function ArticlesPage({
     readTimeMinutes: 5,
     isPublished: true,
     isFeatured: false,
+    displayOrder: 1,
     author: 'Chandru Mohan',
     authorRole: 'Principal Systems Architect',
     authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
@@ -51,17 +102,8 @@ export default function ArticlesPage({
 
   const showToast = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 3500);
   };
-
-  const categories = [
-    'System Design',
-    'Java Engineering',
-    'Database Architecture',
-    'Microservices',
-    'Cloud & DevOps',
-    'High Concurrency & Kafka'
-  ];
 
   // Filtered list
   const filteredArticles = useMemo(() => {
@@ -95,11 +137,13 @@ export default function ArticlesPage({
 
   const handleOpenCreate = () => {
     setEditingId(null);
+    setIsCustomCategoryMode(false);
+    setCustomCategoryInput('');
     setFormData({
       title: '',
       slug: '',
       excerpt: '',
-      content: `## 🚀 Overview\n\nExplain the architectural problem statement here...\n\n### Key Concepts\n- Concurrency patterns\n- Throughput optimization\n\n\`\`\`java\npublic class SystemService {\n    // Core logic\n}\n\`\`\`\n\n### Conclusion\nSummary of results and production findings.`,
+      content: `## 🚀 Overview\n\nExplain the architectural problem statement here...\n\n### Key Concepts\n- High throughput concurrency patterns\n- Distributed event streaming\n\n\`\`\`java\npublic class SystemService {\n    // Core enterprise logic\n}\n\`\`\`\n\n### Conclusion\nSummary of results, benchmark metrics, and production findings.`,
       coverImageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80',
       category: 'System Design',
       tags: ['Java', 'Spring Boot', 'Architecture'],
@@ -107,6 +151,7 @@ export default function ArticlesPage({
       readTimeMinutes: 5,
       isPublished: true,
       isFeatured: false,
+      displayOrder: 1,
       author: 'Chandru Mohan',
       authorRole: 'Principal Systems Architect',
       authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
@@ -117,24 +162,109 @@ export default function ArticlesPage({
 
   const handleOpenEdit = (item: ArticleItem) => {
     setEditingId(item.id);
+    const isCustom = !PRESET_CATEGORIES.includes(item.category);
+    setIsCustomCategoryMode(isCustom);
+    setCustomCategoryInput(isCustom ? item.category : '');
     setFormData({
       title: item.title,
       slug: item.slug,
       excerpt: item.excerpt,
       content: item.content,
       coverImageUrl: item.coverImageUrl,
-      category: item.category,
+      category: item.category || 'System Design',
       tags: item.tags || [],
       tagInput: '',
       readTimeMinutes: item.readTimeMinutes || 5,
       isPublished: item.isPublished,
       isFeatured: item.isFeatured,
+      displayOrder: item.displayOrder ?? item.order ?? (articles.findIndex(a => a.id === item.id) + 1),
       author: item.author || 'Chandru Mohan',
       authorRole: item.authorRole || 'Principal Systems Architect',
       authorAvatar: item.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
     });
     setEditorTab('write');
     setIsFormOpen(true);
+  };
+
+  const handleMoveUp = async (id: number) => {
+    if (!onReorder) return;
+    const currentIndex = articles.findIndex(a => a.id === id);
+    if (currentIndex <= 0) return;
+    
+    const newList = [...articles];
+    const temp = newList[currentIndex];
+    newList[currentIndex] = newList[currentIndex - 1];
+    newList[currentIndex - 1] = temp;
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+    await onReorder(reordered);
+    showToast('Updated article priority rank.');
+  };
+
+  const handleMoveDown = async (id: number) => {
+    if (!onReorder) return;
+    const currentIndex = articles.findIndex(a => a.id === id);
+    if (currentIndex === -1 || currentIndex >= articles.length - 1) return;
+    
+    const newList = [...articles];
+    const temp = newList[currentIndex];
+    newList[currentIndex] = newList[currentIndex + 1];
+    newList[currentIndex + 1] = temp;
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+    await onReorder(reordered);
+    showToast('Updated article priority rank.');
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId === null || draggedId === id) return;
+    setDragOverId(id);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (draggedId === null || draggedId === targetId || !onReorder) {
+      setDraggedId(null);
+      return;
+    }
+
+    const sourceIdx = articles.findIndex(item => item.id === draggedId);
+    const targetIdx = articles.findIndex(item => item.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1) {
+      setDraggedId(null);
+      return;
+    }
+
+    const newList = [...articles];
+    const [movedItem] = newList.splice(sourceIdx, 1);
+    newList.splice(targetIdx, 0, movedItem);
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      displayOrder: idx + 1,
+      order: idx + 1
+    }));
+
+    setDraggedId(null);
+    await onReorder(reordered);
+    showToast('Article position updated.');
   };
 
   const handleAddTag = () => {
@@ -163,6 +293,14 @@ export default function ArticlesPage({
       return;
     }
 
+    let finalCategory = formData.category;
+    if (isCustomCategoryMode && customCategoryInput.trim()) {
+      finalCategory = customCategoryInput.trim();
+      if (!customCategories.includes(finalCategory)) {
+        setCustomCategories(prev => [...prev, finalCategory]);
+      }
+    }
+
     const computedSlug = formData.slug.trim() || generateSlug(formData.title);
     const wordCount = formData.content.split(/\s+/).length;
     const computedReadTime = Math.max(1, Math.ceil(wordCount / 200));
@@ -174,6 +312,7 @@ export default function ArticlesPage({
         await onUpdate({
           id: editingId,
           ...formData,
+          category: finalCategory,
           slug: computedSlug,
           readTimeMinutes: computedReadTime,
           viewsCount: existing?.viewsCount || 0,
@@ -184,6 +323,7 @@ export default function ArticlesPage({
       } else {
         await onAdd({
           ...formData,
+          category: finalCategory,
           slug: computedSlug,
           readTimeMinutes: computedReadTime
         });
@@ -208,9 +348,81 @@ export default function ArticlesPage({
     }
   };
 
+  // Category Management Actions
+  const handleAddNewCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newCatName.trim();
+    if (!clean) return;
+    if (allCategories.includes(clean)) {
+      setCategoryActionFeedback('Category already exists.');
+      return;
+    }
+    setCustomCategories(prev => [...prev, clean]);
+    setNewCatName('');
+    setCategoryActionFeedback(`Added "${clean}" category.`);
+    setTimeout(() => setCategoryActionFeedback(null), 3000);
+  };
+
+  const handleRenameCategory = async (oldCategory: string) => {
+    const cleanNew = renameCatValue.trim();
+    if (!cleanNew || cleanNew === oldCategory) {
+      setEditingCategoryKey(null);
+      return;
+    }
+
+    // Update custom categories list
+    setCustomCategories(prev => prev.map(c => c === oldCategory ? cleanNew : c));
+
+    // Bulk update any articles that use this category
+    const affectedArticles = articles.filter(a => a.category === oldCategory);
+    if (affectedArticles.length > 0) {
+      try {
+        for (const art of affectedArticles) {
+          await onUpdate({
+            ...art,
+            category: cleanNew,
+            updatedAt: new Date().toISOString()
+          });
+        }
+        setCategoryActionFeedback(`Renamed "${oldCategory}" to "${cleanNew}" across ${affectedArticles.length} article(s).`);
+      } catch (err) {
+        setCategoryActionFeedback('Error updating some articles.');
+      }
+    } else {
+      setCategoryActionFeedback(`Renamed "${oldCategory}" to "${cleanNew}".`);
+    }
+
+    setEditingCategoryKey(null);
+    setRenameCatValue('');
+    setTimeout(() => setCategoryActionFeedback(null), 4000);
+  };
+
+  const handleDeleteCategory = async (catToDelete: string) => {
+    const articleCount = articles.filter(a => a.category === catToDelete).length;
+    if (articleCount > 0) {
+      const confirmReassign = window.confirm(
+        `There are ${articleCount} article(s) tagged as "${catToDelete}". Reassign them to "System Design" and delete this category?`
+      );
+      if (!confirmReassign) return;
+
+      const affectedArticles = articles.filter(a => a.category === catToDelete);
+      for (const art of affectedArticles) {
+        await onUpdate({
+          ...art,
+          category: 'System Design',
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
+    setCustomCategories(prev => prev.filter(c => c !== catToDelete));
+    setCategoryActionFeedback(`Category "${catToDelete}" removed.`);
+    setTimeout(() => setCategoryActionFeedback(null), 3000);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Toast */}
+      {/* Toast Notification */}
       {notification && (
         <div className="fixed top-6 right-6 z-50 bg-slate-900/95 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md flex items-center gap-3 animate-fade-in text-sm font-medium">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -225,72 +437,59 @@ export default function ArticlesPage({
             <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
               <BookOpenCheck className="w-5 h-5" />
             </div>
-            <h1 className="text-xl font-bold text-slate-100 font-display">Engineering Blog & Articles</h1>
+            <h1 className="text-xl font-bold text-slate-100 font-display">Thought Leadership & Publications</h1>
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl font-sans">
-            Author and publish deep-dive technical articles, architecture benchmarks, and system design whitepapers under your verified byline.
+            Author and manage deep-dive technical articles, architecture benchmarks, and system design whitepapers under your verified byline.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 duration-200"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Write New Article</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Folder className="w-4 h-4 text-emerald-400" />
+            <span>Manage Categories</span>
+          </button>
 
-      {/* Metrics Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Total Publications</p>
-            <p className="text-2xl font-extrabold text-white mt-1">{totalArticles}</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-            <FileText className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Published</p>
-            <p className="text-2xl font-extrabold text-emerald-400 mt-1">{publishedCount}</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Drafts</p>
-            <p className="text-2xl font-extrabold text-amber-400 mt-1">{draftCount}</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-            <Clock className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Article Reads</p>
-            <p className="text-2xl font-extrabold text-purple-400 mt-1">{totalViews.toLocaleString()}</p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-            <BarChart2 className="w-5 h-5" />
-          </div>
+          <button
+            onClick={handleOpenCreate}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Write Article</span>
+          </button>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/30 p-3 rounded-2xl border border-slate-800/80">
-        <div className="relative w-full sm:w-80">
+      {/* Metric KPI Chips */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl backdrop-blur-sm">
+          <span className="text-[11px] font-mono text-slate-400 block uppercase tracking-wider">Total Articles</span>
+          <span className="text-2xl font-bold font-mono text-slate-100 mt-1 block">{totalArticles}</span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl backdrop-blur-sm">
+          <span className="text-[11px] font-mono text-emerald-400 block uppercase tracking-wider">Published</span>
+          <span className="text-2xl font-bold font-mono text-emerald-400 mt-1 block">{publishedCount}</span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl backdrop-blur-sm">
+          <span className="text-[11px] font-mono text-amber-400 block uppercase tracking-wider">Drafts</span>
+          <span className="text-2xl font-bold font-mono text-amber-400 mt-1 block">{draftCount}</span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl backdrop-blur-sm">
+          <span className="text-[11px] font-mono text-sky-400 block uppercase tracking-wider">Total Reads</span>
+          <span className="text-2xl font-bold font-mono text-sky-400 mt-1 block">{totalViews}</span>
+        </div>
+      </div>
+
+      {/* Search & Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
+        <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by title, tags, category..."
+            placeholder="Search articles by title, tags, or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
@@ -298,13 +497,18 @@ export default function ArticlesPage({
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-slate-400">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Drag cards or use arrows to prioritize</span>
+          </div>
+
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-200 px-3 py-2 focus:outline-none focus:border-emerald-500/50"
           >
-            <option value="all">All Categories</option>
-            {categories.map((c) => (
+            <option value="all">All Categories ({allCategories.length})</option>
+            {allCategories.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -321,35 +525,78 @@ export default function ArticlesPage({
         </div>
       </div>
 
-      {/* Articles Card Grid */}
+      {/* Articles Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredArticles.length === 0 ? (
-          <div className="col-span-full text-center py-16 bg-slate-900/20 border border-slate-800/50 rounded-2xl">
+          <div className="col-span-full py-12 text-center bg-slate-900/20 border border-slate-800/60 rounded-2xl">
             <BookOpenCheck className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 font-medium text-sm">No articles match your search filter.</p>
+            <p className="text-sm font-medium text-slate-400">No technical articles found.</p>
+            <p className="text-xs text-slate-500 mt-1">Try adjusting your filters or publish your first article.</p>
             <button
               onClick={handleOpenCreate}
-              className="mt-3 text-xs text-emerald-400 hover:text-emerald-300 font-bold underline"
+              className="mt-4 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 rounded-xl text-xs font-mono font-bold uppercase transition-all"
             >
-              Write your first article
+              + Write New Article
             </button>
           </div>
         ) : (
-          filteredArticles.map((article) => (
+          filteredArticles.map((article, index) => {
+            const isDragging = draggedId === article.id;
+            const isOver = dragOverId === article.id;
+
+            return (
             <div
               key={article.id}
-              className="bg-slate-900/40 border border-slate-800/80 hover:border-slate-700 rounded-2xl overflow-hidden backdrop-blur-sm transition-all duration-200 flex flex-col justify-between group"
+              draggable={!searchTerm.trim() && filterCategory === 'all' && filterStatus === 'all'}
+              onDragStart={(e) => handleDragStart(e, article.id)}
+              onDragOver={(e) => handleDragOver(e, article.id)}
+              onDrop={(e) => handleDrop(e, article.id)}
+              onDragEnd={() => {
+                setDraggedId(null);
+                setDragOverId(null);
+              }}
+              className={`bg-slate-900/40 border border-slate-800/80 hover:border-slate-700 rounded-2xl overflow-hidden backdrop-blur-sm transition-all duration-200 flex flex-col justify-between group ${
+                isDragging ? 'opacity-40 bg-emerald-500/5' : ''
+              } ${isOver ? 'ring-2 ring-emerald-500 bg-emerald-500/10' : ''}`}
             >
               <div>
-                {/* Cover Image */}
-                <div className="relative h-44 w-full bg-slate-800 overflow-hidden">
+                {/* Drag Handle & Priority Bar */}
+                <div className="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/60 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <GripVertical className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors cursor-grab active:cursor-grabbing" />
+                    <span className="font-bold text-emerald-400">#{article.displayOrder ?? article.order ?? (index + 1)}</span>
+                    <span className="text-slate-500">Priority</span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleMoveUp(article.id)}
+                      disabled={index === 0}
+                      className="p-1 text-slate-400 hover:text-emerald-400 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                      title="Move Up in Display Order"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleMoveDown(article.id)}
+                      disabled={index === filteredArticles.length - 1}
+                      className="p-1 text-slate-400 hover:text-emerald-400 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                      title="Move Down in Display Order"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Article Card Image Cover */}
+                <div className="relative h-44 w-full overflow-hidden bg-slate-950">
                   <img
                     src={article.coverImageUrl || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80'}
                     alt={article.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  
+
                   {/* Category Pill */}
                   <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-950/80 backdrop-blur-md border border-slate-700/60 text-emerald-400">
                     {article.category}
@@ -436,7 +683,7 @@ export default function ArticlesPage({
 
                   <button
                     onClick={() => handleOpenEdit(article)}
-                    className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors cursor-pointer"
                     title="Edit Article"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -444,7 +691,7 @@ export default function ArticlesPage({
 
                   <button
                     onClick={() => handleDelete(article.id, article.title)}
-                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                     title="Delete Article"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -452,9 +699,148 @@ export default function ArticlesPage({
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
+
+      {/* Category Management Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden my-6 animate-scale-up flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/80">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                  <Folder className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Article Categories Manager</h3>
+                  <p className="text-[11px] text-slate-400">Add, rename, or remove topic categories</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setEditingCategoryKey(null);
+                }}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Feedback alert */}
+              {categoryActionFeedback && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono text-emerald-400 flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{categoryActionFeedback}</span>
+                </div>
+              )}
+
+              {/* Add Category Form */}
+              <form onSubmit={handleAddNewCategory} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter new custom category (e.g. Distributed Consensus, Cloud Native)..."
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  className="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+                <button
+                  type="submit"
+                  disabled={!newCatName.trim()}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold font-mono text-xs rounded-xl transition-all shrink-0 cursor-pointer"
+                >
+                  Add Category
+                </button>
+              </form>
+
+              {/* List of Existing Categories */}
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {allCategories.map((cat) => {
+                  const articleCount = articles.filter(a => a.category === cat).length;
+                  const isEditingThis = editingCategoryKey === cat;
+
+                  return (
+                    <div
+                      key={cat}
+                      className="flex items-center justify-between p-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl"
+                    >
+                      {isEditingThis ? (
+                        <div className="flex items-center gap-2 flex-1 mr-2">
+                          <input
+                            type="text"
+                            value={renameCatValue}
+                            onChange={(e) => setRenameCatValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRenameCategory(cat);
+                              if (e.key === 'Escape') setEditingCategoryKey(null);
+                            }}
+                            autoFocus
+                            className="flex-1 px-2.5 py-1 bg-slate-900 border border-emerald-500/50 rounded-lg text-xs text-white focus:outline-none"
+                          />
+                          <button
+                            onClick={() => handleRenameCategory(cat)}
+                            className="px-2 py-1 bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingCategoryKey(null)}
+                            className="px-2 py-1 bg-slate-800 text-slate-300 text-xs rounded-lg"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2.5">
+                          <Tag className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-xs font-medium text-slate-200">{cat}</span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400">
+                            {articleCount} {articleCount === 1 ? 'article' : 'articles'}
+                          </span>
+                        </div>
+                      )}
+
+                      {!isEditingThis && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingCategoryKey(cat);
+                              setRenameCatValue(cat);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-blue-400 rounded-lg transition-colors cursor-pointer"
+                            title="Rename Category"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(cat)}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                            title="Delete Category"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-900/80 flex justify-end">
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-xl transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Write / Edit Article Modal */}
       {isFormOpen && (
@@ -466,7 +852,7 @@ export default function ArticlesPage({
                 <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
                   <BookOpenCheck className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-white font-display">
                   {editingId ? 'Edit Engineering Article' : 'Write & Publish Technical Article'}
                 </h3>
               </div>
@@ -477,7 +863,7 @@ export default function ArticlesPage({
                   <button
                     type="button"
                     onClick={() => setEditorTab('write')}
-                    className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
+                    className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors cursor-pointer ${
                       editorTab === 'write'
                         ? 'bg-emerald-500 text-slate-950 font-bold'
                         : 'text-slate-400 hover:text-white'
@@ -488,7 +874,7 @@ export default function ArticlesPage({
                   <button
                     type="button"
                     onClick={() => setEditorTab('preview')}
-                    className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
+                    className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors cursor-pointer ${
                       editorTab === 'preview'
                         ? 'bg-emerald-500 text-slate-950 font-bold'
                         : 'text-slate-400 hover:text-white'
@@ -500,7 +886,7 @@ export default function ArticlesPage({
 
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors ml-2"
+                  className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors ml-2 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -531,22 +917,61 @@ export default function ArticlesPage({
                     </div>
 
                     <div>
-                      <label className="block text-xs font-mono text-slate-400 mb-1">
-                        Category *
-                      </label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
-                      >
-                        {categories.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-mono text-slate-400">
+                          Category *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomCategoryMode(!isCustomCategoryMode);
+                            if (!isCustomCategoryMode) {
+                              setCustomCategoryInput(formData.category || '');
+                            }
+                          }}
+                          className="text-[10px] font-mono text-emerald-400 hover:underline cursor-pointer"
+                        >
+                          {isCustomCategoryMode ? 'Choose from list' : '+ Custom Category'}
+                        </button>
+                      </div>
+
+                      {isCustomCategoryMode ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            placeholder="Type custom category name..."
+                            value={customCategoryInput}
+                            onChange={(e) => {
+                              setCustomCategoryInput(e.target.value);
+                              setFormData({ ...formData, category: e.target.value });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-950 border border-emerald-500/50 rounded-xl text-xs text-white focus:outline-none"
+                          />
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.category}
+                          onChange={(e) => {
+                            if (e.target.value === '__NEW_CUSTOM__') {
+                              setIsCustomCategoryMode(true);
+                              setCustomCategoryInput('');
+                            } else {
+                              setFormData({ ...formData, category: e.target.value });
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+                        >
+                          {allCategories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                          <option value="__NEW_CUSTOM__">+ Add Custom Category...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-mono text-slate-400 mb-1">
                         URL Slug
@@ -569,6 +994,20 @@ export default function ArticlesPage({
                         placeholder="https://images.unsplash.com/..."
                         value={formData.coverImageUrl}
                         onChange={(e) => setFormData({ ...formData, coverImageUrl: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-mono text-slate-400 mb-1">
+                        Display Priority (Rank / Order)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        placeholder="1 (Top Priority)"
+                        value={formData.displayOrder}
+                        onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 1 })}
                         className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
                       />
                     </div>
@@ -610,7 +1049,7 @@ export default function ArticlesPage({
                       <button
                         type="button"
                         onClick={handleAddTag}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white font-mono rounded-xl transition-colors"
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white font-mono rounded-xl transition-colors cursor-pointer"
                       >
                         Add Tag
                       </button>
@@ -626,7 +1065,7 @@ export default function ArticlesPage({
                           <button
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="hover:text-rose-400 transition-colors"
+                            className="hover:text-rose-400 transition-colors cursor-pointer"
                           >
                             ×
                           </button>
@@ -683,7 +1122,7 @@ export default function ArticlesPage({
                 <div className="space-y-4 bg-slate-950 p-6 rounded-2xl border border-slate-800 text-slate-200">
                   <div className="border-b border-slate-800 pb-4">
                     <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 uppercase font-bold">
-                      {formData.category}
+                      {isCustomCategoryMode ? (customCategoryInput || 'Uncategorized') : formData.category}
                     </span>
                     <h1 className="text-2xl font-bold text-white mt-2 font-display">
                       {formData.title || 'Untitled Article'}
@@ -705,14 +1144,14 @@ export default function ArticlesPage({
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium rounded-xl hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{isSubmitting ? 'Saving...' : editingId ? 'Update Article' : 'Publish Article'}</span>

@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Eye, Shield, Lock, Database, BarChart3, Palette, 
-  Cpu, ArrowRight, X, Sparkles, CheckCircle2, AlertTriangle
+  Eye, Shield, Database, BarChart3, Palette, 
+  Cpu, ArrowRight, X, Sparkles, CheckCircle2
 } from 'lucide-react';
 
 interface RecruiterDemoGateProps {
   isOpen: boolean;
   onClose: () => void;
   onEnterDemo: () => void;
+  onAdminLogin?: () => void;
 }
 
 export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: RecruiterDemoGateProps) {
   const [isEntering, setIsEntering] = useState(false);
+
+  // Lock background body scroll while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isOpen]);
 
   const handleEnter = () => {
     setIsEntering(true);
@@ -36,50 +52,51 @@ export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: Recr
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 z-[9999] overflow-y-auto overflow-x-hidden p-3 sm:p-6 flex items-center justify-center min-h-screen"
           onClick={onClose}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-xl" />
           
           {/* Animated ambient glow */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="fixed inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/8 rounded-full blur-[120px] animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/6 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
           </div>
 
           {/* Gate Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-lg bg-gradient-to-b from-slate-900/98 via-slate-950/99 to-[#020617] border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 overflow-hidden"
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-lg my-auto bg-gradient-to-b from-slate-900/98 via-slate-950/99 to-[#020617] border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/70 overflow-hidden max-h-[90vh] flex flex-col z-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top accent bar */}
-            <div className="h-1 bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500" />
+            <div className="h-1 bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500 shrink-0" />
 
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-all z-10 cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-all z-20 cursor-pointer"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="px-6 sm:px-8 pt-8 pb-6">
+            {/* Scrollable Body Content */}
+            <div className="px-6 sm:px-8 pt-7 pb-6 overflow-y-auto flex-1 overscroll-contain">
               {/* Header */}
-              <div className="flex flex-col items-center text-center mb-6">
+              <div className="flex flex-col items-center text-center mb-5">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
-                  className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 border border-emerald-500/30 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/10"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 border border-emerald-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-emerald-500/10"
                 >
-                  <Eye className="w-7 h-7 text-emerald-400" />
+                  <Eye className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400" />
                 </motion.div>
 
                 <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-1.5">
@@ -91,7 +108,7 @@ export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: Recr
               </div>
 
               {/* Feature Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-5">
                 {features.map((feature, i) => (
                   <motion.div
                     key={i}
@@ -112,7 +129,7 @@ export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: Recr
               </div>
 
               {/* Security Notice */}
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/15 mb-6">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/15 mb-5">
                 <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-0.5">Read-Only Sandbox</p>
@@ -152,7 +169,7 @@ export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: Recr
 
                 <button
                   onClick={onClose}
-                  className="w-full py-2.5 px-4 rounded-xl bg-transparent border border-white/[0.06] text-slate-500 hover:text-slate-300 hover:border-white/[0.12] text-xs font-mono font-medium transition-all cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-transparent border border-white/[0.08] hover:border-white/[0.18] text-slate-400 hover:text-slate-200 text-xs font-mono font-medium transition-all cursor-pointer"
                 >
                   ← Back to Portfolio
                 </button>
@@ -160,9 +177,9 @@ export default function RecruiterDemoGate({ isOpen, onClose, onEnterDemo }: Recr
             </div>
 
             {/* Bottom badge */}
-            <div className="px-6 sm:px-8 py-3 border-t border-white/[0.04] bg-white/[0.01] flex items-center justify-center gap-2">
+            <div className="px-6 sm:px-8 py-3 border-t border-white/[0.04] bg-white/[0.01] flex items-center justify-center gap-2 shrink-0">
               <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">
+              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest text-center">
                 No credentials required • Instant access • Production-safe
               </span>
             </div>
