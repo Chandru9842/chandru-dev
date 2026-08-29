@@ -236,7 +236,7 @@
     }
   ],
   "analytics": {
-    "pageViews": 12453,
+    "pageViews": 12455,
     "uniqueVisitors": 4121,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
@@ -278,7 +278,7 @@
       },
       {
         "date": "Aug 30",
-        "views": 3,
+        "views": 5,
         "visitors": 1
       }
     ],
@@ -295,7 +295,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 2183,
+        "count": 2185,
         "percentage": 17.5
       },
       {
@@ -316,7 +316,7 @@
       },
       {
         "country": "India",
-        "count": 2123
+        "count": 2125
       },
       {
         "country": "Germany",
@@ -338,7 +338,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7453
+        "count": 7455
       },
       {
         "browser": "Safari",
@@ -360,7 +360,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 8593
+        "count": 8595
       },
       {
         "device": "Mobile",
@@ -561,19 +561,19 @@
     "aboutImage": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp",
     "heroBackground": "",
     "heroAvatar": "",
-    "heroBadge": "Full Stack Java Developer",
+    "heroBadge": "SENIOR CLOUD ARCHITECT",
     "heroName": "CHANDRU M",
     "heroTitle": "PRINCIPAL SYSTEMS ARCHITECT",
-    "heroSubtitle": "Java Full Stack Developer",
+    "heroSubtitle": "Distributed Systems & Cloud Engineer",
     "heroDescription": "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-    "fullName": "Chandru Mohan",
+    "fullName": "CHANDRU M",
     "displayName": "Chandru Dev",
-    "title": "Principal Systems Architect",
+    "title": "PRINCIPAL SYSTEMS ARCHITECT",
     "subtitle": "Interactive Portfolio",
     "typingText": "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
     "shortBio": "Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
     "aboutDescription": "With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
-    "shortTagline": "Ecosystem Architect & Product Pioneer",
+    "shortTagline": "Distributed Systems & Cloud Engineer",
     "shortIntroduction": "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
     "biography": "I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.",
     "careerObjective": "To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.",
@@ -631,11 +631,14 @@
     "codeforcesUrl": "https://codeforces.com/profile/username",
     "portfolioUrl": "https://example.com",
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-08-29T19:15:39.732Z",
+    "updatedAt": "2026-08-29T19:44:15.880Z",
     "username": "chandru",
     "phoneNumber": "+919655384140",
     "backupEmail": "",
-    "recoveryPhoneNumber": ""
+    "recoveryPhoneNumber": "",
+    "professionalLabel": "",
+    "statusBadgeText": "",
+    "highlightTags": ""
   },
   "themeSettings": {
     "id": 1,
@@ -1449,12 +1452,12 @@
   "users": [
     {
       "id": 1,
-      "name": "Chandru Mohan",
+      "name": "CHANDRU M",
       "email": "chandrumohan550@gmail.com",
       "passwordHash": "$2b$10$iPvgmSSd0byRxxlqU896A./Ro9itQIwDe2h/lH5RKR4/xywNGFk4S",
       "role": "ROLE_ADMIN",
       "createdAt": "2026-08-29T18:43:56.816Z",
-      "updatedAt": "2026-08-29T19:15:39.732Z",
+      "updatedAt": "2026-08-29T19:44:15.880Z",
       "lastLogin": "2026-08-29T19:10:33.450Z",
       "isActive": true,
       "failedAttempts": 0,
@@ -1538,6 +1541,23 @@
       "location": "California, USA",
       "status": "SUCCESS",
       "createdAt": "2026-08-29T19:15:39.752Z"
+    },
+    {
+      "id": 4,
+      "action": "Profile Updated",
+      "module": "Profile",
+      "description": "Founder updated profile and hero presentation details.",
+      "oldValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"\",\"heroAvatar\":\"\",\"heroBadge\":\"Full Stack Java Developer\",\"heroName\":\"CHANDRU M\",\"heroTitle\":\"PRINCIPAL SYSTEMS ARCHITECT\",\"heroSubtitle\":\"Java Full Stack Developer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"fullName\":\"Chandru Mohan\",\"displayName\":\"Chandru Dev\",\"title\":\"Principal Systems Architect\",\"subtitle\":\"Interactive Portfolio\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"shortTagline\":\"Ecosystem Architect & Product Pioneer\",\"shortIntroduction\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"biography\":\"I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.\",\"careerObjective\":\"To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.\",\"aboutHeading\":\"A Journey of Technical Rigor & Aesthetic Execution\",\"experienceSummary\":\"Crafting Clean Systems & Interactive Developer Tools\",\"skillsSummary\":\"Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation\",\"quickStats\":\"8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written\",\"seoTitle\":\"Chandru Mohan | Principal Systems Architect & Portfolio\",\"seoDescription\":\"The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.\",\"seoKeywords\":\"Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard\",\"primaryCtaText\":\"Explore Engineering\",\"primaryCtaUrl\":\"#projects\",\"primaryCtaIcon\":\"ChevronRight\",\"primaryCtaVisible\":true,\"secondaryCtaText\":\"Get in Touch\",\"secondaryCtaUrl\":\"#contact\",\"secondaryCtaIcon\":\"Mail\",\"secondaryCtaVisible\":true,\"resumeCtaText\":\"View Resume\",\"resumeCtaVisible\":true,\"downloadCtaText\":\"Download CV\",\"downloadCtaVisible\":true,\"versionText\":\"Version 2.4.0\",\"updateText\":\"Updated Recently\",\"floatingIconsVisible\":true,\"heroVisibility\":true,\"contactHeading\":\"Let's coordinate on new paradigms\",\"contactDescription\":\"Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry.\",\"contactSectionVisible\":true,\"apiStatusCardVisible\":true,\"apiStatusText\":\"REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED\",\"dynamicChannelsVisible\":true,\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"+91 9655384140\",\"whatsapp\":\"+91 9655384140\",\"resumeUrl\":\"/api/resume/download\",\"resumeDownloadText\":\"Download CV\",\"onlineStatus\":\"Online\",\"location\":\"Bengaluru, India\",\"country\":\"India\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1998-04-09\",\"resumeId\":1,\"githubUrl\":\"https://github.com/Chandru9842\",\"linkedinUrl\":\"https://www.linkedin.com/in/chandru9842/\",\"instagramUrl\":\"https://instagram.com/chandru_kmn\",\"twitterUrl\":\"https://x.com/chandru_kmn\",\"youtubeUrl\":\"https://youtube.com\",\"leetcodeUrl\":\"https://leetcode.com/username\",\"hackerrankUrl\":\"https://hackerrank.com/username\",\"codechefUrl\":\"https://codechef.com/users/username\",\"codeforcesUrl\":\"https://codeforces.com/profile/username\",\"portfolioUrl\":\"https://example.com\",\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-29T19:15:39.732Z\",\"username\":\"chandru\",\"phoneNumber\":\"+919655384140\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\"}",
+      "newValue": "{\"id\":1,\"profileImage\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=75&fm=webp\",\"coverImage\":\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=75&fm=webp\",\"aboutImage\":\"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp\",\"heroBackground\":\"\",\"heroAvatar\":\"\",\"heroBadge\":\"SENIOR CLOUD ARCHITECT\",\"heroName\":\"CHANDRU M\",\"heroTitle\":\"PRINCIPAL SYSTEMS ARCHITECT\",\"heroSubtitle\":\"Distributed Systems & Cloud Engineer\",\"heroDescription\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"fullName\":\"CHANDRU M\",\"displayName\":\"Chandru Dev\",\"title\":\"PRINCIPAL SYSTEMS ARCHITECT\",\"subtitle\":\"Interactive Portfolio\",\"typingText\":\"Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate\",\"shortBio\":\"Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.\",\"aboutDescription\":\"With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.\",\"shortTagline\":\"Distributed Systems & Cloud Engineer\",\"shortIntroduction\":\"I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.\",\"biography\":\"I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.\",\"careerObjective\":\"To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.\",\"aboutHeading\":\"A Journey of Technical Rigor & Aesthetic Execution\",\"experienceSummary\":\"Crafting Clean Systems & Interactive Developer Tools\",\"skillsSummary\":\"Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation\",\"quickStats\":\"8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written\",\"seoTitle\":\"Chandru Mohan | Principal Systems Architect & Portfolio\",\"seoDescription\":\"The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.\",\"seoKeywords\":\"Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard\",\"primaryCtaText\":\"Explore Engineering\",\"primaryCtaUrl\":\"#projects\",\"primaryCtaIcon\":\"ChevronRight\",\"primaryCtaVisible\":true,\"secondaryCtaText\":\"Get in Touch\",\"secondaryCtaUrl\":\"#contact\",\"secondaryCtaIcon\":\"Mail\",\"secondaryCtaVisible\":true,\"resumeCtaText\":\"View Resume\",\"resumeCtaVisible\":true,\"downloadCtaText\":\"Download CV\",\"downloadCtaVisible\":true,\"versionText\":\"Version 2.4.0\",\"updateText\":\"Updated Recently\",\"floatingIconsVisible\":true,\"heroVisibility\":true,\"contactHeading\":\"Let's coordinate on new paradigms\",\"contactDescription\":\"Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry.\",\"contactSectionVisible\":true,\"apiStatusCardVisible\":true,\"apiStatusText\":\"REST Pool: ONLINE | Cascade Purge Hooks: ATTACHED\",\"dynamicChannelsVisible\":true,\"email\":\"chandrumohan550@gmail.com\",\"phone\":\"+91 9655384140\",\"whatsapp\":\"+91 9655384140\",\"resumeUrl\":\"/api/resume/download\",\"resumeDownloadText\":\"Download CV\",\"onlineStatus\":\"Online\",\"location\":\"Bengaluru, India\",\"country\":\"India\",\"availability\":\"Open to Work\",\"yearsExperience\":8,\"currentCompany\":\"Nexus Cloud Systems\",\"currentPosition\":\"Lead Engineer\",\"birthday\":\"1998-04-09\",\"resumeId\":1,\"githubUrl\":\"https://github.com/Chandru9842\",\"linkedinUrl\":\"https://www.linkedin.com/in/chandru9842/\",\"instagramUrl\":\"https://instagram.com/chandru_kmn\",\"twitterUrl\":\"https://x.com/chandru_kmn\",\"youtubeUrl\":\"https://youtube.com\",\"leetcodeUrl\":\"https://leetcode.com/username\",\"hackerrankUrl\":\"https://hackerrank.com/username\",\"codechefUrl\":\"https://codechef.com/users/username\",\"codeforcesUrl\":\"https://codeforces.com/profile/username\",\"portfolioUrl\":\"https://example.com\",\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-08-29T19:44:15.880Z\",\"username\":\"chandru\",\"phoneNumber\":\"+919655384140\",\"backupEmail\":\"\",\"recoveryPhoneNumber\":\"\",\"professionalLabel\":\"\",\"statusBadgeText\":\"\",\"highlightTags\":\"\"}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-29T19:44:15.884Z"
     }
   ],
   "refreshTokens": [
@@ -1551,6 +1571,35 @@
   "otps": [],
   "codingProfiles": [],
   "notifications": [
+    {
+      "id": "evt-1788032655885-203",
+      "eventId": "EVT-1788032655885",
+      "module": "Profile",
+      "action": "Profile Updated",
+      "title": "Profile Updated",
+      "description": "Founder updated profile and hero presentation details.",
+      "message": "Founder updated profile and hero presentation details.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-08-29T19:44:15.885Z",
+      "createdAt": "2026-08-29T19:44:15.885Z",
+      "severity": "Success",
+      "category": "Profile",
+      "type": "PROFILE",
+      "icon": "User",
+      "color": "#8b5cf6",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "California, USA"
+      }
+    },
     {
       "id": "evt-1788030939753-854",
       "eventId": "EVT-1788030939753",
@@ -1686,5 +1735,100 @@
       "Tasks",
       "Announcements"
     ]
-  }
+  },
+  "mediaItems": [],
+  "mediaCollections": [
+    {
+      "id": 1,
+      "name": "Hero Banners",
+      "description": "Primary hero graphics and avatars",
+      "icon": "Palette",
+      "color": "#10b981",
+      "assetIds": [
+        1
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Project Diagrams",
+      "description": "Architecture and showcase images",
+      "icon": "BookOpen",
+      "color": "#3b82f6",
+      "assetIds": [
+        2
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Badges & Credentials",
+      "description": "Certificates, AWS, and verify badges",
+      "icon": "Award",
+      "color": "#8b5cf6",
+      "assetIds": [
+        3
+      ]
+    }
+  ],
+  "mediaFolders": [
+    {
+      "name": "Profile",
+      "description": "Headshots, avatars, and profile assets",
+      "color": "#10b981"
+    },
+    {
+      "name": "Projects",
+      "description": "Project screenshots, architectures, and UI demos",
+      "color": "#0ea5e9"
+    },
+    {
+      "name": "Skills",
+      "description": "Technology badges, programming languages, and icons",
+      "color": "#a855f7"
+    },
+    {
+      "name": "Certificates",
+      "description": "Cloud certifications and course credentials",
+      "color": "#f59e0b"
+    },
+    {
+      "name": "Tools",
+      "description": "Developer tools, IDEs, and utilities",
+      "color": "#06b6d4"
+    },
+    {
+      "name": "Photos",
+      "description": "Personal photos, gallery, and showcase pictures",
+      "color": "#ec4899"
+    },
+    {
+      "name": "Logos",
+      "description": "Company logos, client seals, and brand vectors",
+      "color": "#8b5cf6"
+    },
+    {
+      "name": "Icons",
+      "description": "SVG symbols and vector assets",
+      "color": "#14b8a6"
+    },
+    {
+      "name": "Backgrounds",
+      "description": "Wallpapers, gradients, and section backdrops",
+      "color": "#6366f1"
+    },
+    {
+      "name": "Documents",
+      "description": "PDF resumes, whitepapers, and reports",
+      "color": "#f43f5e"
+    },
+    {
+      "name": "SEO",
+      "description": "OpenGraph preview banners and social cards",
+      "color": "#eab308"
+    },
+    {
+      "name": "General",
+      "description": "Miscellaneous portfolio media",
+      "color": "#64748b"
+    }
+  ]
 }

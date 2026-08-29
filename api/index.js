@@ -3041,6 +3041,56 @@ app.patch("/api/profile/og-image", authenticateJWT, handleProfileImagePatch("ogI
 app.delete("/api/profile/og-image", authenticateJWT, handleProfileImageDelete("ogImage"));
 app.patch("/api/profile/favicon", authenticateJWT, handleProfileImagePatch("faviconUrl"));
 app.delete("/api/profile/favicon", authenticateJWT, handleProfileImageDelete("faviconUrl"));
+app.get("/api/seo", (req, res) => {
+  const db = loadDatabase();
+  res.json(db.seoConfig || {
+    metaTitle: "Chandru Mohan | Principal Systems Architect & Full Stack Java Developer",
+    metaDescription: "Enterprise portfolio of Chandru Mohan featuring high-scale distributed systems, Java 21, Spring Boot microservices, Kafka event streams, and cloud architecture.",
+    keywords: "Chandru Mohan, Systems Architect, Full Stack Java Developer, Spring Boot, Kafka, React, Cloud, Microservices, TypeScript",
+    ogTitle: "Chandru Mohan - Principal Systems Architect Portfolio CMS",
+    ogDescription: "Architecting high-performance cloud applications & resilient enterprise platforms.",
+    ogImage: db.profile?.ogImage || db.profile?.websiteLogo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+    websiteLogo: db.profile?.websiteLogo || db.profile?.logoUrl || "",
+    faviconUrl: db.profile?.faviconUrl || "",
+    twitterCard: "summary_large_image",
+    twitterSite: "@chandru_dev",
+    robotsTxt: "User-agent: *\nAllow: /\nSitemap: https://chandru-dev-lime.vercel.app/sitemap.xml",
+    pwaEnabled: true,
+    offlineMode: true,
+    highContrastMode: false
+  });
+});
+app.put("/api/seo", authenticateJWT, (req, res) => {
+  const db = loadDatabase();
+  const incoming = req.body;
+  if (!db.seoConfig) db.seoConfig = {};
+  db.seoConfig = { ...db.seoConfig, ...incoming };
+  if (!db.profile) db.profile = { ...initialProfile };
+  if (incoming.websiteLogo !== void 0) {
+    db.profile.websiteLogo = incoming.websiteLogo;
+    db.profile.logoUrl = incoming.websiteLogo;
+  }
+  if (incoming.faviconUrl !== void 0) {
+    db.profile.faviconUrl = incoming.faviconUrl;
+  }
+  if (incoming.metaTitle) {
+    db.profile.seoTitle = incoming.metaTitle;
+  }
+  if (incoming.metaDescription) {
+    db.profile.seoDescription = incoming.metaDescription;
+  }
+  if (incoming.keywords) {
+    db.profile.seoKeywords = incoming.keywords;
+  }
+  if (incoming.ogTitle) {
+    db.profile.ogTitle = incoming.ogTitle;
+  }
+  if (incoming.ogImage) {
+    db.profile.ogImage = incoming.ogImage;
+  }
+  saveDatabase(db);
+  res.json(db.seoConfig);
+});
 app.get("/api/admin/database/export", authenticateJWT, (req, res) => {
   try {
     const db = loadDatabase();

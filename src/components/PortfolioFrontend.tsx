@@ -1415,10 +1415,46 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           if (deleted.aboutImage) finalProfile.aboutImage = "";
           if (deleted.coverImage) finalProfile.coverImage = "";
           if (deleted.profileImage) finalProfile.profileImage = "";
+          if (deleted.websiteLogo) {
+            finalProfile.websiteLogo = "";
+            finalProfile.logoUrl = "";
+          }
+          if (deleted.faviconUrl) finalProfile.faviconUrl = "";
         }
       } catch (e) {}
       setActiveResume(finalActiveResume);
       setProfile(finalProfile);
+
+      // Dynamically sync Document Title and Favicon based on final hydrated profile
+      const dynamicTitle = finalProfile.seoTitle || (finalProfile.fullName ? `${finalProfile.fullName} | ${finalProfile.title || 'Principal Systems Architect'}` : "Chandru Mohan | Principal Systems Architect & Portfolio");
+      document.title = dynamicTitle;
+
+      const dynamicFavicon = finalProfile.faviconUrl || finalProfile.websiteLogo || "/favicon.svg";
+      if (dynamicFavicon) {
+        let linkFavicon = document.querySelector('link[rel~="icon"]') as HTMLLinkElement;
+        if (!linkFavicon) {
+          linkFavicon = document.createElement('link');
+          linkFavicon.rel = 'icon';
+          document.head.appendChild(linkFavicon);
+        }
+        linkFavicon.href = dynamicFavicon;
+
+        let linkShortcut = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement;
+        if (!linkShortcut) {
+          linkShortcut = document.createElement('link');
+          linkShortcut.rel = 'shortcut icon';
+          document.head.appendChild(linkShortcut);
+        }
+        linkShortcut.href = dynamicFavicon;
+
+        let linkApple = document.querySelector('link[rel="apple-touch-icon"]') as HTMLLinkElement;
+        if (!linkApple) {
+          linkApple = document.createElement('link');
+          linkApple.rel = 'apple-touch-icon';
+          document.head.appendChild(linkApple);
+        }
+        linkApple.href = dynamicFavicon;
+      }
 
       // Read URL Query Params for theme mode or section jump
       const searchParams = new URLSearchParams(window.location.search);
@@ -1906,8 +1942,6 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-emerald-500/60 transition-colors">
               {profile?.websiteLogo || profile?.logoUrl ? (
                 <img src={profile.websiteLogo || profile.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
-              ) : profile?.profileImage ? (
-                <img src={profile.profileImage} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <span className="font-luxury font-bold text-emerald-400 text-lg">
                   {profile?.logoText ? profile.logoText.charAt(0).toUpperCase() : (profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : "C")}
