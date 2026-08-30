@@ -6265,9 +6265,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           : socialLinks.filter(l => l.showInFooter !== false).map(l => ({ id: l.id, platform: l.platform, url: l.profileUrl, logoUrl: l.logoUrl }));
         return (
           <footer 
-            className={`border-t border-white/[0.04] py-8 lg:py-10 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 text-[10px] font-mono text-slate-500 relative overflow-hidden transition-all duration-500 ${
+            className={`border-t border-white/[0.08] pt-14 sm:pt-18 pb-28 sm:pb-32 lg:pb-36 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 text-slate-400 relative overflow-hidden transition-all duration-500 ${
               footer?.backgroundType === 'gradient' 
-                ? 'bg-gradient-to-b from-slate-950 to-slate-900' 
+                ? 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950' 
                 : 'bg-slate-950'
             }`}
             style={footer?.backgroundType === 'image' && footer?.customBackgroundUrl ? {
@@ -6276,110 +6276,117 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               backgroundPosition: 'center'
             } : undefined}
           >
+            {/* Top ambient glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent pointer-events-none" />
+
             {theme?.footerBackground?.enabled && (
               <DynamicBackground bg={theme.footerBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
             )}
-            <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto relative z-10 space-y-10 sm:space-y-12">
-              {/* Top Section - 3 balanced columns */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 xl:gap-16 text-left items-start">
+
+            <div className="w-full max-w-7xl mx-auto relative z-10 space-y-12 sm:space-y-14">
+              {/* Top Section - 3 balanced professional columns */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 xl:gap-14 text-left items-start">
                 
-                {/* Column 1 - Profile / Identity */}
-                <div className="md:col-span-12 lg:col-span-5 xl:col-span-5 flex flex-col items-start space-y-4">
-                  <div className="flex items-center gap-3">
-                    {profile?.profileImage ? (
-                      <img 
-                        src={profile.profileImage} 
-                        alt={profile?.fullName || "Avatar"} 
-                        className="w-12 h-12 rounded-full object-cover border border-white/[0.08] shadow-md shadow-emerald-500/5 shrink-0" 
-                        referrerPolicy="no-referrer" 
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-luxury font-bold text-emerald-400 text-base shrink-0">
-                        {(profile?.fullName || "Chandru Mohan")[0]}
-                      </div>
-                    )}
+                {/* Column 1 - Profile & Engineering Identity (5 Cols) */}
+                <div className="md:col-span-12 lg:col-span-5 flex flex-col items-start space-y-5">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent border border-emerald-500/30 flex items-center justify-center font-luxury font-black text-emerald-400 text-lg shadow-lg shadow-emerald-500/10 shrink-0">
+                      C
+                    </div>
                     
-                    <div className="space-y-0.5">
-                      <h4 className="text-base font-sans font-extrabold text-slate-100 tracking-tight">
-                        {profile?.fullName || "Chandru Mohan"}
+                    <div className="space-y-1">
+                      <h4 className="text-base sm:text-lg font-display font-extrabold text-white tracking-tight flex items-center gap-2">
+                        {profile?.fullName || "CHANDRU M"}
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
                       </h4>
-                      <span className="text-[11px] font-mono text-emerald-400 font-semibold uppercase tracking-wider block">
-                        {profile?.title || "Systems Architect"}
+                      <span className="text-[11px] font-mono text-emerald-400/90 font-bold uppercase tracking-wider block">
+                        {profile?.title || "Principal Systems Architect"}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-md">
-                    {profile?.shortIntroduction || footer?.description || "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically."}
+                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-sans max-w-md">
+                    {profile?.shortIntroduction || footer?.description || "Architecting high-throughput distributed systems, real-time event pipelines, and resilient cloud architectures that scale gracefully."}
                   </p>
 
-                  <div className="space-y-2 pt-1 font-mono text-[11px] text-slate-400">
-                    <div className="flex items-center gap-2.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{profile?.location ? `${profile.location}, ${profile.country || 'India'}` : "Bengaluru, Karnataka, India"}</span>
+                  <div className="space-y-2.5 pt-1 font-mono text-xs text-slate-300 w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <span className="text-slate-300 font-medium">Bengaluru, Karnataka, India</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{profile?.email || "chandrumohan550@gmail.com"}</span>
-                    </div>
+                    <a 
+                      href={`mailto:${profile?.email || 'chandrumohan550@gmail.com'}`}
+                      className="flex items-center gap-3 group hover:text-emerald-400 transition-colors cursor-pointer"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:border-emerald-500/40 flex items-center justify-center shrink-0 transition-colors">
+                        <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <span className="text-slate-300 group-hover:text-emerald-400 transition-colors font-medium">
+                        {profile?.email || "chandrumohan550@gmail.com"}
+                      </span>
+                    </a>
                   </div>
                 </div>
 
-                {/* Column 2 - Quick Links */}
-                <div className="md:col-span-6 lg:col-span-3 xl:col-span-3 flex flex-col items-start space-y-4">
+                {/* Column 2 - Quick Navigation (4 Cols) */}
+                <div className="md:col-span-6 lg:col-span-4 flex flex-col items-start space-y-4">
                   <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    Quick Links
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                    Quick Navigation
                   </h5>
-                  <nav className="grid grid-cols-2 lg:grid-cols-2 gap-2.5 text-xs font-medium text-slate-400 w-full">
-                    <a href="#about" onClick={(e) => handleNavLinkClick(e, 'about')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                  <nav className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs font-medium text-slate-400 w-full">
+                    <a href="#about" onClick={(e) => handleNavLinkClick(e, 'about')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> About
                     </a>
-                    <a href="#projects" onClick={(e) => handleNavLinkClick(e, 'projects')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#projects" onClick={(e) => handleNavLinkClick(e, 'projects')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Projects
                     </a>
-                    <a href="#articles" onClick={(e) => handleNavLinkClick(e, 'articles')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#articles" onClick={(e) => handleNavLinkClick(e, 'articles')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Articles & Blog
                     </a>
-                    <a href="#coding-profiles" onClick={(e) => handleNavLinkClick(e, 'coding-profiles')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#coding-profiles" onClick={(e) => handleNavLinkClick(e, 'coding-profiles')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Coding Profiles
                     </a>
-                    <a href="#skills" onClick={(e) => handleNavLinkClick(e, 'skills')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#skills" onClick={(e) => handleNavLinkClick(e, 'skills')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Skills
                     </a>
-                    <a href="#tools" onClick={(e) => handleNavLinkClick(e, 'tools')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#tools" onClick={(e) => handleNavLinkClick(e, 'tools')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Tools
                     </a>
-                    <a href="#timeline" onClick={(e) => handleNavLinkClick(e, 'timeline')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#timeline" onClick={(e) => handleNavLinkClick(e, 'timeline')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Experience
                     </a>
-                    <a href="#education" onClick={(e) => handleNavLinkClick(e, 'education')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#education" onClick={(e) => handleNavLinkClick(e, 'education')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Education
                     </a>
-                    <a href="#credentials" onClick={(e) => handleNavLinkClick(e, 'credentials')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#credentials" onClick={(e) => handleNavLinkClick(e, 'credentials')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Certificates
                     </a>
-                    <a href="#achievements" onClick={(e) => handleNavLinkClick(e, 'achievements')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#achievements" onClick={(e) => handleNavLinkClick(e, 'achievements')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Achievements
                     </a>
-                    <a href="#testimonials" onClick={(e) => handleNavLinkClick(e, 'testimonials')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#testimonials" onClick={(e) => handleNavLinkClick(e, 'testimonials')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Testimonials
                     </a>
-                    <a href="#contact" onClick={(e) => handleNavLinkClick(e, 'contact')} className="hover:text-emerald-400 transition-colors w-fit flex items-center gap-1.5 cursor-pointer">
+                    <a href="#contact" onClick={(e) => handleNavLinkClick(e, 'contact')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> Contact
                     </a>
                   </nav>
                 </div>
 
-                {/* Column 3 - Connect & Resume */}
-                <div className="md:col-span-6 lg:col-span-4 xl:col-span-4 flex flex-col items-start space-y-4">
+                {/* Column 3 - Connect & Resume (3 Cols) */}
+                <div className="md:col-span-6 lg:col-span-3 flex flex-col items-start space-y-4">
                   <h5 className="text-xs font-mono font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
                     Connect & Resume
                   </h5>
                   
-                  <div className="w-full bg-white/[0.015] border border-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-4 backdrop-blur-sm shadow-xl shadow-black/20">
+                  <div className="w-full bg-slate-900/60 border border-white/[0.08] rounded-2xl p-5 space-y-4 backdrop-blur-md shadow-xl shadow-black/20">
                     <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-semibold">
                       Social Channels
                     </span>
@@ -6391,14 +6398,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             link={link}
                             isFooter={true}
                             onClick={() => trackClick('social_footer_' + link.platform.toLowerCase(), link.platform)}
-                            className={`w-9 h-9 rounded-xl border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-transform hover:scale-105 duration-200 shadow-md ${themeCls.bgHover} hover:text-white transition-colors`}
+                            className={`w-9 h-9 rounded-xl border border-slate-700/60 bg-slate-900/90 text-slate-200 flex items-center justify-center transition-all hover:scale-110 duration-200 shadow-md ${themeCls.bgHover} hover:text-white hover:border-emerald-500/50 cursor-pointer`}
                             childrenClassName="w-4.5 h-4.5 object-contain"
                           />
                         ))}
                       </div>
                     )}
 
-                    <div className="border-t border-white/[0.05] pt-3">
+                    <div className="border-t border-white/[0.08] pt-3.5">
                       {!isValidResumeUrl(profile?.resumeUrl) ? (
                         <button 
                           disabled
@@ -6413,10 +6420,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => handleViewResume(e, 'resume_view_footer', 'View Resume Footer')}
-                          className={`w-full justify-center inline-flex px-4 py-2.5 border border-white/[0.08] bg-white/[0.02] text-slate-200 font-sans text-xs rounded-xl transition-all items-center gap-2 cursor-pointer hover:text-white hover:border-emerald-500/30 ${themeCls.bgHover} shadow-sm`}
+                          className="w-full justify-center inline-flex px-4 py-2.5 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-xl transition-all items-center gap-2 cursor-pointer shadow-md shadow-emerald-950/30 hover:border-emerald-400"
                         >
-                          <Download className={`w-3.5 h-3.5 ${themeCls.icon}`} />
-                          <span className="font-semibold">{footer?.resumeText || "View Resume"}</span>
+                          <Download className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{footer?.resumeText || "View Full Resume"}</span>
                         </a>
                       )}
                     </div>
@@ -6425,22 +6432,21 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-white/[0.06] w-full" />
-
-              {/* Bottom Footer Information Bar */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                
-                {/* Copyright + Technical Details */}
-                <div className="flex flex-col gap-1 text-center sm:text-left w-full">
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    {footer?.copyrightText || `© 2026 ${profile?.fullName || "Chandru Mohan"} Portfolio. All database relations mapped to 3NF standards.`}
+              {/* Bottom Copyright & Technical Architecture Bar */}
+              <div className="border-t border-white/[0.08] pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs text-slate-300 font-mono font-medium">
+                    {footer?.copyrightText || `© 2026 ${profile?.fullName || "Chandru Mohan"}. All database relations mapped to 3NF standards.`}
                   </p>
-                  <p className="text-[10px] text-slate-600 font-mono">
-                    {footer?.builtWithText || "Securely served from local sandbox cache. Admin actions synchronized with backend."}
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    {footer?.builtWithText || "Java 21 • Spring Boot • Kafka • React • MySQL • High-Throughput Cloud Architecture"}
                   </p>
                 </div>
 
+                <div className="flex items-center gap-2.5 text-[11px] font-mono text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shrink-0 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Systems Online & Synchronized</span>
+                </div>
               </div>
             </div>
           </footer>
