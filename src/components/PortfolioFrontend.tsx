@@ -3878,9 +3878,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                     <span>Read Full Technical Publication</span>
                                   </button>
 
-                                  <div className="flex items-center gap-2 text-xs font-mono text-slate-400 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/[0.06]">
+                                  <div className="flex items-center gap-1.5 text-xs font-mono text-slate-300 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/[0.06]" title="Article Views">
                                     <Eye className="w-3.5 h-3.5 text-amber-400" />
-                                    <span>{currentArt.viewsCount || 428} Peer Reads</span>
+                                    <span>{currentArt.viewsCount || 428}</span>
                                   </div>
                                 </div>
                               </div>
@@ -6968,9 +6968,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       <Clock className="w-3 h-3 text-emerald-400" />
                       {selectedArticleForModal.readTimeMinutes} min read
                     </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-slate-950/80 text-slate-300 border border-white/[0.1] flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-slate-950/80 text-slate-300 border border-white/[0.1] flex items-center gap-1.5" title="Views">
                       <Eye className="w-3 h-3 text-emerald-400" />
-                      {selectedArticleForModal.viewsCount || 342} views
+                      <span>{selectedArticleForModal.viewsCount || 342}</span>
                     </span>
                   </div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-luxury leading-tight">
