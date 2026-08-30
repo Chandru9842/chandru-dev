@@ -14,7 +14,6 @@ const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
 import { AnimatedProfileAvatar } from './AnimatedProfileAvatar';
-import { GitHubActivitySync } from './GitHubActivitySync';
 import { soundFx } from '../utils/soundEffects';
 import { notifyCmsUpdate } from '../utils/notifyCmsSync';
 const AIPortfolioChat = React.lazy(() => import('./AIPortfolioChat'));
@@ -4054,7 +4053,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </motion.section>
           )}
 
-          {/* GitHub Live Activity & Repository Synchronization Section *          {/* Coding Profiles Section */}
+          {/* Coding Profiles Section */}
           <motion.section 
             id="coding-profiles" 
             className="space-y-8 scroll-mt-24 relative"
