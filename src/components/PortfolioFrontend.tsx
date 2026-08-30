@@ -595,6 +595,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [skillSortMode, setSkillSortMode] = useState<'default' | 'proficiency' | 'name'>('default');
   const [selectedSkillForModal, setSelectedSkillForModal] = useState<SkillItem | null>(null);
   
+  // Interactive Industry Certifications & Credentials Animation States
+  const [selectedCertOrg, setSelectedCertOrg] = useState<string>('All');
+  const [certSearchQuery, setCertSearchQuery] = useState<string>('');
+  const [copiedCertId, setCopiedCertId] = useState<string | null>(null);
+  const [selectedCertForModal, setSelectedCertForModal] = useState<CertificateItem | null>(null);
+
+  // Inbound Message Quick Topic Selector & Typing Animation States
+  const [contactSubjectPreset, setContactSubjectPreset] = useState<string>('');
+  const [copiedEmailSuccess, setCopiedEmailSuccess] = useState<boolean>(false);
+  
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
 
@@ -1048,6 +1058,26 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         (a.category && a.category.toLowerCase().includes(q)));
     });
   }, [displayArticles, selectedArticleCategory, articleSearchQuery]);
+
+  const certOrganizations = useMemo(() => {
+    const orgs = new Set<string>();
+    certificates.forEach(c => {
+      if (c.issuingOrganization) orgs.add(c.issuingOrganization);
+    });
+    return ['All', ...Array.from(orgs)];
+  }, [certificates]);
+
+  const filteredCertificates = useMemo(() => {
+    return certificates.filter(cert => {
+      const matchOrg = selectedCertOrg === 'All' || (cert.issuingOrganization || '').toLowerCase() === selectedCertOrg.toLowerCase();
+      const q = certSearchQuery.trim().toLowerCase();
+      const matchQuery = !q || 
+        (cert.name || '').toLowerCase().includes(q) ||
+        (cert.issuingOrganization || '').toLowerCase().includes(q) ||
+        (cert.credentialId || '').toLowerCase().includes(q);
+      return matchOrg && matchQuery;
+    });
+  }, [certificates, selectedCertOrg, certSearchQuery]);
 
   // Article Autoplay interval with speed control & pause-on-hover
   useEffect(() => {
@@ -5112,74 +5142,221 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           {/* Credentials and Certifications */}
           <motion.section 
             id="credentials" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Verified Badges</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {certificates.length} Credentials
-                </span>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">VERIFIED ACCREDITATIONS & LICENSES</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <Award className="w-3 h-3 text-emerald-400" />
+                    <span>{filteredCertificates.length} {filteredCertificates.length === 1 ? 'Credential' : 'Credentials'}</span>
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
+                  Industry Certifications
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
+                  Accredited professional certifications verifying software architecture, cloud platforms, database optimization, and development standards.
+                </p>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Industry Certifications</h2>
-              <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+
+              {/* Real-time Search Input */}
+              <div className="relative w-full sm:w-72 shrink-0">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={certSearchQuery}
+                  onChange={(e) => setCertSearchQuery(e.target.value)}
+                  placeholder="Search certificates, issuers, IDs..."
+                  className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
+                />
+                {certSearchQuery && (
+                  <button
+                    onClick={() => setCertSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {certificates.map((cert, cIdx) => (
-                <motion.div 
-                  key={cert.id} 
-                  initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.4, delay: Math.min(cIdx * 0.08, 0.4) }}
-                  whileHover={prefersReduced ? {} : { y: -6, scale: 1.01 }}
-                  className="glass-card rounded-2xl p-6 border border-white/[0.05] hover:border-emerald-500/40 hover:bg-slate-900/70 transition-all duration-300 flex flex-col md:flex-row justify-between gap-6 shadow-xl relative overflow-hidden group"
-                >
-                  {/* Subtle Shimmer background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            {/* Organization Filter Tabs */}
+            {certOrganizations.length > 2 && (
+              <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
+                {certOrganizations.map((org) => {
+                  const isActive = selectedCertOrg === org;
+                  return (
+                    <button
+                      key={org}
+                      onClick={() => {
+                        setSelectedCertOrg(org);
+                        soundFx.playClick();
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
+                        isActive
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <span>{org}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-                  <div className="space-y-3.5 flex-grow">
-                    <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 font-bold shadow-sm">
-                      <Award className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{cert.issuingOrganization}</span>
-                    </div>
+            {/* Empty State */}
+            {filteredCertificates.length === 0 ? (
+              <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
+                <Award className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-slate-300">No matching certifications found</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  No credentials match your filter. Try adjusting the search query or resetting the organization filter.
+                </p>
+                {(certSearchQuery || selectedCertOrg !== 'All') && (
+                  <button
+                    onClick={() => {
+                      setSelectedCertOrg('All');
+                      setCertSearchQuery('');
+                    }}
+                    className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* Certifications Grid */
+              <motion.div 
+                key={`cert-grid-${selectedCertOrg}-${certSearchQuery}`}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6"
+              >
+                {filteredCertificates.map((cert, cIdx) => (
+                  <motion.div 
+                    key={cert.id} 
+                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.4, delay: Math.min(cIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={prefersReduced ? {} : { 
+                      y: -7, 
+                      scale: 1.02,
+                      transition: { duration: 0.2, ease: 'easeOut' }
+                    }}
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      setSelectedCertForModal(cert);
+                      soundFx.playModalOpen();
+                    }}
+                    className="glass-card rounded-3xl p-6 border border-white/[0.08] hover:border-emerald-500/50 hover:bg-slate-900/90 transition-all duration-300 flex flex-col justify-between gap-6 shadow-2xl relative overflow-hidden group bg-gradient-to-br from-slate-900/90 via-slate-950/95 to-slate-900/90 cursor-pointer"
+                  >
+                    {/* Top Ambient Holographic Flare */}
+                    <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-2xl pointer-events-none" />
 
-                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-300 transition-colors">{cert.name}</h3>
-                    
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-mono text-slate-400">
-                      <span>Issued: {cert.issueDate}</span>
-                      <span>•</span>
-                      <span>Expires: {cert.expirationDate || 'Lifetime'}</span>
-                    </div>
+                    <div className="space-y-4 relative z-10">
+                      {/* Top Security & Verification Status */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/30 font-bold shadow-sm">
+                          <Award className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{cert.issuingOrganization}</span>
+                        </div>
 
-                    {cert.credentialId && (
-                      <div className="text-[10px] font-mono text-slate-300 bg-slate-950/80 px-2.5 py-1 rounded-lg inline-block border border-white/[0.06]">
-                        Credential ID: <span className="text-emerald-400 font-bold">{cert.credentialId}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                            Verified Authentic
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {cert.credentialUrl && (
-                    <div className="md:self-center shrink-0">
-                      <a 
-                        href={cert.credentialUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-4 py-2.5 border border-white/[0.08] hover:border-emerald-500/40 bg-slate-950/80 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-mono font-bold text-xs rounded-xl transition-all duration-300 flex items-center gap-2 shadow-md group-hover:shadow-emerald-500/10 cursor-pointer"
-                      >
-                        <span>Verify Credentials</span>
-                        <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </a>
+                      {/* Certification Title */}
+                      <div>
+                        <h3 className="text-base sm:text-lg font-extrabold text-white group-hover:text-emerald-300 transition-colors leading-snug">
+                          {cert.name}
+                        </h3>
+                        
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-slate-400 mt-2">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-emerald-400" />
+                            <span>Issued: {cert.issueDate}</span>
+                          </span>
+                          <span>•</span>
+                          <span>Expires: {cert.expirationDate || 'Lifetime Accreditation'}</span>
+                        </div>
+                      </div>
+
+                      {/* Credential ID Badge with One-Click Copy */}
+                      {cert.credentialId && (
+                        <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-white/[0.06]">
+                          <div className="text-[10px] font-mono text-slate-300 truncate">
+                            <span className="text-slate-500">Credential ID: </span>
+                            <span className="text-emerald-400 font-bold">{cert.credentialId}</span>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (cert.credentialId) {
+                                navigator.clipboard.writeText(cert.credentialId);
+                                setCopiedCertId(cert.credentialId);
+                                soundFx.playSuccess();
+                                setTimeout(() => setCopiedCertId(null), 2500);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 border border-white/[0.06] transition-all shrink-0 cursor-pointer"
+                            title="Copy Credential ID"
+                          >
+                            {copiedCertId === cert.credentialId ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
+
+                    {/* Bottom Action Footer */}
+                    <div className="pt-3 border-t border-white/[0.05] flex items-center justify-between gap-3 relative z-10">
+                      <span className="text-[10px] font-mono text-slate-400 group-hover:text-emerald-400 transition-colors flex items-center gap-1 font-bold">
+                        <span>Inspect Verification</span>
+                        <span className="group-hover:translate-x-1 transition-transform">↗</span>
+                      </span>
+
+                      {cert.credentialUrl && (
+                        <a 
+                          href={cert.credentialUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundFx.playClick();
+                          }}
+                          className="px-3.5 py-1.5 border border-emerald-500/30 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-mono font-bold text-[11px] rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+                          title="Open official verification page"
+                        >
+                          <span>Official Portal</span>
+                          <ExternalLink className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        </a>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
           </motion.section>
 
           {/* Achievements & Milestones Section */}
@@ -5574,7 +5751,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 <div className="space-y-4 pt-4 border-t border-white/[0.05] text-xs font-mono">
                   <div className="flex items-center gap-3 text-slate-300">
                     <Mail className="w-4 h-4 text-emerald-400" />
-                    <span>{profile?.email || "alex.dev@stanford.edu"}</span>
+                    <span>{profile?.email || "chandrumohan550@gmail.com"}</span>
                   </div>
                   {profile?.phone && (
                     <div className="flex items-center gap-3 text-slate-300">
@@ -5590,7 +5767,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   )}
                   <div className="flex items-center gap-3 text-slate-300">
                     <Globe className="w-4 h-4 text-emerald-400" />
-                    <span>{profile?.location ? `${profile.location}, ${profile.country}` : "San Francisco Bay Area, CA"}</span>
+                    <span>{profile?.location ? `${profile.location}, ${profile.country || 'India'}` : "Bengaluru, Karnataka, India"}</span>
                   </div>
                   {profile?.availability && (
                     <div className="flex items-center gap-3 text-slate-300">
@@ -5637,20 +5814,68 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   </div>
                 )}
 
-                <div className="bg-slate-950 p-4 rounded-xl border border-white/[0.02] space-y-2 text-[10px] font-mono">
-                  <span className="text-emerald-400 block font-bold">ACTIVE API STATUS:</span>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                    <span>REST Pool: ONLINE</span>
+                <div className="bg-slate-950/90 p-4 sm:p-5 rounded-2xl border border-white/[0.04] space-y-3 text-[10px] font-mono shadow-inner backdrop-blur-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-400 font-bold uppercase tracking-wider">GATEWAY TELEMETRY:</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold">
+                      TLS 1.3 Active
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                    <span>Cascade Purge Hooks: ATTACHED</span>
+
+                  <div className="space-y-2 text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <span>Direct Admin Inbound: <strong className="text-slate-200">ONLINE</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                      <span>SLA Response Window: <strong className="text-slate-200">Within 24 Hours</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
+                      <span>AES-256 Transport: <strong className="text-slate-200">VERIFIED</strong></span>
+                    </div>
+                  </div>
+
+                  {/* One Click Direct Email Copy */}
+                  <div className="pt-2 border-t border-white/[0.05] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-slate-300 truncate">
+                      <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">{profile?.email || 'chandrumohan550@gmail.com'}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const email = profile?.email || 'chandrumohan550@gmail.com';
+                        navigator.clipboard.writeText(email);
+                        setCopiedEmailSuccess(true);
+                        soundFx.playSuccess();
+                        setTimeout(() => setCopiedEmailSuccess(false), 2500);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-white/[0.06] font-mono text-[9px] font-bold transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                      title="Copy Direct Email Address"
+                    >
+                      {copiedEmailSuccess ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span className="text-emerald-400">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
                   </div>
 
                   {socialLinks.filter(l => l.showInSystemConsole === true).length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-white/[0.05]">
-                      <span className="text-[9px] text-slate-500 font-mono uppercase font-bold tracking-wider">Console Telemetry Channels:</span>
+                      <span className="text-[9px] text-slate-500 font-mono uppercase font-bold tracking-wider">Console Channels:</span>
                       <div className="flex flex-wrap gap-1.5">
                         {socialLinks.filter(l => l.showInSystemConsole === true).map((link) => (
                           <SocialLinkAnchor
@@ -5668,88 +5893,156 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
 
               {/* Form itself */}
-              <div className="lg:col-span-7 glass-card rounded-2xl p-8 border border-white/[0.04]">
-                <form onSubmit={handleContactSubmit} className="space-y-5">
+              <div className="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-2xl relative overflow-hidden bg-gradient-to-br from-slate-900/90 via-slate-950/95 to-slate-900/90">
+                {/* Top Ambient Glow */}
+                <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+
+                <form onSubmit={handleContactSubmit} className="space-y-5 relative z-10">
+                  {/* Topic Quick Selection Chips */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">
+                      Fast Topic Selector
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: '💼 Enterprise Architecture', topic: 'Enterprise Architecture Consulting' },
+                        { label: '⚡ High-Scale Backend / Java', topic: 'High-Scale Backend & Java Microservices' },
+                        { label: '☁️ Cloud & Kubernetes', topic: 'Cloud Native & Kubernetes Deployment' },
+                        { label: '🚀 System Scale Review', topic: 'System Scalability & Performance Audit' },
+                        { label: '🤝 Advisory / Role', topic: 'Principal Engineering Role / Technical Advisory' }
+                      ].map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setFormSubject(item.topic);
+                            setContactSubjectPreset(item.topic);
+                            soundFx.playClick();
+                          }}
+                          className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-semibold transition-all border cursor-pointer ${
+                            formSubject === item.topic
+                              ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold shadow-md shadow-emerald-500/20 scale-[1.02]'
+                              : 'bg-slate-950/70 border-white/[0.06] text-slate-400 hover:text-white hover:border-emerald-500/40'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Name and Email */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Your Name</label>
+                      <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
+                        Your Name <span className="text-emerald-400">*</span>
+                      </label>
                       <input 
                         type="text" 
                         required
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
-                        placeholder="John Doe"
-                        className="w-full bg-slate-900 border border-white/[0.06] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
+                        placeholder="e.g. Sarah Jenkins"
+                        className="w-full bg-slate-950/80 border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Your Email</label>
+                      <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
+                        Your Email <span className="text-emerald-400">*</span>
+                      </label>
                       <input 
                         type="email" 
                         required
                         value={formEmail}
                         onChange={(e) => setFormEmail(e.target.value)}
-                        placeholder="john@example.com"
-                        className="w-full bg-slate-900 border border-white/[0.06] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
+                        placeholder="e.g. sarah@enterprise.io"
+                        className="w-full bg-slate-950/80 border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner"
                       />
                     </div>
                   </div>
 
+                  {/* Subject */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Subject</label>
+                    <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
+                      Subject <span className="text-emerald-400">*</span>
+                    </label>
                     <input 
                       type="text" 
                       required
                       value={formSubject}
                       onChange={(e) => setFormSubject(e.target.value)}
-                      placeholder="Enterprise Integration Consulting"
-                      className="w-full bg-slate-900 border border-white/[0.06] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
+                      placeholder="e.g. Distributed System Architecture Consultation"
+                      className="w-full bg-slate-950/80 border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner"
                     />
                   </div>
 
+                  {/* Message Content with Live Counter */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Message content</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
+                        Message Payload <span className="text-emerald-400">*</span>
+                      </label>
+                      <span className="text-[9px] font-mono text-slate-500">
+                        {formMessage.length} characters
+                      </span>
+                    </div>
                     <textarea 
                       required
                       rows={4}
                       value={formMessage}
                       onChange={(e) => setFormMessage(e.target.value)}
-                      placeholder="Describe your project, technology stack requirements, or collaboration details..."
-                      className="w-full bg-slate-900 border border-white/[0.06] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500/40 transition-colors resize-none"
+                      placeholder="Describe your project, engineering stack requirements, timeline, or collaboration details..."
+                      className="w-full bg-slate-950/80 border border-white/[0.08] rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none shadow-inner"
                     />
                   </div>
 
                   {formError && (
-                    <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2">
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-400 text-xs flex items-center gap-2"
+                    >
                       <ShieldAlert className="w-4 h-4 shrink-0" />
                       <span>{formError}</span>
-                    </div>
+                    </motion.div>
                   )}
 
                   {formSuccess && (
-                    <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2.5 shadow-lg shadow-emerald-500/5">
-                      <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                      <span>Message submitted successfully! Your message has been received and delivered to Chandru's Admin Inbox.</span>
-                    </div>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 bg-emerald-950/50 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs flex items-start gap-3 shadow-xl shadow-emerald-500/10"
+                    >
+                      <ShieldCheck className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
+                      <div className="space-y-1">
+                        <span className="font-bold block text-sm text-white">Message Transmitted Successfully!</span>
+                        <p className="text-slate-300 leading-relaxed font-sans">
+                          Your message has been received and indexed into Chandru's Admin Management Console. A response will be dispatched to your email shortly.
+                        </p>
+                      </div>
+                    </motion.div>
                   )}
 
-                  <button
+                  {/* Interactive Submit Button with Flight Physics */}
+                  <motion.button
                     type="submit"
                     disabled={formLoading}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-800 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                    whileHover={formLoading ? {} : { scale: 1.015 }}
+                    whileTap={formLoading ? {} : { scale: 0.985 }}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:opacity-95 disabled:opacity-60 text-slate-950 font-extrabold text-xs font-mono rounded-xl transition-all shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2.5 cursor-pointer group"
                   >
                     {formLoading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                        <span>Sending Transaction...</span>
+                        <span>Transmitting Inbound Payload...</span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Submit Inbound Message</span>
+                        <Send className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                        <span>Dispatch Inbound Message</span>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 </form>
               </div>
 
@@ -6884,6 +7177,155 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
                 >
                   Close Specs View
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Certificate Intelligence Deep-Dive Modal */}
+      <AnimatePresence>
+        {selectedCertForModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="relative w-full max-w-xl bg-slate-900 border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden"
+              style={{
+                boxShadow: `0 0 50px -10px rgba(16, 185, 129, 0.3)`
+              }}
+            >
+              {/* Header */}
+              <div className="p-6 bg-slate-950/90 border-b border-white/[0.06] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl border border-emerald-500/40 bg-slate-900 flex items-center justify-center p-3 shadow-inner text-emerald-400 shrink-0">
+                    <Award className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                        {selectedCertForModal.issuingOrganization}
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+                        ● Verified Accreditation
+                      </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-white font-luxury tracking-wide mt-1">
+                      {selectedCertForModal.name}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedCertForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar font-sans">
+                {/* Dates & Validity */}
+                <div className="grid grid-cols-2 gap-3 font-mono text-xs">
+                  <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-white/[0.04] space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Issue Date</span>
+                    <span className="text-slate-200 font-bold flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                      {selectedCertForModal.issueDate}
+                    </span>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-white/[0.04] space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Expiration</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      {selectedCertForModal.expirationDate || 'Lifetime Active'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Credential ID with Copy */}
+                {selectedCertForModal.credentialId && (
+                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-emerald-500/20 flex items-center justify-between gap-3">
+                    <div className="space-y-0.5 min-w-0">
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block font-bold">
+                        Official Credential Identifier
+                      </span>
+                      <span className="text-xs sm:text-sm font-mono font-extrabold text-emerald-400 truncate block">
+                        {selectedCertForModal.credentialId}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedCertForModal.credentialId) {
+                          navigator.clipboard.writeText(selectedCertForModal.credentialId);
+                          setCopiedCertId(selectedCertForModal.credentialId);
+                          soundFx.playSuccess();
+                          setTimeout(() => setCopiedCertId(null), 2500);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-white/[0.06] font-mono text-[10px] font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                    >
+                      {copiedCertId === selectedCertForModal.credentialId ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy ID</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Audit & Compliance Badges */}
+                <div className="grid grid-cols-2 gap-2.5 font-mono text-xs text-slate-300">
+                  <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Cryptographically Verified</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Industry Recognized Authority</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 bg-slate-950/90 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                {selectedCertForModal.credentialUrl ? (
+                  <a
+                    href={selectedCertForModal.credentialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => soundFx.playClick()}
+                    className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-300 border border-white/[0.08] hover:border-emerald-500/30 text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Launch Verification Portal</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : <div />}
+
+                <button
+                  onClick={() => {
+                    setSelectedCertForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
+                >
+                  Close Credential View
                 </button>
               </div>
             </motion.div>
