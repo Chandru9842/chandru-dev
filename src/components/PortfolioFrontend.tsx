@@ -54,6 +54,57 @@ import {
   initialResumes, initialCodingProfiles, initialPortfolioMetrics, initialTestimonials, initialArticles,
   initialTechStack 
 } from '../data/cmsMockData';
+import rawDbData from '../data/db.json';
+
+// Synchronous 0ms Zero-Flash Cache Hydration Engine
+const getInstantState = <T,>(key: string, fallback: T): T => {
+  if (typeof window !== 'undefined') {
+    try {
+      // 1. Check specific key overrides (e.g. for profile / hero assets)
+      if (key === 'profile') {
+        const localOverrides = localStorage.getItem('cms_profile_overrides');
+        const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+        let prof = (rawDbData as any)?.profile ? { ...(rawDbData as any).profile } : { ...(fallback as any) };
+        if (localOverrides) {
+          try {
+            prof = { ...prof, ...JSON.parse(localOverrides) };
+          } catch (e) {}
+        }
+        if (deletedStr) {
+          try {
+            const deleted = JSON.parse(deletedStr);
+            if (deleted.heroBackground) prof.heroBackground = "";
+            if (deleted.heroAvatar) prof.heroAvatar = "";
+            if (deleted.aboutImage) prof.aboutImage = "";
+            if (deleted.coverImage) prof.coverImage = "";
+            if (deleted.profileImage) prof.profileImage = "";
+            if (deleted.websiteLogo) { prof.websiteLogo = ""; prof.logoUrl = ""; }
+            if (deleted.faviconUrl) prof.faviconUrl = "";
+          } catch (e) {}
+        }
+        return prof as T;
+      }
+
+      // 2. Check full combined portfolio cache
+      const cachedCombined = localStorage.getItem('cms_portfolio_combined_cache');
+      if (cachedCombined) {
+        const parsed = JSON.parse(cachedCombined);
+        if (parsed && parsed[key] !== undefined && parsed[key] !== null) {
+          return parsed[key] as T;
+        }
+      }
+    } catch (e) {}
+  }
+  
+  // 3. Fallback to synchronous bundled db.json data, then fallback variable
+  const dbVal = (rawDbData as any)?.[key];
+  if (dbVal !== undefined && dbVal !== null) {
+    if (Array.isArray(dbVal) && dbVal.length > 0) return dbVal as T;
+    if (typeof dbVal === 'object' && Object.keys(dbVal).length > 0) return dbVal as T;
+  }
+  return fallback;
+};
+
 import { 
   getPlatformIconComponent, 
   getCodingPlatformIconComponent, 
@@ -473,27 +524,27 @@ const ScrollProgressBar = React.memo(function ScrollProgressBar() {
 });
 
 export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps) {
-  // Dynamic API Loaded States - Initialized with cmsMockData defaults for instant zero-latency first paint
-  const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
-  const [skills, setSkills] = useState<SkillItem[]>(initialSkills);
-  const [certificates, setCertificates] = useState<CertificateItem[]>(initialCertificates);
-  const [achievements, setAchievements] = useState<AchievementItem[]>(initialAchievements);
-  const [experiences, setExperiences] = useState<ExperienceItem[]>(initialExperiences);
-  const [education, setEducation] = useState<EducationItem[]>(initialEducation);
-  const [settings, setSettings] = useState<SettingsConfig | null>(initialSettings);
-  const [footer, setFooter] = useState<any>(initialFooter);
-  const [analytics, setAnalytics] = useState<AnalyticsMetric | null>(initialAnalytics);
-  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>(initialSocialLinks);
-  const [footerSocialLinks, setFooterSocialLinks] = useState<any[]>(initialSocialLinks);
-  const [activeResume, setActiveResume] = useState<ResumeItem | null>(initialResumes[0] || null);
-  const [profile, setProfile] = useState<any>(initialProfile);
-  const [theme, setTheme] = useState<any>(initialThemeSettings);
-  const [technologies, setTechnologies] = useState<any[]>(initialTechStack);
-  const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>(initialCodingProfiles);
-  const [tools, setTools] = useState<ToolItem[]>(initialTools);
-  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>(initialPortfolioMetrics);
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(initialTestimonials);
-  const [articles, setArticles] = useState<ArticleItem[]>(initialArticles);
+  // Dynamic API Loaded States - Initialized with getInstantState for instant zero-latency first paint
+  const [projects, setProjects] = useState<ProjectItem[]>(() => getInstantState('projects', initialProjects));
+  const [skills, setSkills] = useState<SkillItem[]>(() => getInstantState('skills', initialSkills));
+  const [certificates, setCertificates] = useState<CertificateItem[]>(() => getInstantState('certificates', initialCertificates));
+  const [achievements, setAchievements] = useState<AchievementItem[]>(() => getInstantState('achievements', initialAchievements));
+  const [experiences, setExperiences] = useState<ExperienceItem[]>(() => getInstantState('experiences', initialExperiences));
+  const [education, setEducation] = useState<EducationItem[]>(() => getInstantState('education', initialEducation));
+  const [settings, setSettings] = useState<SettingsConfig | null>(() => getInstantState('settings', initialSettings));
+  const [footer, setFooter] = useState<any>(() => getInstantState('footer', initialFooter));
+  const [analytics, setAnalytics] = useState<AnalyticsMetric | null>(() => getInstantState('analytics', initialAnalytics));
+  const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>(() => getInstantState('socialLinks', initialSocialLinks));
+  const [footerSocialLinks, setFooterSocialLinks] = useState<any[]>(() => getInstantState('footerSocialLinks', initialSocialLinks));
+  const [activeResume, setActiveResume] = useState<ResumeItem | null>(() => getInstantState('activeResume', initialResumes[0] || null));
+  const [profile, setProfile] = useState<any>(() => getInstantState('profile', initialProfile));
+  const [theme, setTheme] = useState<any>(() => getInstantState('themeSettings', initialThemeSettings));
+  const [technologies, setTechnologies] = useState<any[]>(() => getInstantState('technologies', initialTechStack));
+  const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>(() => getInstantState('codingProfiles', initialCodingProfiles));
+  const [tools, setTools] = useState<ToolItem[]>(() => getInstantState('tools', initialTools));
+  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>(() => getInstantState('portfolioMetrics', initialPortfolioMetrics));
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(() => getInstantState('testimonials', initialTestimonials));
+  const [articles, setArticles] = useState<ArticleItem[]>(() => getInstantState('articles', initialArticles));
   const [selectedToolCategory, setSelectedToolCategory] = useState<string>('All');
   const [toolSearchQuery, setToolSearchQuery] = useState<string>('');
   const [selectedArticleCategory, setSelectedArticleCategory] = useState<string>('All');
@@ -1446,6 +1497,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       } catch (e) {}
       setActiveResume(finalActiveResume);
       setProfile(finalProfile);
+
+      // Cache full dataset for instant 0ms zero-flash subsequent loads
+      try {
+        const fullCachePayload = {
+          ...data,
+          profile: finalProfile,
+          activeResume: finalActiveResume
+        };
+        localStorage.setItem('cms_portfolio_combined_cache', JSON.stringify(fullCachePayload));
+      } catch (e) {}
 
       // Dynamically sync Document Title and Favicon based on final hydrated profile
       const dynamicTitle = finalProfile.seoTitle || (finalProfile.fullName ? `${finalProfile.fullName} | ${finalProfile.title || 'Principal Systems Architect'}` : "Chandru Mohan | Principal Systems Architect & Portfolio");

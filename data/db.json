@@ -438,9 +438,14 @@
         "elementId": "experience_linkedin",
         "label": "Company Profile Link",
         "count": 110
+      },
+      {
+        "elementId": "about_resume_btn",
+        "label": "Download Resume from About",
+        "count": 2
       }
     ],
-    "resumeDownloads": 345,
+    "resumeDownloads": 347,
     "apiMetrics": {
       "totalRequests": 1420,
       "failedRequests": 12,

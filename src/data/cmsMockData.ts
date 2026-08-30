@@ -503,19 +503,19 @@ export const initialProfile: ProfileItem = {
   aboutImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75&fm=webp",
   heroBackground: "",
   heroAvatar: "",
-  heroBadge: "Full Stack Java Developer",
+  heroBadge: "SENIOR CLOUD ARCHITECT",
   heroName: "CHANDRU M",
   heroTitle: "PRINCIPAL SYSTEMS ARCHITECT",
-  heroSubtitle: "Java Full Stack Developer",
+  heroSubtitle: "Distributed Systems & Cloud Engineer",
   heroDescription: "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
-  fullName: "Chandru Mohan",
+  fullName: "CHANDRU M",
   displayName: "Chandru Dev",
-  title: "Principal Systems Architect",
-  subtitle: "Designing high-throughput distributed architectures & interactive visual frameworks.",
+  title: "PRINCIPAL SYSTEMS ARCHITECT",
+  subtitle: "Interactive Portfolio",
   typingText: "Principal Systems Architect, Full-Stack Pioneer, Clean Code Advocate",
   shortBio: "Hi, I'm Chandru. I specialize in designing and engineering scalable microservice frameworks and high-performance React systems.",
   aboutDescription: "With extensive professional enterprise engineering experience, I bridge the gap between rigorous back-end systems engineering and fluid, interactive modern interfaces. I'm passionate about automation, clean database designs, and optimal React state pipelines.",
-  shortTagline: "Ecosystem Architect & Product Pioneer",
+  shortTagline: "Distributed Systems & Cloud Engineer",
   shortIntroduction: "I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.",
   biography: "I am a high-throughput systems developer with an obsession for performance and visual fidelity. Over the past years, I've designed cloud native integrations, written database layers supporting millions of transactions, and optimized responsive micro-dashboards.",
   careerObjective: "To drive high-impact technical initiatives as a Principal Software Engineer, leading teams to deliver ultra-scalable systems, beautiful developer experiences, and resilient microservices architectures.",
@@ -523,9 +523,9 @@ export const initialProfile: ProfileItem = {
   experienceSummary: "Crafting Clean Systems & Interactive Developer Tools",
   skillsSummary: "Microservice Design, Real-time WebSockets, PostgreSQL optimization, High-performance React, Tailwind CSS design languages, DevOps automation",
   quickStats: "8+ Years Exp | 50+ Projects Mapped | 99.9% Core SLA Uptime | 120k+ Lines Written",
-  seoTitle: "Chandru Mohan | Principal Systems Architect & Portfolio",
-  seoDescription: "The professional full-stack portfolio of Chandru Mohan, featuring advanced analytics, system designs, and visual client-side engineering dashboards.",
-  seoKeywords: "Systems Architect, React developer, full-stack engineer, PostgreSQL, Tailwind CSS, CMS dashboard",
+  seoTitle: "Chandru Mohan | Principal Systems Architect & Full Stack Java Developer",
+  seoDescription: "Enterprise portfolio of Chandru Mohan featuring high-scale distributed systems, Java 21, Spring Boot microservices, Kafka event streams, and cloud architecture.",
+  seoKeywords: "Chandru Mohan, Systems Architect, Full Stack Java Developer, Spring Boot, Kafka, React, Cloud, Microservices, TypeScript",
   primaryCtaText: "Explore Engineering",
   primaryCtaUrl: "#projects",
   primaryCtaIcon: "ChevronRight",
@@ -572,8 +572,11 @@ export const initialProfile: ProfileItem = {
   codechefUrl: "https://codechef.com/users/username",
   codeforcesUrl: "https://codeforces.com/profile/username",
   portfolioUrl: "https://example.com",
+  websiteLogo: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+  logoUrl: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+  faviconUrl: "/favicon.svg",
   createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-07-09T04:40:00.000Z"
+  updatedAt: "2026-08-29T20:06:14.833Z"
 };
 
 export const initialProjects: ProjectItem[] = [
@@ -830,9 +833,9 @@ export const initialAnalytics: AnalyticsMetric = {
 };
 
 export const initialSettings: SettingsConfig = {
-  siteName: "Alex Dev | Tech Architect & Systems builder",
-  siteDescription: "The digital home of Alex Dev, showing core full-stack competencies, cloud engineering certifications, and interactive UI creations.",
-  metaKeywords: "Alex Dev, software architect, Spring Boot developer, React specialist, cloud engineering, Java backend portfolio",
+  siteName: "Chandru Mohan | Principal Systems Architect & Full Stack Java Developer",
+  siteDescription: "The digital home of Chandru Mohan, showcasing core full-stack competencies, cloud engineering systems, and interactive UI frameworks.",
+  metaKeywords: "Chandru Mohan, software architect, Spring Boot developer, React specialist, cloud engineering, Java backend portfolio",
   themeColor: "#10b981", // emerald-500
   analyticsId: "G-990321A8",
   isMaintenanceMode: false,
@@ -840,15 +843,15 @@ export const initialSettings: SettingsConfig = {
 };
 
 export const initialFooter: FooterConfig = {
-  title: "Alex Dev",
+  title: "Chandru Dev",
   description: "Designing high-throughput distributed architectures & interactive visual frameworks.",
-  copyrightText: "© 2026 Chandru Mohan Portfolio. All database relations mapped to 3NF standards.",
-  builtWithText: "Securely served from local sandbox cache. Admin actions synchronized with Express backend.",
-  contactInfo: "chandrumohan550@gmail.com | San Francisco, California",
+  copyrightText: "© 2026 Chandru Mohan Portfolio. All rights reserved.",
+  builtWithText: "Synchronized with enterprise database and active portfolio backend.",
+  contactInfo: "chandrumohan550@gmail.com | Bengaluru, India",
   showResume: true,
   resumeText: "View Resume",
-  logoText: "Alex Dev",
-  logoUrl: "",
+  logoText: "Chandru Dev",
+  logoUrl: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
   backgroundType: "glass",
   customBackgroundUrl: "",
   theme: "glass",

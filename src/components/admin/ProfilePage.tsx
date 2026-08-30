@@ -577,6 +577,14 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         setOriginalProfile(JSON.parse(JSON.stringify(savedData)));
         try {
           localStorage.setItem('cms_profile_overrides', JSON.stringify(savedData));
+          const cachedCombined = localStorage.getItem('cms_portfolio_combined_cache');
+          if (cachedCombined) {
+            try {
+              const parsed = JSON.parse(cachedCombined);
+              parsed.profile = savedData;
+              localStorage.setItem('cms_portfolio_combined_cache', JSON.stringify(parsed));
+            } catch (e) {}
+          }
           const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
           const deleted = deletedStr ? JSON.parse(deletedStr) : {};
           if (savedData.heroBackground === "") deleted.heroBackground = true;
