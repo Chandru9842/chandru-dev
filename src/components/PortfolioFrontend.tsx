@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
   Menu, XCircle, AlertCircle, Star, Wrench, Search, BookOpen, BookOpenCheck, MessageSquareQuote, Quote, Clock, Share2,
-  Volume2, VolumeX, ChevronDown, ChevronUp, Building2, CheckCircle2
+  Volume2, VolumeX, ChevronDown, ChevronUp, Building2, CheckCircle2, Copy, Flame, TrendingUp, SlidersHorizontal, ArrowUpDown
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
@@ -534,6 +534,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [expandedExperienceId, setExpandedExperienceId] = useState<number | null>(null);
   const [expandedEducationId, setExpandedEducationId] = useState<number | null>(null);
   const [hoveredTimelineKey, setHoveredTimelineKey] = useState<string | null>(null);
+  
+  // Interactive Coding Profiles & Skills Animation States
+  const [selectedCodingPlatformFilter, setSelectedCodingPlatformFilter] = useState<string>('All');
+  const [copiedHandleKey, setCopiedHandleKey] = useState<string | null>(null);
+  const [skillSearchQuery, setSkillSearchQuery] = useState<string>('');
+  const [skillSortMode, setSkillSortMode] = useState<'default' | 'proficiency' | 'name'>('default');
+  const [selectedSkillForModal, setSelectedSkillForModal] = useState<SkillItem | null>(null);
   
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
@@ -1720,17 +1727,44 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const filteredSkills = React.useMemo(() => {
     const visibleSkills = skills.filter(s => s.visibility !== false);
-    const list = selectedSkillCategory === 'All' 
+    let list = selectedSkillCategory === 'All' 
       ? visibleSkills 
       : visibleSkills.filter(s => s.category === selectedSkillCategory);
-    // Sort by displayOrder ascending, then by name
-    return list.sort((a, b) => {
+    
+    if (skillSearchQuery.trim()) {
+      const q = skillSearchQuery.toLowerCase().trim();
+      list = list.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        (s.category && s.category.toLowerCase().includes(q)) ||
+        (s.description && s.description.toLowerCase().includes(q))
+      );
+    }
+
+    if (skillSortMode === 'proficiency') {
+      return [...list].sort((a, b) => ((b as any).proficiency || (b as any).level || 0) - ((a as any).proficiency || (a as any).level || 0));
+    } else if (skillSortMode === 'name') {
+      return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // Default: Sort by displayOrder ascending, then by name
+    return [...list].sort((a, b) => {
       const orderA = a.displayOrder !== undefined ? a.displayOrder : 999;
       const orderB = b.displayOrder !== undefined ? b.displayOrder : 999;
       if (orderA !== orderB) return orderA - orderB;
       return a.name.localeCompare(b.name);
     });
-  }, [skills, selectedSkillCategory]);
+  }, [skills, selectedSkillCategory, skillSearchQuery, skillSortMode]);
+
+  // Dynamic Coding Profile categories & filter
+  const codingPlatformCategories = React.useMemo(() => {
+    const platforms = Array.from(new Set(codingProfiles.map(p => p.platformType || p.displayName).filter(Boolean)));
+    return ['All', ...platforms];
+  }, [codingProfiles]);
+
+  const filteredCodingProfiles = React.useMemo(() => {
+    if (selectedCodingPlatformFilter === 'All') return codingProfiles;
+    return codingProfiles.filter(p => (p.platformType || p.displayName) === selectedCodingPlatformFilter);
+  }, [codingProfiles, selectedCodingPlatformFilter]);
 
   // Dynamic achievements filtering & sorting
   const visibleAchievements = React.useMemo(() => {
@@ -3772,184 +3806,329 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </motion.section>
           )}
 
-          {/* GitHub Live Activity & Repository Synchronization Section */}
-          <GitHubActivitySync prefersReduced={prefersReduced} />
-
-          {/* Coding Profiles Section */}
+          {/* GitHub Live Activity & Repository Synchronization Section *          {/* Coding Profiles Section */}
           <motion.section 
             id="coding-profiles" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
+            {/* Header & Filter Controls */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {codingProfiles.length} Profiles
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES & ALGORITHMS</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                    <span>{codingProfiles.length} Developer Tracks</span>
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">
-                  Competitive Programming & Developer Profiles
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
+                  Competitive Programming & Repos
                 </h2>
-                <p className="text-sm text-slate-400 font-sans max-w-2xl">
-                  Showcasing my coding journey across competitive programming, open-source, and developer communities.
+                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
+                  Verified developer profiles across algorithmic problem-solving ecosystems, open-source communities, and competitive benchmarks.
                 </p>
-                <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-amber-400 to-transparent rounded-full" />
               </div>
 
-              {/* Grid Layout for Coding Profile Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 font-sans">
-                {codingProfiles.map((p, pIdx) => {
-                  const IconComponent = getCodingPlatformIconComponent(p.platformType);
-                  
-                  // Premium colors per platform
-                  const platformBorderGlow = p.featured
-                    ? 'border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.12)] hover:shadow-[0_0_30px_rgba(245,158,11,0.25)] hover:border-amber-500/70'
-                    : p.platformType === 'GitHub' ? 'hover:shadow-slate-500/10 hover:border-slate-700' :
-                      p.platformType === 'LeetCode' ? 'hover:shadow-amber-500/15 hover:border-amber-500/40' :
-                      p.platformType === 'GeeksforGeeks' ? 'hover:shadow-emerald-500/15 hover:border-emerald-500/40' :
-                      p.platformType === 'Codeforces' ? 'hover:shadow-red-500/15 hover:border-red-500/40' :
-                      p.platformType === 'CodeChef' ? 'hover:shadow-amber-700/15 hover:border-amber-700/40' :
-                      p.platformType === 'HackerRank' ? 'hover:shadow-emerald-400/15 hover:border-emerald-400/40' :
-                      p.platformType === 'HackerEarth' ? 'hover:shadow-violet-400/15 hover:border-violet-400/40' :
-                      'hover:shadow-emerald-500/15 hover:border-emerald-500/40';
+              {/* Interactive Platform Filter Pills */}
+              {codingPlatformCategories.length > 2 && (
+                <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
+                  {codingPlatformCategories.map((cat) => {
+                    const isActive = selectedCodingPlatformFilter === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCodingPlatformFilter(cat);
+                          soundFx.playClick();
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                          isActive
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        {cat === 'All' && <span className="text-[10px] opacity-70">({codingProfiles.length})</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                  const cardScale = p.featured 
-                    ? 'border-amber-500/30 bg-gradient-to-b from-amber-500/[0.03] to-transparent' 
-                    : 'border-white/[0.04] bg-slate-900/40';
+            {/* Grid Layout for Coding Profile Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 font-sans">
+              {filteredCodingProfiles.map((p, pIdx) => {
+                const IconComponent = getCodingPlatformIconComponent(p.platformType);
+                const isCopied = copiedHandleKey === `handle-${p.id}`;
+                
+                // Platform Theme Configs
+                const isLeetCode = p.platformType === 'LeetCode';
+                const isGitHub = p.platformType === 'GitHub';
+                const isGFG = p.platformType === 'GeeksforGeeks';
+                const isCodeforces = p.platformType === 'Codeforces';
+                const isCodeChef = p.platformType === 'CodeChef';
+                const isHackerRank = p.platformType === 'HackerRank';
 
-                  return (
-                    <motion.div
-                      key={p.id}
-                      initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      transition={{ duration: 0.4, delay: Math.min(pIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                      whileHover={prefersReduced ? {} : { y: -8, scale: p.featured ? 1.03 : 1.02 }}
-                      className={`relative backdrop-blur-md border rounded-2xl p-4 sm:p-5 lg:p-6 hover:bg-slate-900/70 transition-all duration-300 flex flex-col justify-between group shadow-lg overflow-hidden ${platformBorderGlow} ${cardScale}`}
-                    >
-                      {/* Ambient background hover shine */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                const themeAccent = p.featured
+                  ? 'border-amber-500/40 hover:border-amber-400 shadow-amber-500/10 hover:shadow-amber-500/20'
+                  : isLeetCode ? 'border-amber-500/30 hover:border-amber-400 shadow-amber-500/10'
+                  : isGitHub ? 'border-purple-500/30 hover:border-purple-400 shadow-purple-500/10'
+                  : isGFG ? 'border-emerald-500/30 hover:border-emerald-400 shadow-emerald-500/10'
+                  : isCodeforces ? 'border-red-500/30 hover:border-red-400 shadow-red-500/10'
+                  : isCodeChef ? 'border-amber-700/30 hover:border-amber-600 shadow-amber-700/10'
+                  : isHackerRank ? 'border-teal-500/30 hover:border-teal-400 shadow-teal-500/10'
+                  : 'border-white/[0.06] hover:border-emerald-500/40';
 
-                      {/* Featured Badge */}
-                      {p.featured && (
-                        <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 flex items-center gap-1 px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                          <span>★ Featured</span>
-                        </div>
-                      )}
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.45, delay: Math.min(pIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={prefersReduced ? {} : { y: -6, scale: 1.015 }}
+                    onMouseEnter={() => soundFx.playHover()}
+                    className={`relative backdrop-blur-xl border rounded-2xl p-5 sm:p-6 bg-slate-900/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col justify-between group shadow-xl overflow-hidden ${themeAccent}`}
+                  >
+                    {/* Ambient Glow Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                      <div>
-                        {/* Card Header */}
-                        <div className="flex items-start gap-3 sm:gap-4 mb-2.5 sm:mb-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-950/80 border border-white/[0.08] flex items-center justify-center p-2 sm:p-2.5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shadow-inner group-hover:border-emerald-500/40">
-                            {p.logoUrl ? (
-                              <img 
-                                src={p.logoUrl} 
-                                alt={p.displayName} 
-                                className="w-full h-full object-contain" 
-                                referrerPolicy="no-referrer"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-                            )}
-                          </div>
-                          <div className="min-w-0 pr-12 sm:pr-16">
-                            <h3 className="text-sm sm:text-base font-extrabold text-slate-100 font-luxury tracking-wide truncate group-hover:text-emerald-400 transition-colors duration-300">
-                              {p.displayName}
-                            </h3>
-                            <p className="text-[9px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-widest truncate">
-                              {p.platformType}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Username Display Box */}
-                        <div className="bg-slate-950/60 border border-white/[0.04] group-hover:border-emerald-500/30 rounded-xl px-3 py-2 sm:px-4 sm:py-3 mb-2.5 sm:mb-4 font-mono text-center transition-colors">
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">Handle / Username</p>
-                          <p className="text-xs sm:text-sm font-bold text-slate-200 truncate tracking-wide group-hover:text-emerald-400 transition-colors duration-300">
-                            {p.username}
-                          </p>
-                        </div>
-
-                        {/* Optional Description / Badge */}
-                        {p.description && (
-                          <div className="mb-3 sm:mb-5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white/[0.02] border border-white/[0.04] rounded-xl text-xs text-slate-400 font-sans leading-relaxed flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0 animate-pulse" />
-                            <p className="flex-1 font-mono text-[10px] sm:text-[11px] font-medium tracking-wide">
-                              {p.description}
-                            </p>
-                          </div>
-                        )}
+                    {/* Featured / Live Active Badge */}
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-950/80 border border-white/[0.08] text-[9px] font-mono text-slate-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Verified Account</span>
                       </div>
 
-                      {/* Action Button */}
-                      <a
-                        href={p.profileUrl}
-                        target={p.openInNewTab !== false ? "_blank" : "_self"}
-                        rel="noopener noreferrer"
-                        aria-label={`Visit ${p.displayName || p.platformType || 'Coding'} Profile of ${p.username}`}
-                        className="w-full py-2 sm:py-2.5 bg-slate-950/80 hover:bg-emerald-500 hover:text-slate-950 border border-white/[0.06] hover:border-emerald-500 text-center font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/20"
-                      >
-                        <span>Visit Profile</span>
-                        <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </a>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.section>
+                      {p.featured && (
+                        <div className="flex items-center gap-1 px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm">
+                          <Flame className="w-3 h-3 text-amber-400 animate-pulse" />
+                          <span>Featured</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      {/* Card Platform Header */}
+                      <div className="flex items-start gap-3.5 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-slate-950 border border-white/[0.08] flex items-center justify-center p-2.5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-6 duration-300 shadow-md group-hover:border-emerald-500/40">
+                          {p.logoUrl ? (
+                            <img 
+                              src={p.logoUrl} 
+                              alt={p.displayName} 
+                              className="w-full h-full object-contain" 
+                              referrerPolicy="no-referrer"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <IconComponent className="w-6 h-6 text-emerald-400" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-extrabold text-white font-luxury tracking-wide truncate group-hover:text-emerald-300 transition-colors">
+                            {p.displayName}
+                          </h3>
+                          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest block font-bold">
+                            {p.platformType || 'Algorithm Platform'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Username / Handle with Copy Button */}
+                      <div className="bg-slate-950/80 border border-white/[0.06] group-hover:border-emerald-500/30 rounded-xl p-2.5 sm:p-3 mb-4 font-mono transition-colors flex items-center justify-between gap-2 shadow-inner">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[9px] text-slate-500 uppercase tracking-widest block font-bold">Handle</span>
+                          <span className="text-xs sm:text-sm font-bold text-slate-200 truncate block group-hover:text-emerald-300 transition-colors">
+                            {p.username}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(p.username);
+                            setCopiedHandleKey(`handle-${p.id}`);
+                            soundFx.playSuccess();
+                            setTimeout(() => setCopiedHandleKey(null), 2200);
+                          }}
+                          aria-label={`Copy handle ${p.username}`}
+                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
+                            isCopied
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
+                              : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-white/[0.06]'
+                          }`}
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span className="text-[9px] font-bold">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 text-slate-400" />
+                              <span className="text-[9px]">Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Description / Highlights */}
+                      {p.description && (
+                        <div className="mb-4 px-3 py-2 bg-white/[0.02] border border-white/[0.04] rounded-xl text-xs text-slate-400 leading-relaxed flex items-start gap-2">
+                          <span className="text-emerald-400 text-xs mt-0.5">▹</span>
+                          <p className="flex-1 font-mono text-[11px] font-medium text-slate-300">
+                            {p.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Button */}
+                    <a
+                      href={p.profileUrl}
+                      target={p.openInNewTab !== false ? "_blank" : "_self"}
+                      rel="noopener noreferrer"
+                      onClick={() => soundFx.playClick()}
+                      aria-label={`Visit ${p.displayName || p.platformType || 'Coding'} Profile of ${p.username}`}
+                      className="w-full py-2.5 bg-slate-950/90 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-slate-950 border border-white/[0.08] hover:border-emerald-400 text-center font-mono text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/20"
+                    >
+                      <span>Visit Live Profile</span>
+                      <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </a>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.section>
 
           {/* Skill Matrix Section */}
           <motion.section 
             id="skills" 
-            className="space-y-12 scroll-mt-24 relative"
+            className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
             <div id="techstack" className="absolute -top-24" />
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            
+            {/* Header with Title and Search/Sort Controls */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Competency Ledger</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {filteredSkills.length} Skills
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">COMPETENCY LEDGER & SYSTEM CAPABILITIES</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                    <span>{filteredSkills.length} Technologies</span>
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Expertise Matrix</h2>
-                <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
+                  Expertise & Core Competencies
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
+                  Deep technical proficiency across enterprise backend architectures, reactive frontends, distributed databases, and cloud systems.
+                </p>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
               </div>
 
-              {/* Categorization controls */}
-              <div className="flex flex-wrap gap-1 bg-slate-900/80 border border-white/[0.08] rounded-xl p-1 text-xs backdrop-blur-md shadow-inner">
-                {skillCategories.map(cat => (
+              {/* Real-time Search and Sort Bar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={skillSearchQuery}
+                    onChange={(e) => setSkillSearchQuery(e.target.value)}
+                    placeholder="Search skills, tags, tech..."
+                    className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
+                  />
+                  {skillSearchQuery && (
+                    <button
+                      onClick={() => setSkillSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Sort Toggle */}
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs">
                   <button
-                    key={cat}
-                    onClick={() => setSelectedSkillCategory(cat)}
-                    className={`px-3.5 py-1.5 rounded-lg font-mono text-[11px] transition-all font-bold cursor-pointer ${
-                      selectedSkillCategory === cat 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' 
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    type="button"
+                    onClick={() => {
+                      setSkillSortMode(prev => prev === 'proficiency' ? 'default' : 'proficiency');
+                      soundFx.playClick();
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      skillSortMode === 'proficiency'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white'
                     }`}
+                    title="Sort by Highest Mastery"
                   >
-                    {cat}
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Top Mastery</span>
                   </button>
-                ))}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSkillSortMode(prev => prev === 'name' ? 'default' : 'name');
+                      soundFx.playClick();
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      skillSortMode === 'name'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Sort Alphabetically"
+                  >
+                    <ArrowUpDown className="w-3 h-3" />
+                    <span>A-Z</span>
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* Categorization controls */}
+            <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
+              {skillCategories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedSkillCategory(cat);
+                    soundFx.playClick();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
+                    selectedSkillCategory === cat 
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <span>{cat}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Skills Grid */}
             <motion.div 
-              key={`skills-grid-${selectedSkillCategory}`}
+              key={`skills-grid-${selectedSkillCategory}-${skillSearchQuery}-${skillSortMode}`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
             >
               {filteredSkills.map((skill, sIdx) => {
                 const itemColor = skill.color || '#10b981';
@@ -3958,6 +4137,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 const isPulse = skill.animation === 'Pulse';
                 const isSpin = skill.animation === 'Spin Slow';
                 const isGlow = skill.animation === 'Glow';
+
+                // Compute proficiency score (0 - 100)
+                const rawProf = (skill as any).proficiency || (skill as any).level || '90%';
+                const profPercent = typeof rawProf === 'number' 
+                  ? Math.min(100, Math.max(10, rawProf)) 
+                  : parseInt(String(rawProf).replace(/\D/g, ''), 10) || 85;
 
                 return (
                   <motion.div 
@@ -3970,25 +4155,31 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       scale: 1.02,
                       transition: { duration: 0.2, ease: 'easeOut' }
                     }}
-                    className={`glass-card rounded-2xl p-3.5 sm:p-5 border border-white/[0.05] hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-2.5 sm:gap-4 relative overflow-hidden group bg-slate-900/50 ${
+                    onMouseEnter={() => soundFx.playHover()}
+                    onClick={() => {
+                      setSelectedSkillForModal(skill);
+                      soundFx.playModalOpen();
+                    }}
+                    className={`glass-card rounded-2xl p-4 sm:p-5 border border-white/[0.06] hover:border-emerald-500/50 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-3 relative overflow-hidden group bg-slate-900/60 cursor-pointer ${
                       isPulse ? 'animate-pulse' : ''
                     }`}
                     style={{
-                      boxShadow: isGlow ? `0 0 16px ${itemColor}20` : undefined
+                      boxShadow: isGlow ? `0 0 20px ${itemColor}25` : undefined
                     }}
                   >
                     {/* Hover Glow Gradient */}
                     <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none rounded-2xl"
+                      className="absolute inset-0 opacity-0 group-hover:opacity-15 transition-opacity duration-300 pointer-events-none rounded-2xl"
                       style={{ background: `radial-gradient(circle at top right, ${itemColor}, transparent 70%)` }}
                     />
 
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Top Row: Icon & Titles */}
+                    <div className="flex items-center gap-3">
                       <div 
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden bg-slate-950/80 p-2 shadow-inner"
+                        className="w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 overflow-hidden bg-slate-950 p-2 shadow-inner"
                         style={{ 
                           borderColor: `${itemColor}40`,
-                          boxShadow: `0 0 12px ${itemColor}15`
+                          boxShadow: `0 0 12px ${itemColor}20`
                         }}
                       >
                         <SkillMediaRenderer 
@@ -4000,32 +4191,66 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         />
                       </div>
                       <div className="min-w-0 flex-grow">
-                        <span className="font-bold text-white block text-xs sm:text-base truncate group-hover:text-emerald-300 transition-colors" title={skill.name}>
+                        <span className="font-extrabold text-white block text-xs sm:text-sm truncate group-hover:text-emerald-300 transition-colors" title={skill.name}>
                           {skill.name}
                         </span>
-                        <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 block uppercase tracking-wider truncate mt-0.5" style={{ color: itemColor }}>
+                        <span className="text-[9px] font-mono block uppercase tracking-wider truncate font-semibold" style={{ color: itemColor }}>
                           {skill.category}
                         </span>
                       </div>
                     </div>
 
                     {skill.description && (
-                      <p className="text-[10px] sm:text-xs text-slate-400 leading-snug sm:leading-relaxed line-clamp-2">
+                      <p className="text-[10px] sm:text-xs text-slate-300 leading-snug line-clamp-2">
                         {skill.description}
                       </p>
                     )}
 
-                    {/* Skill Mastery Level Indicator */}
-                    {Boolean((skill as any).proficiency || (skill as any).level) && (
-                      <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[9px] font-mono">
-                        <span className="text-slate-500 uppercase tracking-widest">Mastery</span>
-                        <span className="font-bold text-emerald-400">{(skill as any).proficiency || (skill as any).level}</span>
+                    {/* Animated Skill Mastery Progress Bar */}
+                    <div className="pt-2 border-t border-white/[0.04] space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] font-mono">
+                        <span className="text-slate-400 uppercase tracking-widest text-[9px] font-bold">Mastery Level</span>
+                        <span className="font-bold text-emerald-400">{profPercent}%</span>
                       </div>
-                    )}
+
+                      {/* Progress Track */}
+                      <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden border border-white/[0.05]">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${profPercent}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: Math.min(sIdx * 0.04, 0.4), ease: "easeOut" }}
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 relative"
+                        >
+                          <span className="absolute right-0 top-0 bottom-0 w-2 bg-white/80 rounded-full shadow-[0_0_8px_#ffffff]" />
+                        </motion.div>
+                      </div>
+                    </div>
                   </motion.div>
                 );
               })}
             </motion.div>
+
+            {/* Empty Search Result Fallback */}
+            {filteredSkills.length === 0 && (
+              <div className="text-center py-12 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04] space-y-3">
+                <Code2 className="w-10 h-10 text-slate-600 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-300">No matching technical skills found</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Try searching for different keywords or reset your category filters.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSkillSearchQuery('');
+                    setSelectedSkillCategory('All');
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                >
+                  Reset Skill Filters
+                </button>
+              </div>
+            )}
           </motion.section>
 
           {/* Tools & Technologies Section */}
@@ -6192,6 +6417,142 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     <span>Share Publication</span>
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Skill Intelligence Deep-Dive Modal */}
+      <AnimatePresence>
+        {selectedSkillForModal && (
+          <div className="fixed inset-0 z-[115] flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-xl overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="w-full max-w-2xl bg-slate-900 border border-white/[0.08] rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto relative"
+              style={{
+                boxShadow: `0 0 40px ${selectedSkillForModal.color || '#10b981'}25`
+              }}
+            >
+              {/* Header */}
+              <div className="p-6 bg-slate-950/90 border-b border-white/[0.06] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-2xl border flex items-center justify-center p-2.5 bg-slate-900 shadow-inner shrink-0"
+                    style={{
+                      borderColor: `${selectedSkillForModal.color || '#10b981'}50`,
+                      boxShadow: `0 0 20px ${selectedSkillForModal.color || '#10b981'}20`
+                    }}
+                  >
+                    <SkillMediaRenderer
+                      src={selectedSkillForModal.iconUrl}
+                      fallbackIcon={selectedSkillForModal.iconName || 'Code2'}
+                      fallbackColor={selectedSkillForModal.color || '#10b981'}
+                      alt={selectedSkillForModal.name}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                        {selectedSkillForModal.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">Technical Capability</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-white font-luxury tracking-wide mt-1">
+                      {selectedSkillForModal.name}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedSkillForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                {/* Mastery & Proficiency Gauge */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.04] space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-400 uppercase tracking-widest font-bold">Proficiency & Architecture Mastery</span>
+                    <span className="text-emerald-400 font-extrabold text-sm">
+                      {(selectedSkillForModal as any).proficiency || (selectedSkillForModal as any).level || '95% Expert'}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 rounded-full bg-slate-900 border border-white/[0.05] overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400"
+                      style={{
+                        width: `${parseInt(String((selectedSkillForModal as any).proficiency || 95).replace(/\D/g, ''), 10) || 95}%`
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                {selectedSkillForModal.description && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold block">
+                      Architectural Overview & Core Competency
+                    </span>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans bg-slate-950/40 p-4 rounded-2xl border border-white/[0.04]">
+                      {selectedSkillForModal.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Subsystem Competency Highlights */}
+                <div className="space-y-2.5">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold block">
+                    Enterprise Engineering Highlights:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-300 font-mono">
+                    <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Production Deployments & SLA</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Scalable Microservice Design</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Low Latency Event Pipelines</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Automated Test Coverage & CI</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 sm:p-5 bg-slate-950/90 border-t border-white/[0.06] flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500">
+                  Verified Technical Skill Portfolio
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectedSkillForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
+                >
+                  Close Intelligence View
+                </button>
               </div>
             </motion.div>
           </div>

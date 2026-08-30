@@ -262,7 +262,7 @@
     }
   ],
   "analytics": {
-    "pageViews": 12458,
+    "pageViews": 12459,
     "uniqueVisitors": 4121,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
@@ -304,7 +304,7 @@
       },
       {
         "date": "Aug 30",
-        "views": 8,
+        "views": 9,
         "visitors": 1
       }
     ],
@@ -312,7 +312,7 @@
       {
         "source": "GitHub",
         "count": 4890,
-        "percentage": 39.3
+        "percentage": 39.2
       },
       {
         "source": "LinkedIn",
@@ -321,7 +321,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 2188,
+        "count": 2189,
         "percentage": 17.6
       },
       {
@@ -342,7 +342,7 @@
       },
       {
         "country": "India",
-        "count": 2128
+        "count": 2129
       },
       {
         "country": "Germany",
@@ -364,7 +364,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7458
+        "count": 7459
       },
       {
         "browser": "Safari",
@@ -386,7 +386,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 8598
+        "count": 8599
       },
       {
         "device": "Mobile",
