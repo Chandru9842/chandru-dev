@@ -913,6 +913,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         body: JSON.stringify({ image: compressedDataUrl })
       });
       if (uploadRes.ok) {
+        const resData = await uploadRes.json();
         const returnedProfile = resData?.profile || resData;
         if (returnedProfile) {
           setProfile(returnedProfile);
