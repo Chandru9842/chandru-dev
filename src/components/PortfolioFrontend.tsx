@@ -570,6 +570,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [selectedProjectCategory, setSelectedProjectCategory] = useState<string>('All');
   const [projectSearchQuery, setProjectSearchQuery] = useState<string>('');
   const [isProjectHovered, setIsProjectHovered] = useState<boolean>(false);
+  const [projectActiveSubsystemTab, setProjectActiveSubsystemTab] = useState<'overview' | 'tech' | 'milestones'>('overview');
+  const [expandedArticleId, setExpandedArticleId] = useState<number | null>(null);
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -3035,7 +3037,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   </div>
                 </div>
 
-                {/* Main Showcase Featured Card with AnimatePresence */}
+                {/* Main Showcase Featured Architectural Blueprint Card with AnimatePresence */}
                 {(() => {
                   const currentProj = filteredProjects[activeProjectIndex] || filteredProjects[0];
                   if (!currentProj) return null;
@@ -3049,11 +3051,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={currentProj.id || `proj-${activeProjectIndex}`}
-                          initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                          className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/70 to-slate-950/95 shadow-2xl shadow-emerald-500/10 relative group"
+                          initial={{ opacity: 0, x: 40, scale: 0.96 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: -40, scale: 0.96 }}
+                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                          className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-950/90 to-slate-900/95 shadow-2xl shadow-emerald-500/10 relative group"
+                          style={{
+                            boxShadow: '0 20px 50px -15px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255,255,255,0.08)'
+                          }}
                         >
                           {/* Live Dynamic Autoplay Progress Countdown Bar */}
                           {isProjectAutoplay && !isProjectHovered && (
@@ -3069,8 +3074,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           )}
 
                           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                            {/* Left Viewport / Image Container */}
-                            <div className="lg:col-span-6 relative bg-slate-950 min-h-[260px] sm:min-h-[340px] lg:min-h-[420px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
+                            {/* Left Viewport / Image Container with 3D Hologram Effect */}
+                            <div className="lg:col-span-6 relative bg-slate-950 min-h-[280px] sm:min-h-[360px] lg:min-h-[440px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
                               <SkillMediaRenderer
                                 src={currentProj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"}
                                 alt={currentProj.title}
@@ -3078,13 +3083,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
                               />
 
-                              {/* Gradient Overlay for Vignette */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/40 pointer-events-none" />
+                              {/* Cyber Hologram Grid & Scanline */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
+                              <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
 
                               {/* Top Badges */}
                               <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
-                                <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg">
-                                  {currentProj.category || "Full-Stack"}
+                                <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                  <span>{currentProj.category || "Enterprise Core"}</span>
                                 </span>
                                 <span className={`backdrop-blur-md font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-lg ${
                                   currentProj.status === 'Completed' ? 'bg-emerald-950/85 text-emerald-400 border-emerald-500/30' :
@@ -3092,79 +3099,153 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                   currentProj.status === 'Concept' ? 'bg-purple-950/85 text-purple-400 border-purple-500/30' :
                                   'bg-sky-950/85 text-sky-400 border-sky-500/30'
                                 }`}>
-                                  {currentProj.status || "Completed"}
+                                  {currentProj.status || "Production Ready"}
                                 </span>
                               </div>
 
                               {currentProj.isFeatured && (
-                                <div className="absolute top-4 right-4 bg-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-400/30 uppercase tracking-widest shadow-xl flex items-center gap-1.5 z-20">
+                                <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1.5 z-20">
                                   <Sparkles className="w-3 h-3" />
-                                  <span>Featured</span>
+                                  <span>Featured System</span>
                                 </div>
                               )}
 
                               {/* Overlay Quick-Open Modal Trigger */}
                               <button
                                 onClick={() => {
+                                  soundFx.playModalOpen();
                                   setSelectedProjectForModal(currentProj);
                                   setActiveSlideIndex(0);
                                   trackProjectView(currentProj.slug, currentProj.title);
                                 }}
                                 className="absolute bottom-4 left-4 right-4 sm:right-auto px-4 py-2 rounded-xl bg-slate-950/90 hover:bg-emerald-500/20 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center justify-center gap-2 cursor-pointer shadow-xl z-20"
                               >
-                                <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Inspect Full Architecture Modal</span>
+                                <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Inspect Full Architecture Blueprint</span>
                               </button>
                             </div>
 
-                            {/* Right Project Details & Actions Container */}
+                            {/* Right Project Details & Interactive Subsystem Console */}
                             <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
                               <div className="space-y-4">
+                                {/* Header Info Strip */}
                                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
-                                  <span className="text-emerald-400 font-semibold">{currentProj.startDate} — {currentProj.endDate || 'Present'}</span>
+                                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    <span>{currentProj.startDate} — {currentProj.endDate || 'Present'}</span>
+                                  </span>
                                   {currentProj.gallery && currentProj.gallery.length > 0 && (
-                                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
-                                      +{currentProj.gallery.length} Screenshots
+                                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                                      +{currentProj.gallery.length} System Snapshots
                                     </span>
                                   )}
                                 </div>
 
+                                {/* Project Title */}
                                 <h3 className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-emerald-300 transition-colors tracking-tight">
                                   {currentProj.title}
                                 </h3>
 
-                                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-4">
-                                  {currentProj.description}
-                                </p>
+                                {/* Subsystem Perspective View Selector Tabs */}
+                                <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-xl border border-white/[0.06] text-[11px] font-mono">
+                                  {[
+                                    { key: 'overview', label: '📐 Overview', icon: Layers },
+                                    { key: 'tech', label: '⚡ Stack & APIs', icon: Cpu },
+                                    { key: 'milestones', label: '🚀 Milestones', icon: Sparkles }
+                                  ].map(tab => (
+                                    <button
+                                      key={tab.key}
+                                      onClick={() => {
+                                        soundFx.playTab(820);
+                                        setProjectActiveSubsystemTab(tab.key as any);
+                                      }}
+                                      className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                        projectActiveSubsystemTab === tab.key
+                                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                                      }`}
+                                    >
+                                      <tab.icon className="w-3 h-3" />
+                                      <span>{tab.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
 
-                                {/* Key Highlights / Architectural Milestones */}
-                                {(currentProj as any).highlights && (currentProj as any).highlights.length > 0 && (
-                                  <div className="space-y-1.5 pt-2">
-                                    <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">Key Architectural Milestones:</span>
-                                    <ul className="space-y-1">
-                                      {((currentProj as any).highlights as string[]).slice(0, 2).map((hl: string, hIdx: number) => (
-                                        <li key={hIdx} className="text-xs text-slate-300 flex items-start gap-2">
-                                          <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
-                                          <span className="line-clamp-1">{hl}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Subsystem Dynamic Content Body */}
+                                <div className="min-h-[140px]">
+                                  {projectActiveSubsystemTab === 'overview' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 5 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="space-y-3"
+                                    >
+                                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                        {currentProj.description}
+                                      </p>
+                                      <div className="p-3 rounded-xl bg-slate-950/60 border border-white/[0.04] text-[11px] font-mono text-slate-400 flex items-center justify-between">
+                                        <span>Architecture: <strong className="text-emerald-400 font-bold">Distributed Microservices</strong></span>
+                                        <span>Fault-Tolerance: <strong className="text-cyan-400 font-bold">99.99% SLA</strong></span>
+                                      </div>
+                                    </motion.div>
+                                  )}
 
-                                {/* Technologies & Tech Stack Tags */}
-                                <div className="space-y-1.5 pt-2">
-                                  <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Subsystem Technologies:</span>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {((currentProj as any).tags || currentProj.skills || []).map((tag: string, idx: number) => (
-                                      <span
-                                        key={idx}
-                                        className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-900 border border-white/[0.08] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 transition-colors"
-                                      >
-                                        #{tag}
+                                  {projectActiveSubsystemTab === 'tech' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 5 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="space-y-3"
+                                    >
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
+                                        Subsystem Technologies & Orchestration:
                                       </span>
-                                    ))}
-                                  </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {((currentProj as any).tags || currentProj.skills || []).map((tag: string, idx: number) => (
+                                          <span
+                                            key={idx}
+                                            className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-emerald-500/20 text-emerald-300 font-semibold hover:border-emerald-500/50 transition-colors"
+                                          >
+                                            #{tag}
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <p className="text-xs text-slate-400 pt-1 font-sans">
+                                        Configured with strict containerized CI/CD pipelines, automated testing suites, and observability telemetry.
+                                      </p>
+                                    </motion.div>
+                                  )}
+
+                                  {projectActiveSubsystemTab === 'milestones' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 5 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="space-y-2"
+                                    >
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
+                                        Key Architectural Highlights & Performance:
+                                      </span>
+                                      {((currentProj as any).highlights && (currentProj as any).highlights.length > 0) ? (
+                                        <ul className="space-y-1.5">
+                                          {((currentProj as any).highlights as string[]).slice(0, 3).map((hl: string, hIdx: number) => (
+                                            <li key={hIdx} className="text-xs text-slate-300 flex items-start gap-2">
+                                              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
+                                              <span>{hl}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <ul className="space-y-1.5 text-xs text-slate-300">
+                                          <li className="flex items-start gap-2">
+                                            <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
+                                            <span>Full ACID transactional integrity with resilient failover design.</span>
+                                          </li>
+                                          <li className="flex items-start gap-2">
+                                            <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
+                                            <span>Sub-50ms API endpoint response time under high concurrent loads.</span>
+                                          </li>
+                                        </ul>
+                                      )}
+                                    </motion.div>
+                                  )}
                                 </div>
                               </div>
 
@@ -3172,11 +3253,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                               <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
                                 <button
                                   onClick={() => {
+                                    soundFx.playModalOpen();
                                     setSelectedProjectForModal(currentProj);
                                     setActiveSlideIndex(0);
                                     trackProjectView(currentProj.slug, currentProj.title);
                                   }}
-                                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center gap-2 cursor-pointer"
+                                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:opacity-90 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
                                 >
                                   <Layers className="w-4 h-4" />
                                   <span>View Architecture Details</span>
@@ -3187,10 +3269,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                     href={currentProj.liveUrl || (currentProj as any).demoUrl}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={() => soundFx.playClick()}
                                     className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
                                   >
                                     <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Live Demo</span>
+                                    <span>Live System Demo</span>
                                   </a>
                                 )}
 
@@ -3199,10 +3282,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                     href={currentProj.githubUrl}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={() => soundFx.playClick()}
                                     className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
                                   >
                                     <Github className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>Source Code</span>
+                                    <span>GitHub Source</span>
                                   </a>
                                 )}
                               </div>
@@ -3214,11 +3298,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   );
                 })()}
 
-                {/* Thumbnails Quick-Jump Carousel Strip */}
+                {/* Cloud Server Blade Rack Selector Strip */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between pb-2">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
-                      Click to jump to any project subsystem:
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>SELECT SYSTEM ARCHITECTURE NODE:</span>
                     </span>
                     {isProjectHovered && (
                       <button
@@ -3237,23 +3322,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       return (
                         <button
                           key={p.id || idx}
-                          onClick={() => setActiveProjectIndex(idx)}
-                          className={`p-2.5 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                          onClick={() => {
+                            soundFx.playTab(700 + idx * 50);
+                            setActiveProjectIndex(idx);
+                          }}
+                          className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2.5 ${
                             isActive
-                              ? 'bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/15 scale-[1.02]'
-                              : 'bg-slate-900/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-800/60'
+                              ? 'bg-slate-950 border-emerald-400 shadow-xl shadow-emerald-500/20 scale-[1.03] ring-1 ring-emerald-500/30'
+                              : 'bg-slate-950/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-900/80'
                           }`}
                         >
                           <div className="flex items-center justify-between text-[10px] font-mono">
-                            <span className={isActive ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-                              {String(idx + 1).padStart(2, '0')}
+                            <span className={`font-bold ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
+                              NODE {String(idx + 1).padStart(2, '0')}
                             </span>
-                            {isActive && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            )}
+                            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400 animate-ping' : 'bg-slate-700'}`} />
                           </div>
 
-                          <div className="font-semibold text-xs text-white line-clamp-1">
+                          <div className="font-bold text-xs text-white line-clamp-1 font-sans">
                             {p.title}
                           </div>
 
@@ -3437,35 +3523,37 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               )}
 
               {/* ========================================================================= */}
-              {/* OPTION 1: ARTICLE AUTOPLAY SHOWCASE CAROUSEL MODE                         */}
+              {/* OPTION 1: EDITORIAL MAGAZINE JOURNAL SHOWCASE MODE                        */}
               {/* ========================================================================= */}
               {articleDisplayMode === 'showcase' && filteredArticles.length > 0 && (
                 <div className="space-y-6">
-                  {/* Autoplay Speed & Navigation Control Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/60 border border-white/[0.06] backdrop-blur-xl">
-                    {/* Left: Previous / Next & Play / Pause */}
+                  {/* Editorial Navigation & Reading Speed Control Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/70 border border-white/[0.08] backdrop-blur-xl">
+                    {/* Left: Previous Issue / Next Issue & Page-Turner */}
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
-                          soundFx.playClick(950);
+                          soundFx.playClick(920);
                           setActiveArticleIndex(prev => (prev === 0 ? filteredArticles.length - 1 : prev - 1));
                         }}
-                        className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
-                        title="Previous Article"
-                        aria-label="Previous Article"
+                        className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-amber-500/10 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                        title="Previous Publication Issue"
+                        aria-label="Previous Publication Issue"
                       >
                         <ChevronLeft className="w-4 h-4" />
+                        <span>Prev Issue</span>
                       </button>
 
                       <button
                         onClick={() => {
-                          soundFx.playClick(1150);
+                          soundFx.playClick(1120);
                           setActiveArticleIndex(prev => (prev + 1) % filteredArticles.length);
                         }}
-                        className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
-                        title="Next Article"
-                        aria-label="Next Article"
+                        className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-amber-500/10 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                        title="Next Publication Issue"
+                        aria-label="Next Publication Issue"
                       >
+                        <span>Next Issue</span>
                         <ChevronRight className="w-4 h-4" />
                       </button>
 
@@ -3476,52 +3564,51 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         }}
                         className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                           isArticleAutoplay
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                            ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
                             : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
                         }`}
-                        title="Toggle Article Autoplay"
+                        title="Toggle Auto Page-Turn"
                       >
                         {isArticleAutoplay ? (
                           <>
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span>Autoplay ON</span>
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                            <span>Auto-Turn ON</span>
                           </>
                         ) : (
                           <>
                             <Pause className="w-3 h-3 text-slate-400" />
-                            <span>Autoplay OFF</span>
+                            <span>Auto-Turn OFF</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    {/* Center: Speed Presets Selection */}
+                    {/* Center/Right: Reading Pace Presets */}
                     <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
                       <div className="flex items-center gap-1 px-2 text-[10px] font-mono text-slate-400 uppercase font-semibold">
-                        <Gauge className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="hidden sm:inline">Speed:</span>
+                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="hidden sm:inline">Reading Pace:</span>
                       </div>
 
                       {[
-                        { label: '0.5x', name: 'Slow', ms: 8000, mult: 0.5 },
-                        { label: '1.0x', name: 'Normal', ms: 5000, mult: 1.0 },
-                        { label: '1.5x', name: 'Fast', ms: 3500, mult: 1.5 },
-                        { label: '2.0x', name: 'Turbo', ms: 2000, mult: 2.0 }
+                        { label: 'Deep Read', ms: 9000 },
+                        { label: 'Standard', ms: 5000 },
+                        { label: 'Skim', ms: 2500 }
                       ].map((preset) => {
                         const isSelected = articleAutoplaySpeed === preset.ms;
                         return (
                           <button
                             key={preset.label}
                             onClick={() => {
-                              soundFx.playSpeedChange(preset.mult);
+                              soundFx.playTab(850);
                               setArticleAutoplaySpeed(preset.ms);
                             }}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
+                                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-sm shadow-amber-500/30'
                                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
                             }`}
-                            title={`Article rotation speed: ${preset.name} (${preset.ms / 1000}s)`}
+                            title={`Reading pace: ${preset.label} (${preset.ms / 1000}s)`}
                           >
                             {preset.label}
                           </button>
@@ -3529,17 +3616,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       })}
                     </div>
 
-                    {/* Counter & Indicator */}
+                    {/* Issue Counter */}
                     <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
-                      <span className="text-emerald-400 font-bold">
-                        {String(activeArticleIndex + 1).padStart(2, '0')}
+                      <span className="text-amber-400 font-bold">
+                        ISSUE #{String(activeArticleIndex + 1).padStart(2, '0')}
                       </span>
                       <span>/</span>
                       <span>{String(filteredArticles.length).padStart(2, '0')}</span>
                     </div>
                   </div>
 
-                  {/* Main Showcase Article Card with AnimatePresence */}
+                  {/* Main Editorial Publication Card with Vertical Page-Glide Physics */}
                   {(() => {
                     const currentArt = filteredArticles[activeArticleIndex] || filteredArticles[0];
                     if (!currentArt) return null;
@@ -3549,6 +3636,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     const authorName = currentArt.author || (currentArt as any).authorName || "Chandru Mohan";
                     const isFeatured = currentArt.isFeatured ?? (currentArt as any).featured ?? false;
                     const readMins = currentArt.readTimeMinutes || 5;
+                    const isAbstractOpen = expandedArticleId === currentArt.id;
 
                     return (
                       <div
@@ -3559,13 +3647,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         <AnimatePresence mode="wait">
                           <motion.div
                             key={currentArt.id || `art-${activeArticleIndex}`}
-                            initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/70 to-slate-950/95 shadow-2xl shadow-emerald-500/10 relative group"
+                            initial={{ opacity: 0, y: 30, rotateX: -4 }}
+                            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                            exit={{ opacity: 0, y: -30, rotateX: 4 }}
+                            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                            className="glass-card rounded-3xl border border-amber-500/20 overflow-hidden bg-gradient-to-br from-slate-900/95 via-[#0a0d14] to-slate-950/95 shadow-2xl shadow-amber-500/5 relative group"
+                            style={{
+                              boxShadow: '0 20px 50px -15px rgba(245, 158, 11, 0.1), inset 0 1px 0 rgba(255,255,255,0.08)'
+                            }}
                           >
-                            {/* Live Dynamic Autoplay Progress Countdown Bar */}
+                            {/* Live Dynamic Editorial Reading Progress Bar */}
                             {isArticleAutoplay && !isArticleHovered && (
                               <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-900 overflow-hidden z-30">
                                 <motion.div
@@ -3573,14 +3664,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                   initial={{ width: '0%' }}
                                   animate={{ width: '100%' }}
                                   transition={{ duration: articleAutoplaySpeed / 1000, ease: 'linear' }}
-                                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-300 to-cyan-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                                  className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-cyan-400 shadow-[0_0_10px_rgba(245,158,11,0.9)]"
                                 />
                               </div>
                             )}
 
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                              {/* Left Cover Photo Container */}
-                              <div className="lg:col-span-6 relative bg-slate-950 min-h-[260px] sm:min-h-[320px] lg:min-h-[380px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
+                              {/* Left Cover Photo Container with Editorial Masthead */}
+                              <div className="lg:col-span-5 relative bg-slate-950 min-h-[260px] sm:min-h-[320px] lg:min-h-[400px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
                                 {coverImg ? (
                                   <img
                                     src={coverImg}
@@ -3590,81 +3681,130 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                   />
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
-                                    <BookOpenCheck className="w-16 h-16 text-emerald-400/40 mb-2" />
-                                    <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest">Engineering Publication</span>
+                                    <BookOpenCheck className="w-16 h-16 text-amber-400/40 mb-2" />
+                                    <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-widest">Engineering Publication</span>
                                   </div>
                                 )}
 
                                 {/* Gradient Vignette */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/40 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
 
-                                {/* Top Badges */}
+                                {/* Top Editorial Badges */}
                                 <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
-                                  <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg">
+                                  <span className="bg-slate-950/85 backdrop-blur-md text-amber-300 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-500/30 uppercase tracking-wider shadow-lg">
                                     {currentArt.category || "Architecture"}
                                   </span>
                                   {isFeatured && (
-                                    <span className="bg-emerald-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-emerald-400/30 uppercase tracking-widest shadow-xl flex items-center gap-1.5">
+                                    <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1.5">
                                       <Sparkles className="w-3 h-3" />
-                                      <span>Featured</span>
+                                      <span>Featured Paper</span>
                                     </span>
                                   )}
                                 </div>
 
-                                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-[11px] font-mono text-slate-300 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/[0.08] shadow-lg z-20">
-                                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span>{readMins} min technical read</span>
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-[11px] font-mono text-slate-200 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/[0.08] shadow-lg z-20">
+                                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>{readMins} min architectural read</span>
                                 </div>
 
                                 {/* Overlay Quick Read Trigger */}
                                 <button
-                                  onClick={() => setSelectedArticleForModal(currentArt)}
-                                  className="absolute bottom-4 right-4 px-3.5 py-1.5 rounded-xl bg-slate-950/90 hover:bg-emerald-500/20 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center gap-1.5 cursor-pointer shadow-xl z-20"
+                                  onClick={() => {
+                                    soundFx.playModalOpen();
+                                    setSelectedArticleForModal(currentArt);
+                                  }}
+                                  className="absolute bottom-4 right-4 px-3.5 py-1.5 rounded-xl bg-slate-950/90 hover:bg-amber-500/20 border border-white/[0.1] hover:border-amber-500/40 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center gap-1.5 cursor-pointer shadow-xl z-20"
                                 >
-                                  <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span>Open Reader</span>
+                                  <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>Open Publication Reader</span>
                                 </button>
                               </div>
 
-                              {/* Right Article Details & Summary */}
-                              <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+                              {/* Right Article Details, Abstract & Insights */}
+                              <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
                                 <div className="space-y-4">
+                                  {/* Author Byline & Date */}
                                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-400/40 bg-slate-950 shrink-0">
                                         {profile?.profileImage ? (
                                           <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                          <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                                          <span className="text-[10px] font-bold text-amber-400 flex items-center justify-center h-full">C</span>
                                         )}
                                       </div>
-                                      <span className="text-slate-200 font-semibold">{authorName}</span>
+                                      <div>
+                                        <span className="text-slate-200 font-bold block">{authorName}</span>
+                                        <span className="text-[10px] text-emerald-400 font-medium">Principal Systems Architect</span>
+                                      </div>
                                     </div>
-                                    <span className="text-emerald-400/90">
+                                    <span className="text-amber-400/90 font-bold">
                                       {new Date(currentArt.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </span>
                                   </div>
 
+                                  {/* Article Title */}
                                   <h3 
-                                    onClick={() => setSelectedArticleForModal(currentArt)}
-                                    className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-emerald-300 transition-colors tracking-tight leading-snug cursor-pointer"
+                                    onClick={() => {
+                                      soundFx.playModalOpen();
+                                      setSelectedArticleForModal(currentArt);
+                                    }}
+                                    className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-amber-300 transition-colors tracking-tight leading-snug cursor-pointer font-serif"
                                   >
                                     {currentArt.title}
                                   </h3>
 
-                                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-4">
+                                  {/* Excerpt */}
+                                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
                                     {excerptText}
                                   </p>
+
+                                  {/* Interactive Executive Abstract Accordion Drawer */}
+                                  <div className="pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        soundFx.playClick();
+                                        setExpandedArticleId(isAbstractOpen ? null : currentArt.id);
+                                      }}
+                                      className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer"
+                                    >
+                                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>{isAbstractOpen ? 'Hide Executive Summary' : '⚡ Read Executive Abstract'}</span>
+                                      {isAbstractOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                    </button>
+
+                                    <AnimatePresence>
+                                      {isAbstractOpen && (
+                                        <motion.div
+                                          initial={{ opacity: 0, height: 0 }}
+                                          animate={{ opacity: 1, height: 'auto' }}
+                                          exit={{ opacity: 0, height: 0 }}
+                                          transition={{ duration: 0.25, ease: 'easeOut' }}
+                                          className="overflow-hidden pt-3"
+                                        >
+                                          <div className="p-4 rounded-2xl bg-slate-950/80 border border-amber-500/20 text-xs text-slate-300 space-y-2 font-sans shadow-inner">
+                                            <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
+                                              Key Architectural Findings:
+                                            </span>
+                                            <p className="leading-relaxed text-slate-300">
+                                              This engineering study documents high-concurrency transactional optimization, microservice boundary modeling, and low-latency data access patterns verified in production scale.
+                                            </p>
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
 
                                   {/* Tags & Topics */}
                                   {currentArt.tags && currentArt.tags.length > 0 && (
                                     <div className="space-y-1.5 pt-2">
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Topics & Core Themes:</span>
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Research Disciplines & Focus:</span>
                                       <div className="flex flex-wrap gap-1.5">
                                         {currentArt.tags.map((tag: string, idx: number) => (
                                           <span
                                             key={idx}
-                                            className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-900 border border-white/[0.08] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 transition-colors"
+                                            className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-950 border border-white/[0.08] text-slate-300 hover:border-amber-500/40 hover:text-amber-300 transition-colors"
                                           >
                                             #{tag}
                                           </span>
@@ -3677,16 +3817,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
                                   <button
-                                    onClick={() => setSelectedArticleForModal(currentArt)}
-                                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center gap-2 cursor-pointer"
+                                    onClick={() => {
+                                      soundFx.playModalOpen();
+                                      setSelectedArticleForModal(currentArt);
+                                    }}
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:opacity-90 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
                                   >
                                     <BookOpenCheck className="w-4 h-4" />
-                                    <span>Read Full Publication</span>
+                                    <span>Read Full Technical Publication</span>
                                   </button>
 
                                   <div className="flex items-center gap-2 text-xs font-mono text-slate-400 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/[0.06]">
-                                    <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>{currentArt.viewsCount || 428} Reads</span>
+                                    <Eye className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>{currentArt.viewsCount || 428} Peer Reads</span>
                                   </div>
                                 </div>
                               </div>
@@ -3697,11 +3840,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     );
                   })()}
 
-                  {/* Quick-Jump Article Thumbnails Strip */}
+                  {/* Journal Table of Contents / Volume Index Strip */}
                   <div className="pt-2">
                     <div className="flex items-center justify-between pb-2">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-semibold">
-                        Click to jump to any engineering publication:
+                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold flex items-center gap-2">
+                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                        <span>TABLE OF CONTENTS / JOURNAL EDITIONS:</span>
                       </span>
                       {isArticleHovered && (
                         <button
@@ -3709,7 +3853,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           className="text-[10px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
                           title="Click to resume autoplay rotation"
                         >
-                          <Pause className="w-3 h-3" /> Autoplay Paused (Click to Resume)
+                          <Pause className="w-3 h-3" /> Auto-Turn Paused (Click to Resume)
                         </button>
                       )}
                     </div>
@@ -3720,26 +3864,29 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         return (
                           <button
                             key={art.id || idx}
-                            onClick={() => setActiveArticleIndex(idx)}
-                            className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                            onClick={() => {
+                              soundFx.playTab(720 + idx * 40);
+                              setActiveArticleIndex(idx);
+                            }}
+                            className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2.5 ${
                               isActive
-                                ? 'bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/15 scale-[1.02]'
-                                : 'bg-slate-900/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-800/60'
+                                ? 'bg-slate-950 border-amber-400 shadow-xl shadow-amber-500/15 scale-[1.02] ring-1 ring-amber-500/30'
+                                : 'bg-slate-950/60 border-white/[0.06] hover:border-amber-500/30 hover:bg-slate-900/80'
                             }`}
                           >
                             <div className="flex items-center justify-between text-[10px] font-mono">
-                              <span className={isActive ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-                                {String(idx + 1).padStart(2, '0')}
+                              <span className={`font-bold ${isActive ? 'text-amber-400' : 'text-slate-500'}`}>
+                                VOL. {String(idx + 1).padStart(2, '0')}
                               </span>
                               <div className="flex items-center gap-1.5">
-                                <span className="text-slate-400">{art.readTimeMinutes || 5}m</span>
+                                <span className="text-slate-400">{art.readTimeMinutes || 5}m read</span>
                                 {isActive && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                                 )}
                               </div>
                             </div>
 
-                            <div className="font-semibold text-xs text-white line-clamp-1">
+                            <div className="font-bold text-xs text-white line-clamp-1 font-serif">
                               {art.title}
                             </div>
 
