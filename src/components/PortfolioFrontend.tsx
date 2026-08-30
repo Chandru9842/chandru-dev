@@ -547,6 +547,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [articles, setArticles] = useState<ArticleItem[]>(() => getInstantState('articles', initialArticles));
   const [selectedToolCategory, setSelectedToolCategory] = useState<string>('All');
   const [toolSearchQuery, setToolSearchQuery] = useState<string>('');
+  const [toolSortMode, setToolSortMode] = useState<'default' | 'name' | 'featured'>('default');
+  const [selectedToolForModal, setSelectedToolForModal] = useState<ToolItem | null>(null);
   const [selectedArticleCategory, setSelectedArticleCategory] = useState<string>('All');
   const [articleSearchQuery, setArticleSearchQuery] = useState<string>('');
   const [selectedArticleForModal, setSelectedArticleForModal] = useState<ArticleItem | null>(null);
@@ -1007,7 +1009,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, [displayTools]);
 
   const filteredTools = useMemo(() => {
-    return displayTools.filter(t => {
+    let list = displayTools.filter(t => {
       const matchesCategory = selectedToolCategory === 'All' || t.category === selectedToolCategory;
       const q = toolSearchQuery.trim().toLowerCase();
       const matchesSearch = !q || 
@@ -1016,7 +1018,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         (t.description && t.description.toLowerCase().includes(q));
       return matchesCategory && matchesSearch;
     });
-  }, [displayTools, selectedToolCategory, toolSearchQuery]);
+
+    if (toolSortMode === 'featured') {
+      return [...list].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    } else if (toolSortMode === 'name') {
+      return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return [...list].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  }, [displayTools, selectedToolCategory, toolSearchQuery, toolSortMode]);
 
   const displayArticles = useMemo(() => {
     return articles.length > 0 ? articles : initialArticles;
@@ -4129,24 +4139,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   <button
                     type="button"
                     onClick={() => {
-                      setSkillSortMode(prev => prev === 'proficiency' ? 'default' : 'proficiency');
+                      setSkillSortMode('default');
                       soundFx.playClick();
                     }}
                     className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                      skillSortMode === 'proficiency'
+                      skillSortMode === 'default'
                         ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                         : 'text-slate-400 hover:text-white'
                     }`}
-                    title="Sort by Highest Mastery"
+                    title="System Priority Order"
                   >
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Top Mastery</span>
+                    <Sparkles className="w-3 h-3" />
+                    <span>Featured</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setSkillSortMode(prev => prev === 'name' ? 'default' : 'name');
+                      setSkillSortMode('name');
                       soundFx.playClick();
                     }}
                     className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
@@ -4199,11 +4209,30 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 const isSpin = skill.animation === 'Spin Slow';
                 const isGlow = skill.animation === 'Glow';
 
-                // Compute proficiency score (0 - 100)
-                const rawProf = (skill as any).proficiency || (skill as any).level || '90%';
-                const profPercent = typeof rawProf === 'number' 
-                  ? Math.min(100, Math.max(10, rawProf)) 
-                  : parseInt(String(rawProf).replace(/\D/g, ''), 10) || 85;
+                // Professional Tier classification without raw numbers
+                const sName = (skill.name || '').toLowerCase();
+                const sCat = (skill.category || '').toLowerCase();
+                let tierTag = 'Core Stack';
+                let tierPill = 'Production Ready';
+                let tierBadgeColor = itemColor;
+
+                if (sName.includes('java') || sName.includes('spring') || sName.includes('architect') || sName.includes('microservice')) {
+                  tierTag = 'Architect Tier';
+                  tierPill = 'Core System';
+                  tierBadgeColor = '#10b981';
+                } else if (sName.includes('sql') || sName.includes('postgres') || sName.includes('redis') || sName.includes('kafka') || sName.includes('mysql')) {
+                  tierTag = 'High Throughput';
+                  tierPill = 'Distributed Scale';
+                  tierBadgeColor = '#06b6d4';
+                } else if (sName.includes('react') || sName.includes('tailwind') || sName.includes('typescript') || sName.includes('next') || sName.includes('javascript')) {
+                  tierTag = 'Modern Reactive';
+                  tierPill = 'Enterprise UI';
+                  tierBadgeColor = '#3b82f6';
+                } else if (sName.includes('docker') || sName.includes('aws') || sName.includes('kubernetes') || sName.includes('cloud') || sName.includes('ci/cd')) {
+                  tierTag = 'Cloud Native';
+                  tierPill = 'DevOps & Infra';
+                  tierBadgeColor = '#a855f7';
+                }
 
                 return (
                   <motion.div 
@@ -4213,7 +4242,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     transition={{ duration: 0.35, delay: Math.min(sIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
                     whileHover={prefersReduced ? {} : { 
                       y: -6, 
-                      scale: 1.02,
+                      scale: 1.025,
                       transition: { duration: 0.2, ease: 'easeOut' }
                     }}
                     onMouseEnter={() => soundFx.playHover()}
@@ -4230,7 +4259,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   >
                     {/* Hover Glow Gradient */}
                     <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-15 transition-opacity duration-300 pointer-events-none rounded-2xl"
+                      className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none rounded-2xl"
                       style={{ background: `radial-gradient(circle at top right, ${itemColor}, transparent 70%)` }}
                     />
 
@@ -4262,30 +4291,34 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </div>
 
                     {skill.description && (
-                      <p className="text-[10px] sm:text-xs text-slate-300 leading-snug line-clamp-2">
+                      <p className="text-[10px] sm:text-xs text-slate-300 leading-snug line-clamp-2 font-sans">
                         {skill.description}
                       </p>
                     )}
 
-                    {/* Animated Skill Mastery Progress Bar */}
-                    <div className="pt-2 border-t border-white/[0.04] space-y-1.5">
-                      <div className="flex items-center justify-between text-[10px] font-mono">
-                        <span className="text-slate-400 uppercase tracking-widest text-[9px] font-bold">Mastery Level</span>
-                        <span className="font-bold text-emerald-400">{profPercent}%</span>
+                    {/* Professional Enterprise Competency Indicators (No numbers/percentages) */}
+                    <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {/* Live Radar Beacon */}
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span className="font-mono text-[9px] font-bold text-slate-300 truncate">
+                          {tierTag}
+                        </span>
                       </div>
 
-                      {/* Progress Track */}
-                      <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden border border-white/[0.05]">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${profPercent}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.8, delay: Math.min(sIdx * 0.04, 0.4), ease: "easeOut" }}
-                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 relative"
-                        >
-                          <span className="absolute right-0 top-0 bottom-0 w-2 bg-white/80 rounded-full shadow-[0_0_8px_#ffffff]" />
-                        </motion.div>
-                      </div>
+                      <span 
+                        className="px-2 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase tracking-wider shrink-0 transition-colors group-hover:border-emerald-500/40"
+                        style={{
+                          backgroundColor: `${tierBadgeColor}15`,
+                          color: tierBadgeColor,
+                          border: `1px solid ${tierBadgeColor}30`
+                        }}
+                      >
+                        {tierPill}
+                      </span>
                     </div>
                   </motion.div>
                 );
@@ -4324,57 +4357,104 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               viewport={{ once: true, margin: "-100px" }}
               variants={sectionVariants}
             >
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
-                <div className="space-y-2">
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
+                <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Ecosystem Tools & Software</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      {filteredTools.length} {filteredTools.length === 1 ? 'Tool' : 'Tools'}
+                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">ECOSYSTEM TOOLS & STACK UTILITIES</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <Wrench className="w-3 h-3 text-emerald-400" />
+                      <span>{filteredTools.length} {filteredTools.length === 1 ? 'Tool' : 'Tools'}</span>
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Tools & Technologies</h2>
-                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                    Frameworks, IDEs, databases, development platforms, and tools utilized across system design, full-stack engineering, and cloud workflows.
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
+                    Tools & Technologies
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
+                    Frameworks, IDEs, databases, development platforms, and specialized tools utilized across high-scale distributed systems and responsive web engineering.
                   </p>
+                  <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
                 </div>
 
-                {/* Real-time Search Input */}
-                <div className="relative w-full md:w-72 shrink-0">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={toolSearchQuery}
-                    onChange={(e) => setToolSearchQuery(e.target.value)}
-                    placeholder="Search tools, tags, categories..."
-                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
-                  />
-                  {toolSearchQuery && (
+                {/* Real-time Search and Sort Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  {/* Search Bar */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={toolSearchQuery}
+                      onChange={(e) => setToolSearchQuery(e.target.value)}
+                      placeholder="Search tools, platforms..."
+                      className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
+                    />
+                    {toolSearchQuery && (
+                      <button
+                        onClick={() => setToolSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Sort Toggles */}
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs">
                     <button
-                      onClick={() => setToolSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                      type="button"
+                      onClick={() => {
+                        setToolSortMode('featured');
+                        soundFx.playClick();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        toolSortMode === 'featured'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Featured Tools First"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <Star className="w-3 h-3" />
+                      <span>Featured</span>
                     </button>
-                  )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setToolSortMode('name');
+                        soundFx.playClick();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        toolSortMode === 'name'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Sort Alphabetically"
+                    >
+                      <ArrowUpDown className="w-3 h-3" />
+                      <span>A-Z</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Category Filter Pills */}
               {toolCategories.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
                   {toolCategories.map((cat) => {
                     const isActive = selectedToolCategory === cat;
                     return (
                       <button
                         key={cat}
-                        onClick={() => setSelectedToolCategory(cat)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        onClick={() => {
+                          setSelectedToolCategory(cat);
+                          soundFx.playClick();
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
                           isActive
-                            ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                            : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                         }`}
                       >
-                        {cat}
+                        <span>{cat}</span>
                       </button>
                     );
                   })}
@@ -4404,61 +4484,64 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               ) : (
                 /* Tools Cards Grid with Staggered Motion */
                 <motion.div 
-                  key={`tools-grid-${selectedToolCategory}-${toolSearchQuery}`}
+                  key={`tools-grid-${selectedToolCategory}-${toolSearchQuery}-${toolSortMode}`}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5"
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5"
                 >
                   {filteredTools.map((tool, tIdx) => {
                     const brandColor = tool.brandColor || '#10B981';
-                    const hoverScale = tool.hoverScale || 1.02;
-                    const hoverRotation = tool.hoverRotation || 0;
 
                     return (
                       <motion.div
                         key={tool.id || `tool-${tIdx}`}
-                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, delay: Math.min(tIdx * 0.03, 0.3) }}
-                        whileHover={{ 
-                          y: -6, 
-                          scale: hoverScale,
-                          rotate: hoverRotation,
+                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.35, delay: Math.min(tIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={prefersReduced ? {} : { 
+                          y: -7, 
+                          scale: 1.025,
                           transition: { duration: 0.2, ease: "easeOut" } 
                         }}
-                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-800/90 p-3 sm:p-4 lg:p-5 hover:border-emerald-500/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col justify-between shadow-lg overflow-hidden"
+                        onMouseEnter={() => soundFx.playHover()}
+                        onClick={() => {
+                          setSelectedToolForModal(tool);
+                          soundFx.playModalOpen();
+                        }}
+                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-4 sm:p-5 hover:border-emerald-500/50 hover:bg-slate-900/90 transition-all duration-300 flex flex-col justify-between shadow-lg overflow-hidden cursor-pointer"
                         style={{
                           boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
                         }}
                       >
-                        {/* Top Subtle Ambient Glow */}
+                        {/* Top Ambient Glow */}
                         <div 
-                          className="absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300 pointer-events-none"
-                          style={{ backgroundColor: brandColor }}
+                          className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none rounded-2xl"
+                          style={{ background: `radial-gradient(circle at top right, ${brandColor}, transparent 70%)` }}
                         />
 
-                        <div className="space-y-1.5 sm:space-y-3">
+                        <div className="space-y-2.5 sm:space-y-3 relative z-10">
                           {/* Header: Icon + Category Badge + Star if featured */}
-                          <div className="flex items-start justify-between gap-1.5 sm:gap-2.5">
+                          <div className="flex items-start justify-between gap-2">
                             <div 
-                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shrink-0 shadow-inner bg-slate-950/80"
+                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shrink-0 shadow-inner bg-slate-950"
                               style={{ 
                                 borderColor: tool.borderColor || `${brandColor}40`,
                                 borderWidth: '1px',
-                                boxShadow: `0 0 10px ${brandColor}15`
+                                boxShadow: `0 0 12px ${brandColor}20`
                               }}
                             >
                               <ToolIconRenderer tool={tool} />
                             </div>
                             <div className="flex items-center gap-1 flex-wrap justify-end min-w-0">
                               {tool.isFeatured && (
-                                <span className="p-0.5 sm:p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm shrink-0" title="Featured Tool">
-                                  <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400" />
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[9px] font-bold flex items-center gap-1 shadow-sm shrink-0" title="Core Ecosystem Tool">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400" />
+                                  <span>Core</span>
                                 </span>
                               )}
                               {tool.category && (
-                                <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-slate-700/60 truncate max-w-[80px] sm:max-w-none">
+                                <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-white/[0.08] truncate">
                                   {tool.category}
                                 </span>
                               )}
@@ -4467,11 +4550,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                           {/* Tool Name & Description */}
                           <div>
-                            <h3 className="text-xs sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1 truncate" title={tool.name}>
+                            <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1 truncate" title={tool.name}>
                               {tool.name}
                             </h3>
                             {tool.description && (
-                              <p className="text-[10px] sm:text-xs text-slate-400 leading-snug sm:leading-relaxed mt-0.5 sm:mt-1.5 line-clamp-2 sm:line-clamp-3">
+                              <p className="text-[10px] sm:text-xs text-slate-400 leading-relaxed mt-1 line-clamp-2 font-sans">
                                 {tool.description}
                               </p>
                             )}
@@ -4479,32 +4562,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         </div>
 
                         {/* Footer Meta & Website Link */}
-                        <div className="pt-2 mt-2 sm:pt-3.5 sm:mt-3 border-t border-slate-800/80 flex items-center justify-between text-[9px] sm:text-[11px] font-mono text-slate-400">
-                          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap min-w-0">
-                            {tool.experienceLevel && (
-                              <span className="text-emerald-400 font-medium truncate flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                {tool.experienceLevel}
-                              </span>
-                            )}
-                            {tool.yearsOfExperience && (
-                              <span className="text-slate-500 hidden xs:inline">• {tool.yearsOfExperience}y</span>
-                            )}
+                        <div className="pt-2.5 mt-3 border-t border-white/[0.05] flex items-center justify-between text-[10px] font-mono text-slate-400 relative z-10">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="relative flex h-2 w-2 shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-slate-300 font-bold truncate">
+                              {tool.experienceLevel || 'Production Tool'}
+                            </span>
                           </div>
 
-                          {tool.officialWebsite && (
+                          {tool.officialWebsite ? (
                             <a
                               href={tool.officialWebsite}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-1 sm:px-1.5 rounded hover:bg-emerald-500/10 shrink-0"
+                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-2 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 shrink-0 font-bold"
                               title={`Visit ${tool.name} official website`}
                               aria-label={`Visit ${tool.name} official website`}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                soundFx.playClick();
+                              }}
                             >
-                              <span className="hidden xs:inline">Website</span>
-                              <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform group-hover:translate-x-0.5" />
+                              <span>Website</span>
+                              <ExternalLink className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                             </a>
+                          ) : (
+                            <span className="text-[9px] text-slate-500 font-mono">Specs ↗</span>
                           )}
                         </div>
                       </motion.div>
@@ -6542,23 +6628,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
               {/* Body */}
               <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                {/* Mastery & Proficiency Gauge */}
+                {/* Enterprise Competency & Production Architecture Tier */}
                 <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.04] space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-400 uppercase tracking-widest font-bold">Proficiency & Architecture Mastery</span>
-                    <span className="text-emerald-400 font-extrabold text-sm">
-                      {(selectedSkillForModal as any).proficiency || (selectedSkillForModal as any).level || '95% Expert'}
-                    </span>
+                    <span className="text-slate-400 uppercase tracking-widest font-bold">Deployment & Production Tier</span>
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <span className="text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
+                        Active In Production
+                      </span>
+                    </div>
                   </div>
                   
-                  {/* Progress Bar */}
-                  <div className="w-full h-2 rounded-full bg-slate-900 border border-white/[0.05] overflow-hidden">
-                    <div 
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400"
-                      style={{
-                        width: `${parseInt(String((selectedSkillForModal as any).proficiency || 95).replace(/\D/g, ''), 10) || 95}%`
-                      }}
-                    />
+                  {/* Status Badges Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 font-mono text-[10px]">
+                    <div className="p-2 rounded-xl bg-slate-900/80 border border-white/[0.04] text-slate-300 flex items-center gap-1.5">
+                      <span className="text-emerald-400">⚡</span>
+                      <span className="font-semibold">Core Stack</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-900/80 border border-white/[0.04] text-slate-300 flex items-center gap-1.5">
+                      <span className="text-cyan-400">🛡️</span>
+                      <span className="font-semibold">Architect Grade</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-900/80 border border-white/[0.04] text-slate-300 flex items-center gap-1.5 col-span-2 sm:col-span-1">
+                      <span className="text-teal-400">🚀</span>
+                      <span className="font-semibold">High Scale SLA</span>
+                    </div>
                   </div>
                 </div>
 
@@ -6613,6 +6711,135 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
                 >
                   Close Intelligence View
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Tool Intelligence Deep-Dive Modal */}
+      <AnimatePresence>
+        {selectedToolForModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="relative w-full max-w-xl bg-slate-900 border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden"
+              style={{
+                boxShadow: `0 0 50px -10px ${selectedToolForModal.brandColor || '#10b981'}30`
+              }}
+            >
+              {/* Header */}
+              <div className="p-6 bg-slate-950/90 border-b border-white/[0.06] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-2xl border flex items-center justify-center p-2.5 bg-slate-900 shadow-inner shrink-0"
+                    style={{
+                      borderColor: `${selectedToolForModal.brandColor || '#10b981'}50`,
+                      boxShadow: `0 0 20px ${selectedToolForModal.brandColor || '#10b981'}20`
+                    }}
+                  >
+                    <ToolIconRenderer tool={selectedToolForModal} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                        {selectedToolForModal.category}
+                      </span>
+                      {selectedToolForModal.isFeatured && (
+                        <span className="text-[10px] font-mono text-amber-400 font-bold flex items-center gap-1">
+                          ★ Core Ecosystem
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-white font-luxury tracking-wide mt-1">
+                      {selectedToolForModal.name}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedToolForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.06] transition-colors cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar font-sans">
+                {/* Engineering Tier & Proficiency */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/[0.04] flex items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">
+                      Experience & Tooling Proficiency
+                    </span>
+                    <span className="text-sm font-extrabold text-emerald-400 font-mono mt-0.5 block">
+                      {selectedToolForModal.experienceLevel || 'Advanced Tooling'}
+                      {selectedToolForModal.yearsOfExperience ? ` • ${selectedToolForModal.yearsOfExperience}+ Years Production Experience` : ''}
+                    </span>
+                  </div>
+
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Production Active
+                  </span>
+                </div>
+
+                {/* Description */}
+                {selectedToolForModal.description && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold block">
+                      Engineering Role & System Utility
+                    </span>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed bg-slate-950/40 p-4 rounded-2xl border border-white/[0.04]">
+                      {selectedToolForModal.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Capability Badges */}
+                <div className="grid grid-cols-2 gap-2.5 font-mono text-xs text-slate-300">
+                  <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Active Workflow Integration</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/50 border border-white/[0.04] flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>High Productivity Standard</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 bg-slate-950/90 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                {selectedToolForModal.officialWebsite ? (
+                  <a
+                    href={selectedToolForModal.officialWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => soundFx.playClick()}
+                    className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-300 border border-white/[0.08] hover:border-emerald-500/30 text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Visit Official Platform</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : <div />}
+
+                <button
+                  onClick={() => {
+                    setSelectedToolForModal(null);
+                    soundFx.playModalClose();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
+                >
+                  Close Specs View
                 </button>
               </div>
             </motion.div>
