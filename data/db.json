@@ -262,7 +262,7 @@
     }
   ],
   "analytics": {
-    "pageViews": 12468,
+    "pageViews": 12471,
     "uniqueVisitors": 4121,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
@@ -304,7 +304,7 @@
       },
       {
         "date": "Aug 30",
-        "views": 18,
+        "views": 21,
         "visitors": 1
       }
     ],
@@ -321,7 +321,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 2198,
+        "count": 2201,
         "percentage": 17.6
       },
       {
@@ -342,7 +342,7 @@
       },
       {
         "country": "India",
-        "count": 2138
+        "count": 2141
       },
       {
         "country": "Germany",
@@ -364,7 +364,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7468
+        "count": 7471
       },
       {
         "browser": "Safari",
@@ -386,7 +386,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 8608
+        "count": 8611
       },
       {
         "device": "Mobile",

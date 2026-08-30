@@ -1,16 +1,24 @@
-# Chandru Mohan - Portfolio & CMS
+# Chandru Mohan - Systems Architect & Full-Stack Java Developer Portfolio
 
-> Professional Full-Stack Systems Architect & Developer Portfolio
+> Professional Systems Architect & Full-Stack Java Engineer Portfolio & CMS
 
 ## Overview
-- **Name**: Chandru Mohan (Alex Dev)
-- **Role**: Principal Systems Architect & Full-Stack Engineer
-- **Specialties**: Distributed Systems, React, TypeScript, Node.js, Express, Spring Boot, MySQL, Cloud Infrastructure, AI Systems
+- **Name**: Chandru Mohan (Chandru Dev / CHANDRU M)
+- **Role**: Principal Systems Architect & Full Stack Java Developer
+- **Email**: chandrumohan550@gmail.com
+- **Phone**: +91 9655384140
+- **Location**: Bengaluru, India
+- **Specialties**: Distributed Systems, Java 21, Spring Boot, Apache Kafka, React, TypeScript, MySQL, Microservices Architecture, Cloud Infrastructure
 - **Live Website**: [https://chandru-dev-lime.vercel.app/](https://chandru-dev-lime.vercel.app/)
+- **GitHub**: [https://github.com/Chandru9842](https://github.com/Chandru9842)
+- **LinkedIn**: [https://www.linkedin.com/in/chandru9842/](https://www.linkedin.com/in/chandru9842/)
 
 ## Sections & Highlights
-- **Projects**: [Featured Engineering Projects](https://chandru-dev-lime.vercel.app/#projects)
+- **Projects**: [Architectural Blueprints & Full-Stack Systems](https://chandru-dev-lime.vercel.app/#projects)
+- **Articles**: [Technical Publications & Whitepapers](https://chandru-dev-lime.vercel.app/#articles)
 - **Skills & Technologies**: [Core Technical Competencies](https://chandru-dev-lime.vercel.app/#skills)
-- **Career & Experience**: [Professional Experience](https://chandru-dev-lime.vercel.app/#experience)
-- **Certifications**: [Cloud & Enterprise Credentials](https://chandru-dev-lime.vercel.app/#certificates)
+- **Developer Tools**: [Workstation Software & Infrastructure](https://chandru-dev-lime.vercel.app/#tools)
+- **Career & Experience**: [Professional Track Record](https://chandru-dev-lime.vercel.app/#experience)
+- **Certifications**: [Cloud & Enterprise Credentials](https://chandru-dev-lime.vercel.app/#credentials)
+- **Testimonials**: [Engineering Peer Endorsements](https://chandru-dev-lime.vercel.app/#testimonials)
 - **Contact**: [Get in touch](https://chandru-dev-lime.vercel.app/#contact)
