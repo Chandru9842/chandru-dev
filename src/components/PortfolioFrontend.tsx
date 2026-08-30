@@ -84,6 +84,21 @@ const getInstantState = <T,>(key: string, fallback: T): T => {
         return prof as T;
       }
 
+      if (key === 'activeResume') {
+        const localActive = localStorage.getItem('cms_custom_active_resume');
+        if (localActive) {
+          try {
+            const parsed = JSON.parse(localActive);
+            if (parsed && (parsed.fileUrl || parsed.title)) return parsed as T;
+          } catch (e) {}
+        }
+        const dbResumes = (rawDbData as any)?.resumes;
+        if (Array.isArray(dbResumes) && dbResumes.length > 0) {
+          const active = dbResumes.find((r: any) => r.isActive) || dbResumes[0];
+          if (active) return active as T;
+        }
+      }
+
       // 2. Check full combined portfolio cache
       const cachedCombined = localStorage.getItem('cms_portfolio_combined_cache');
       if (cachedCombined) {
@@ -96,9 +111,46 @@ const getInstantState = <T,>(key: string, fallback: T): T => {
   }
   
   // 3. Fallback to synchronous bundled db.json data, then fallback variable
+  if (key === 'activeResume') {
+    const dbResumes = (rawDbData as any)?.resumes;
+    if (Array.isArray(dbResumes) && dbResumes.length > 0) {
+      return (dbResumes.find((r: any) => r.isActive) || dbResumes[0]) as T;
+    }
+  }
+
+  if (key === 'footerSocialLinks') {
+    const dbSocial = (rawDbData as any)?.footerSocialLinks || (rawDbData as any)?.socialLinks;
+    if (Array.isArray(dbSocial) && dbSocial.length > 0) {
+      return dbSocial.filter((s: any) => s.isVisible !== false) as T;
+    }
+  }
+
   const dbVal = (rawDbData as any)?.[key];
   if (dbVal !== undefined && dbVal !== null) {
-    if (Array.isArray(dbVal) && dbVal.length > 0) return dbVal as T;
+    if (Array.isArray(dbVal)) {
+      if (key === 'projects') {
+        return [...dbVal].filter((p: any) => p.title && p.title.trim() !== '').sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'skills') {
+        return [...dbVal].sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'articles') {
+        return [...dbVal].filter((a: any) => a.isPublished !== false).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'codingProfiles') {
+        return [...dbVal].filter((p: any) => p.visible !== false).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'tools') {
+        return [...dbVal].filter((t: any) => t.isVisible !== false).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'portfolioMetrics') {
+        return [...dbVal].filter((m: any) => m.visible !== false).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (key === 'testimonials') {
+        return [...dbVal].filter((t: any) => t.isVisible !== false).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0)) as T;
+      }
+      if (dbVal.length > 0) return dbVal as T;
+    }
     if (typeof dbVal === 'object' && Object.keys(dbVal).length > 0) return dbVal as T;
   }
   return fallback;
