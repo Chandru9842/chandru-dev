@@ -6429,46 +6429,16 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <div className="border-t border-white/[0.06] w-full" />
 
               {/* Bottom Footer Information Bar */}
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                 
                 {/* Copyright + Technical Details */}
-                <div className="flex flex-col gap-1 text-center lg:text-left">
+                <div className="flex flex-col gap-1 text-center sm:text-left w-full">
                   <p className="text-[11px] text-slate-400 font-mono">
                     {footer?.copyrightText || `© 2026 ${profile?.fullName || "Chandru Mohan"} Portfolio. All database relations mapped to 3NF standards.`}
                   </p>
                   <p className="text-[10px] text-slate-600 font-mono">
                     {footer?.builtWithText || "Securely served from local sandbox cache. Admin actions synchronized with backend."}
                   </p>
-                </div>
-
-                {/* Right side: Analytics badges bar + Admin lock icon */}
-                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 sm:gap-4">
-                  {/* Dedicated Analytics Badges Bar */}
-                  <div className="flex items-center gap-2.5 bg-white/[0.02] border border-white/[0.05] px-3 py-1.5 rounded-xl shadow-inner text-[10px] text-slate-400 font-mono">
-                    <div className="flex items-center gap-1.5">
-                      <Eye className={`w-3.5 h-3.5 ${themeCls.icon}`} />
-                      <span>Views: <strong className="text-slate-200 font-semibold">{analytics?.pageViews ? analytics.pageViews.toLocaleString() : '12,450'}</strong></span>
-                    </div>
-                    <span className="text-white/10">|</span>
-                    <div className="flex items-center gap-1.5">
-                      <Users className={`w-3.5 h-3.5 ${themeCls.icon}`} />
-                      <span>Visitors: <strong className="text-slate-200 font-semibold">{analytics?.uniqueVisitors ? analytics.uniqueVisitors.toLocaleString() : '4,120'}</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Admin & Recruiter Portal Lock Button */}
-                  <button 
-                    onClick={onEnterCMS} 
-                    className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all duration-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer text-xs font-mono"
-                    title="Admin & Recruiter Portal"
-                    aria-label="Admin & Recruiter Portal"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Admin Portal</span>
-                    <span className="absolute bottom-full right-0 mb-2 scale-0 group-hover:scale-100 transition-all duration-200 bg-slate-900 border border-slate-800 text-slate-200 text-[10px] font-mono py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                      Admin & Recruiter Portal
-                    </span>
-                  </button>
                 </div>
 
               </div>
