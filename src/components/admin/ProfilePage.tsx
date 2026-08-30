@@ -587,6 +587,10 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           else delete deleted.aboutImage;
           if (savedData.profileImage === "") deleted.profileImage = true;
           else delete deleted.profileImage;
+          if (savedData.websiteLogo === "") deleted.websiteLogo = true;
+          else delete deleted.websiteLogo;
+          if (savedData.faviconUrl === "") deleted.faviconUrl = true;
+          else delete deleted.faviconUrl;
           localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
         } catch (e) {}
         if (onProfileUpdated) {
