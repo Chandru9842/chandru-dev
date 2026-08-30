@@ -8,7 +8,7 @@ import {
   Image as ImageIcon, Smartphone, Network, Braces, Cloud, Lock, Settings, Sliders, Palette,
   Download, Phone, FileText, Linkedin, Youtube, Instagram, Facebook, Link, Twitter,
   Menu, XCircle, AlertCircle, Star, Wrench, Search, BookOpen, BookOpenCheck, MessageSquareQuote, Quote, Clock, Share2,
-  Volume2, VolumeX
+  Volume2, VolumeX, ChevronDown, ChevronUp, Building2, CheckCircle2
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
@@ -528,6 +528,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const [isSoundMuted, setIsSoundMuted] = useState<boolean>(() => soundFx.isMuted());
+  
+  // Interactive Timeline (Experience & Education) Animation States
+  const [timelineFilter, setTimelineFilter] = useState<'all' | 'experience' | 'education'>('all');
+  const [expandedExperienceId, setExpandedExperienceId] = useState<number | null>(null);
+  const [expandedEducationId, setExpandedEducationId] = useState<number | null>(null);
+  const [hoveredTimelineKey, setHoveredTimelineKey] = useState<string | null>(null);
+  
   const hasInitialAutoScrolledRef = React.useRef(false);
   const hasLoadedOnceRef = React.useRef(false);
 
@@ -4225,119 +4232,463 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
           {/* Timeline (Experience + Education) Section */}
           <motion.section 
             id="experience" 
-            className="space-y-12 scroll-mt-24 relative"
+            className="space-y-10 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={sectionVariants}
           >
             <div id="timeline" className="absolute -top-24" />
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Career & Education
-                </span>
+            <div id="education" className="absolute -top-24" />
+            
+            {/* Header with Title and Interactive Filter Tabs */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                    <span>Career & Academic Tracks</span>
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
+                  Experience & Education
+                </h2>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Professional Timeline</h2>
-              <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+
+              {/* Interactive Tab Switcher */}
+              <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimelineFilter('all');
+                    soundFx.playClick();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+                    timelineFilter === 'all'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>All Tracks</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimelineFilter('experience');
+                    soundFx.playClick();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+                    timelineFilter === 'experience'
+                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                      : 'text-slate-400 hover:text-emerald-400 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Work Milestones ({experiences.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimelineFilter('education');
+                    soundFx.playClick();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+                    timelineFilter === 'education'
+                      ? 'bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 scale-[1.02]'
+                      : 'text-slate-400 hover:text-teal-400 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Academic Degrees ({education.length})</span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-emerald-500/30 transition-all">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <Briefcase className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Experience</span>
+                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">8+ Years Industry</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-teal-500/30 transition-all">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <GraduationCap className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Academics</span>
+                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">{education.length} Degrees Completed</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-cyan-500/30 transition-all">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <Cpu className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Current Status</span>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-400 font-mono truncate block flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Principal Architect</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-amber-500/30 transition-all">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <Award className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Track Record</span>
+                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">High-SLA Delivery</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Columns Container with Responsive Grid */}
+            <div className={`grid grid-cols-1 ${timelineFilter === 'all' ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto'} gap-8 lg:gap-10`}>
               
-              {/* Professional Work Experience column */}
-              <div className="lg:col-span-6 space-y-8 relative">
-                <div className="flex items-center gap-2.5 text-white mb-6">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-sm">
-                    <Briefcase className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold font-display">Work Milestones</h3>
-                </div>
-
-                <div className="border-l-2 border-emerald-500/20 pl-6 ml-3 space-y-10 relative">
-                  {experiences.map((exp, eIdx) => (
-                    <motion.div 
-                      key={exp.id} 
-                      initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      transition={{ duration: 0.4, delay: Math.min(eIdx * 0.1, 0.4) }}
-                      className="relative group space-y-2 p-4 rounded-2xl bg-slate-900/40 border border-white/[0.04] hover:border-emerald-500/40 hover:bg-slate-900/70 transition-all duration-300 shadow-lg"
-                    >
-                      {/* Pulsing Animated Timeline Node */}
-                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-slate-950 border-2 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] transition-all group-hover:scale-125 z-10" />
-                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-emerald-400/30 animate-ping pointer-events-none" />
-                      
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
-                          {exp.isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                          {exp.startDate} — {exp.isCurrent ? 'Present' : exp.endDate}
-                        </span>
-                        {exp.location && (
-                          <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1 bg-slate-950/60 px-2 py-0.5 rounded-md border border-white/[0.04]">
-                            <MapPin className="w-3 h-3 text-emerald-400" />
-                            {exp.location}
-                          </span>
-                        )}
+              {/* Professional Work Experience Column */}
+              {(timelineFilter === 'all' || timelineFilter === 'experience') && (
+                <div className={`${timelineFilter === 'all' ? 'lg:col-span-6' : 'w-full'} space-y-6 relative`}>
+                  
+                  <div className="flex items-center justify-between gap-3 text-white mb-2 p-3 rounded-2xl bg-slate-900/60 border border-emerald-500/20 backdrop-blur-md shadow-md">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-sm">
+                        <Briefcase className="w-4.5 h-4.5" />
                       </div>
-
-                      <h4 className="text-sm sm:text-base font-bold text-white leading-tight group-hover:text-emerald-300 transition-colors pt-1">
-                        {exp.role} <span className="text-slate-500 font-normal">at</span> <span className="text-emerald-400 font-bold">{exp.company}</span>
-                      </h4>
-
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {exp.description}
-                      </p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Academic Education column */}
-              <div className="lg:col-span-6 space-y-8 relative">
-                <div id="education" className="absolute -top-24" />
-                <div className="flex items-center gap-2.5 text-white mb-6">
-                  <div className="p-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 shadow-sm">
-                    <GraduationCap className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold font-display">Academic Background</h3>
-                </div>
-
-                <div className="border-l-2 border-teal-500/20 pl-6 ml-3 space-y-10 relative">
-                  {education.map((edu, edIdx) => (
-                    <motion.div 
-                      key={edu.id} 
-                      initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      transition={{ duration: 0.4, delay: Math.min(edIdx * 0.1, 0.4) }}
-                      className="relative group space-y-2 p-4 rounded-2xl bg-slate-900/40 border border-white/[0.04] hover:border-teal-500/40 hover:bg-slate-900/70 transition-all duration-300 shadow-lg"
-                    >
-                      {/* Pulsing Animated Timeline Node */}
-                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-slate-950 border-2 border-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.8)] transition-all group-hover:scale-125 z-10" />
-                      <span className="absolute -left-[33px] top-4 w-4 h-4 rounded-full bg-teal-400/30 animate-ping pointer-events-none" />
-                      
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-teal-400 font-bold bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/30 shadow-sm">
-                          {edu.startDate} — {edu.endDate}
-                        </span>
-                        {edu.grade && (
-                          <span className="text-[10px] font-mono text-emerald-300 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-md font-bold">
-                            Score / Grade: {edu.grade}
-                          </span>
-                        )}
+                      <div>
+                        <h3 className="text-base font-bold font-display text-white">Work Milestones</h3>
+                        <span className="text-[10px] font-mono text-emerald-400/80">Enterprise & Systems Architecture</span>
                       </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                      {experiences.length} Positions
+                    </span>
+                  </div>
 
-                      <h4 className="text-sm sm:text-base font-bold text-white leading-tight group-hover:text-teal-300 transition-colors pt-1">
-                        {edu.degree} <span className="text-slate-500 font-normal">in</span> <span className="text-teal-400 font-bold">{edu.fieldOfStudy}</span>
-                      </h4>
-                      <p className="text-xs text-slate-300 leading-normal flex items-center gap-1.5">
-                        <span className="text-slate-400 font-semibold">{edu.institution}</span>
-                      </p>
-                    </motion.div>
-                  ))}
+                  {/* Animated Vertical Laser Rail */}
+                  <div className="relative pl-7 sm:pl-8 ml-3 space-y-8">
+                    {/* Glowing Laser Rail Line */}
+                    <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-gradient-to-b from-emerald-400 via-emerald-500/40 to-transparent shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+
+                    {experiences.map((exp, eIdx) => {
+                      const isExpanded = expandedExperienceId === exp.id;
+                      const isHovered = hoveredTimelineKey === `exp-${exp.id}`;
+
+                      return (
+                        <motion.div 
+                          key={exp.id} 
+                          initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -25 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true, margin: "-50px" }}
+                          transition={{ duration: 0.45, delay: Math.min(eIdx * 0.1, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                          whileHover={prefersReduced ? {} : { y: -4, scale: 1.01 }}
+                          onMouseEnter={() => {
+                            setHoveredTimelineKey(`exp-${exp.id}`);
+                            soundFx.playHover();
+                          }}
+                          onMouseLeave={() => setHoveredTimelineKey(null)}
+                          className={`relative group rounded-2xl p-4 sm:p-5 transition-all duration-300 backdrop-blur-xl border ${
+                            exp.isCurrent
+                              ? 'bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-slate-950/90 border-emerald-500/40 shadow-xl shadow-emerald-950/30 hover:border-emerald-400 hover:shadow-emerald-500/15'
+                              : 'bg-slate-900/50 hover:bg-slate-900/80 border-white/[0.06] hover:border-emerald-500/30 shadow-lg'
+                          }`}
+                        >
+                          {/* Laser Milestone Node on the Spine */}
+                          <div className="absolute -left-[35px] sm:-left-[39px] top-5 flex items-center justify-center">
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                              exp.isCurrent
+                                ? 'bg-slate-950 border-2 border-emerald-400 shadow-[0_0_15px_#34d399]'
+                                : isHovered
+                                  ? 'bg-emerald-500 border-2 border-white scale-125 shadow-[0_0_12px_#34d399]'
+                                  : 'bg-slate-950 border-2 border-emerald-500/60 shadow-[0_0_8px_rgba(52,211,153,0.4)]'
+                            }`}>
+                              <span className={`w-2 h-2 rounded-full ${exp.isCurrent ? 'bg-emerald-400' : 'bg-emerald-500/60'}`} />
+                            </span>
+                            {exp.isCurrent && (
+                              <span className="absolute w-5 h-5 rounded-full bg-emerald-400/40 animate-ping pointer-events-none" />
+                            )}
+                          </div>
+
+                          {/* Ambient background hover flare */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+
+                          {/* Card Content */}
+                          <div className="space-y-3 relative z-10">
+                            
+                            {/* Date Badge & Location */}
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 shadow-sm ${
+                                exp.isCurrent
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
+                                  : 'bg-slate-950/80 text-emerald-400/90 border-emerald-500/20'
+                              }`}>
+                                <Calendar className="w-3 h-3 text-emerald-400" />
+                                <span>{exp.startDate} — {exp.isCurrent ? 'Present' : exp.endDate}</span>
+                                {exp.isCurrent && (
+                                  <span className="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-emerald-400 text-slate-950 font-black uppercase tracking-wider animate-pulse">
+                                    Active
+                                  </span>
+                                )}
+                              </span>
+
+                              {exp.location && (
+                                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-white/[0.04]">
+                                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                                  <span>{exp.location}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Role Title & Company */}
+                            <div className="flex items-start gap-3 pt-1">
+                              <div className="w-10 h-10 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold font-mono text-sm shrink-0 group-hover:scale-110 group-hover:rotate-6 group-hover:border-emerald-400 transition-all shadow-md">
+                                <Building2 className="w-5 h-5 text-emerald-400" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-sm sm:text-base font-extrabold text-white leading-tight group-hover:text-emerald-300 transition-colors">
+                                  {exp.role}
+                                </h4>
+                                <p className="text-xs font-mono text-emerald-400 font-semibold pt-0.5 flex items-center gap-1.5">
+                                  <span>@</span>
+                                  <span className="text-slate-200 font-bold">{exp.company}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Description text */}
+                            <p className="text-xs text-slate-300 leading-relaxed pt-0.5">
+                              {exp.description}
+                            </p>
+
+                            {/* Interactive Architectural Highlights toggle */}
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedExperienceId(isExpanded ? null : exp.id);
+                                  soundFx.playClick();
+                                }}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400 hover:text-emerald-300 transition-colors py-1 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 cursor-pointer"
+                              >
+                                <span>{isExpanded ? 'Hide Architecture Details' : 'Inspect Key Systems & Tech'}</span>
+                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              </button>
+
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                                    className="overflow-hidden pt-3 space-y-2.5"
+                                  >
+                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/20 space-y-2">
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
+                                        Architectural Highlights & Impact:
+                                      </span>
+                                      <ul className="space-y-1 text-xs text-slate-300 font-sans">
+                                        <li className="flex items-start gap-2">
+                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
+                                          <span>Engineered resilient microservice architectures with Java 21, Spring Boot, and PostgreSQL.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
+                                          <span>Orchestrated high-throughput Kafka streaming pipelines and low-latency API gateways.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
+                                          <span>Enforced zero-downtime CI/CD container deployments via Docker and Kubernetes.</span>
+                                        </li>
+                                      </ul>
+
+                                      <div className="pt-2 flex flex-wrap gap-1.5">
+                                        {["Java 21", "Spring Boot", "Kafka", "PostgreSQL", "Docker", "Cloud Native"].map((tech, tIdx) => (
+                                          <span key={tIdx} className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-semibold">
+                                            #{tech}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Academic Education Column */}
+              {(timelineFilter === 'all' || timelineFilter === 'education') && (
+                <div className={`${timelineFilter === 'all' ? 'lg:col-span-6' : 'w-full'} space-y-6 relative`}>
+                  
+                  <div className="flex items-center justify-between gap-3 text-white mb-2 p-3 rounded-2xl bg-slate-900/60 border border-teal-500/20 backdrop-blur-md shadow-md">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 shadow-sm">
+                        <GraduationCap className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold font-display text-white">Academic Background</h3>
+                        <span className="text-[10px] font-mono text-teal-400/80">Degrees & Computer Science Foundations</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold bg-teal-500/10 text-teal-400 px-2.5 py-1 rounded-lg border border-teal-500/30">
+                      {education.length} Credentials
+                    </span>
+                  </div>
+
+                  {/* Animated Vertical Laser Rail */}
+                  <div className="relative pl-7 sm:pl-8 ml-3 space-y-8">
+                    {/* Glowing Laser Rail Line */}
+                    <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-gradient-to-b from-teal-400 via-cyan-500/40 to-transparent shadow-[0_0_8px_rgba(45,212,191,0.6)]" />
+
+                    {education.map((edu, edIdx) => {
+                      const isExpanded = expandedEducationId === edu.id;
+                      const isHovered = hoveredTimelineKey === `edu-${edu.id}`;
+
+                      return (
+                        <motion.div 
+                          key={edu.id} 
+                          initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 25 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true, margin: "-50px" }}
+                          transition={{ duration: 0.45, delay: Math.min(edIdx * 0.1, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                          whileHover={prefersReduced ? {} : { y: -4, scale: 1.01 }}
+                          onMouseEnter={() => {
+                            setHoveredTimelineKey(`edu-${edu.id}`);
+                            soundFx.playHover();
+                          }}
+                          onMouseLeave={() => setHoveredTimelineKey(null)}
+                          className="relative group rounded-2xl p-4 sm:p-5 transition-all duration-300 backdrop-blur-xl border bg-slate-900/50 hover:bg-slate-900/80 border-white/[0.06] hover:border-teal-500/40 shadow-lg hover:shadow-teal-500/10"
+                        >
+                          {/* Laser Milestone Node on the Spine */}
+                          <div className="absolute -left-[35px] sm:-left-[39px] top-5 flex items-center justify-center">
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                              isHovered
+                                ? 'bg-teal-400 border-2 border-white scale-125 shadow-[0_0_12px_#2dd4bf]'
+                                : 'bg-slate-950 border-2 border-teal-500/60 shadow-[0_0_8px_rgba(45,212,191,0.4)]'
+                            }`}>
+                              <span className="w-2 h-2 rounded-full bg-teal-400" />
+                            </span>
+                          </div>
+
+                          {/* Ambient background hover flare */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-teal-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+
+                          {/* Card Content */}
+                          <div className="space-y-3 relative z-10">
+                            
+                            {/* Date Badge & Grade / Honors */}
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border bg-slate-950/80 text-teal-400 border-teal-500/20 flex items-center gap-1.5 shadow-sm">
+                                <Calendar className="w-3 h-3 text-teal-400" />
+                                <span>{edu.startDate} — {edu.endDate}</span>
+                              </span>
+
+                              {edu.grade && (
+                                <span className="text-[10px] font-mono text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-xs">
+                                  <Star className="w-3 h-3 text-amber-400" />
+                                  <span>{edu.grade}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Degree Title & Field */}
+                            <div className="flex items-start gap-3 pt-1">
+                              <div className="w-10 h-10 rounded-xl bg-slate-950 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold font-mono text-sm shrink-0 group-hover:scale-110 group-hover:-rotate-6 group-hover:border-teal-400 transition-all shadow-md">
+                                <GraduationCap className="w-5 h-5 text-teal-400" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-sm sm:text-base font-extrabold text-white leading-tight group-hover:text-teal-300 transition-colors">
+                                  {edu.degree}
+                                </h4>
+                                <p className="text-xs font-mono text-teal-400 font-semibold pt-0.5">
+                                  in <span className="text-slate-200 font-bold">{edu.fieldOfStudy}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Institution Name */}
+                            <p className="text-xs text-slate-300 leading-normal flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                              <span className="text-slate-300 font-semibold">{edu.institution}</span>
+                            </p>
+
+                            {/* Interactive Coursework toggle */}
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedEducationId(isExpanded ? null : edu.id);
+                                  soundFx.playClick();
+                                }}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-teal-400 hover:text-teal-300 transition-colors py-1 px-2.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/20 cursor-pointer"
+                              >
+                                <span>{isExpanded ? 'Hide Academic Highlights' : 'Inspect Specialization & Highlights'}</span>
+                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              </button>
+
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                                    className="overflow-hidden pt-3 space-y-2.5"
+                                  >
+                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-teal-500/20 space-y-2">
+                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
+                                        Core Computer Science Competencies:
+                                      </span>
+                                      <ul className="space-y-1 text-xs text-slate-300 font-sans">
+                                        <li className="flex items-start gap-2">
+                                          <span className="text-teal-400 font-bold mt-0.5">▹</span>
+                                          <span>Advanced Algorithms, Distributed Systems, Data Structures & Concurrency.</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                          <span className="text-teal-400 font-bold mt-0.5">▹</span>
+                                          <span>Relational Database Internals, Query Optimization, and Object-Oriented Architecture.</span>
+                                        </li>
+                                      </ul>
+
+                                      <div className="pt-2 flex flex-wrap gap-1.5">
+                                        {["Data Structures", "Distributed Systems", "Database Design", "Operating Systems", "Cloud Computing"].map((topic, topIdx) => (
+                                          <span key={topIdx} className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-teal-950/40 border border-teal-500/30 text-teal-400 font-semibold">
+                                            #{topic}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
             </div>
           </motion.section>
