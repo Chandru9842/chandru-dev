@@ -4199,7 +4199,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
             >
               {filteredSkills.map((skill, sIdx) => {
                 const itemColor = skill.color || '#10b981';
@@ -4209,29 +4209,54 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 const isSpin = skill.animation === 'Spin Slow';
                 const isGlow = skill.animation === 'Glow';
 
-                // Professional Tier classification without raw numbers
+                // Professional Tier & Category classification
                 const sName = (skill.name || '').toLowerCase();
                 const sCat = (skill.category || '').toLowerCase();
                 let tierTag = 'Core Stack';
                 let tierPill = 'Production Ready';
                 let tierBadgeColor = itemColor;
+                let capabilityChips = ['Enterprise Ready', 'Clean Architecture', 'Production SLA'];
 
-                if (sName.includes('java') || sName.includes('spring') || sName.includes('architect') || sName.includes('microservice')) {
+                if (sName.includes('java') || sName.includes('spring boot') || sName.includes('architect')) {
                   tierTag = 'Architect Tier';
                   tierPill = 'Core System';
                   tierBadgeColor = '#10b981';
-                } else if (sName.includes('sql') || sName.includes('postgres') || sName.includes('redis') || sName.includes('kafka') || sName.includes('mysql')) {
+                  capabilityChips = ['Spring Cloud', 'JVM 21', 'Microservices'];
+                } else if (sName.includes('security') || sName.includes('jwt')) {
+                  tierTag = 'Security & Auth';
+                  tierPill = 'Zero-Trust';
+                  tierBadgeColor = '#10b981';
+                  capabilityChips = ['OAuth2.0 / JWT', 'RBAC Security', 'Stateless Auth'];
+                } else if (sName.includes('sql') || sName.includes('postgres') || sName.includes('redis') || sName.includes('kafka') || sName.includes('mysql') || sName.includes('hibernate')) {
                   tierTag = 'High Throughput';
                   tierPill = 'Distributed Scale';
                   tierBadgeColor = '#06b6d4';
-                } else if (sName.includes('react') || sName.includes('tailwind') || sName.includes('typescript') || sName.includes('next') || sName.includes('javascript')) {
+                  capabilityChips = ['ACID Transactions', 'Index Tuning', 'JPA 3NF Mapping'];
+                } else if (sName.includes('react') || sName.includes('next')) {
                   tierTag = 'Modern Reactive';
                   tierPill = 'Enterprise UI';
                   tierBadgeColor = '#3b82f6';
+                  capabilityChips = ['SSR / React 19', 'Custom State Hooks', 'Fluid Motion'];
+                } else if (sName.includes('typescript') || sName.includes('javascript')) {
+                  tierTag = 'Type Architecture';
+                  tierPill = 'Strict Mode';
+                  tierBadgeColor = '#38bdf8';
+                  capabilityChips = ['Type-Safe Models', 'ESNext Pipelines', 'Clean Code'];
+                } else if (sName.includes('tailwind') || sName.includes('css')) {
+                  tierTag = 'Design System';
+                  tierPill = 'Custom Tokens';
+                  tierBadgeColor = '#38bdf8';
+                  capabilityChips = ['Glassmorphism', 'Dark Themes', 'Responsive 3NF'];
                 } else if (sName.includes('docker') || sName.includes('aws') || sName.includes('kubernetes') || sName.includes('cloud') || sName.includes('ci/cd')) {
                   tierTag = 'Cloud Native';
                   tierPill = 'DevOps & Infra';
                   tierBadgeColor = '#a855f7';
+                  capabilityChips = ['Container Pods', 'CI/CD Pipelines', 'Zero Downtime'];
+                } else if (sName.includes('cloudinary')) {
+                  tierTag = 'Media Pipeline';
+                  tierPill = 'CDN Edge';
+                  tierBadgeColor = '#6366f1';
+                  capabilityChips = ['Global CDN', 'WebP Transcoding', 'Signed URLs'];
                 }
 
                 return (
@@ -4241,7 +4266,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.35, delay: Math.min(sIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
                     whileHover={prefersReduced ? {} : { 
-                      y: -6, 
+                      y: -7, 
                       scale: 1.025,
                       transition: { duration: 0.2, ease: 'easeOut' }
                     }}
@@ -4250,75 +4275,94 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       setSelectedSkillForModal(skill);
                       soundFx.playModalOpen();
                     }}
-                    className={`glass-card rounded-2xl p-4 sm:p-5 border border-white/[0.06] hover:border-emerald-500/50 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-3 relative overflow-hidden group bg-slate-900/60 cursor-pointer ${
+                    className={`glass-card rounded-2xl p-5 border border-white/[0.08] hover:border-emerald-500/50 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 relative overflow-hidden group bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-900/90 cursor-pointer shadow-lg ${
                       isPulse ? 'animate-pulse' : ''
                     }`}
                     style={{
-                      boxShadow: isGlow ? `0 0 20px ${itemColor}25` : undefined
+                      boxShadow: isGlow ? `0 0 24px ${itemColor}25` : undefined
                     }}
                   >
-                    {/* Hover Glow Gradient */}
+                    {/* Top Right Ambient Neon Flare */}
                     <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none rounded-2xl"
-                      style={{ background: `radial-gradient(circle at top right, ${itemColor}, transparent 70%)` }}
+                      className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-0 group-hover:opacity-25 transition-opacity duration-300 pointer-events-none blur-2xl"
+                      style={{ background: itemColor }}
                     />
 
-                    {/* Top Row: Icon & Titles */}
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 overflow-hidden bg-slate-950 p-2 shadow-inner"
-                        style={{ 
-                          borderColor: `${itemColor}40`,
-                          boxShadow: `0 0 12px ${itemColor}20`
-                        }}
-                      >
-                        <SkillMediaRenderer 
-                          src={skill.iconUrl} 
-                          fallbackIcon={skill.iconName || 'Code2'} 
-                          fallbackColor={itemColor} 
-                          isSpin={isSpin} 
-                          alt={skill.name} 
-                        />
-                      </div>
-                      <div className="min-w-0 flex-grow">
-                        <span className="font-extrabold text-white block text-xs sm:text-sm truncate group-hover:text-emerald-300 transition-colors" title={skill.name}>
-                          {skill.name}
+                    {/* Top Row: Icon, Title & Category */}
+                    <div className="space-y-3 relative z-10">
+                      <div className="flex items-center justify-between gap-3">
+                        <div 
+                          className="w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 overflow-hidden bg-slate-950 p-2.5 shadow-inner"
+                          style={{ 
+                            borderColor: `${itemColor}45`,
+                            boxShadow: `0 0 14px ${itemColor}25`
+                          }}
+                        >
+                          <SkillMediaRenderer 
+                            src={skill.iconUrl} 
+                            fallbackIcon={skill.iconName || 'Code2'} 
+                            fallbackColor={itemColor} 
+                            isSpin={isSpin} 
+                            alt={skill.name} 
+                          />
+                        </div>
+
+                        <span 
+                          className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 transition-colors"
+                          style={{
+                            backgroundColor: `${tierBadgeColor}15`,
+                            color: tierBadgeColor,
+                            border: `1px solid ${tierBadgeColor}35`
+                          }}
+                        >
+                          {tierPill}
                         </span>
-                        <span className="text-[9px] font-mono block uppercase tracking-wider truncate font-semibold" style={{ color: itemColor }}>
+                      </div>
+
+                      <div>
+                        <h3 className="font-extrabold text-white text-base sm:text-lg tracking-tight group-hover:text-emerald-300 transition-colors truncate" title={skill.name}>
+                          {skill.name}
+                        </h3>
+                        <span className="text-[10px] font-mono block uppercase tracking-widest font-semibold mt-0.5" style={{ color: itemColor }}>
                           {skill.category}
                         </span>
                       </div>
+
+                      {skill.description && (
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 font-sans">
+                          {skill.description}
+                        </p>
+                      )}
                     </div>
 
-                    {skill.description && (
-                      <p className="text-[10px] sm:text-xs text-slate-300 leading-snug line-clamp-2 font-sans">
-                        {skill.description}
-                      </p>
-                    )}
-
-                    {/* Professional Enterprise Competency Indicators (No numbers/percentages) */}
-                    <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {/* Live Radar Beacon */}
-                        <span className="relative flex h-2 w-2 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <span className="font-mono text-[9px] font-bold text-slate-300 truncate">
-                          {tierTag}
-                        </span>
+                    {/* Architectural Capability Chips */}
+                    <div className="space-y-2.5 relative z-10 pt-2 border-t border-white/[0.05]">
+                      <div className="flex flex-wrap gap-1.5">
+                        {capabilityChips.map((chip, cIdx) => (
+                          <span 
+                            key={cIdx}
+                            className="px-2 py-0.5 rounded-md text-[9px] font-mono font-medium bg-slate-950/80 text-slate-300 border border-white/[0.06] shadow-sm"
+                          >
+                            {chip}
+                          </span>
+                        ))}
                       </div>
 
-                      <span 
-                        className="px-2 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase tracking-wider shrink-0 transition-colors group-hover:border-emerald-500/40"
-                        style={{
-                          backgroundColor: `${tierBadgeColor}15`,
-                          color: tierBadgeColor,
-                          border: `1px solid ${tierBadgeColor}30`
-                        }}
-                      >
-                        {tierPill}
-                      </span>
+                      {/* Bottom Live Status Bar */}
+                      <div className="flex items-center justify-between text-[10px] font-mono pt-1 text-slate-400">
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span className="font-bold text-slate-300">{tierTag}</span>
+                        </div>
+
+                        <span className="text-[9px] text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
+                          <span>Specs</span>
+                          <span>↗</span>
+                        </span>
+                      </div>
                     </div>
                   </motion.div>
                 );
