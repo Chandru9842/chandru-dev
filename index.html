@@ -42,143 +42,33 @@
     <meta property="twitter:description" content="Enterprise portfolio of Chandru Mohan featuring high-scale distributed systems, Java 21, Spring Boot microservices, Kafka event streams, and cloud architecture." />
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-400">
+    <style>
+      @keyframes initSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes initPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.04); }
+      }
+      @keyframes initShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+    </style>
     <div id="root">
-      <!-- Pre-rendered Static Hero Shell for Instant 0.1s FCP & LCP matching real data -->
-      <div class="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col antialiased">
-        <header class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-3.5 bg-slate-950/85 backdrop-blur-md border-b border-white/[0.06] shadow-lg shadow-black/30">
-          <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-emerald-500/30 overflow-hidden bg-slate-900 shrink-0">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&h=60&q=75&fm=webp" alt="Avatar" width="40" height="40" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex flex-col text-left">
-                <div class="flex items-center gap-2">
-                  <h2 class="text-sm sm:text-base font-bold text-white tracking-tight leading-none">CHANDRU M</h2>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Online
-                  </span>
-                </div>
-                <span class="text-[10px] sm:text-xs font-mono text-slate-400 mt-0.5">Principal Systems Architect</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="px-3.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-mono text-xs font-bold">Interactive Portfolio</span>
-            </div>
-          </div>
-        </header>
-
-        <section id="hero" class="relative min-h-[90vh] flex items-center justify-center pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-hidden px-4 sm:px-6 lg:px-8">
-          <div class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-            <div class="lg:col-span-7 xl:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 sm:space-y-7">
-              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-medium">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>Available for High-Impact Roles</span>
-              </div>
-
-              <div class="flex flex-col gap-2 sm:gap-2.5 w-full">
-                <span class="text-[10px] sm:text-xs font-mono text-emerald-400/90 uppercase tracking-widest block font-bold">SENIOR CLOUD ARCHITECT</span>
-                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">CHANDRU M</h1>
-                <p class="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">PRINCIPAL SYSTEMS ARCHITECT</p>
-                <h2 class="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug">Distributed Systems &amp; Cloud Engineer</h2>
-              </div>
-
-              <p class="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces that scale dynamically.</p>
-
-              <div class="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-1 sm:pt-2 w-full">
-                <a href="#projects" class="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xl shadow-emerald-500/10">
-                  <span>Explore Engineering</span>
-                </a>
-                <a href="#contact" class="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 glass-card text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 border border-white/[0.08]">
-                  <span>Get in Touch</span>
-                </a>
-                <a href="#experience" class="w-full sm:w-auto px-4 py-2.5 border border-white/[0.08] bg-white/[0.02] text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2">
-                  <span>View Resume</span>
-                </a>
-                <a href="/api/resume/download" class="w-full sm:w-auto px-4 py-2.5 border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2">
-                  <span>Download CV</span>
-                </a>
-                <div class="flex flex-col text-[10px] font-mono text-slate-500 items-center sm:items-start pl-0 sm:pl-3 sm:border-l sm:border-white/[0.06]">
-                  <span class="text-emerald-400/80 font-bold">Version 2.4.0</span>
-                  <span class="mt-0.5 text-slate-600">Updated Recently</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="lg:col-span-5 xl:col-span-6 w-full h-[320px] sm:h-[380px] md:h-[440px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 flex items-center justify-center my-2 lg:my-0 shadow-2xl">
-              <div class="relative w-full h-full flex flex-col items-center justify-center p-6 select-none overflow-hidden">
-                <div class="absolute w-44 h-44 rounded-full bg-emerald-500/10 blur-2xl"></div>
-                <div class="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-emerald-500/20 flex items-center justify-center">
-                  <div class="absolute -top-1.5 w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399]"></div>
-                  <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-dashed border-emerald-400/30 flex items-center justify-center">
-                    <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-slate-950 via-emerald-950/80 to-emerald-500/20 border border-emerald-400/40 shadow-[0_0_30px_rgba(16,185,129,0.25)] flex items-center justify-center text-emerald-400">
-                      ✨
-                    </div>
-                  </div>
-                </div>
-                <div class="mt-4 flex flex-col items-center gap-2.5 z-10">
-                  <div class="px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 shadow-lg flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span class="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
-                      JAVA 21 • SPRING BOOT • REACT • KAFKA • MYSQL
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="lg:col-span-12 w-full pt-6 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 md:gap-4 w-full">
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">👁️</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">12,450</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">Page Views</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">Live Impressions</span>
-                  </div>
-                </div>
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-sky-500/30 bg-sky-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">👥</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">4,820</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">Unique Visitors</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">Distinct Clients</span>
-                  </div>
-                </div>
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">💼</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">15+</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">Projects Delivered</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">Production Grade</span>
-                  </div>
-                </div>
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">&lt;/&gt;</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">350+</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">LeetCode Solved</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">Knight Rating 2150+</span>
-                  </div>
-                </div>
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-teal-500/30 bg-teal-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">⚡</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">28</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">GitHub Repositories</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">Open Source</span>
-                  </div>
-                </div>
-                <div class="w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md">
-                  <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">🎖️</div>
-                  <div class="min-w-0 flex-1">
-                    <span class="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate block">12+</span>
-                    <span class="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">Certifications</span>
-                    <span class="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">AWS &amp; Kubernetes</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+      <!-- Branded Zero-Flash Initialization Screen -->
+      <div style="min-height: 100vh; background-color: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; color: #f8fafc; padding: 20px; text-align: center;">
+        <div style="position: relative; width: 68px; height: 68px; margin-bottom: 22px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; inset: 0; border-radius: 20px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); animation: initPulse 2.4s ease-in-out infinite;"></div>
+          <div style="position: absolute; inset: 4px; border-radius: 16px; border: 2px dashed rgba(16, 185, 129, 0.4); animation: initSpin 10s linear infinite;"></div>
+          <span style="font-size: 24px; font-weight: 800; color: #34d399; font-family: 'Cinzel', serif;">C</span>
+        </div>
+        <h1 style="font-size: 22px; font-weight: 800; letter-spacing: 0.06em; color: #ffffff; margin: 0 0 6px 0; font-family: 'Cinzel', serif;">CHANDRU M</h1>
+        <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #34d399; text-transform: uppercase; letter-spacing: 0.15em; margin: 0 0 24px 0; font-weight: 700;">Principal Systems Architect</p>
+        <div style="width: 160px; height: 3px; background: rgba(255, 255, 255, 0.06); border-radius: 9999px; overflow: hidden; position: relative;">
+          <div style="position: absolute; inset: 0; width: 100%; background: linear-gradient(90deg, transparent, #10b981, #34d399, #06b6d4, transparent); border-radius: 9999px; animation: initShimmer 1.5s ease-in-out infinite;"></div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
