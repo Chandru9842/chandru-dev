@@ -51,7 +51,8 @@ import {
   PortfolioMetricItem, TestimonialItem, ArticleItem, initialTools, initialProfile, initialProjects, 
   initialSkills, initialCertificates, initialAchievements, initialExperiences, initialEducation, 
   initialSettings, initialFooter, initialSocialLinks, initialThemeSettings, initialAnalytics, 
-  initialResumes, initialCodingProfiles, initialPortfolioMetrics, initialTestimonials, initialArticles 
+  initialResumes, initialCodingProfiles, initialPortfolioMetrics, initialTestimonials, initialArticles,
+  initialTechStack 
 } from '../data/cmsMockData';
 import { 
   getPlatformIconComponent, 
@@ -487,7 +488,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [activeResume, setActiveResume] = useState<ResumeItem | null>(initialResumes[0] || null);
   const [profile, setProfile] = useState<any>(initialProfile);
   const [theme, setTheme] = useState<any>(initialThemeSettings);
-  const [technologies, setTechnologies] = useState<any[]>([]);
+  const [technologies, setTechnologies] = useState<any[]>(initialTechStack);
   const [codingProfiles, setCodingProfiles] = useState<CodingProfileItem[]>(initialCodingProfiles);
   const [tools, setTools] = useState<ToolItem[]>(initialTools);
   const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetricItem[]>(initialPortfolioMetrics);
@@ -1375,6 +1376,13 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         setTestimonials(visibleTestimonials);
       }
 
+      if (data.technologies && Array.isArray(data.technologies)) {
+        const sortedTechnologies = [...data.technologies].sort(
+          (a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0)
+        );
+        setTechnologies(sortedTechnologies);
+      }
+
       if (data.articles && Array.isArray(data.articles)) {
         const visibleArticles = data.articles
           .filter((a: any) => a.isPublished !== false)
@@ -1573,6 +1581,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         if (socialLinks.length === 0) setSocialLinks(initialSocialLinks);
         if (!footer) setFooter(initialFooter);
         if (!theme) setTheme(initialThemeSettings);
+        if (technologies.length === 0) setTechnologies(initialTechStack);
         setIsBackendOffline(false);
         setIsLoading(false);
         setIsRetrying(false);
