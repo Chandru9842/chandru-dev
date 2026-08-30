@@ -1824,12 +1824,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
     { name: 'Notification Center', icon: <Bell className="w-4 h-4 text-emerald-400" /> },
     { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
-    { name: 'Hero Management', icon: <Palette className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Profile', icon: <User className="w-4 h-4" /> },
     { name: 'Portfolio Metrics', icon: <BarChart3 className="w-4 h-4 text-emerald-400" /> },
     { name: 'Testimonials', icon: <MessageSquareQuote className="w-4 h-4 text-emerald-400" /> },
     { name: 'Articles & Blog', icon: <BookOpenCheck className="w-4 h-4 text-emerald-400" /> },
-    { name: 'Tech Stack', icon: <Cpu className="w-4 h-4 text-emerald-400" /> },
-    { name: 'Profile', icon: <User className="w-4 h-4" /> },
     { name: 'Projects', icon: <BookOpen className="w-4 h-4" /> },
     { name: 'Skills', icon: <Cpu className="w-4 h-4" /> },
     { name: 'Tools & Technologies', icon: <Terminal className="w-4 h-4 text-emerald-400" /> },
@@ -2111,12 +2109,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                     🚀 Projects DB
                   </button>
                   <button
-                    onClick={() => setActiveTab('Tech Stack')}
+                    onClick={() => setActiveTab('Profile')}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
-                      activeTab === 'Tech Stack' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
+                      activeTab === 'Profile' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
-                    🛠️ Tech Stack
+                    👤 Profile & Hero
                   </button>
                   <button
                     onClick={() => setActiveTab('Theme & Appearance')}

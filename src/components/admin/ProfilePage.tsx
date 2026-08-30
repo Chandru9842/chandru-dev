@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Image as ImageIcon, FileText, Share2, Shield, Edit2, Check, RefreshCw, 
   Trash2, UploadCloud, Sliders, ZoomIn, CheckCircle2, AlertTriangle, Play, Save, 
-  RotateCcw, Eye, Download, Info, Globe, Mail, Phone, MapPin, Briefcase, Calendar, Lock, Unlock, Cpu, Folder
+  RotateCcw, Eye, Download, Info, Globe, Mail, Phone, MapPin, Briefcase, Calendar, Lock, Unlock, Cpu, Folder, Plus, Sparkles
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
 import MediaLibraryModal from './MediaLibraryModal';
+import TechStackPage from './TechStackPage';
 import { AnimatedProfileAvatar } from '../AnimatedProfileAvatar';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 import { isDemoSessionActive, checkAndBlockDemoAction, DEMO_RESTRICTION_MESSAGE } from '../../utils/demoAuthUtils';
@@ -18,10 +19,16 @@ interface ProfileData {
   heroBackground: string;
   heroAvatar?: string;
   heroBadge?: string;
+  professionalLabel?: string;
   heroName?: string;
   heroTitle?: string;
   heroSubtitle?: string;
   heroDescription?: string;
+  statusBadgeText?: string;
+  versionText?: string;
+  updateText?: string;
+  highlightTags?: string;
+  heroVisibility?: boolean;
   fullName: string;
   displayName: string;
   title: string;
@@ -89,7 +96,7 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ onTriggerToast, onProfileUpdated }: ProfilePageProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'basic' | 'hero' | 'images' | 'resume' | 'bio' | 'career' | 'experience' | 'location' | 'availability' | 'buttons' | 'seo' | 'security'>('basic');
+  const [activeSubTab, setActiveSubTab] = useState<'basic' | 'hero' | 'techstack' | 'images' | 'resume' | 'bio' | 'career' | 'experience' | 'location' | 'availability' | 'buttons' | 'seo' | 'security'>('basic');
   
   // Loading & original database profiles
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -97,6 +104,11 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  // Hero Operational Metrics / Quick Stats list state
+  const [stats, setStats] = useState<{ value: string; label: string }[]>([]);
+  const [newStatValue, setNewStatValue] = useState('');
+  const [newStatLabel, setNewStatLabel] = useState('');
+
   // Technologies states
   const [technologies, setTechnologies] = useState<any[]>([]);
   const [newTechName, setNewTechName] = useState('');
@@ -481,6 +493,48 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       setCurrentHistoryIndex(nextIndex);
       onTriggerToast("Reapplied reverted change (Redo).", "success");
     }
+  };
+
+  // Synchronize stats list when profile.quickStats changes or on load
+  useEffect(() => {
+    if (profile?.quickStats && profile.quickStats.trim()) {
+      const parsed = profile.quickStats.split('|').map(item => {
+        const parts = item.trim().split(' ');
+        return {
+          value: parts[0] || '',
+          label: parts.slice(1).join(' ') || ''
+        };
+      }).filter(s => s.value || s.label);
+      setStats(parsed);
+    } else {
+      setStats([]);
+    }
+  }, [profile?.quickStats]);
+
+  const handleAddStat = () => {
+    if (!newStatValue.trim() || !newStatLabel.trim()) {
+      onTriggerToast("Both Stat value and label are required.", "error");
+      return;
+    }
+    const updatedStats = [...stats, { value: newStatValue.trim(), label: newStatLabel.trim() }];
+    setStats(updatedStats);
+    setNewStatValue('');
+    setNewStatLabel('');
+    const quickStatsString = updatedStats.map(s => `${s.value} ${s.label}`).join(' | ');
+    if (profile) {
+      updateProfileStateWithHistory({ ...profile, quickStats: quickStatsString });
+    }
+    onTriggerToast("Metric added to Hero presentation.", "success");
+  };
+
+  const handleDeleteStat = (index: number) => {
+    const updatedStats = stats.filter((_, i) => i !== index);
+    setStats(updatedStats);
+    const quickStatsString = updatedStats.map(s => `${s.value} ${s.label}`).join(' | ');
+    if (profile) {
+      updateProfileStateWithHistory({ ...profile, quickStats: quickStatsString });
+    }
+    onTriggerToast("Metric removed from Hero presentation.", "success");
   };
 
   // Reset Handler
@@ -992,8 +1046,20 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
           }`}
         >
+          <Sliders className="w-3.5 h-3.5 text-emerald-400/80" />
+          <span>Hero Presentation</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('techstack')}
+          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === 'techstack'
+              ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
+          }`}
+        >
           <Cpu className="w-3.5 h-3.5 text-emerald-400/80" />
-          <span>Hero & Tech Stack</span>
+          <span>Hero Tech Stack</span>
         </button>
 
         <button
@@ -1231,24 +1297,431 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
             </div>
           )}
 
-          {/* HERO & TECH STACK REDIRECTION */}
+          {/* HERO PRESENTATION & CUSTOMIZER */}
           {activeSubTab === 'hero' && (
-            <div className="space-y-6 text-center py-10">
-              <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-4 text-emerald-400">
-                <Sliders className="w-7 h-7" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider font-mono">Independent Module Focus</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                Hero customization and Tech Stack management have been decoupled into independent administrative modules!
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-                <div className="px-4 py-2 border border-slate-800 bg-slate-950/80 rounded-xl text-[11px] font-mono text-slate-300">
-                  ← Select <strong>Hero Management</strong> in sidebar
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sliders className="w-4.5 h-4.5 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-slate-100 font-mono">Hero Landing Page & Presentation Customizer</h3>
                 </div>
-                <div className="px-4 py-2 border border-slate-800 bg-slate-950/80 rounded-xl text-[11px] font-mono text-slate-300">
-                  ← Select <strong>Tech Stack</strong> in sidebar
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-mono text-slate-400">Hero Section State:</span>
+                  <button
+                    type="button"
+                    onClick={() => updateProfileStateWithHistory({ ...profile, heroVisibility: profile.heroVisibility === false ? true : false })}
+                    className={`px-3 py-1 text-[10px] font-mono rounded-lg border transition cursor-pointer ${
+                      profile.heroVisibility !== false 
+                        ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
+                        : 'bg-rose-950/20 border-rose-500/20 text-rose-400 hover:bg-rose-500/10'
+                    }`}
+                  >
+                    {profile.heroVisibility !== false ? '● Visible on Live' : '○ Hidden on Live'}
+                  </button>
                 </div>
               </div>
+
+              {/* Visual Media Assets (Avatar & Landscape Background) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Hero Avatar Photo */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Avatar Photo</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Floating portrait next to online status node</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
+                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-lg transition cursor-pointer hover:text-emerald-400"
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('heroAvatar')}
+                        className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-lg transition cursor-pointer"
+                      >
+                        Media Library
+                      </button>
+                      {profile.heroAvatar && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImageField('heroAvatar')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete Hero Avatar"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
+                    <AnimatedProfileAvatar
+                      src={profile.heroAvatar}
+                      alt={profile.heroName || profile.fullName || "Hero Avatar"}
+                      size="sm"
+                      shape="circle"
+                      glowIntensity="vibrant"
+                      showStatus={false}
+                    />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <input 
+                        type="text"
+                        value={profile.heroAvatar || ""}
+                        onChange={(e) => updateProfileStateWithHistory({ ...profile, heroAvatar: e.target.value })}
+                        placeholder="https://example.com/avatar.jpg"
+                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      />
+                      <p className="text-[9px] text-slate-500 font-mono truncate">{profile.heroAvatar || "No custom hero avatar loaded"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hero Landscape Background */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Landscape Wallpaper</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Ambient backdrop visualizer</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('hero', 16/9)}
+                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-lg transition cursor-pointer hover:text-emerald-400"
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('heroBackground')}
+                        className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-lg transition cursor-pointer"
+                      >
+                        Media Library
+                      </button>
+                      {profile.heroBackground && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImageField('heroBackground')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete Hero Background"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
+                    <div className="w-full h-20 rounded-lg border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden relative">
+                      {profile.heroBackground ? (
+                        <img src={profile.heroBackground} alt="Hero Background Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="text-[9px] font-mono text-slate-600">Default Ambient Atmosphere</span>
+                      )}
+                    </div>
+                    <input 
+                      type="text"
+                      value={profile.heroBackground || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroBackground: e.target.value })}
+                      placeholder="https://example.com/background.jpg"
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Highlight Tags */}
+              <div className="space-y-1.5 border border-slate-800 bg-slate-950/40 rounded-2xl p-4">
+                <label className="block text-[11px] font-mono text-slate-300 font-bold">Highlight Skill & Competency Tags (Comma-Separated)</label>
+                <input 
+                  type="text" 
+                  value={profile.highlightTags ?? ""} 
+                  onChange={(e) => updateProfileStateWithHistory({ ...profile, highlightTags: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                  placeholder="e.g. #CloudNative, #HighConcurrency, #ZeroDowntime, #DistributedSystems"
+                />
+                <p className="text-[9px] text-slate-500 font-mono">Displayed as vibrant neon-bordered pills in the Hero section.</p>
+              </div>
+
+              {/* Copy, Typography & Titles */}
+              <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-5 space-y-4">
+                <h4 className="text-xs font-bold font-mono text-slate-200 uppercase tracking-wider">Hero Copy, Typography & Titles</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Hero Badge */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Badge Text</label>
+                    <input 
+                      type="text" 
+                      value={profile.heroBadge ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroBadge: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. FULL STACK JAVA DEVELOPER"
+                    />
+                  </div>
+
+                  {/* Professional Label */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Professional Eyebrow Label</label>
+                    <input 
+                      type="text" 
+                      value={profile.professionalLabel ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, professionalLabel: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. SYSTEMS ARCHITECT"
+                    />
+                  </div>
+
+                  {/* Hero Name */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Display Name</label>
+                    <input 
+                      type="text" 
+                      value={profile.heroName ?? profile.fullName ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroName: e.target.value, fullName: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. CHANDRU M"
+                    />
+                  </div>
+
+                  {/* Hero Title */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Display Title</label>
+                    <input 
+                      type="text" 
+                      value={profile.heroTitle ?? profile.title ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroTitle: e.target.value, title: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Principal Systems Architect"
+                    />
+                  </div>
+
+                  {/* Hero Subtitle */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Display Subtitle</label>
+                    <input 
+                      type="text" 
+                      value={profile.heroSubtitle ?? profile.shortTagline ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroSubtitle: e.target.value, shortTagline: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Ecosystem Architect & Product Pioneer"
+                    />
+                  </div>
+
+                  {/* Status Badge Label */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Status Badge Heading</label>
+                    <input 
+                      type="text" 
+                      value={profile.statusBadgeText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, statusBadgeText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Founder Online / Available for Hire"
+                    />
+                  </div>
+
+                  {/* Online Status Node */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Online Status Node Text</label>
+                    <input 
+                      type="text" 
+                      value={profile.onlineStatus ?? "Online"} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, onlineStatus: e.target.value as any })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Online / Open to Work"
+                    />
+                  </div>
+
+                  {/* Portfolio Version Tag */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Portfolio Version Tag</label>
+                    <input 
+                      type="text" 
+                      value={profile.versionText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, versionText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Version 2.4.0"
+                    />
+                  </div>
+
+                  {/* Updated Date Label */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-[11px] font-mono text-slate-400">Updated Date Label</label>
+                    <input 
+                      type="text" 
+                      value={profile.updateText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, updateText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Updated Recently / Updated July 2026"
+                    />
+                  </div>
+
+                  {/* Hero Typing Animation Words */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-[11px] font-mono text-slate-400">Typing Animation Words (Comma-Separated)</label>
+                    <input 
+                      type="text" 
+                      value={profile.typingText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, typingText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Systems Architect, Full-Stack Pioneer, Clean Code Advocate"
+                    />
+                  </div>
+
+                  {/* Hero Short Description */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Short Description</label>
+                    <textarea 
+                      rows={3}
+                      value={profile.heroDescription ?? profile.shortIntroduction ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroDescription: e.target.value, shortIntroduction: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-sans text-slate-100 transition focus:outline-none resize-none leading-relaxed"
+                      placeholder="I design and build resilient cloud systems, real-time analytics engines, and gorgeous web-based developer interfaces..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hero Call-to-Action Buttons */}
+              <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-5 space-y-4">
+                <h4 className="text-xs font-bold font-mono text-slate-200 uppercase tracking-wider">Hero Call-to-Action Buttons</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Primary button Text */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Primary Button Text</label>
+                    <input 
+                      type="text" 
+                      value={profile.primaryCtaText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, primaryCtaText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Explore Engineering"
+                    />
+                  </div>
+
+                  {/* Primary button Link */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Primary Button Target URL / ID</label>
+                    <input 
+                      type="text" 
+                      value={profile.primaryCtaUrl ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, primaryCtaUrl: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. #projects"
+                    />
+                  </div>
+
+                  {/* Secondary button Text */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Contact Button Text</label>
+                    <input 
+                      type="text" 
+                      value={profile.secondaryCtaText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, secondaryCtaText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Get in Touch"
+                    />
+                  </div>
+
+                  {/* Secondary button Link */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Contact Button Target URL / ID</label>
+                    <input 
+                      type="text" 
+                      value={profile.secondaryCtaUrl ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, secondaryCtaUrl: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. #contact"
+                    />
+                  </div>
+
+                  {/* Resume download text */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-[11px] font-mono text-slate-400">Resume Download Button Text</label>
+                    <input 
+                      type="text" 
+                      value={profile.resumeDownloadText ?? ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, resumeDownloadText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Download CV"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hero Statistics Operational Metrics Builder */}
+              <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-900">
+                  <div>
+                    <h4 className="text-xs font-bold font-mono text-slate-200 uppercase tracking-wider">Hero Statistics (Operational Metrics)</h4>
+                    <p className="text-[10px] text-slate-500 font-mono">Live counter metrics rendered directly on the Hero banner</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {stats.map((stat, idx) => (
+                      <div key={idx} className="p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className="text-sm font-bold font-mono text-emerald-400 block truncate">{stat.value}</span>
+                          <span className="text-[10px] font-mono text-slate-400 block truncate">{stat.label}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStat(idx)}
+                          className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded transition cursor-pointer"
+                          title="Remove Metric"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Stat Input Bar */}
+                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                    <input 
+                      type="text" 
+                      placeholder="Value (e.g. 8+)" 
+                      value={newStatValue}
+                      onChange={(e) => setNewStatValue(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 flex-1 focus:outline-none w-full"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Label (e.g. Years Exp)" 
+                      value={newStatLabel}
+                      onChange={(e) => setNewStatLabel(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 flex-1 focus:outline-none w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddStat}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer w-full sm:w-auto shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Metric</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* HERO TECH STACK SUB-TAB */}
+          {activeSubTab === 'techstack' && (
+            <div className="space-y-6">
+              <TechStackPage 
+                onTriggerToast={onTriggerToast}
+                onTechStackUpdated={fetchProfileAndResumes}
+              />
             </div>
           )}
 

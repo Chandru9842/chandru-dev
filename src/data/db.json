@@ -1,6 +1,29 @@
 {
   "projects": [
     {
+      "title": "h vgyuuihui h",
+      "slug": "h-vgyuuihui-h",
+      "description": "ijuh u89u89knjnbnhiojiooj",
+      "liveUrl": "",
+      "githubUrl": "",
+      "startDate": "2026-02-01",
+      "endDate": "",
+      "isFeatured": false,
+      "displayOrder": 1,
+      "skills": [
+        "spring boot"
+      ],
+      "imageUrl": "",
+      "category": "Full-Stack",
+      "status": "Completed",
+      "videoUrl": "",
+      "gallery": [],
+      "createdAt": "2026-08-30T03:58:38.899Z",
+      "updatedAt": "2026-08-30T03:59:13.085Z",
+      "id": 4,
+      "order": 1
+    },
+    {
       "id": 1,
       "title": "AI-Powered Meeting Summarizer",
       "slug": "ai-meeting-summarizer",
@@ -10,7 +33,7 @@
       "startDate": "2026-01-15",
       "endDate": "2026-04-30",
       "isFeatured": true,
-      "displayOrder": 1,
+      "displayOrder": 2,
       "skills": [
         "React",
         "Spring Boot",
@@ -26,7 +49,8 @@
         "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2026-01-15T09:00:00Z",
-      "updatedAt": "2026-04-30T17:30:00Z"
+      "updatedAt": "2026-08-30T03:59:13.085Z",
+      "order": 2
     },
     {
       "id": 2,
@@ -38,7 +62,7 @@
       "startDate": "2025-08-10",
       "endDate": "2025-12-20",
       "isFeatured": true,
-      "displayOrder": 2,
+      "displayOrder": 3,
       "skills": [
         "React",
         "Node.js",
@@ -53,7 +77,8 @@
         "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2025-08-10T10:00:00Z",
-      "updatedAt": "2025-12-20T18:00:00Z"
+      "updatedAt": "2026-08-30T03:59:13.085Z",
+      "order": 3
     },
     {
       "id": 3,
@@ -65,7 +90,7 @@
       "startDate": "2025-03-01",
       "endDate": "2025-07-15",
       "isFeatured": false,
-      "displayOrder": 3,
+      "displayOrder": 4,
       "skills": [
         "React",
         "D3.js",
@@ -80,7 +105,8 @@
         "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=480&q=75&fm=webp"
       ],
       "createdAt": "2025-03-01T08:00:00Z",
-      "updatedAt": "2025-07-15T16:00:00Z"
+      "updatedAt": "2026-08-30T03:59:13.085Z",
+      "order": 4
     }
   ],
   "skills": [
@@ -236,7 +262,7 @@
     }
   ],
   "analytics": {
-    "pageViews": 12455,
+    "pageViews": 12456,
     "uniqueVisitors": 4121,
     "averageSessionSec": 184,
     "contactConversionRate": 2.8,
@@ -278,7 +304,7 @@
       },
       {
         "date": "Aug 30",
-        "views": 5,
+        "views": 6,
         "visitors": 1
       }
     ],
@@ -295,7 +321,7 @@
       },
       {
         "source": "Direct Traffic",
-        "count": 2185,
+        "count": 2186,
         "percentage": 17.5
       },
       {
@@ -316,7 +342,7 @@
       },
       {
         "country": "India",
-        "count": 2125
+        "count": 2126
       },
       {
         "country": "Germany",
@@ -338,7 +364,7 @@
     "browsers": [
       {
         "browser": "Chrome",
-        "count": 7455
+        "count": 7456
       },
       {
         "browser": "Safari",
@@ -360,7 +386,7 @@
     "devices": [
       {
         "device": "Desktop",
-        "count": 8595
+        "count": 8596
       },
       {
         "device": "Mobile",
@@ -1580,6 +1606,40 @@
       "location": "Bengaluru, India",
       "status": "SUCCESS",
       "createdAt": "2026-08-29T20:06:14.969Z"
+    },
+    {
+      "id": 6,
+      "action": "Project Created",
+      "module": "Projects",
+      "description": "Committed new project \"h vgyuuihui h\" to portfolio index.",
+      "oldValue": null,
+      "newValue": "{\"title\":\"h vgyuuihui h\",\"slug\":\"h-vgyuuihui-h\",\"description\":\"ijuh u89u89knjnbnhiojiooj\",\"liveUrl\":\"\",\"githubUrl\":\"\",\"startDate\":\"2026-02-01\",\"endDate\":\"\",\"isFeatured\":false,\"displayOrder\":4,\"skills\":[\"spring boot\"],\"imageUrl\":\"\",\"category\":\"Full-Stack\",\"status\":\"Completed\",\"videoUrl\":\"\",\"gallery\":[],\"createdAt\":\"2026-08-30T03:58:38.899Z\",\"updatedAt\":\"2026-08-30T03:59:07.988Z\",\"id\":4}",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "California, USA",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-30T03:59:08.077Z"
+    },
+    {
+      "id": 7,
+      "action": "Projects Reordered",
+      "module": "Projects",
+      "description": "Updated custom priority and display ordering for projects.",
+      "oldValue": null,
+      "newValue": "[{\"id\":4,\"displayOrder\":1},{\"id\":1,\"displayOrder\":2},{\"id\":2,\"displayOrder\":3},{\"id\":3,\"displayOrder\":4}]",
+      "performedBy": "Chandru Mohan",
+      "role": "ROLE_ADMIN",
+      "browser": "Chrome",
+      "operatingSystem": "Windows 10/11",
+      "device": "Desktop",
+      "ipAddress": "127.0.0.1",
+      "location": "Singapore",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-30T03:59:13.086Z"
     }
   ],
   "refreshTokens": [
@@ -1593,6 +1653,64 @@
   "otps": [],
   "codingProfiles": [],
   "notifications": [
+    {
+      "id": "evt-1788062353086-535",
+      "eventId": "EVT-1788062353087",
+      "module": "Projects",
+      "action": "Projects Reordered",
+      "title": "Projects Reordered",
+      "description": "Updated custom priority and display ordering for projects.",
+      "message": "Updated custom priority and display ordering for projects.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-08-30T03:59:13.087Z",
+      "createdAt": "2026-08-30T03:59:13.087Z",
+      "severity": "Information",
+      "category": "Projects",
+      "type": "PROJECTS",
+      "icon": "BookOpen",
+      "color": "#3b82f6",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "Singapore"
+      }
+    },
+    {
+      "id": "evt-1788062348081-240",
+      "eventId": "EVT-1788062348088",
+      "module": "Projects",
+      "action": "Project Created",
+      "title": "Project Created",
+      "description": "Committed new project \"h vgyuuihui h\" to portfolio index.",
+      "message": "Committed new project \"h vgyuuihui h\" to portfolio index.",
+      "performedBy": "Chandru Mohan",
+      "timestamp": "2026-08-30T03:59:08.088Z",
+      "createdAt": "2026-08-30T03:59:08.088Z",
+      "severity": "Success",
+      "category": "Projects",
+      "type": "PROJECTS",
+      "icon": "BookOpen",
+      "color": "#3b82f6",
+      "status": "UNREAD",
+      "read": false,
+      "unread": true,
+      "pinned": false,
+      "archived": false,
+      "metadata": {
+        "browser": "Chrome",
+        "operatingSystem": "Windows 10/11",
+        "device": "Desktop",
+        "ipAddress": "127.0.0.1",
+        "location": "California, USA"
+      }
+    },
     {
       "id": "evt-1788033975068-866",
       "eventId": "EVT-1788033975068",
