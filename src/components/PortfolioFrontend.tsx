@@ -342,7 +342,6 @@ const desktopNavItems = [
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
   { id: "articles", label: "Articles" },
-  { id: "github-activity", label: "GitHub Live" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools" },
@@ -359,7 +358,6 @@ const mobileNavItems = [
   { id: "about", label: "About" },
   { id: "projects", label: "Projects" },
   { id: "articles", label: "Articles & Blog" },
-  { id: "github-activity", label: "GitHub Live Activity" },
   { id: "coding-profiles", label: "Coding Profiles" },
   { id: "skills", label: "Skills" },
   { id: "tools", label: "Tools & Technologies" },
@@ -381,157 +379,196 @@ interface ProjectCardProps {
 
 function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActiveSlideIndex, trackProjectView }: ProjectCardProps) {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setCoords({ x, y });
+
+    if (!prefersReduced) {
+      // Calculate 3D tilt angles (-6deg to +6deg)
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -6;
+      const rotateY = ((x - centerX) / centerX) * 6;
+      setTilt({ rotateX, rotateY });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ rotateX: 0, rotateY: 0 });
   };
 
   const projectSkills = (proj.skills || (proj as any).tags || []) as string[];
 
   return (
-    <motion.article 
-      initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={() => {
-        setSelectedProjectForModal(proj);
-        setActiveSlideIndex(0);
-        trackProjectView(proj.slug, proj.title);
-      }}
-      className="relative glass-card rounded-2xl overflow-hidden flex flex-col h-full group border border-white/[0.04] hover:border-emerald-500/30 transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-emerald-500/10"
-      whileHover={prefersReduced ? {} : {
-        scale: 1.015,
-        transition: { duration: 0.3, ease: "easeOut" }
-      }}
-    >
-      {/* Light spotlight effect */}
-      {!prefersReduced && isHovered && (
-        <div
-          className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-300"
-          style={{
-            background: `radial-gradient(350px circle at ${coords.x}px ${coords.y}px, rgba(16, 185, 129, 0.08), transparent 85%)`,
-            zIndex: 1,
-          }}
-        />
-      )}
+    <div style={{ perspective: 1000 }} className="h-full">
+      <motion.article 
+        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        animate={{ 
+          opacity: 1, 
+          y: 0,
+          rotateX: prefersReduced ? 0 : tilt.rotateX,
+          rotateY: prefersReduced ? 0 : tilt.rotateY,
+          transformStyle: "preserve-3d"
+        }}
+        transition={{ 
+          duration: isHovered ? 0.1 : 0.45, 
+          ease: isHovered ? "linear" : [0.16, 1, 0.3, 1] 
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => {
+          setSelectedProjectForModal(proj);
+          setActiveSlideIndex(0);
+          trackProjectView(proj.slug, proj.title);
+        }}
+        className="relative rounded-2xl overflow-hidden flex flex-col h-full group border border-emerald-500/20 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-[#020617] backdrop-blur-xl transition-all duration-300 cursor-pointer shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-emerald-500/15 hover:border-emerald-400/50"
+        whileHover={prefersReduced ? {} : {
+          scale: 1.02,
+          transition: { duration: 0.25, ease: "easeOut" }
+        }}
+      >
+        {/* Cybernetic HUD Corner Brackets */}
+        <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
+        <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
+        <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
+        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
 
-      {/* Subtle border glow spotlight */}
-      {!prefersReduced && isHovered && (
-        <div
-          className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-300 border border-emerald-500/20"
-          style={{
-            background: `radial-gradient(200px circle at ${coords.x}px ${coords.y}px, rgba(16, 185, 129, 0.15), transparent 60%)`,
-            maskImage: 'linear-gradient(black, black)',
-            WebkitMaskImage: 'linear-gradient(black, black)',
-            zIndex: 0,
-          }}
-        />
-      )}
-
-      <div className="relative aspect-video w-full overflow-hidden bg-slate-900 shrink-0 z-10">
-        <SkillMediaRenderer 
-          src={proj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"} 
-          alt={proj.title}
-          variant="cover"
-          className="group-hover:scale-105 transition-all duration-700 opacity-80 group-hover:opacity-100"
-        />
-        
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-          <span className="bg-slate-950/80 backdrop-blur-md text-emerald-400 font-mono text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-500/25 uppercase tracking-wider">
-            {proj.category || "Full-Stack"}
-          </span>
-          <span className={`backdrop-blur-md font-mono text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
-            proj.status === 'Completed' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/20' :
-            proj.status === 'In Development' ? 'bg-amber-950/80 text-amber-400 border-amber-500/20' :
-            proj.status === 'Concept' ? 'bg-purple-950/80 text-purple-400 border-purple-500/20' :
-            proj.status === 'Maintained' ? 'bg-sky-950/80 text-sky-400 border-sky-500/20' :
-            'bg-slate-950/80 text-slate-400 border-slate-500/20'
-          }`}>
-            {proj.status || "Completed"}
-          </span>
-        </div>
-
-        {proj.isFeatured && (
-          <div className="absolute top-3 right-3 bg-amber-500 text-slate-950 font-mono text-[9px] font-extrabold px-2 py-0.5 rounded border border-amber-400/20 uppercase tracking-widest shadow-md flex items-center gap-1">
-            <Sparkles className="w-2.5 h-2.5" />
-            <span>Featured</span>
+        {/* Laser Sweep Scan Highlight (Active on Hover) */}
+        {isHovered && !prefersReduced && (
+          <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden z-30 pointer-events-none">
+            <div className="w-full h-full bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-laser-sweep shadow-[0_0_8px_#34d399]" />
           </div>
         )}
-      </div>
 
-      <div className="p-6 flex flex-col flex-grow justify-between gap-6 z-10">
-        <div className="space-y-3.5">
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
-            <span>{proj.startDate} — {proj.endDate || 'Present'}</span>
-            {proj.gallery && proj.gallery.length > 0 && (
-              <span className="text-emerald-500/80">+{proj.gallery.length} Screens</span>
-            )}
+        {/* Interactive Radial Spotlight */}
+        {!prefersReduced && isHovered && (
+          <div
+            className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-300 z-10"
+            style={{
+              background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, rgba(16, 185, 129, 0.12), transparent 80%)`,
+            }}
+          />
+        )}
+
+        {/* Card Media Section */}
+        <div className="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0 z-10 border-b border-white/[0.06]">
+          <SkillMediaRenderer 
+            src={proj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"} 
+            alt={proj.title}
+            variant="cover"
+            className="group-hover:scale-108 group-hover:brightness-110 transition-all duration-700 opacity-85 group-hover:opacity-100"
+          />
+          
+          {/* Engineering HUD Telemetry Tag */}
+          <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-20">
+            <span className="bg-slate-950/90 backdrop-blur-md text-emerald-400 font-mono text-[9px] font-bold px-2.5 py-0.5 rounded-md border border-emerald-500/40 uppercase tracking-widest flex items-center gap-1 shadow-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {proj.category || "Full-Stack"}
+            </span>
+            <span className={`backdrop-blur-md font-mono text-[9px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${
+              proj.status === 'Completed' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/30' :
+              proj.status === 'In Development' ? 'bg-amber-950/90 text-amber-300 border-amber-500/30' :
+              proj.status === 'Concept' ? 'bg-purple-950/90 text-purple-300 border-purple-500/30' :
+              proj.status === 'Maintained' ? 'bg-sky-950/90 text-sky-300 border-sky-500/30' :
+              'bg-slate-950/90 text-slate-300 border-slate-500/30'
+            }`}>
+              {proj.status || "Completed"}
+            </span>
           </div>
-          <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
-            {proj.title}
-          </h3>
-          <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-            {proj.description}
-          </p>
+
+          {proj.isFeatured && (
+            <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[9px] font-black px-2.5 py-0.5 rounded-md border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1 z-20">
+              <Sparkles className="w-2.5 h-2.5" />
+              <span>Production Blueprint</span>
+            </div>
+          )}
+
+          {/* Bottom Gradient Vignette */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent pointer-events-none" />
         </div>
 
-        <div className="space-y-5">
-          <div className="flex flex-wrap gap-1.5">
-            {projectSkills.map((skill, idx) => (
-              <span 
-                key={idx} 
-                className="text-[9px] font-mono bg-white/[0.03] border border-white/[0.04] px-2 py-0.5 rounded text-slate-300"
-              >
-                {skill}
+        {/* Card Content Section */}
+        <div className="p-6 flex flex-col flex-grow justify-between gap-5 z-20">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-[10px] font-mono text-emerald-400/80">
+              <span className="flex items-center gap-1">
+                <span className="text-slate-500">TIMELINE:</span>
+                <span>{proj.startDate} — {proj.endDate || 'Present'}</span>
               </span>
-            ))}
+              {proj.gallery && proj.gallery.length > 0 && (
+                <span className="text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-1.5 py-0.2 rounded text-[9px]">
+                  +{proj.gallery.length} Arch Diagrams
+                </span>
+              )}
+            </div>
+            
+            <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-1 font-display tracking-tight">
+              {proj.title}
+            </h3>
+            
+            <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+              {proj.description}
+            </p>
           </div>
 
-          <div className="flex items-center justify-between border-t border-white/[0.04] pt-4 text-xs font-semibold">
-            <span className="text-emerald-400 group-hover:translate-x-1 transition-transform flex items-center gap-1 font-mono text-[10px] uppercase">
-              <span>Review Blueprint</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </span>
+          <div className="space-y-4">
+            {/* Tech Stack Chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {projectSkills.map((skill, idx) => (
+                <span 
+                  key={idx} 
+                  className="text-[9px] font-mono bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded text-emerald-300/90 group-hover:border-emerald-500/40 transition-colors"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
 
-            <div className="flex items-center gap-3.5" onClick={(e) => e.stopPropagation()}>
-              {proj.liveUrl && (
-                <a 
-                  href={proj.liveUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1"
-                  title={`Live Deployment of ${proj.title}`}
-                  aria-label={`Live site for ${proj.title}`}
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                </a>
-              )}
-              {proj.githubUrl && (
-                <a 
-                  href={proj.githubUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-slate-400 hover:text-white transition-colors flex items-center gap-1"
-                  title={`Source Repository for ${proj.title}`}
-                  aria-label={`Source repository for ${proj.title}`}
-                >
-                  <Github className="w-3.5 h-3.5" />
-                </a>
-              )}
+            {/* Card Action Footer */}
+            <div className="flex items-center justify-between border-t border-white/[0.06] pt-3.5 text-xs font-semibold">
+              <span className="text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all flex items-center gap-1.5 font-mono text-[10px] uppercase font-bold tracking-wider">
+                <span>Inspect Blueprint</span>
+                <ChevronRight className="w-3.5 h-3.5 group-hover:scale-125 transition-transform" />
+              </span>
+
+              <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
+                {proj.liveUrl && (
+                  <a 
+                    href={proj.liveUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all flex items-center justify-center"
+                    title={`Live Deployment of ${proj.title}`}
+                    aria-label={`Live site for ${proj.title}`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                  </a>
+                )}
+                {proj.githubUrl && (
+                  <a 
+                    href={proj.githubUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/30 text-slate-400 hover:text-white transition-all flex items-center justify-center"
+                    title={`Source Repository for ${proj.title}`}
+                    aria-label={`Source repository for ${proj.title}`}
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </motion.article>
+      </motion.article>
+    </div>
   );
 }
 
@@ -3980,73 +4017,95 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     return (
                       <motion.article
                         key={art.id || `grid-art-${aIdx}`}
-                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, delay: Math.min(aIdx * 0.05, 0.3) }}
-                        whileHover={prefersReduced ? {} : { y: -6, transition: { duration: 0.25, ease: 'easeOut' } }}
-                        className={`glass-card rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 h-full ${
+                        transition={{ duration: 0.4, delay: Math.min(aIdx * 0.06, 0.35), ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={prefersReduced ? {} : { 
+                          y: -8, 
+                          transition: { duration: 0.28, ease: 'easeOut' } 
+                        }}
+                        className={`rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 h-full relative cursor-pointer ${
                           isFeatured
-                            ? 'border-emerald-500/40 bg-emerald-500/[0.02] shadow-xl shadow-emerald-500/5'
-                            : 'border-white/[0.05] bg-slate-900/40 hover:border-emerald-500/30'
+                            ? 'border-amber-500/40 bg-gradient-to-b from-slate-900/95 via-[#0b0e17] to-slate-950/95 shadow-xl shadow-amber-500/10 hover:border-amber-400 hover:shadow-2xl hover:shadow-amber-500/25'
+                            : 'border-white/[0.08] border-l-[3px] border-l-amber-500/80 bg-gradient-to-b from-slate-900/85 via-[#0a0d15] to-slate-950/95 hover:border-amber-500/40 hover:border-l-amber-400 hover:shadow-2xl hover:shadow-amber-500/20'
                         }`}
+                        style={{
+                          boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05)'
+                        }}
+                        onClick={() => setSelectedArticleForModal(art)}
                       >
-                        {/* Card Cover Image */}
-                        <div 
-                          onClick={() => setSelectedArticleForModal(art)}
-                          className="relative h-48 bg-slate-950 overflow-hidden shrink-0 cursor-pointer"
-                        >
+                        {/* Top Subtle Amber Sheen Line */}
+                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent group-hover:via-amber-400 transition-colors z-20" />
+
+                        {/* Card Cover Image with Editorial Overlay */}
+                        <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
                           {coverImg ? (
                             <img
                               src={coverImg}
                               alt={art.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              className="w-full h-full object-cover group-hover:scale-106 group-hover:brightness-105 transition-all duration-700 opacity-90 group-hover:opacity-100"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                              <BookOpenCheck className="w-12 h-12 text-emerald-400/40" />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
+                              <BookOpenCheck className="w-12 h-12 text-amber-400/40 mb-1" />
+                              <span className="text-[9px] font-mono text-amber-400/80 uppercase tracking-widest font-bold">Research Paper</span>
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent" />
+
+                          {/* Diagonal Silk Sheen Sweep on Hover */}
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden">
+                            <div className="w-[120%] h-[120%] bg-gradient-to-r from-transparent via-white/10 to-transparent animate-journal-sheen" />
+                          </div>
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/50 to-transparent pointer-events-none" />
                           
-                          <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center">
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 uppercase">
-                              {art.category}
+                          {/* Editorial Masthead Badges */}
+                          <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center z-10">
+                            <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-slate-950/90 backdrop-blur-md text-amber-300 border border-amber-500/40 uppercase tracking-wider shadow-lg">
+                              {art.category || "Architecture"}
                             </span>
                             {isFeatured && (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
+                              <span className="px-2.5 py-1 rounded-md text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-amber-500/30">
                                 <Sparkles className="w-3 h-3" />
-                                Featured
+                                Editorial Choice
                               </span>
                             )}
                           </div>
 
-                          <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/[0.08]">
-                            <Clock className="w-3 h-3 text-emerald-400" />
+                          {/* Reading Time Tag */}
+                          <div className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 text-[10px] font-mono text-amber-200 bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-amber-500/30 shadow-md z-10">
+                            <Clock className="w-3 h-3 text-amber-400" />
                             <span>{readMins} min read</span>
                           </div>
                         </div>
 
-                        {/* Card Body */}
-                        <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                        {/* Card Body & Journal Metadata */}
+                        <div className="p-5 flex-1 flex flex-col justify-between gap-4 z-10">
                           <div className="space-y-2.5">
-                            <h3 
-                              onClick={() => setSelectedArticleForModal(art)}
-                              className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors leading-snug cursor-pointer line-clamp-2"
-                            >
+                            <div className="text-[9px] font-mono text-amber-400/90 uppercase tracking-widest font-bold flex items-center gap-2">
+                              <span>VOL. {String(aIdx + 1).padStart(2, '0')} // PUBLICATION</span>
+                              <span className="w-1 h-1 rounded-full bg-amber-400" />
+                              <span className="text-slate-400">
+                                {new Date(art.publishedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+
+                            <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors leading-snug line-clamp-2 font-serif">
                               {art.title}
                             </h3>
+
                             <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
                               {excerptText}
                             </p>
                           </div>
 
-                          <div className="space-y-3 pt-3 border-t border-white/[0.04]">
+                          <div className="space-y-3 pt-3 border-t border-white/[0.06]">
                             {/* Tags */}
                             {art.tags && art.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1.5">
                                 {art.tags.slice(0, 3).map((tag, i) => (
-                                  <span key={i} className="text-[9px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-white/[0.04]">
+                                  <span key={i} className="text-[9px] font-mono text-amber-300/80 bg-amber-950/30 px-2 py-0.5 rounded border border-amber-500/20">
                                     #{tag}
                                   </span>
                                 ))}
@@ -4061,21 +4120,26 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             {/* Footer Action */}
                             <div className="flex items-center justify-between pt-1">
                               <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-500/40 bg-slate-950 shrink-0">
+                                <div className="w-6 h-6 rounded-full overflow-hidden border border-amber-400/50 bg-slate-950 shrink-0">
                                   {profile?.profileImage ? (
                                     <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
                                   ) : (
-                                    <span className="text-[9px] font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
+                                    <span className="text-[9px] font-bold text-amber-400 flex items-center justify-center h-full">C</span>
                                   )}
                                 </div>
                                 <span className="text-[11px] font-medium text-slate-300 truncate">{authorName}</span>
                               </div>
 
                               <button
-                                onClick={() => setSelectedArticleForModal(art)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer group-hover:translate-x-0.5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  soundFx.playModalOpen();
+                                  setSelectedArticleForModal(art);
+                                }}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-all cursor-pointer group-hover:translate-x-1"
                               >
-                                <span>Read Article</span>
+                                <BookOpen className="w-3.5 h-3.5" />
+                                <span>Read Paper</span>
                                 <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>

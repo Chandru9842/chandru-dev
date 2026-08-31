@@ -110,35 +110,7 @@
     </script>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-400">
-    <style>
-      @keyframes initSpin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      @keyframes initPulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.6; transform: scale(1.04); }
-      }
-      @keyframes initShimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-      }
-    </style>
-    <div id="root">
-      <!-- Branded Zero-Flash Initialization Screen -->
-      <div style="min-height: 100vh; background-color: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; color: #f8fafc; padding: 20px; text-align: center;">
-        <div style="position: relative; width: 68px; height: 68px; margin-bottom: 22px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; inset: 0; border-radius: 20px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); animation: initPulse 2.4s ease-in-out infinite;"></div>
-          <div style="position: absolute; inset: 4px; border-radius: 16px; border: 2px dashed rgba(16, 185, 129, 0.4); animation: initSpin 10s linear infinite;"></div>
-          <span style="font-size: 24px; font-weight: 800; color: #34d399; font-family: 'Cinzel', serif;">C</span>
-        </div>
-        <h1 style="font-size: 22px; font-weight: 800; letter-spacing: 0.06em; color: #ffffff; margin: 0 0 6px 0; font-family: 'Cinzel', serif;">CHANDRU M</h1>
-        <p style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #34d399; text-transform: uppercase; letter-spacing: 0.15em; margin: 0 0 24px 0; font-weight: 700;">Principal Systems Architect</p>
-        <div style="width: 160px; height: 3px; background: rgba(255, 255, 255, 0.06); border-radius: 9999px; overflow: hidden; position: relative;">
-          <div style="position: absolute; inset: 0; width: 100%; background: linear-gradient(90deg, transparent, #10b981, #34d399, #06b6d4, transparent); border-radius: 9999px; animation: initShimmer 1.5s ease-in-out infinite;"></div>
-        </div>
-      </div>
-    </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

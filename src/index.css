@@ -172,3 +172,45 @@ body {
   animation: glass-sheen 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+/* =========================================================
+   PROJECT CYBERNETIC 3D & LASER SCAN ANIMATIONS
+   ========================================================= */
+@keyframes laser-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-laser-sweep {
+  animation: laser-sweep 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* =========================================================
+   EDITORIAL JOURNAL & PUBLICATION ACCENTS
+   ========================================================= */
+@keyframes journal-sheen-sweep {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(200%) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+.animate-journal-sheen {
+  animation: journal-sheen-sweep 4s ease-in-out infinite;
+}
+
