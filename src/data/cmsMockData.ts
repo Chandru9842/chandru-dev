@@ -476,6 +476,11 @@ export interface ProfileItem {
   codechefUrl?: string;
   codeforcesUrl?: string;
   portfolioUrl?: string;
+  websiteLogo?: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  ogImage?: string;
+  logoText?: string;
   createdAt: string;
   updatedAt: string;
 }
