@@ -4,7 +4,6 @@ import { Layers, Database, Code2, ShieldAlert, ArrowRight, BookOpen, GitFork, Re
 import StatusCard from './components/StatusCard';
 import PortfolioFrontend from './components/PortfolioFrontend';
 import PublicPreviewWrapper from './components/PublicPreviewWrapper';
-import RecruiterDemoGate from './components/RecruiterDemoGate';
 import { PageTransitionWrapper, StaggerContainer, AnimatedCard } from './components/PageTransitionWrapper';
 import DeepSpaceParticleOverlay from './components/DeepSpaceParticleOverlay';
 import AuroraWaveBackground from './components/AuroraWaveBackground';
@@ -15,7 +14,8 @@ const DatabaseERD = React.lazy(() => import('./components/DatabaseERD'));
 const CodeExplorer = React.lazy(() => import('./components/CodeExplorer'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 const DeveloperTerminalModal = React.lazy(() => import('./components/DeveloperTerminalModal'));
-import AdminLogin from './components/AdminLogin';
+const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
+const RecruiterDemoGate = React.lazy(() => import('./components/RecruiterDemoGate'));
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -261,10 +261,12 @@ export default function App() {
       navigate('/admin/dashboard');
     } else {
       return (
-        <AdminLogin 
-          onLoginSuccess={handleLoginSuccess}
-          onBackToPortfolio={() => navigate('/')}
-        />
+        <React.Suspense fallback={<div className="min-h-screen bg-[#020617]" />}>
+          <AdminLogin 
+            onLoginSuccess={handleLoginSuccess}
+            onBackToPortfolio={() => navigate('/')}
+          />
+        </React.Suspense>
       );
     }
   }
@@ -284,10 +286,12 @@ export default function App() {
 
     if (!isAuthenticated) {
       return (
-        <AdminLogin 
-          onLoginSuccess={handleLoginSuccess}
-          onBackToPortfolio={() => navigate('/')}
-        />
+        <React.Suspense fallback={<div className="min-h-screen bg-[#020617]" />}>
+          <AdminLogin 
+            onLoginSuccess={handleLoginSuccess}
+            onBackToPortfolio={() => navigate('/')}
+          />
+        </React.Suspense>
       );
     }
   }
@@ -302,12 +306,16 @@ export default function App() {
         <PublicPreviewWrapper>
           <PortfolioFrontend onEnterCMS={handleEnterCMS} />
         </PublicPreviewWrapper>
-        <RecruiterDemoGate
-          isOpen={showDemoGate}
-          onClose={() => setShowDemoGate(false)}
-          onEnterDemo={handleConfirmDemoEntry}
-          onAdminLogin={handleAdminLoginRedirect}
-        />
+        {showDemoGate && (
+          <React.Suspense fallback={null}>
+            <RecruiterDemoGate
+              isOpen={showDemoGate}
+              onClose={() => setShowDemoGate(false)}
+              onEnterDemo={handleConfirmDemoEntry}
+              onAdminLogin={handleAdminLoginRedirect}
+            />
+          </React.Suspense>
+        )}
       </>
     );
   }

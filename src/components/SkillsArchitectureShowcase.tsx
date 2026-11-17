@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { ProjectItem, SkillItem } from '../data/cmsMockData';
 import SkillMediaRenderer from './SkillMediaRenderer';
-import TechProficiencyHeatmap from './TechProficiencyHeatmap';
+const TechProficiencyHeatmap = React.lazy(() => import('./TechProficiencyHeatmap'));
 
 interface SkillsArchitectureShowcaseProps {
   skills: SkillItem[];
@@ -1139,13 +1139,23 @@ export default function SkillsArchitectureShowcase({
 
       {/* Interactive D3.js Tech Proficiency Heatmap (Displayed in 'heatmap' mode or directly below 3D Spotlight Grid) */}
       {(viewMode === 'heatmap' || viewMode === 'spotlight') && (
-        <TechProficiencyHeatmap
-          skills={visibleSkills}
-          projects={projects}
-          prefersReduced={prefersReduced}
-          onSelectSkillForModal={onSelectSkillForModal}
-          soundFx={soundFx}
-        />
+        <React.Suspense
+          fallback={
+            <div className="h-64 w-full rounded-3xl bg-slate-900/50 border border-white/[0.06] animate-pulse flex items-center justify-center">
+              <span className="text-xs font-mono text-emerald-400/80 uppercase tracking-widest">
+                Loading D3 Proficiency Matrix...
+              </span>
+            </div>
+          }
+        >
+          <TechProficiencyHeatmap
+            skills={visibleSkills}
+            projects={projects}
+            prefersReduced={prefersReduced}
+            onSelectSkillForModal={onSelectSkillForModal}
+            soundFx={soundFx}
+          />
+        </React.Suspense>
       )}
 
       {/* VIEW 2: Architecture Blueprint Matrix (Grouped by Domain Layer) */}

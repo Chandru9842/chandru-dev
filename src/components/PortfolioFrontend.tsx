@@ -15,20 +15,115 @@ import DynamicBackground from './DynamicBackground';
 import DeepSpaceParticleOverlay from './DeepSpaceParticleOverlay';
 import AuroraWaveBackground from './AuroraWaveBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
-import ProjectPerformanceDashboard from './ProjectPerformanceDashboard';
-import ProjectRechartsMetricsPanel from './ProjectRechartsMetricsPanel';
-import AboutBiographyTimeline from './AboutBiographyTimeline';
-import ArticleMonographCard from './ArticleMonographCard';
-import CodingProfileSpotlightCard from './CodingProfileSpotlightCard';
-import SkillsArchitectureShowcase from './SkillsArchitectureShowcase';
-import ToolsEcosystemWorkbench from './ToolsEcosystemWorkbench';
-import ExperienceEducationShowcase from './ExperienceEducationShowcase';
-import CertificationsAchievementsShowcase from './CertificationsAchievementsShowcase';
+const ProjectPerformanceDashboard = React.lazy(() => import('./ProjectPerformanceDashboard'));
+const ProjectRechartsMetricsPanel = React.lazy(() => import('./ProjectRechartsMetricsPanel'));
+const AboutBiographyTimeline = React.lazy(() => import('./AboutBiographyTimeline'));
+const ArticleMonographCard = React.lazy(() => import('./ArticleMonographCard'));
+const CodingProfileSpotlightCard = React.lazy(() => import('./CodingProfileSpotlightCard'));
+const SkillsArchitectureShowcase = React.lazy(() => import('./SkillsArchitectureShowcase'));
+const ToolsEcosystemWorkbench = React.lazy(() => import('./ToolsEcosystemWorkbench'));
+const ExperienceEducationShowcase = React.lazy(() => import('./ExperienceEducationShowcase'));
+const CertificationsAchievementsShowcase = React.lazy(() => import('./CertificationsAchievementsShowcase'));
 import { AnimatedProfileAvatar } from './AnimatedProfileAvatar';
 import { soundFx } from '../utils/soundEffects';
 import { notifyCmsUpdate } from '../utils/notifyCmsSync';
 const AIPortfolioChat = React.lazy(() => import('./AIPortfolioChat'));
 const DeveloperTerminalModal = React.lazy(() => import('./DeveloperTerminalModal'));
+
+// Background chunk preloader for instant section jumps and idle mobile hydration
+let hasPreloadedHeavyChunks = false;
+const preloadHeavyPortfolioChunks = () => {
+  if (hasPreloadedHeavyChunks) return;
+  hasPreloadedHeavyChunks = true;
+  import('./AboutBiographyTimeline');
+  import('./SkillsArchitectureShowcase');
+  import('./ToolsEcosystemWorkbench');
+  import('./ExperienceEducationShowcase');
+  import('./CertificationsAchievementsShowcase');
+  import('./CodingProfileSpotlightCard');
+  import('./ArticleMonographCard');
+  import('./ProjectPerformanceDashboard');
+};
+
+const LazySectionSkeleton: React.FC<{ minHeight?: string; label?: string; fallbackAnchors?: string[] }> = ({
+  minHeight = '320px',
+  label = 'Loading Architecture Module...',
+  fallbackAnchors = [],
+}) => (
+  <div
+    style={{ minHeight }}
+    className="w-full rounded-3xl bg-slate-900/35 border border-white/[0.05] flex flex-col items-center justify-center p-8 relative overflow-hidden"
+  >
+    {fallbackAnchors.map((anchorId) => (
+      <div key={anchorId} id={anchorId} className="absolute -top-24" />
+    ))}
+    <div className="w-7 h-7 border-2 border-emerald-400/80 border-t-transparent rounded-full animate-spin mb-2.5" />
+    <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400">
+      {label}
+    </span>
+  </div>
+);
+
+const LazySectionBoundary: React.FC<{
+  children: React.ReactNode;
+  minHeight?: string;
+  label?: string;
+  forceHydrate?: boolean;
+  fallbackAnchors?: string[];
+}> = ({ children, minHeight = '320px', label, forceHydrate = false, fallbackAnchors = [] }) => {
+  const [shouldRender, setShouldRender] = useState<boolean>(forceHydrate);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (forceHydrate) {
+      setShouldRender(true);
+    }
+  }, [forceHydrate]);
+
+  useEffect(() => {
+    if (shouldRender) return;
+    const el = hostRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setShouldRender(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldRender(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '700px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shouldRender]);
+
+  return (
+    <div ref={hostRef} className="w-full">
+      {shouldRender ? (
+        <React.Suspense
+          fallback={
+            <LazySectionSkeleton
+              minHeight={minHeight}
+              label={label}
+              fallbackAnchors={fallbackAnchors}
+            />
+          }
+        >
+          {children}
+        </React.Suspense>
+      ) : (
+        <LazySectionSkeleton
+          minHeight={minHeight}
+          label={label}
+          fallbackAnchors={fallbackAnchors}
+        />
+      )}
+    </div>
+  );
+};
 
 class CanvasErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -981,10 +1076,20 @@ function ProjectCard({
               </div>
 
               {spotlightConsoleTab === "metrics" ? (
-                <ProjectRechartsMetricsPanel
-                  project={proj}
-                  onSoundClick={(freq) => soundFx.playClick(freq)}
-                />
+                <React.Suspense
+                  fallback={
+                    <div className="h-48 w-full rounded-2xl bg-slate-900/50 border border-white/[0.06] animate-pulse flex items-center justify-center">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest">
+                        Loading Recharts Telemetry...
+                      </span>
+                    </div>
+                  }
+                >
+                  <ProjectRechartsMetricsPanel
+                    project={proj}
+                    onSoundClick={(freq) => soundFx.playClick(freq)}
+                  />
+                </React.Suspense>
               ) : (
                 <>
                   <div className="space-y-4">
@@ -1100,7 +1205,9 @@ function ProjectCard({
                   </div>
 
                   {/* D3.js Project Performance Dashboard (Traffic, Deploy Success, Uptime Trends) */}
-                  <ProjectPerformanceDashboard project={proj} />
+                  <React.Suspense fallback={<div className="h-28 w-full rounded-xl bg-slate-900/40 animate-pulse" />}>
+                    <ProjectPerformanceDashboard project={proj} />
+                  </React.Suspense>
 
                   {/* Simulated Deployment Pipeline Log Terminal */}
                   <div className="rounded-xl bg-[#030712] border border-emerald-500/25 overflow-hidden shadow-inner">
@@ -1420,7 +1527,9 @@ function ProjectCard({
 
               <div className="space-y-4">
                 {/* Compact D3.js Performance Telemetry Strip */}
-                <ProjectPerformanceDashboard project={proj} compact />
+                <React.Suspense fallback={<div className="h-12 w-full rounded-xl bg-slate-900/40" />}>
+                  <ProjectPerformanceDashboard project={proj} compact />
+                </React.Suspense>
 
                 {/* Interactive Technology Stack Filter Buttons */}
                 {projectSkills.length > 0 && (
@@ -1987,6 +2096,27 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const isProgrammaticScrollRef = useRef<boolean>(false);
   const programmaticScrollTimerRef = useRef<any>(null);
+  const [isHero3DReady, setIsHero3DReady] = useState<boolean>(false);
+  const [forceHydrateAllSections, setForceHydrateAllSections] = useState<boolean>(false);
+
+  // Defer heavy WebGL ThreeDHero boot & background chunk preloading until after First Contentful Paint / TTI
+  useEffect(() => {
+    const isMobileViewport = window.innerWidth < 768;
+    const heroDelay = isMobileViewport ? 180 : 60;
+    const heroTimer = setTimeout(() => {
+      setIsHero3DReady(true);
+    }, heroDelay);
+
+    const idleHydrateTimer = setTimeout(() => {
+      preloadHeavyPortfolioChunks();
+      setForceHydrateAllSections(true);
+    }, isMobileViewport ? 1400 : 800);
+
+    return () => {
+      clearTimeout(heroTimer);
+      clearTimeout(idleHydrateTimer);
+    };
+  }, []);
 
   useEffect(() => {
     const sections = ["hero", "home", "about", "projects", "articles", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "testimonials", "contact"];
@@ -2106,37 +2236,48 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       );
     };
 
-    const element = findTargetElement();
-    if (element) {
-      isProgrammaticScrollRef.current = true;
-      if (programmaticScrollTimerRef.current) {
-        clearTimeout(programmaticScrollTimerRef.current);
-      }
-      programmaticScrollTimerRef.current = setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 380);
+    // Ensure all lazy sections are immediately hydrated prior to programmatic jump
+    preloadHeavyPortfolioChunks();
+    setForceHydrateAllSections(true);
 
-      setActiveSection(normalizedId);
-
-      if (window.history && window.history.replaceState) {
-        try {
-          window.history.replaceState(null, '', `#${normalizedId}`);
-        } catch (err) {
-          // Ignore state mutation errors in sandboxed iframes
+    const performJump = () => {
+      const element = findTargetElement();
+      if (element) {
+        isProgrammaticScrollRef.current = true;
+        if (programmaticScrollTimerRef.current) {
+          clearTimeout(programmaticScrollTimerRef.current);
         }
+        programmaticScrollTimerRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 380);
+
+        setActiveSection(normalizedId);
+
+        if (window.history && window.history.replaceState) {
+          try {
+            window.history.replaceState(null, '', `#${normalizedId}`);
+          } catch (err) {
+            // Ignore state mutation errors in sandboxed iframes
+          }
+        }
+
+        const headerOffset = 76;
+        const elementTop = element.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = Math.max(0, elementTop - headerOffset);
+        const distance = Math.abs(offsetPosition - window.scrollY);
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Instant jump for long-distance navigation (>800px) so clicking any section is immediate
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: prefersReducedMotion || distance > 800 ? 'auto' : 'smooth'
+        });
       }
+    };
 
-      const headerOffset = 76;
-      const elementTop = element.getBoundingClientRect().top + window.scrollY;
-      const offsetPosition = Math.max(0, elementTop - headerOffset);
-      const distance = Math.abs(offsetPosition - window.scrollY);
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // Instant jump for long-distance navigation (>800px) so clicking any section is immediate
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: prefersReducedMotion || distance > 800 ? 'auto' : 'smooth'
-      });
+    performJump();
+    if (!forceHydrateAllSections) {
+      requestAnimationFrame(performJump);
     }
   };
 
@@ -3870,18 +4011,25 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           </motion.div>
 
-          {/* Right Column: Interactive 3D Systems Command Center on ALL screen sizes */}
+          {/* Right Column: Interactive 3D Systems Command Center on ALL screen sizes (Idle-deferred for instant Mobile TTI) */}
           <div className="lg:col-span-5 xl:col-span-6 w-full h-[420px] sm:h-[450px] md:h-[470px] lg:h-[490px] xl:h-[510px] relative rounded-3xl overflow-hidden border border-emerald-500/30 bg-[#020617]/90 backdrop-blur-xl flex items-center justify-center my-1 lg:my-0 shadow-[0_0_50px_-12px_rgba(16,185,129,0.28)] ring-1 ring-white/[0.06]">
-            <CanvasErrorBoundary>
-              <React.Suspense fallback={
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]">
-                  <div className="inline-block w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2.5" />
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">Booting 3D Systems Core...</p>
-                </div>
-              }>
-                <ThreeDHero techString={techString} />
-              </React.Suspense>
-            </CanvasErrorBoundary>
+            {isHero3DReady ? (
+              <CanvasErrorBoundary>
+                <React.Suspense fallback={
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]">
+                    <div className="inline-block w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2.5" />
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">Booting 3D Systems Core...</p>
+                  </div>
+                }>
+                  <ThreeDHero techString={techString} />
+                </React.Suspense>
+              </CanvasErrorBoundary>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]">
+                <div className="inline-block w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2.5" />
+                <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">Initializing 3D Telemetry Engine...</p>
+              </div>
+            )}
           </div>
 
         </div>
@@ -4486,13 +4634,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                 {/* Interactive Scroll-Triggered Biography Timeline with Glass-Morphism Career Phases */}
                 <div className="glass-card rounded-3xl p-6 sm:p-8 border border-emerald-500/25 relative overflow-hidden">
-                  <AboutBiographyTimeline
-                    profile={profile}
-                    experiences={experiences}
-                    education={education}
-                    prefersReduced={prefersReduced}
-                    onSoundClick={(freq) => soundFx.playClick(freq)}
-                  />
+                  <LazySectionBoundary
+                    minHeight="260px"
+                    label="Loading Biography Timeline..."
+                    forceHydrate={forceHydrateAllSections}
+                  >
+                    <AboutBiographyTimeline
+                      profile={profile}
+                      experiences={experiences}
+                      education={education}
+                      prefersReduced={prefersReduced}
+                      onSoundClick={(freq) => soundFx.playClick(freq)}
+                    />
+                  </LazySectionBoundary>
                 </div>
               </div>
             </div>
@@ -5216,7 +5370,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             )}
 
                             {/* D3.js Project Performance Dashboard in Split Explorer */}
-                            <ProjectPerformanceDashboard project={currentProj} />
+                            <React.Suspense fallback={<div className="h-28 w-full rounded-xl bg-slate-900/40 animate-pulse" />}>
+                              <ProjectPerformanceDashboard project={currentProj} />
+                            </React.Suspense>
 
                             {/* Simulated Deployment Pipeline Log in Split Explorer */}
                             <div className="rounded-xl bg-[#030712] border border-emerald-500/25 overflow-hidden">
@@ -5716,27 +5872,33 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                             : "col-span-1 group-hover/articles-grid:opacity-80 hover:!opacity-100"
                         }`}
                       >
-                        <ArticleMonographCard
-                          art={art}
-                          index={aIdx}
-                          prefersReduced={prefersReduced}
-                          isExpanded={isExpanded}
-                          onToggleExpand={(articleId) =>
-                            setExpandedArticleId((prev) =>
-                              prev === articleId ? null : articleId
-                            )
+                        <React.Suspense
+                          fallback={
+                            <div className="h-80 w-full rounded-3xl bg-slate-900/40 border border-white/[0.05] animate-pulse" />
                           }
-                          onOpenModal={(article) => {
-                            setArticleReaderProgress(0);
-                            setSelectedArticleForModal(article);
-                          }}
-                          onSelectTag={(tag) => {
-                            setArticleSearchQuery(tag);
-                            setActiveArticleIndex(0);
-                          }}
-                          profileAvatar={profile?.profileImage}
-                          soundFx={soundFx}
-                        />
+                        >
+                          <ArticleMonographCard
+                            art={art}
+                            index={aIdx}
+                            prefersReduced={prefersReduced}
+                            isExpanded={isExpanded}
+                            onToggleExpand={(articleId) =>
+                              setExpandedArticleId((prev) =>
+                                prev === articleId ? null : articleId
+                              )
+                            }
+                            onOpenModal={(article) => {
+                              setArticleReaderProgress(0);
+                              setSelectedArticleForModal(article);
+                            }}
+                            onSelectTag={(tag) => {
+                              setArticleSearchQuery(tag);
+                              setActiveArticleIndex(0);
+                            }}
+                            profileAvatar={profile?.profileImage}
+                            soundFx={soundFx}
+                          />
+                        </React.Suspense>
                       </motion.div>
                     );
                   })}
@@ -6230,18 +6392,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                           : "col-span-1 group-hover/coding-grid:opacity-80 hover:!opacity-100"
                       }`}
                     >
-                      <CodingProfileSpotlightCard
-                        profile={p}
-                        index={pIdx}
-                        prefersReduced={prefersReduced}
-                        isExpanded={isExpanded}
-                        onToggleExpand={(id) =>
-                          setExpandedCodingProfileId((prev) =>
-                            prev === id ? null : id
-                          )
+                      <React.Suspense
+                        fallback={
+                          <div className="h-72 w-full rounded-3xl bg-slate-900/40 border border-white/[0.05] animate-pulse" />
                         }
-                        soundFx={soundFx}
-                      />
+                      >
+                        <CodingProfileSpotlightCard
+                          profile={p}
+                          index={pIdx}
+                          prefersReduced={prefersReduced}
+                          isExpanded={isExpanded}
+                          onToggleExpand={(id) =>
+                            setExpandedCodingProfileId((prev) =>
+                              prev === id ? null : id
+                            )
+                          }
+                          soundFx={soundFx}
+                        />
+                      </React.Suspense>
                     </motion.div>
                   );
                 })}
@@ -6280,13 +6448,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             variants={sectionVariants}
           >
             <div id="techstack" className="absolute -top-24" />
-            <SkillsArchitectureShowcase
-              skills={skills}
-              projects={projects}
-              prefersReduced={prefersReduced}
-              onSelectSkillForModal={(skill) => setSelectedSkillForModal(skill)}
-              soundFx={soundFx}
-            />
+            <LazySectionBoundary
+              minHeight="380px"
+              label="Loading Skills Architecture Matrix..."
+              forceHydrate={forceHydrateAllSections}
+            >
+              <SkillsArchitectureShowcase
+                skills={skills}
+                projects={projects}
+                prefersReduced={prefersReduced}
+                onSelectSkillForModal={(skill) => setSelectedSkillForModal(skill)}
+                soundFx={soundFx}
+              />
+            </LazySectionBoundary>
           </motion.section>
 
           {/* Tools & Technologies Section */}
@@ -6299,12 +6473,18 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               viewport={{ once: true, amount: 0.01, margin: "120px" }}
               variants={sectionVariants}
             >
-              <ToolsEcosystemWorkbench
-                tools={tools.length > 0 ? tools : initialTools}
-                prefersReduced={prefersReduced}
-                onSelectToolForModal={(tool) => setSelectedToolForModal(tool)}
-                soundFx={soundFx}
-              />
+              <LazySectionBoundary
+                minHeight="360px"
+                label="Loading Engineering Workbench..."
+                forceHydrate={forceHydrateAllSections}
+              >
+                <ToolsEcosystemWorkbench
+                  tools={tools.length > 0 ? tools : initialTools}
+                  prefersReduced={prefersReduced}
+                  onSelectToolForModal={(tool) => setSelectedToolForModal(tool)}
+                  soundFx={soundFx}
+                />
+              </LazySectionBoundary>
             </motion.section>
           )}
 
@@ -6320,24 +6500,37 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             <div id="timeline" className="absolute -top-24" />
             <div id="education" className="absolute -top-24" />
             
-            <ExperienceEducationShowcase
-              experiences={experiences}
-              education={education}
-              projects={projects}
-              prefersReduced={prefersReduced}
-              soundFx={soundFx}
-            />
+            <LazySectionBoundary
+              minHeight="420px"
+              label="Loading Career & Academic Timeline..."
+              forceHydrate={forceHydrateAllSections}
+            >
+              <ExperienceEducationShowcase
+                experiences={experiences}
+                education={education}
+                projects={projects}
+                prefersReduced={prefersReduced}
+                soundFx={soundFx}
+              />
+            </LazySectionBoundary>
           </motion.section>
 
           {/* Top 1% Industry Certifications & Proven Milestones Showcase */}
-          <CertificationsAchievementsShowcase
-            certificates={certificates}
-            achievements={achievements}
-            prefersReduced={prefersReduced}
-            onSelectCertificate={(cert) => setSelectedCertForModal(cert)}
-            onSelectAchievement={(ach) => setSelectedAchievementForModal(ach)}
-            soundFx={soundFx}
-          />
+          <LazySectionBoundary
+            minHeight="420px"
+            label="Loading Verified Credentials & Milestones..."
+            forceHydrate={forceHydrateAllSections}
+            fallbackAnchors={["credentials", "certificates", "achievements"]}
+          >
+            <CertificationsAchievementsShowcase
+              certificates={certificates}
+              achievements={achievements}
+              prefersReduced={prefersReduced}
+              onSelectCertificate={(cert) => setSelectedCertForModal(cert)}
+              onSelectAchievement={(ach) => setSelectedAchievementForModal(ach)}
+              soundFx={soundFx}
+            />
+          </LazySectionBoundary>
 
           {/* Client & Peer Testimonials Section */}
           {displayTestimonials.length > 0 && (

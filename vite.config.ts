@@ -18,9 +18,23 @@ export default defineConfig(() => {
           return deps.filter(
             (dep) =>
               !dep.includes('vendor-three') &&
-              !dep.includes('ThreeDHero') &&
+              !dep.includes('vendor-d3') &&
+              !dep.includes('vendor-charts') &&
               !dep.includes('vendor-lottie') &&
+              !dep.includes('ThreeDHero') &&
+              !dep.includes('ProjectPerformanceDashboard') &&
+              !dep.includes('ProjectRechartsMetricsPanel') &&
+              !dep.includes('AboutBiographyTimeline') &&
+              !dep.includes('ArticleMonographCard') &&
+              !dep.includes('CodingProfileSpotlightCard') &&
+              !dep.includes('SkillsArchitectureShowcase') &&
+              !dep.includes('TechProficiencyHeatmap') &&
+              !dep.includes('ToolsEcosystemWorkbench') &&
+              !dep.includes('ExperienceEducationShowcase') &&
+              !dep.includes('CertificationsAchievementsShowcase') &&
               !dep.includes('AdminDashboard') &&
+              !dep.includes('AdminLogin') &&
+              !dep.includes('RecruiterDemoGate') &&
               !dep.includes('AIPortfolioChat') &&
               !dep.includes('DeveloperTerminalModal') &&
               !dep.includes('CodeExplorer') &&
@@ -38,6 +52,12 @@ export default defineConfig(() => {
             if (id.includes('node_modules')) {
               if (id.includes('three') || id.includes('@react-three')) {
                 return 'vendor-three';
+              }
+              if (id.includes('d3-') || id.includes('/d3/')) {
+                return 'vendor-d3';
+              }
+              if (id.includes('recharts') || id.includes('victory-vendor')) {
+                return 'vendor-charts';
               }
               if (id.includes('lucide-react')) {
                 return 'vendor-lucide';
