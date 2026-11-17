@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Edit2, Trash2, Search, ArrowLeft, ArrowRight, ExternalLink, 
-  Award, AlertCircle, Check, Loader2, Calendar, GripVertical, ChevronUp, ChevronDown, Sparkles
+  Award, AlertCircle, Check, Loader2, Calendar, GripVertical, ChevronUp, ChevronDown, Sparkles, X, Copy
 } from 'lucide-react';
 import { CertificateItem } from '../../data/cmsMockData';
 
@@ -34,6 +35,7 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
   // Drag & drop state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   // Validation
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -418,24 +420,36 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
               </div>
             ) : (
               <div className="divide-y divide-slate-800/60">
-                {paginatedCerts.map((cert) => {
+                <AnimatePresence mode="popLayout" initial={false}>
+                {paginatedCerts.map((cert, idx) => {
                   const absoluteIndex = certificates.findIndex(c => c.id === cert.id);
                   const isDragging = draggedId === cert.id;
                   const isOver = dragOverId === cert.id;
+                  const isConfirmingDelete = confirmDeleteId === cert.id;
 
                   return (
-                    <div 
-                      key={cert.id} 
+                    <motion.div 
+                      key={cert.id}
+                      layout
+                      initial={{ opacity: 0, x: -28, y: 10, scale: 0.98 }}
+                      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                      viewport={{ once: false, margin: '-50px' }}
+                      exit={{ opacity: 0, x: 32, scale: 0.96 }}
+                      transition={{
+                        duration: 0.28,
+                        delay: Math.min(idx * 0.04, 0.2),
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
                       draggable={!searchQuery.trim()}
-                      onDragStart={(e) => handleDragStart(e, cert.id)}
-                      onDragOver={(e) => handleDragOver(e, cert.id)}
-                      onDrop={(e) => handleDrop(e, cert.id)}
+                      onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent<HTMLDivElement>, cert.id)}
+                      onDragOver={(e) => handleDragOver(e as unknown as React.DragEvent<HTMLDivElement>, cert.id)}
+                      onDrop={(e) => handleDrop(e as unknown as React.DragEvent<HTMLDivElement>, cert.id)}
                       onDragEnd={() => {
                         setDraggedId(null);
                         setDragOverId(null);
                       }}
-                      className={`p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-                        isDragging ? 'opacity-40 bg-emerald-500/5' : 'hover:bg-slate-950/20'
+                      className={`p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors ${
+                        isDragging ? 'opacity-40 bg-emerald-500/5' : 'hover:bg-slate-950/30'
                       } ${isOver ? 'border-t-2 border-emerald-500 bg-emerald-500/10' : ''}`}
                     >
                       <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -469,7 +483,7 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
                           </button>
                         </div>
 
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-amber-400 shrink-0">
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-emerald-400 shrink-0">
                           <Award className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.5]" />
                         </div>
 
@@ -479,12 +493,12 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
                           <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-400">
                             <span className="font-semibold text-emerald-400">{cert.issuingOrganization}</span>
                             <span className="text-slate-600">•</span>
-                            <span className="font-mono text-[10px] text-slate-500">ID: {cert.credentialId || "N/A"}</span>
+                            <span className="font-mono text-[10px] text-slate-400">ID: {cert.credentialId || "N/A"}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500 pt-0.5">
                             <span className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5" /> Issued: {cert.issueDate}
+                              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Issued: {cert.issueDate}
                             </span>
                             {cert.expirationDate && (
                               <span>• Expires: {cert.expirationDate}</span>
@@ -508,30 +522,70 @@ export default function CertificatesPage({ certificates, onAdd, onUpdate, onDele
                         )}
 
                         <button
-                          onClick={() => openEditForm(cert)}
-                          className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-emerald-500/25 hover:text-emerald-400 text-slate-400 transition-all flex items-center gap-1 text-xs font-mono"
-                          title="Edit Record"
+                          type="button"
+                          onClick={() => {
+                            const { id: _, ...rest } = cert;
+                            onAdd({
+                              ...rest,
+                              name: `${cert.name} (Copy)`,
+                              displayOrder: certificates.length + 1,
+                              order: certificates.length + 1,
+                            });
+                          }}
+                          className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-cyan-500/30 hover:text-cyan-400 text-slate-400 transition-all cursor-pointer"
+                          title="Duplicate Certificate"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span className="sm:hidden">Edit</span>
+                          <Copy className="w-3.5 h-3.5" />
                         </button>
 
                         <button
-                          onClick={() => {
-                            if (confirm(`Delete certificate: "${cert.name}"?`)) {
-                              onDelete(cert.id);
-                            }
-                          }}
-                          className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-rose-500/25 hover:text-rose-400 text-slate-400 transition-all flex items-center gap-1 text-xs font-mono"
-                          title="Delete Record"
+                          type="button"
+                          onClick={() => openEditForm(cert)}
+                          className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-emerald-500/25 hover:text-emerald-400 text-slate-300 transition-all flex items-center gap-1.5 text-xs font-mono font-bold cursor-pointer"
+                          title="Edit Record"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span className="sm:hidden">Delete</span>
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </button>
+
+                        {isConfirmingDelete ? (
+                          <div className="flex items-center gap-1.5 bg-rose-950/60 border border-rose-500/40 rounded-lg px-2 py-1">
+                            <span className="text-[10px] font-mono text-rose-300 font-bold">
+                              Delete?
+                            </span>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setConfirmDeleteId(null);
+                                await onDelete(cert.id);
+                              }}
+                              className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-mono font-bold cursor-pointer"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="p-1 text-slate-400 hover:text-white cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(cert.id)}
+                            className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-rose-500/25 hover:text-rose-400 text-slate-400 transition-all flex items-center gap-1 text-xs font-mono cursor-pointer"
+                            title="Delete Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
+                </AnimatePresence>
               </div>
             )}
 

@@ -40,7 +40,9 @@ interface ProfileData {
   shortIntroduction?: string;
   biography?: string;
   careerObjective?: string;
+  aboutBadge?: string;
   aboutHeading?: string;
+  aboutHighlights?: Array<{ id: string; title: string; badge?: string; description: string }>;
   experienceSummary?: string;
   skillsSummary?: string;
   quickStats?: string;
@@ -192,6 +194,12 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
             if (deleted.aboutImage) data.aboutImage = "";
             if (deleted.coverImage) data.coverImage = "";
             if (deleted.profileImage) data.profileImage = "";
+            if (deleted.websiteLogo) {
+              data.websiteLogo = "";
+              data.logoUrl = "";
+            }
+            if (deleted.faviconUrl) data.faviconUrl = "";
+            if (deleted.ogImage) data.ogImage = "";
           }
         } catch (e) {}
         setProfile(data);
@@ -1741,15 +1749,146 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           {/* 2. BIOGRAPHY & TAGLINES */}
           {activeSubTab === 'bio' && (
             <div className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-                <FileText className="w-4.5 h-4.5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-mono">Biography, Taglines & About Headlines</h3>
+              <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4.5 h-4.5 text-emerald-400" />
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-100 font-mono">About Section & Biography Control Center</h3>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Add, edit, update, or delete any badge, title, heading, or biography displayed in the live About section.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* About Section Eyebrow Badge */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">About Section Top Badge</label>
+                    {profile.aboutBadge && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, aboutBadge: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                        title="Clear / Delete Badge"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    value={profile.aboutBadge ?? "ABOUT ME"} 
+                    onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutBadge: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                    placeholder="e.g. ABOUT ME (leave empty to hide)"
+                  />
+                </div>
+
+                {/* Role Badge / Title (e.g. Principal Systems Architect) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-emerald-400 font-semibold">
+                      About Role Badge (e.g. Principal Systems Architect)
+                    </label>
+                    {(profile.professionalLabel || profile.title) && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, professionalLabel: "", title: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                        title="Delete Role Badge from About Card"
+                      >
+                        <Trash2 className="w-3 h-3" /> Delete Role Badge
+                      </button>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    value={profile.professionalLabel || profile.title || ""} 
+                    onChange={(e) => updateProfileStateWithHistory({ ...profile, professionalLabel: e.target.value, title: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                    placeholder="e.g. Principal Systems Architect (clear to hide)"
+                  />
+                </div>
+              </div>
+
+              {/* Dedicated About Section Portrait Image Control (Strictly Separate from Profile Image & Hero Avatar) */}
+              <div className="border border-emerald-500/25 bg-slate-950/60 rounded-2xl p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold font-mono text-emerald-400">About Section Portrait Image (Independent Link)</h4>
+                    <p className="text-[10px] text-slate-400 font-mono">Dedicated portrait shown ONLY in the About Me section (not linked to Profile Avatar or Hero Pic-1)</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => triggerImageFileBrowse('about', 1)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                    >
+                      Upload Photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMediaModalField('aboutImage')}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Folder className="w-3 h-3" />
+                      Media Library
+                    </button>
+                    {profile.aboutImage && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteImageField('aboutImage')}
+                        className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                        title="Delete About Image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="shrink-0">
+                    <AnimatedProfileAvatar
+                      src={profile.aboutImage || ""}
+                      alt={profile.fullName || "About Section Portrait"}
+                      size="sm"
+                      shape="squircle"
+                      glowIntensity="vibrant"
+                      showStatus={false}
+                    />
+                  </div>
+                  <div className="w-full space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct About Section Image URL</label>
+                    <input
+                      type="text"
+                      value={profile.aboutImage || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutImage: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/about-portrait.jpg (or leave empty for monogram)"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
                 {/* About Section Heading */}
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">About Section Heading</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">About Section Main Heading</label>
+                    {profile.aboutHeading && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, aboutHeading: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={profile.aboutHeading || ""} 
@@ -1759,32 +1898,20 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                   />
                 </div>
 
-                {/* Short Tagline */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Hero Section Short Tagline</label>
-                  <input 
-                    type="text" 
-                    value={profile.shortTagline || ""} 
-                    onChange={(e) => updateProfileStateWithHistory({ ...profile, shortTagline: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                    placeholder="e.g. Next-Gen Full-Stack Architect & AI Advocate"
-                  />
-                </div>
-
-                {/* Short Introduction */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Hero Section Short Introduction</label>
-                  <textarea 
-                    value={profile.shortIntroduction || ""} 
-                    onChange={(e) => updateProfileStateWithHistory({ ...profile, shortIntroduction: e.target.value })}
-                    className="w-full h-18 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
-                    placeholder="e.g. I build secure, high-concurrency cloud systems and beautifully fluid user experiences."
-                  />
-                </div>
-
                 {/* Short Bio */}
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Short Bio (About Summary / Left Column Text)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">Short Bio (About Lead Summary)</label>
+                    {profile.shortBio && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, shortBio: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
                   <textarea 
                     value={profile.shortBio} 
                     onChange={(e) => updateProfileStateWithHistory({ ...profile, shortBio: e.target.value })}
@@ -1795,7 +1922,18 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
                 {/* Full Biography */}
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Full Biography (Markdown Supported)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">Full Biography (Main Narrative in About Section)</label>
+                    {profile.biography && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, biography: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
                   <textarea 
                     value={profile.biography || ""} 
                     onChange={(e) => updateProfileStateWithHistory({ ...profile, biography: e.target.value })}
@@ -1806,7 +1944,18 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
                 {/* About Description */}
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400 font-semibold">Full About Section Description (Secondary text block)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400 font-semibold">About Section Secondary Description</label>
+                    {profile.aboutDescription && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, aboutDescription: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
                   <textarea 
                     value={profile.aboutDescription} 
                     onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutDescription: e.target.value })}
@@ -1814,6 +1963,139 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     placeholder="Comprehensive secondary background summary detail..."
                   />
                 </div>
+
+                {/* Hero Tagline & Intro */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-900">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Section Short Tagline</label>
+                    <input 
+                      type="text" 
+                      value={profile.shortTagline || ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, shortTagline: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. Next-Gen Full-Stack Architect"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono text-slate-400">Hero Section Short Introduction</label>
+                    <input 
+                      type="text" 
+                      value={profile.shortIntroduction || ""} 
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, shortIntroduction: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="e.g. I build secure, high-concurrency cloud systems..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* CUSTOM ABOUT SECTION HIGHLIGHT CARDS (ADD / EDIT / DELETE) */}
+              <div className="pt-5 border-t border-slate-900 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-100 font-mono flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-400" />
+                      About Section Custom Highlight Cards ({(profile.aboutHighlights || []).length})
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Add, edit, or delete custom highlight cards displayed inside the About section. If all cards are deleted, no extra cards are shown.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextCards = [
+                        ...(profile.aboutHighlights || []),
+                        {
+                          id: `hl-${Date.now()}`,
+                          title: 'New Architecture Highlight',
+                          badge: 'CORE FOCUS',
+                          description: 'Describe this highlight or capability...',
+                        },
+                      ];
+                      updateProfileStateWithHistory({ ...profile, aboutHighlights: nextCards });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-bold transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Highlight Card
+                  </button>
+                </div>
+
+                {(profile.aboutHighlights || []).length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-800 bg-slate-950/50 p-4 text-center">
+                    <p className="text-xs font-mono text-slate-400">
+                      No custom highlight cards active in the About section. Click &ldquo;Add Highlight Card&rdquo; above if you want to display custom cards.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {(profile.aboutHighlights || []).map((card, idx) => (
+                      <div
+                        key={card.id || idx}
+                        className="rounded-xl border border-slate-800 bg-slate-950/80 p-3.5 space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">
+                            Highlight Card #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextCards = (profile.aboutHighlights || []).filter((_, i) => i !== idx);
+                              updateProfileStateWithHistory({ ...profile, aboutHighlights: nextCards });
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-[10px] font-mono transition"
+                          >
+                            <Trash2 className="w-3 h-3" /> Delete Card
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-mono text-slate-400 mb-1">Card Title</label>
+                            <input
+                              type="text"
+                              value={card.title}
+                              onChange={(e) => {
+                                const nextCards = [...(profile.aboutHighlights || [])];
+                                nextCards[idx] = { ...card, title: e.target.value };
+                                updateProfileStateWithHistory({ ...profile, aboutHighlights: nextCards });
+                              }}
+                              className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-100 focus:outline-none"
+                              placeholder="Card Title"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-mono text-slate-400 mb-1">Badge (Optional)</label>
+                            <input
+                              type="text"
+                              value={card.badge || ''}
+                              onChange={(e) => {
+                                const nextCards = [...(profile.aboutHighlights || [])];
+                                nextCards[idx] = { ...card, badge: e.target.value };
+                                updateProfileStateWithHistory({ ...profile, aboutHighlights: nextCards });
+                              }}
+                              className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-100 focus:outline-none"
+                              placeholder="e.g. HIGH SCALE"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-mono text-slate-400 mb-1">Card Description</label>
+                          <textarea
+                            value={card.description}
+                            onChange={(e) => {
+                              const nextCards = [...(profile.aboutHighlights || [])];
+                              nextCards[idx] = { ...card, description: e.target.value };
+                              updateProfileStateWithHistory({ ...profile, aboutHighlights: nextCards });
+                            }}
+                            className="w-full h-16 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-100 focus:outline-none resize-none"
+                            placeholder="Description shown inside this card..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1823,30 +2105,100 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
             <div className="space-y-6">
               <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
                 <Shield className="w-4.5 h-4.5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-100 font-mono">Career Objective & Core Competencies</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100 font-mono">Career Objective & Core Competencies</h3>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    Edit or delete your Career Objective and Core Competency tags displayed in the About section.
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-5">
                 {/* Career Objective */}
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Career Objective</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">Career Objective (Shown in About Section)</label>
+                    {profile.careerObjective && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, careerObjective: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Delete Career Objective
+                      </button>
+                    )}
+                  </div>
                   <textarea 
                     value={profile.careerObjective || ""} 
                     onChange={(e) => updateProfileStateWithHistory({ ...profile, careerObjective: e.target.value })}
                     className="w-full h-24 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
-                    placeholder="State your clear career goals, path and vision..."
+                    placeholder="State your clear career goals, path and vision (leave blank to hide block)..."
                   />
                 </div>
 
-                {/* Skills Summary */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono text-slate-400">Skills & Competency Summary</label>
+                {/* Skills Summary with Interactive Tag Chips */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-mono text-slate-400">
+                      Core Competencies &amp; Focus Areas (Comma-separated tags shown in About Section)
+                    </label>
+                    {profile.skillsSummary && (
+                      <button
+                        type="button"
+                        onClick={() => updateProfileStateWithHistory({ ...profile, skillsSummary: "" })}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-rose-400 hover:text-rose-300 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear All Tags
+                      </button>
+                    )}
+                  </div>
                   <textarea 
                     value={profile.skillsSummary || ""} 
                     onChange={(e) => updateProfileStateWithHistory({ ...profile, skillsSummary: e.target.value })}
-                    className="w-full h-24 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
-                    placeholder="A broad overview of your skills or capabilities..."
+                    className="w-full h-20 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none resize-none"
+                    placeholder="e.g. Java 21, Spring Boot 3.4, Microservices, React, AWS (comma separated)"
                   />
+
+                  {/* Interactive Competency Chips for quick delete */}
+                  {profile.skillsSummary && profile.skillsSummary.trim().length > 0 && (
+                    <div className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-3 space-y-2">
+                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                        Active About Section Competency Tags (Click × to delete individual tag):
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.skillsSummary
+                          .split(/[,•|]+/)
+                          .map((t) => t.trim())
+                          .filter(Boolean)
+                          .map((tag, tagIdx) => (
+                            <span
+                              key={`${tag}-${tagIdx}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const remaining = (profile.skillsSummary || "")
+                                    .split(/[,•|]+/)
+                                    .map((t) => t.trim())
+                                    .filter(Boolean)
+                                    .filter((_, i) => i !== tagIdx);
+                                  updateProfileStateWithHistory({
+                                    ...profile,
+                                    skillsSummary: remaining.join(', '),
+                                  });
+                                }}
+                                className="text-slate-400 hover:text-rose-400 transition font-bold"
+                                title={`Remove "${tag}"`}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2218,9 +2570,9 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                          {profile.faviconUrl || profile.websiteLogo ? (
+                          {profile.faviconUrl ? (
                             <img 
-                              src={profile.faviconUrl || profile.websiteLogo} 
+                              src={profile.faviconUrl} 
                               alt="Favicon" 
                               className="w-6 h-6 object-contain"
                               referrerPolicy="no-referrer"
@@ -2373,9 +2725,9 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                   {/* Live Social Share Card Preview */}
                   <div className="border border-slate-800 bg-slate-950/60 rounded-2xl overflow-hidden shadow-xl">
                     <div className="aspect-[1.91/1] w-full bg-slate-900 relative overflow-hidden flex items-center justify-center border-b border-slate-800">
-                      {profile.ogImage || profile.websiteLogo || profile.profileImage ? (
+                      {profile.ogImage ? (
                         <img 
-                          src={profile.ogImage || profile.websiteLogo || profile.profileImage} 
+                          src={profile.ogImage} 
                           alt="OG Preview" 
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"
@@ -2509,27 +2861,35 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Profile Photo - Aspect 1:1 circular */}
+                {/* 1. Profile Photo - Aspect 1:1 circular */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Profile Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Used for primary avatars and headers</p>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">1. Primary Profile Image</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent profile avatar (not linked to About or Hero)</p>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('profile', 1)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
                       <button
                         type="button"
                         onClick={() => setMediaModalField('profileImage')}
                         className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
                         <Folder className="w-3 h-3" />
-                        From Media Manager
+                        Media
                       </button>
                       {profile.profileImage && (
                         <button 
+                          type="button"
                           onClick={() => handleDeleteImageField('profileImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete asset"
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Profile Image"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2541,10 +2901,10 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     onDragOver={handleImageDragOver}
                     onDrop={(e) => handleImageDrop(e, 'profile', 1)}
                     onClick={() => triggerImageFileBrowse('profile', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
                   >
                     <AnimatedProfileAvatar
-                      src={profile.profileImage}
+                      src={profile.profileImage || ""}
                       alt={profile.fullName || "Profile"}
                       size="lg"
                       shape="circle"
@@ -2556,29 +2916,48 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <p className="text-[9px] text-slate-500 mt-0.5">Live animated cyber preview (Square 1:1)</p>
                     </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Profile Image URL</label>
+                    <input
+                      type="text"
+                      value={profile.profileImage || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, profileImage: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/profile-avatar.jpg"
+                    />
+                  </div>
                 </div>
 
-                {/* Hero Avatar - Aspect 1:1 circular */}
+                {/* 2. Hero Avatar (Pic-1) - Aspect 1:1 circular */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Avatar Photo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Avatar overlay inside the home section</p>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">2. Hero Avatar Photo (Pic-1)</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent Hero section portrait badge</p>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
                       <button
                         type="button"
                         onClick={() => setMediaModalField('heroAvatar')}
                         className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
                         <Folder className="w-3 h-3" />
-                        From Media Manager
+                        Media
                       </button>
                       {profile.heroAvatar && (
                         <button 
+                          type="button"
                           onClick={() => handleDeleteImageField('heroAvatar')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete asset"
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Hero Avatar"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2590,10 +2969,10 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     onDragOver={handleImageDragOver}
                     onDrop={(e) => handleImageDrop(e, 'hero-avatar', 1)}
                     onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
                   >
                     <AnimatedProfileAvatar
-                      src={profile.heroAvatar}
+                      src={profile.heroAvatar || ""}
                       alt={profile.heroName || profile.fullName || "Hero Avatar"}
                       size="lg"
                       shape="circle"
@@ -2605,29 +2984,48 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <p className="text-[9px] text-slate-500 mt-0.5">Optional Hero Avatar (1:1 circular)</p>
                     </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Hero Avatar URL</label>
+                    <input
+                      type="text"
+                      value={profile.heroAvatar || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroAvatar: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/hero-avatar.jpg"
+                    />
+                  </div>
                 </div>
 
-                {/* About Image - Aspect 1:1 square */}
+                {/* 3. About Image - Aspect 1:1 squircle (Strictly Independent) */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">About Section Photo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Illustrated image on the About tab</p>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">3. About Section Portrait Photo</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent portrait in the About section (not linked to Profile Image)</p>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('about', 1)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
                       <button
                         type="button"
                         onClick={() => setMediaModalField('aboutImage')}
                         className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
                         <Folder className="w-3 h-3" />
-                        From Media Manager
+                        Media
                       </button>
                       {profile.aboutImage && (
                         <button 
+                          type="button"
                           onClick={() => handleDeleteImageField('aboutImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete asset"
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete About Image"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2639,10 +3037,10 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     onDragOver={handleImageDragOver}
                     onDrop={(e) => handleImageDrop(e, 'about', 1)}
                     onClick={() => triggerImageFileBrowse('about', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
                   >
                     <AnimatedProfileAvatar
-                      src={profile.aboutImage || profile.profileImage}
+                      src={profile.aboutImage || ""}
                       alt={profile.fullName || "About Section Photo"}
                       size="lg"
                       shape="squircle"
@@ -2654,135 +3052,121 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <p className="text-[9px] text-slate-500 mt-0.5">High-quality portrait or photo (Squircle Cyber Frame)</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Cover Photo - Aspect 3:1 banner */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3 lg:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Cover Banner Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Top panoramic panel background</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('coverImage')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        From Media Manager
-                      </button>
-                      {profile.coverImage && (
-                        <button 
-                          onClick={() => handleDeleteImageField('coverImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete asset"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'cover', 3)}
-                    onClick={() => triggerImageFileBrowse('cover', 3)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.coverImage ? (
-                      <img 
-                        src={profile.coverImage} 
-                        alt="Cover banner" 
-                        referrerPolicy="no-referrer"
-                        className="w-full max-h-24 rounded-lg object-cover border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-24 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <ImageIcon className="w-8 h-8" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop cover banner or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Panoramic 3:1 widescreen ratio</p>
-                    </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct About Image URL</label>
+                    <input
+                      type="text"
+                      value={profile.aboutImage || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutImage: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/about-photo.jpg"
+                    />
                   </div>
                 </div>
 
-                {/* Hero Background - Aspect 16:9 wallpaper */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3 lg:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Section Wallpaper</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Cosmic canvas overlay in portfolio header</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('heroBackground')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        From Media Manager
-                      </button>
-                      {profile.heroBackground && (
-                        <button 
-                          onClick={() => handleDeleteImageField('heroBackground')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete asset"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'hero', 16/9)}
-                    onClick={() => triggerImageFileBrowse('hero', 16/9)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.heroBackground ? (
-                      <img 
-                        src={profile.heroBackground} 
-                        alt="Hero background" 
-                        referrerPolicy="no-referrer"
-                        className="w-full max-h-32 rounded-lg object-cover border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-32 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <ImageIcon className="w-8 h-8" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop hero wallpaper or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">High definition 16:9 widescreen wallpaper</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Website Logo - Aspect 1:1 or wide */}
+                {/* 4. Browser Tab Favicon - Aspect 1:1 (Strictly Independent from Website Logo) */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Website Branding Logo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Navbar brand emblem</p>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">4. Browser Tab Favicon Icon</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent browser tab icon (.svg / .png / .ico)</p>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('favicon', 1)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('faviconUrl')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Folder className="w-3 h-3" />
+                        Media
+                      </button>
+                      {profile.faviconUrl && (
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteImageField('faviconUrl')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Favicon"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div 
+                    onDragOver={handleImageDragOver}
+                    onDrop={(e) => handleImageDrop(e, 'favicon', 1)}
+                    onClick={() => triggerImageFileBrowse('favicon', 1)}
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                  >
+                    {profile.faviconUrl ? (
+                      <img 
+                        src={profile.faviconUrl} 
+                        alt="Favicon" 
+                        referrerPolicy="no-referrer"
+                        className="w-20 h-20 rounded-xl object-contain p-3 bg-slate-900 border border-slate-800"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-500">
+                        <Globe className="w-7 h-7 text-emerald-400" />
+                        <span className="text-[8px] font-mono text-slate-500 mt-1">Default SVG</span>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-300">Drag & drop favicon or <span className="text-emerald-400">browse</span></p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">Browser tab icon (Strictly separate from Navbar Logo)</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Favicon URL</label>
+                    <input
+                      type="text"
+                      value={profile.faviconUrl || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, faviconUrl: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="/favicon.svg or https://example.com/favicon.png"
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Website Logo - Aspect 1:1 or wide */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">5. Website Branding Logo</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent Navbar brand emblem</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('website-logo', 1)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
                       <button
                         type="button"
                         onClick={() => setMediaModalField('websiteLogo')}
                         className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
                         <Folder className="w-3 h-3" />
-                        From Media Manager
+                        Media
                       </button>
                       {(profile.websiteLogo || profile.logoUrl) && (
                         <button 
+                          type="button"
                           onClick={() => handleDeleteImageField('websiteLogo')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete logo"
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Website Logo"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2794,18 +3178,18 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     onDragOver={handleImageDragOver}
                     onDrop={(e) => handleImageDrop(e, 'website-logo', 1)}
                     onClick={() => triggerImageFileBrowse('website-logo', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
                   >
                     {profile.websiteLogo || profile.logoUrl ? (
                       <img 
                         src={profile.websiteLogo || profile.logoUrl} 
                         alt="Website Logo" 
                         referrerPolicy="no-referrer"
-                        className="w-24 h-24 rounded-lg object-contain p-2 bg-slate-900 border border-slate-800"
+                        className="w-20 h-20 rounded-lg object-contain p-2 bg-slate-900 border border-slate-800"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <Globe className="w-8 h-8 text-emerald-400" />
+                      <div className="w-20 h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <Globe className="w-7 h-7 text-emerald-400" />
                       </div>
                     )}
                     <div className="text-center">
@@ -2813,28 +3197,47 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                       <p className="text-[9px] text-slate-500 mt-0.5">Transparent PNG / SVG recommended</p>
                     </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Website Logo URL</label>
+                    <input
+                      type="text"
+                      value={profile.websiteLogo || profile.logoUrl || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, websiteLogo: e.target.value, logoUrl: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
                 </div>
 
-                {/* Social Share OG Image */}
+                {/* 6. Social Share OG Image */}
                 <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Social Share (OG) Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">1200x630 link preview thumbnail</p>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">6. Social Share (OG) Image</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Independent 1200x630 link preview thumbnail</p>
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('og-image', 1.91)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
                       <button
                         type="button"
                         onClick={() => setMediaModalField('ogImage')}
                         className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
                       >
                         <Folder className="w-3 h-3" />
-                        From Media Manager
+                        Media
                       </button>
                       {profile.ogImage && (
                         <button 
+                          type="button"
                           onClick={() => handleDeleteImageField('ogImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
                           title="Delete OG image"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -2847,24 +3250,179 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                     onDragOver={handleImageDragOver}
                     onDrop={(e) => handleImageDrop(e, 'og-image', 1.91)}
                     onClick={() => triggerImageFileBrowse('og-image', 1.91)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
                   >
                     {profile.ogImage ? (
                       <img 
                         src={profile.ogImage} 
                         alt="Social Share" 
                         referrerPolicy="no-referrer"
-                        className="w-full max-h-24 rounded-lg object-cover border border-slate-800"
+                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
                       />
                     ) : (
-                      <div className="w-full h-24 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <Share2 className="w-8 h-8 text-emerald-400" />
+                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <Share2 className="w-7 h-7 text-emerald-400" />
                       </div>
                     )}
                     <div className="text-center">
                       <p className="text-xs font-semibold text-slate-300">Drag & drop OG image or <span className="text-emerald-400">browse</span></p>
                       <p className="text-[9px] text-slate-500 mt-0.5">1200x630 social card ratio</p>
                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct OG Image URL</label>
+                    <input
+                      type="text"
+                      value={profile.ogImage || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, ogImage: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/og-card.jpg"
+                    />
+                  </div>
+                </div>
+
+                {/* 7. Cover Photo - Aspect 3:1 banner */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">7. Cover Banner Image</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Top panoramic panel background</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('cover', 3)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('coverImage')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Folder className="w-3 h-3" />
+                        Media
+                      </button>
+                      {profile.coverImage && (
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteImageField('coverImage')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Cover Banner"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div 
+                    onDragOver={handleImageDragOver}
+                    onDrop={(e) => handleImageDrop(e, 'cover', 3)}
+                    onClick={() => triggerImageFileBrowse('cover', 3)}
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                  >
+                    {profile.coverImage ? (
+                      <img 
+                        src={profile.coverImage} 
+                        alt="Cover banner" 
+                        referrerPolicy="no-referrer"
+                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
+                      />
+                    ) : (
+                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <ImageIcon className="w-7 h-7" />
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-300">Drag & drop cover banner or <span className="text-emerald-400">browse</span></p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">Panoramic 3:1 widescreen ratio</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Cover Banner URL</label>
+                    <input
+                      type="text"
+                      value={profile.coverImage || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, coverImage: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/cover-banner.jpg"
+                    />
+                  </div>
+                </div>
+
+                {/* 8. Hero Background - Aspect 16:9 wallpaper */}
+                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-xs font-bold font-mono text-slate-200">8. Hero Section Wallpaper</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">Cosmic canvas overlay in portfolio header</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageFileBrowse('hero', 16/9)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalField('heroBackground')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Folder className="w-3 h-3" />
+                        Media
+                      </button>
+                      {profile.heroBackground && (
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteImageField('heroBackground')}
+                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete Hero Wallpaper"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div 
+                    onDragOver={handleImageDragOver}
+                    onDrop={(e) => handleImageDrop(e, 'hero', 16/9)}
+                    onClick={() => triggerImageFileBrowse('hero', 16/9)}
+                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
+                  >
+                    {profile.heroBackground ? (
+                      <img 
+                        src={profile.heroBackground} 
+                        alt="Hero background" 
+                        referrerPolicy="no-referrer"
+                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
+                      />
+                    ) : (
+                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <ImageIcon className="w-7 h-7" />
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-300">Drag & drop hero wallpaper or <span className="text-emerald-400">browse</span></p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">High definition 16:9 widescreen wallpaper</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400">Direct Hero Wallpaper URL</label>
+                    <input
+                      type="text"
+                      value={profile.heroBackground || ""}
+                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroBackground: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
+                      placeholder="https://example.com/hero-wallpaper.jpg"
+                    />
                   </div>
                 </div>
 

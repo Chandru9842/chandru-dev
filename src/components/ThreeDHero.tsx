@@ -1,742 +1,1671 @@
-import React, { useRef, useEffect, useState, Suspense, useMemo } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sparkles, Stars, Float, Html } from '@react-three/drei';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Globe,
+  Zap,
+  Play,
+  Pause,
+  Activity,
+  Database,
+  ShieldCheck,
+  Server,
+  Layers,
+  Sparkles,
+  Cpu,
+} from 'lucide-react';
+import { soundFx } from '../utils/soundEffects';
 
-// --- PROCEDURAL TEXTURE GENERATORS ---
-// These run purely in the client, requiring zero asset requests or network bandwidth!
-
-// 1. Procedural Planet Earth texture
-function createEarthCanvas(): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  // Ocean Base Gradient
-  const grad = ctx.createLinearGradient(0, 0, 1024, 512);
-  grad.addColorStop(0, '#020617');
-  grad.addColorStop(0.5, '#050b18');
-  grad.addColorStop(1, '#09152e');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  // Drawing procedural glowing landmasses (continent silhouettes)
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.85)'; // Emerald Green Land
-  ctx.shadowColor = '#10b981';
-  ctx.shadowBlur = 15;
-
-  // Americas
-  ctx.beginPath();
-  ctx.ellipse(320, 240, 75, 130, 0.1, 0, Math.PI * 2);
-  ctx.ellipse(260, 150, 95, 75, -0.1, 0, Math.PI * 2);
-  ctx.ellipse(360, 360, 45, 95, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Africa / Europe
-  ctx.beginPath();
-  ctx.ellipse(540, 260, 85, 105, -0.15, 0, Math.PI * 2);
-  ctx.ellipse(530, 130, 95, 65, 0.1, 0, Math.PI * 2);
-  ctx.ellipse(510, 80, 50, 40, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eurasia / Oceania / India
-  ctx.beginPath();
-  ctx.ellipse(780, 160, 150, 90, 0.05, 0, Math.PI * 2);
-  ctx.ellipse(820, 240, 60, 50, -0.2, 0, Math.PI * 2);
-  ctx.ellipse(740, 230, 45, 55, 0.1, 0, Math.PI * 2);
-  // Australia
-  ctx.ellipse(850, 370, 65, 45, 0.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.shadowBlur = 0; // Reset shadow
-
-  // City Lights (Glow points inside landmasses)
-  ctx.fillStyle = '#6ee7b7';
-  const fullImgData = ctx.getImageData(0, 0, 1024, 512).data;
-  for (let i = 0; i < 200; i++) {
-    const x = Math.floor(Math.random() * 1024);
-    const y = Math.floor(Math.random() * 512);
-    const offset = (y * 1024 + x) * 4;
-    if (fullImgData[offset + 1] > 100 && fullImgData[offset] < 100) { // Green continent mask
-      ctx.beginPath();
-      ctx.arc(x, y, 0.8 + Math.random() * 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Draw cyber latitude/longitude lines on top for a futuristic look
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)';
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i < 1024; i += 64) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, 512);
-    ctx.stroke();
-  }
-  for (let j = 0; j < 512; j += 48) {
-    ctx.beginPath();
-    ctx.moveTo(0, j);
-    ctx.lineTo(1024, j);
-    ctx.stroke();
-  }
-
-  return canvas;
+export interface ThreeDHeroProps {
+  techString?: string;
 }
 
-// 2. Procedural Scrolling Code screen texture for Laptop
-class ScrollingCodeTexture {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D | null;
-  texture: THREE.CanvasTexture;
-  lines: string[] = [];
-  yOffsets: number[] = [];
-  maxLines = 22;
-  lastUpdate = 0;
+type ShowcaseTab = 'core' | 'pipeline' | 'topology';
 
-  // Code snippets to scroll
-  codePool = [
-    'import { SpringBoot } from "@nestjs/core";',
-    'const db = new MySQLPool({ poolSize: 20 });',
-    '@Entity() class SystemCluster extends Base {',
-    '  @Column() nodeStatus = "ONLINE";',
-    '  @PrimaryColumn() uuid: string;',
-    '}',
-    'async function syncSchemas(tx: Transaction) {',
-    '  await tx.execute("CASCADE CONSTRAINTS");',
-    '  logger.info("3NF schema fully satisfied.");',
-    '}',
-    '// REST Dispatch Thread pool matching...',
-    'app.get("/api/analytics", async (req, res) => {',
-    '  const views = await db.query("SELECT COUNT(*)...");',
-    '  res.status(200).json({ status: "SUCCESS" });',
-    '});',
-    '// WebGL context binding complete...',
-    'const gl = canvas.getContext("webgl2");',
-    'gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);',
-    'gl.vertexAttribPointer(loc, 3, gl.FLOAT, false);',
-    '// Matrix projections mapped: R3F active',
-    'camera.position.lerp(mouse, 0.05);',
-    'renderer.setPixelRatio(window.devicePixelRatio);'
-  ];
-
-  constructor() {
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = 512;
-    this.canvas.height = 512;
-    this.ctx = this.canvas.getContext('2d');
-    
-    this.texture = new THREE.CanvasTexture(this.canvas);
-    this.texture.minFilter = THREE.LinearFilter;
-
-    // Seed initial lines
-    for (let i = 0; i < this.maxLines; i++) {
-      this.lines.push(this.codePool[Math.floor(Math.random() * this.codePool.length)]);
-      this.yOffsets.push(24 * (i + 1));
-    }
-  }
-
-  update() {
-    const now = Date.now();
-    if (now - this.lastUpdate < 33) return; // Cap texture updates at 30fps
-    this.lastUpdate = now;
-
-    if (!this.ctx) return;
-    const ctx = this.ctx;
-    const width = this.canvas.width;
-    const height = this.canvas.height;
-
-    // Background
-    ctx.fillStyle = '#02040a';
-    ctx.fillRect(0, 0, width, height);
-
-    // Glowing Frame
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(0, 0, width, height);
-
-    // Grid details
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.03)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < width; i += 32) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
-    }
-
-    // Scroll lines up
-    ctx.font = '15px "JetBrains Mono", monospace';
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = '#10b981';
-
-    for (let i = 0; i < this.lines.length; i++) {
-      ctx.fillStyle = i === this.lines.length - 1 ? '#6ee7b7' : 'rgba(16, 185, 129, 0.8)';
-      ctx.fillText(this.lines[i], 24, this.yOffsets[i]);
-      this.yOffsets[i] -= 0.8; // Speed of scrolling
-
-      // Recycle line when out of screen top
-      if (this.yOffsets[i] < 0) {
-        this.lines[i] = this.codePool[Math.floor(Math.random() * this.codePool.length)];
-        this.yOffsets[i] = height + 10;
-      }
-    }
-    
-    ctx.shadowBlur = 0; // Reset
-
-    // Draw some dynamic server chart at the bottom
-    ctx.fillStyle = 'rgba(5, 150, 105, 0.15)';
-    ctx.fillRect(24, height - 100, width - 48, 80);
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(24, height - 50);
-    for (let x = 0; x < width - 48; x += 15) {
-      const y = height - 60 + Math.sin(x * 0.05 + Date.now() * 0.003) * 30 * Math.random();
-      ctx.lineTo(24 + x, y);
-    }
-    ctx.stroke();
-
-    ctx.fillStyle = '#6ee7b7';
-    ctx.font = '10px "JetBrains Mono", monospace';
-    ctx.fillText(`CLUSTER HEALTH: 99.8%  |  TPS: ${Math.floor(2500 + Math.random() * 40)}`, 32, height - 30);
-
-    this.texture.needsUpdate = true;
-  }
+interface StackNodeSpec {
+  id: string;
+  name: string;
+  fileTitle: string;
+  role: string;
+  latency: string;
+  throughput: string;
+  color: string;
+  hex: number;
+  codeLines: string[];
 }
 
-// 3. Keyboard Backlight Canvas Texture
-function createKeyboardTexture(): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
+const STACK_NODES: StackNodeSpec[] = [
+  {
+    id: 'java',
+    name: 'Java',
+    fileTitle: 'DistributedCoreEngine.java — Spring Boot 3.4',
+    role: 'Java 21 LTS Virtual Threads',
+    latency: '0.8ms',
+    throughput: '22.4k ops/s',
+    color: '#10b981',
+    hex: 0x10b981,
+    codeLines: [
+      '@SpringBootApplication @EnableKafka',
+      'public class DistributedCoreEngine {',
+      '  private final KafkaTemplate<String, Event> bus;',
+      '  @Transactional(isolation = SERIALIZABLE)',
+      '  public ResponseEntity<ClusterMetrics> dispatch() {',
+      '    var node = ClusterNode.builder()',
+      '      .region("ap-south-1-bengaluru")',
+      '      .virtualThreads(true).build();',
+      '    bus.send("telemetry-topic", node.toEvent());',
+      '    return ResponseEntity.ok(node.metrics());',
+      '  }',
+      '}',
+    ],
+  },
+  {
+    id: 'spring',
+    name: 'Spring Boot',
+    fileTitle: 'SystemsGatewayController.java — Reactive Mesh',
+    role: 'Spring Boot 3.4 Microservices',
+    latency: '1.1ms',
+    throughput: '18.9k req/s',
+    color: '#34d399',
+    hex: 0x34d399,
+    codeLines: [
+      '@RestController @RequestMapping("/api/v2/core")',
+      'public class SystemsGatewayController {',
+      '  @CircuitBreaker(name = "cluster", fallbackMethod = "ha")',
+      '  @GetMapping("/telemetry/pulse")',
+      '  public Mono<TelemetryPayload> streamPulse() {',
+      '    return reactiveClusterService',
+      '      .verifyRs512Signature()',
+      '      .flatMap(ClusterOrchestrator::collectMetrics);',
+      '  }',
+      '}',
+    ],
+  },
+  {
+    id: 'react',
+    name: 'React',
+    fileTitle: 'SystemsTelemetryHUD.tsx — React 19 + WebGL',
+    role: 'React 19 + WebGL 60FPS UI',
+    latency: '0.4ms',
+    throughput: '60 FPS Lock',
+    color: '#06b6d4',
+    hex: 0x06b6d4,
+    codeLines: [
+      'export function SystemsTelemetryHUD() {',
+      '  const snapshot = useSyncExternalStore(clusterSub);',
+      '  return (',
+      '    <PageTransitionWrapper pageKey={snapshot.region}>',
+      '      <ThreeDOrbitalReactor rps={snapshot.rps} />',
+      '      <RealtimeLatencyGraph p99="0.8ms" />',
+      '    </PageTransitionWrapper>',
+      '  );',
+      '}',
+    ],
+  },
+  {
+    id: 'mysql',
+    name: 'MySQL',
+    fileTitle: 'ProjectRepository.java — MySQL 8.0 + Redis L2',
+    role: 'MySQL 8.0 3NF + Redis L2 Cache',
+    latency: '0.9ms',
+    throughput: '31.2k qps',
+    color: '#f59e0b',
+    hex: 0xf59e0b,
+    codeLines: [
+      '@Query("""',
+      '  SELECT p FROM Project p',
+      '  LEFT JOIN FETCH p.skills s',
+      '  WHERE p.isFeatured = true',
+      '  ORDER BY p.displayOrder ASC',
+      '""")',
+      '@Cacheable(value = "featured_projects", key = "\'v2\'")',
+      'List<Project> findFeaturedWith3NFJoin();',
+    ],
+  },
+  {
+    id: 'docker',
+    name: 'Docker',
+    fileTitle: 'Dockerfile.prod — Multi-Stage ZGC Runtime',
+    role: 'Multi-Stage Distroless Containers',
+    latency: '1.0ms',
+    throughput: 'Zero-Downtime',
+    color: '#38bdf8',
+    hex: 0x38bdf8,
+    codeLines: [
+      'FROM eclipse-temurin:21-jdk-alpine AS build',
+      'WORKDIR /workspace',
+      'RUN ./mvnw clean package -DskipTests',
+      'FROM eclipse-temurin:21-jre-alpine AS prod',
+      'COPY --from=build /workspace/target/cms.jar /app.jar',
+      'ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app.jar"]',
+    ],
+  },
+  {
+    id: 'aws',
+    name: 'AWS',
+    fileTitle: 'cluster-deployment.yaml — AWS EKS ap-south-1',
+    role: 'AWS EKS Multi-AZ Auto-Scaling',
+    latency: '9.4ms',
+    throughput: '99.99% SLA',
+    color: '#a855f7',
+    hex: 0xa855f7,
+    codeLines: [
+      'apiVersion: apps/v1',
+      'kind: Deployment',
+      'metadata:',
+      '  name: chandru-portfolio-cluster',
+      '  namespace: ap-south-1-prod',
+      'spec:',
+      '  replicas: 6',
+      '  strategy: { type: RollingUpdate }',
+    ],
+  },
+];
 
-  ctx.fillStyle = '#090a0f';
-  ctx.fillRect(0, 0, 512, 256);
+export default function ThreeDHero({ techString }: ThreeDHeroProps) {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const [activeTab, setActiveTab] = useState<ShowcaseTab>('core');
+  const [activeNodeId, setActiveNodeId] = useState<string>('java');
+  const [pulseCount, setPulseCount] = useState<number>(24);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [liveRps, setLiveRps] = useState<number>(14668);
+  const [activePipelineStep, setActivePipelineStep] = useState<number>(0);
 
-  // Draw trackpad
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(192, 180, 128, 60);
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-  ctx.strokeRect(192, 180, 128, 60);
-
-  // Keyboard grid (Keys)
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
-  ctx.lineWidth = 1;
-  const keyRows = 5;
-  const keysPerRow = 14;
-  const kw = 28;
-  const kh = 22;
-
-  for (let r = 0; r < keyRows; r++) {
-    for (let k = 0; k < keysPerRow; k++) {
-      const ox = 24 + k * (kw + 4) + (r * 4); // staggered
-      const oy = 20 + r * (kh + 4);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(ox, oy, kw, kh);
-      ctx.strokeRect(ox, oy, kw, kh);
-    }
-  }
-
-  return canvas;
-}
-
-
-// --- 3D SUB-COMPONENTS ---
-
-// 1. Procedural Planet Earth
-function PlanetEarth({ reducedMotion }: { reducedMotion: boolean }) {
-  const earthRef = useRef<THREE.Group | null>(null);
-  
-  // Create and memoize the CanvasTexture so it doesn't leak memory on re-render
-  const earthTexture = useMemo(() => {
-    const canvas = createEarthCanvas();
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.ClampToEdgeWrapping;
-    return tex;
-  }, []);
-
-  useFrame((state) => {
-    if (earthRef.current) {
-      if (reducedMotion) {
-        earthRef.current.rotation.y = 0.5;
-        earthRef.current.position.y = 0;
-      } else {
-        // Rotation on axis
-        earthRef.current.rotation.y = state.clock.getElapsedTime() * 0.1;
-        // Slight floating wobble
-        earthRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 0.4) * 0.15;
-      }
-    }
-  });
-
-  return (
-    <group ref={earthRef} position={[1.25, 0.15, -0.1]}>
-      {/* Dynamic Earth Sphere */}
-      <mesh castShadow receiveShadow>
-        <sphereGeometry args={[1.1, 32, 32]} />
-        <meshStandardMaterial
-          map={earthTexture}
-          roughness={0.4}
-          metalness={0.1}
-          emissive={new THREE.Color('#10b981')}
-          emissiveIntensity={0.08}
-        />
-      </mesh>
-
-      {/* Atmospheric Outer Glowing Ring */}
-      <mesh>
-        <sphereGeometry args={[1.15, 16, 16]} />
-        <meshBasicMaterial
-          color="#10b981"
-          transparent
-          opacity={0.12}
-          blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
-        />
-      </mesh>
-
-      {/* Cyber Satellite Wireframe orbit ring */}
-      <mesh rotation={[Math.PI / 3, 0, Date.now() * 0.0001]}>
-        <torusGeometry args={[1.45, 0.012, 6, 32]} />
-        <meshBasicMaterial color="#10b981" transparent opacity={0.3} />
-      </mesh>
-
-      {/* Beaming Satellite Signal Nodes */}
-      <mesh position={[1.45, 0, 0]}>
-        <sphereGeometry args={[0.05, 4, 4]} />
-        <meshBasicMaterial color="#6ee7b7" />
-      </mesh>
-    </group>
-  );
-}
-
-// 2. Procedural Holographic Laptop
-function HolographicLaptop({ reducedMotion }: { reducedMotion: boolean }) {
-  const laptopGroupRef = useRef<THREE.Group | null>(null);
-  const screenRef = useRef<THREE.Mesh | null>(null);
-
-  // Initialize scrolling screen class
-  const scroller = useMemo(() => new ScrollingCodeTexture(), []);
-
-  // Keyboard layout backlighting
-  const keyboardTexture = useMemo(() => {
-    const canvas = createKeyboardTexture();
-    return new THREE.CanvasTexture(canvas);
-  }, []);
-
-  useFrame((state) => {
-    // Update real-time scrolling code texture
-    if (!reducedMotion) {
-      scroller.update();
-    }
-
-    if (laptopGroupRef.current) {
-      if (reducedMotion) {
-        laptopGroupRef.current.position.y = -0.2;
-        laptopGroupRef.current.rotation.y = -0.5;
-      } else {
-        // Gentle floating animation
-        laptopGroupRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 0.55) * 0.2 - 0.2;
-        // Soft ambient sway
-        laptopGroupRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.25) * 0.15 - 0.5;
-      }
-    }
-  });
-
-  return (
-    <group ref={laptopGroupRef} position={[-1.25, -0.2, 0.2]} scale={0.58}>
-      
-      {/* LAPTOP KEYBOARD BASE */}
-      <mesh castShadow receiveShadow position={[0, -0.05, 0]}>
-        <boxGeometry args={[4.2, 0.1, 3.0]} />
-        <meshStandardMaterial 
-          color="#0f172a" 
-          roughness={0.2}
-          metalness={0.8}
-        />
-      </mesh>
-
-      {/* Key board surface with procedural key glow texture */}
-      <mesh position={[0, 0.01, -0.1]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3.8, 2.5]} />
-        <meshStandardMaterial
-          map={keyboardTexture}
-          roughness={0.5}
-          metalness={0.3}
-          emissive={new THREE.Color('#10b981')}
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-
-      {/* LAPTOP HINGE CYLINDER */}
-      <mesh rotation={[0, 0, Math.PI / 2]} position={[0, 0.04, -1.45]}>
-        <cylinderGeometry args={[0.07, 0.07, 4.0, 16]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.1} />
-      </mesh>
-
-      {/* LAPTOP SCREEN/LID (Angled open by ~115 degrees) */}
-      <group position={[0, 0.04, -1.45]} rotation={[1.1, 0, 0]}>
-        
-        {/* Screen back casing */}
-        <mesh castShadow position={[0, 1.35, -0.04]}>
-          <boxGeometry args={[4.2, 2.7, 0.08]} />
-          <meshStandardMaterial 
-            color="#090d16" 
-            roughness={0.3} 
-            metalness={0.9} 
-          />
-        </mesh>
-
-        {/* Glossy bezel front panel */}
-        <mesh position={[0, 1.35, 0.005]}>
-          <boxGeometry args={[4.05, 2.55, 0.01]} />
-          <meshBasicMaterial color="#020408" />
-        </mesh>
-
-        {/* Actual Glowing Code Screen Matrix Panel */}
-        <mesh ref={screenRef} position={[0, 1.35, 0.015]}>
-          <planeGeometry args={[3.9, 2.4]} />
-          <meshBasicMaterial 
-            map={scroller.texture} 
-            transparent 
-            opacity={0.95}
-          />
-        </mesh>
-
-        {/* Laser Screen Emissive Glow Effect */}
-        <pointLight 
-          position={[0, 1.35, 0.3]} 
-          distance={4} 
-          intensity={0.6} 
-          color="#10b981" 
-        />
-      </group>
-
-      {/* High-tech Holographic Rings floating above keyboard */}
-      <mesh position={[0, 0.5, -0.1]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.2, 0.015, 8, 32]} />
-        <meshBasicMaterial color="#10b981" transparent opacity={0.15} />
-      </mesh>
-      <mesh position={[0, 0.7, -0.1]} rotation={[Math.PI / 2, 0.1, 0]}>
-        <torusGeometry args={[0.9, 0.01, 8, 32]} />
-        <meshBasicMaterial color="#6ee7b7" transparent opacity={0.25} />
-      </mesh>
-
-    </group>
-  );
-}
-
-// 3. Glowing Particle Galaxy (Spiral Star Arms)
-function ParticleGalaxy({ reducedMotion }: { reducedMotion: boolean }) {
-  const pointsRef = useRef<THREE.Points | null>(null);
-
-  // Generate spiral galaxy coordinates
-  const [positions, colors] = useMemo(() => {
-    const count = 1800;
-    const pos = new Float32Array(count * 3);
-    const cols = new Float32Array(count * 3);
-
-    const colorInside = new THREE.Color('#10b981'); // Emerald
-    const colorMiddle = new THREE.Color('#6ee7b7'); // Light Emerald
-    const colorOutside = new THREE.Color('#3b0764'); // Deep Purple nebula edge
-
-    for (let i = 0; i < count; i++) {
-      // Spiral Math
-      const r = Math.pow(Math.random(), 2.2) * 16;
-      const spin = 1.4;
-      const branches = 2;
-      const branchAngle = ((i % branches) / branches) * Math.PI * 2;
-      const spiralAngle = r * spin + branchAngle;
-
-      // Random dispersion spread
-      const randomX = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.4) * r;
-      const randomY = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.4) * r;
-      const randomZ = (Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 0.4) * r;
-
-      const x = Math.cos(spiralAngle) * r + randomX;
-      const y = randomY;
-      const z = Math.sin(spiralAngle) * r + randomZ;
-
-      pos[i * 3] = x;
-      pos[i * 3 + 1] = y - 1.5; // lower galaxy slightly
-      pos[i * 3 + 2] = z;
-
-      // Color Interpolation based on distance
-      const mixedColor = colorInside.clone();
-      if (r < 4) {
-        mixedColor.lerp(colorMiddle, r / 4);
-      } else {
-        mixedColor.lerp(colorOutside, (r - 4) / 12);
-      }
-
-      cols[i * 3] = mixedColor.r;
-      cols[i * 3 + 1] = mixedColor.g;
-      cols[i * 3 + 2] = mixedColor.b;
-    }
-
-    return [pos, cols];
-  }, []);
-
-  useFrame((state) => {
-    if (pointsRef.current) {
-      if (reducedMotion) {
-        pointsRef.current.rotation.y = 0.2;
-      } else {
-        // Spin the entire galaxy
-        pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.025;
-      }
-    }
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          args={[colors, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.065}
-        sizeAttenuation={true}
-        depthWrite={false}
-        vertexColors
-        transparent
-        opacity={0.65}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
-
-// 4. Camera Parallax Mouse controller
-function CameraMouseController({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera } = useThree();
-  const mouse = useRef({ x: 0, y: 0 });
+  const isPausedRef = useRef<boolean>(false);
+  const isInViewRef = useRef<boolean>(true);
+  const pulseBoostRef = useRef<number>(0);
+  const shockwaveRef = useRef<number>(0);
+  const activeNodeRef = useRef<string>('java');
 
   useEffect(() => {
-    if (reducedMotion) return;
-    const handleMouseMove = (event: MouseEvent) => {
-      // Normalize mouse coordinates (-1 to +1)
-      mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    };
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [reducedMotion]);
-
-  useFrame(() => {
-    if (reducedMotion) {
-      camera.position.x = 0;
-      camera.position.y = 0;
-      camera.lookAt(0, 0, 0);
-      return;
-    }
-    // Smooth camera target lerp based on mouse position (Parallax effect)
-    const targetX = mouse.current.x * 0.5;
-    const targetY = mouse.current.y * 0.3;
-    
-    camera.position.x += (targetX - camera.position.x) * 0.05;
-    camera.position.y += (targetY - camera.position.y) * 0.05;
-    
-    // Always look towards scene center
-    camera.lookAt(0, 0, 0);
-  });
-
-  return null;
-}
-
-
-// Responsive Scene Container to scale composition based on canvas aspect ratio
-function ResponsiveSceneContainer({ children }: { children: React.ReactNode }) {
-  const { size } = useThree();
-  const aspect = size.width / (size.height || 1);
-
-  const scale = useMemo(() => {
-    if (aspect < 0.75) return 0.62;
-    if (aspect < 0.95) return 0.72;
-    if (aspect < 1.25) return 0.82;
-    if (aspect < 1.5) return 0.90;
-    return 0.95;
-  }, [aspect]);
-
-  return (
-    <group scale={[scale, scale, scale]} position={[0, -0.05, 0]}>
-      {children}
-    </group>
-  );
-}
-
-// --- MAIN 3D HERO CANVAS CONTAINER ---
-
-export default function ThreeDHero({ techString }: { techString?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(true);
-  const [isTabVisible, setIsTabVisible] = useState(() => typeof document !== 'undefined' ? !document.hidden : true);
-  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
-  const [isLowBattery, setIsLowBattery] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  // 1. Viewport Intersection Observer (freeze when scrolled out of view)
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
+    activeNodeRef.current = activeNodeId;
+  }, [activeNodeId]);
+
+  useEffect(() => {
+    const el = mountRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]) {
+          isInViewRef.current = entries[0].isIntersecting;
+        }
       },
-      { threshold: 0.05 }
+      { rootMargin: '150px 0px' }
     );
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
-  // 2. Tab Visibility Observer (freeze when user switches tabs to save 100% background GPU)
+  const activeNode = useMemo(
+    () => STACK_NODES.find((n) => n.id === activeNodeId) || STACK_NODES[0],
+    [activeNodeId]
+  );
+
+  // Live RPS counter animation (paused when off-screen)
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsTabVisible(!document.hidden);
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    const timer = setInterval(() => {
+      if (!isPausedRef.current && isInViewRef.current) {
+        setLiveRps((prev) => {
+          const delta = Math.floor((Math.random() - 0.46) * 185);
+          return Math.max(14100, Math.min(19800, prev + delta));
+        });
+      }
+    }, 1400);
+    return () => clearInterval(timer);
   }, []);
 
-  // 3. Battery Saver & Low-Power Hardware Awareness
+  // Pipeline tab auto-step
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
-      (navigator as any).getBattery?.().then((battery: any) => {
-        const checkBattery = () => {
-          if (battery.level < 0.2 && !battery.charging) {
-            setIsLowBattery(true);
+    if (activeTab !== 'pipeline' || isPaused) return;
+    const timer = setInterval(() => {
+      if (isInViewRef.current) {
+        setActivePipelineStep((s) => (s + 1) % 5);
+      }
+    }, 1300);
+    return () => clearInterval(timer);
+  }, [activeTab, isPaused]);
+
+  const handleTriggerPulse = useCallback(() => {
+    soundFx.playSuccess();
+    pulseBoostRef.current = 2.8;
+    shockwaveRef.current = 0.01;
+    setPulseCount((c) => c + 1);
+    setLiveRps((r) => r + 840);
+  }, []);
+
+  const handleSelectStackNode = useCallback((id: string) => {
+    soundFx.playClick();
+    setActiveNodeId(id);
+    pulseBoostRef.current = 1.9;
+    shockwaveRef.current = 0.01;
+  }, []);
+
+  // ============================================================================
+  // 60FPS THREE.JS CYBER GLOBE + HOLOGRAPHIC CODE WORKSTATION (with 3D Fallback)
+  // ============================================================================
+  useEffect(() => {
+    if (activeTab !== 'core') return;
+    const container = mountRef.current;
+    if (!container) return;
+
+    let width = container.clientWidth || 560;
+    let height = container.clientHeight || 430;
+
+    // --------------------------------------------------------------------------
+    // 1. High-DPI Holographic Laptop Screen Texture (1024 x 640)
+    // --------------------------------------------------------------------------
+    const screenCanvas = document.createElement('canvas');
+    screenCanvas.width = 1024;
+    screenCanvas.height = 640;
+    const sCtx = screenCanvas.getContext('2d');
+
+    const drawLaptopScreen = (scrollTick: number, node: StackNodeSpec) => {
+      if (!sCtx) return;
+
+      // Deep cyber-IDE background gradient
+      const bgGrad = sCtx.createLinearGradient(0, 0, 0, 640);
+      bgGrad.addColorStop(0, '#040b18');
+      bgGrad.addColorStop(0.6, '#030813');
+      bgGrad.addColorStop(1, '#02060e');
+      sCtx.fillStyle = bgGrad;
+      sCtx.fillRect(0, 0, 1024, 640);
+
+      // Subtle holographic grid lines inside screen
+      sCtx.strokeStyle = 'rgba(16, 185, 129, 0.055)';
+      sCtx.lineWidth = 1;
+      for (let y = 68; y < 510; y += 28) {
+        sCtx.beginPath();
+        sCtx.moveTo(0, y);
+        sCtx.lineTo(1024, y);
+        sCtx.stroke();
+      }
+      for (let x = 80; x < 1024; x += 64) {
+        sCtx.beginPath();
+        sCtx.moveTo(x, 68);
+        sCtx.lineTo(x, 510);
+        sCtx.stroke();
+      }
+
+      // Top macOS / JetBrains Studio Header Bar
+      const hdrGrad = sCtx.createLinearGradient(0, 0, 1024, 0);
+      hdrGrad.addColorStop(0, '#071426');
+      hdrGrad.addColorStop(0.5, '#0a1c34');
+      hdrGrad.addColorStop(1, '#071426');
+      sCtx.fillStyle = hdrGrad;
+      sCtx.fillRect(0, 0, 1024, 64);
+
+      sCtx.strokeStyle = 'rgba(52, 211, 153, 0.35)';
+      sCtx.lineWidth = 2;
+      sCtx.beginPath();
+      sCtx.moveTo(0, 64);
+      sCtx.lineTo(1024, 64);
+      sCtx.stroke();
+
+      // Traffic light dots
+      const dots = ['#ff5f56', '#ffbd2e', '#27c93f'];
+      dots.forEach((c, idx) => {
+        sCtx.beginPath();
+        sCtx.arc(34 + idx * 28, 32, 9, 0, Math.PI * 2);
+        sCtx.fillStyle = c;
+        sCtx.fill();
+      });
+
+      // File title & Live JVM badge
+      sCtx.font = 'bold 21px "JetBrains Mono", monospace';
+      sCtx.fillStyle = '#34d399';
+      sCtx.fillText(node.fileTitle, 132, 39);
+
+      // Right pill in header
+      sCtx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+      sCtx.strokeStyle = 'rgba(52, 211, 153, 0.45)';
+      sCtx.lineWidth = 1.5;
+      sCtx.beginPath();
+      sCtx.roundRect(790, 14, 210, 36, 10);
+      sCtx.fill();
+      sCtx.stroke();
+
+      sCtx.font = 'bold 17px monospace';
+      sCtx.fillStyle = '#6ee7b7';
+      sCtx.fillText(`● ${node.latency} | ${node.name.toUpperCase()}`, 812, 38);
+
+      // Scrolling Live Production Code
+      const lines = node.codeLines;
+      const lineHeight = 38;
+      const totalHeight = lines.length * lineHeight;
+      const offset = (scrollTick * 42) % totalHeight;
+
+      sCtx.save();
+      sCtx.beginPath();
+      sCtx.rect(0, 66, 1024, 442);
+      sCtx.clip();
+
+      // Active execution highlight bar (oscillating smoothly)
+      const activeCursorY = 330 + Math.sin(scrollTick * 2.2) * 36;
+      const barGrad = sCtx.createLinearGradient(0, activeCursorY - 18, 920, activeCursorY - 18);
+      barGrad.addColorStop(0, 'rgba(245, 158, 11, 0.24)');
+      barGrad.addColorStop(0.5, 'rgba(16, 185, 129, 0.12)');
+      barGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+      sCtx.fillStyle = barGrad;
+      sCtx.fillRect(0, activeCursorY - 24, 1024, 36);
+
+      // Golden execution pointer arrow on active line
+      sCtx.strokeStyle = '#fbbf24';
+      sCtx.fillStyle = '#fbbf24';
+      sCtx.lineWidth = 3;
+      sCtx.beginPath();
+      sCtx.moveTo(76, activeCursorY - 6);
+      sCtx.lineTo(136, activeCursorY - 6);
+      sCtx.stroke();
+      sCtx.beginPath();
+      sCtx.moveTo(142, activeCursorY - 6);
+      sCtx.lineTo(130, activeCursorY - 13);
+      sCtx.lineTo(130, activeCursorY + 1);
+      sCtx.closePath();
+      sCtx.fill();
+
+      for (let pass = 0; pass < 2; pass++) {
+        lines.forEach((line, idx) => {
+          const y = 104 + idx * lineHeight - offset + pass * totalHeight;
+          if (y < 64 || y > 520) return;
+
+          // Line numbers
+          sCtx.font = '20px monospace';
+          sCtx.fillStyle = '#475569';
+          sCtx.fillText(String(idx + 1).padStart(2, '0'), 24, y);
+
+          // Code syntax coloring
+          sCtx.font = 'bold 23px "JetBrains Mono", monospace';
+          const trimmed = line.trim();
+          if (trimmed.startsWith('@')) {
+            sCtx.fillStyle = '#34d399';
+          } else if (
+            line.includes('public') ||
+            line.includes('private') ||
+            line.includes('return') ||
+            line.includes('export') ||
+            line.includes('FROM') ||
+            line.includes('apiVersion')
+          ) {
+            sCtx.fillStyle = '#38bdf8';
+          } else if (line.includes('"') || line.includes("'")) {
+            sCtx.fillStyle = '#fbbf24';
           } else {
-            setIsLowBattery(false);
+            sCtx.fillStyle = '#f1f5f9';
           }
-        };
-        checkBattery();
-        battery.addEventListener?.('levelchange', checkBattery);
-        battery.addEventListener?.('chargingchange', checkBattery);
-      }).catch(() => {});
+          sCtx.fillText(line, 82, y);
+        });
+      }
+      sCtx.restore();
+
+      // Bottom Live Oscilloscope & Telemetry Deck inside Laptop Screen
+      sCtx.fillStyle = '#040d1a';
+      sCtx.fillRect(0, 508, 1024, 132);
+
+      sCtx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+      sCtx.lineWidth = 2;
+      sCtx.beginPath();
+      sCtx.moveTo(0, 508);
+      sCtx.lineTo(1024, 508);
+      sCtx.stroke();
+
+      // Primary Emerald Sine Waveform + Fill
+      sCtx.beginPath();
+      for (let x = 24; x <= 720; x += 8) {
+        const wy =
+          574 +
+          Math.sin(x * 0.025 + scrollTick * 5.0) * 24 +
+          Math.cos(x * 0.055 - scrollTick * 3.2) * 12;
+        if (x === 24) sCtx.moveTo(x, wy);
+        else sCtx.lineTo(x, wy);
+      }
+      sCtx.strokeStyle = '#10b981';
+      sCtx.lineWidth = 4;
+      sCtx.stroke();
+
+      // Secondary Cyan Harmonic Waveform
+      sCtx.beginPath();
+      for (let x = 24; x <= 720; x += 8) {
+        const wy =
+          580 +
+          Math.cos(x * 0.03 - scrollTick * 4.2) * 16 +
+          Math.sin(x * 0.07 + scrollTick * 2.5) * 9;
+        if (x === 24) sCtx.moveTo(x, wy);
+        else sCtx.lineTo(x, wy);
+      }
+      sCtx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+      sCtx.lineWidth = 2.5;
+      sCtx.stroke();
+
+      // Right mini telemetry readout on laptop screen
+      sCtx.font = 'bold 18px monospace';
+      sCtx.fillStyle = '#94a3b8';
+      sCtx.fillText('THROUGHPUT', 760, 548);
+      sCtx.font = 'bold 26px monospace';
+      sCtx.fillStyle = '#34d399';
+      sCtx.fillText(node.throughput, 760, 582);
+      sCtx.font = '16px monospace';
+      sCtx.fillStyle = '#38bdf8';
+      sCtx.fillText('STATUS: OPTIMAL 99.99%', 760, 612);
+
+      // Glowing outer screen frame
+      sCtx.strokeStyle = 'rgba(52, 211, 153, 0.65)';
+      sCtx.lineWidth = 4;
+      sCtx.strokeRect(2, 2, 1020, 636);
+    };
+
+    // --------------------------------------------------------------------------
+    // 2. High-Craft 3D Backlit Keyboard & Trackpad Deck Texture (512 x 320)
+    // --------------------------------------------------------------------------
+    const keyboardCanvas = document.createElement('canvas');
+    keyboardCanvas.width = 512;
+    keyboardCanvas.height = 320;
+    const kCtx = keyboardCanvas.getContext('2d');
+    if (kCtx) {
+      const deckGrad = kCtx.createLinearGradient(0, 0, 512, 320);
+      deckGrad.addColorStop(0, '#0a1929');
+      deckGrad.addColorStop(0.5, '#0f293a');
+      deckGrad.addColorStop(1, '#071422');
+      kCtx.fillStyle = deckGrad;
+      kCtx.fillRect(0, 0, 512, 320);
+
+      // Metallic chamfered perimeter border
+      kCtx.strokeStyle = 'rgba(52, 211, 153, 0.45)';
+      kCtx.lineWidth = 3;
+      kCtx.strokeRect(4, 4, 504, 312);
+
+      // Recessed keyboard well
+      kCtx.fillStyle = '#040b14';
+      kCtx.beginPath();
+      kCtx.roundRect(26, 22, 460, 178, 8);
+      kCtx.fill();
+      kCtx.strokeStyle = 'rgba(16, 185, 129, 0.25)';
+      kCtx.lineWidth = 1.5;
+      kCtx.stroke();
+
+      // 6 rows of backlit mechanical keycaps
+      const rows = 6;
+      const cols = 14;
+      const startX = 36;
+      const startY = 30;
+      const keyW = 29;
+      const keyH = 23;
+      const gapX = 3.2;
+      const gapY = 4.5;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          // Spacebar row special handling
+          if (r === 5 && c >= 4 && c <= 9) {
+            if (c === 4) {
+              const sbW = keyW * 6 + gapX * 5;
+              kCtx.fillStyle = '#0c1c2c';
+              kCtx.strokeStyle = 'rgba(52, 211, 153, 0.55)';
+              kCtx.lineWidth = 1.2;
+              kCtx.beginPath();
+              kCtx.roundRect(startX + c * (keyW + gapX), startY + r * (keyH + gapY), sbW, keyH, 4);
+              kCtx.fill();
+              kCtx.stroke();
+            }
+            continue;
+          }
+          const kx = startX + c * (keyW + gapX);
+          const ky = startY + r * (keyH + gapY);
+          kCtx.fillStyle = '#0b1827';
+          kCtx.strokeStyle =
+            (r + c) % 5 === 0 ? 'rgba(56, 189, 248, 0.55)' : 'rgba(16, 185, 129, 0.42)';
+          kCtx.lineWidth = 1;
+          kCtx.beginPath();
+          kCtx.roundRect(kx, ky, keyW, keyH, 3.5);
+          kCtx.fill();
+          kCtx.stroke();
+        }
+      }
+
+      // Precision glass haptic trackpad
+      kCtx.fillStyle = '#061220';
+      kCtx.strokeStyle = 'rgba(52, 211, 153, 0.4)';
+      kCtx.lineWidth = 1.5;
+      kCtx.beginPath();
+      kCtx.roundRect(176, 212, 160, 88, 8);
+      kCtx.fill();
+      kCtx.stroke();
+
+      // Front lip glowing status LED bar
+      kCtx.fillStyle = '#34d399';
+      kCtx.fillRect(216, 308, 80, 4);
     }
-  }, []);
 
-  // 4. Reduced Motion Preferences
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-    const listener = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', listener);
-    return () => mediaQuery.removeEventListener('change', listener);
-  }, []);
+    // --------------------------------------------------------------------------
+    // 3. High-Resolution Cyber-Globe Digital Twin Texture (1024 x 512)
+    // --------------------------------------------------------------------------
+    const globeCanvas = document.createElement('canvas');
+    globeCanvas.width = 1024;
+    globeCanvas.height = 512;
+    const gCtx = globeCanvas.getContext('2d');
+    if (gCtx) {
+      // Deep emerald-obsidian planetary core gradient
+      const oceanGrad = gCtx.createLinearGradient(0, 0, 0, 512);
+      oceanGrad.addColorStop(0, '#021c1e');
+      oceanGrad.addColorStop(0.3, '#042f2e');
+      oceanGrad.addColorStop(0.5, '#064e3b');
+      oceanGrad.addColorStop(0.7, '#042f2e');
+      oceanGrad.addColorStop(1, '#02171a');
+      gCtx.fillStyle = oceanGrad;
+      gCtx.fillRect(0, 0, 1024, 512);
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const shouldRender = isInView && isTabVisible && !isManuallyPaused;
-  const frameloopMode = shouldRender ? (reducedMotion || isLowBattery ? "demand" : "always") : "never";
+      // Luminous cyber-continent zones + dot-matrix landmass constellations
+      const continentPolys: [number, number, number, number, number][] = [
+        // [centerX, centerY, radiusX, radiusY, rotation]
+        [210, 165, 115, 78, -0.2], // North America
+        [295, 335, 72, 95, 0.25],  // South America
+        [515, 145, 88, 56, 0.1],   // Europe
+        [535, 285, 82, 92, -0.1],  // Africa
+        [715, 175, 145, 86, 0.08], // Eurasia & India (AP-SOUTH-1)
+        [835, 355, 74, 52, -0.15], // Australia
+      ];
+
+      // Soft volumetric continental glow layers
+      continentPolys.forEach(([cx, cy, rx, ry, rot]) => {
+        gCtx.save();
+        gCtx.translate(cx, cy);
+        gCtx.rotate(rot);
+
+        const cGrad = gCtx.createRadialGradient(0, 0, 8, 0, 0, Math.max(rx, ry));
+        cGrad.addColorStop(0, 'rgba(110, 231, 183, 0.88)');
+        cGrad.addColorStop(0.55, 'rgba(16, 185, 129, 0.58)');
+        cGrad.addColorStop(0.85, 'rgba(6, 182, 212, 0.22)');
+        cGrad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+        gCtx.fillStyle = cGrad;
+        gCtx.beginPath();
+        gCtx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        gCtx.fill();
+
+        // Crisp continental perimeter contour
+        gCtx.strokeStyle = 'rgba(167, 243, 208, 0.55)';
+        gCtx.lineWidth = 2;
+        gCtx.stroke();
+        gCtx.restore();
+      });
+
+      // Dot-matrix cyber city nodes across continents
+      for (let gx = 16; gx < 1024; gx += 14) {
+        for (let gy = 16; gy < 512; gy += 14) {
+          let inside = false;
+          for (const [cx, cy, rx, ry] of continentPolys) {
+            const dx = (gx - cx) / rx;
+            const dy = (gy - cy) / ry;
+            if (dx * dx + dy * dy <= 0.92) {
+              inside = true;
+              break;
+            }
+          }
+          if (inside) {
+            gCtx.fillStyle =
+              (gx + gy) % 28 === 0 ? 'rgba(255, 255, 255, 0.85)' : 'rgba(52, 211, 153, 0.65)';
+            gCtx.beginPath();
+            gCtx.arc(gx, gy, (gx + gy) % 28 === 0 ? 2.4 : 1.5, 0, Math.PI * 2);
+            gCtx.fill();
+          }
+        }
+      }
+
+      // Latitude / Longitude Holographic Graticule Grid
+      gCtx.strokeStyle = 'rgba(52, 211, 153, 0.28)';
+      gCtx.lineWidth = 1.5;
+      for (let x = 0; x <= 1024; x += 64) {
+        gCtx.beginPath();
+        gCtx.moveTo(x, 0);
+        gCtx.lineTo(x, 512);
+        gCtx.stroke();
+      }
+      for (let y = 0; y <= 512; y += 64) {
+        gCtx.beginPath();
+        gCtx.moveTo(0, y);
+        gCtx.lineTo(1024, y);
+        gCtx.stroke();
+      }
+
+      // Glowing Submarine Fiber-Optic Telemetry Arcs to AP-SOUTH-1 Hub (710, 235)
+      const hubs: [number, number][] = [
+        [210, 165],
+        [515, 145],
+        [535, 285],
+        [835, 355],
+        [295, 335],
+      ];
+      hubs.forEach(([hx, hy]) => {
+        gCtx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+        gCtx.lineWidth = 2.2;
+        gCtx.beginPath();
+        gCtx.moveTo(710, 235);
+        gCtx.quadraticCurveTo((710 + hx) / 2, Math.min(235, hy) - 65, hx, hy);
+        gCtx.stroke();
+      });
+
+      // Bright AP-SOUTH-1 (Bengaluru) Primary Cluster Beacon on Globe
+      gCtx.beginPath();
+      gCtx.arc(710, 235, 16, 0, Math.PI * 2);
+      gCtx.strokeStyle = '#ffffff';
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+      gCtx.beginPath();
+      gCtx.arc(710, 235, 7, 0, Math.PI * 2);
+      gCtx.fillStyle = '#ffffff';
+      gCtx.fill();
+    }
+
+    // --------------------------------------------------------------------------
+    // 4. Initialize WebGLRenderer (or High-Precision 2D 3D-Projection Fallback)
+    // --------------------------------------------------------------------------
+    let renderer: THREE.WebGLRenderer | null = null;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+    } catch {
+      renderer = null;
+    }
+
+    // High-Precision 2D Canvas 3D-Scene Fallback if WebGL context is restricted
+    if (!renderer) {
+      const fallbackCanvas = document.createElement('canvas');
+      fallbackCanvas.width = width * 2;
+      fallbackCanvas.height = height * 2;
+      fallbackCanvas.style.width = '100%';
+      fallbackCanvas.style.height = '100%';
+      container.innerHTML = '';
+      container.appendChild(fallbackCanvas);
+      const ctx2d = fallbackCanvas.getContext('2d');
+      let anim2d = 0;
+      let t2d = 0;
+
+      const loop2d = () => {
+        anim2d = requestAnimationFrame(loop2d);
+        if (!ctx2d || !isInViewRef.current) return;
+        const speed = (isPausedRef.current ? 0 : 0.022) + pulseBoostRef.current * 0.035;
+        t2d += speed;
+        if (pulseBoostRef.current > 0) {
+          pulseBoostRef.current = Math.max(0, pulseBoostRef.current - 0.03);
+        }
+
+        ctx2d.save();
+        ctx2d.scale(2, 2);
+        ctx2d.clearRect(0, 0, width, height);
+
+        const cx = width * 0.58;
+        const cy = height * 0.48;
+        const r = Math.min(width, height) * 0.25;
+
+        // Atmospheric outer glow
+        const halo = ctx2d.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.55);
+        halo.addColorStop(0, 'rgba(52, 211, 153, 0.75)');
+        halo.addColorStop(0.55, 'rgba(16, 185, 129, 0.32)');
+        halo.addColorStop(0.85, 'rgba(6, 182, 212, 0.12)');
+        halo.addColorStop(1, 'rgba(2, 6, 23, 0)');
+        ctx2d.fillStyle = halo;
+        ctx2d.beginPath();
+        ctx2d.arc(cx, cy, r * 1.55, 0, Math.PI * 2);
+        ctx2d.fill();
+
+        // Globe sphere
+        const sphereGrad = ctx2d.createRadialGradient(
+          cx - r * 0.28,
+          cy - r * 0.28,
+          r * 0.08,
+          cx,
+          cy,
+          r
+        );
+        sphereGrad.addColorStop(0, '#6ee7b7');
+        sphereGrad.addColorStop(0.45, '#10b981');
+        sphereGrad.addColorStop(0.85, '#064e3b');
+        sphereGrad.addColorStop(1, '#022c22');
+        ctx2d.fillStyle = sphereGrad;
+        ctx2d.beginPath();
+        ctx2d.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx2d.fill();
+
+        // 3 Gyroscopic Rings + Traveling Packets
+        const ringColors = ['#34d399', '#38bdf8', '#c084fc'];
+        [1.42, 1.64, 1.84].forEach((mult, idx) => {
+          ctx2d.save();
+          ctx2d.translate(cx, cy);
+          const tilt = (idx - 1) * 0.52 + Math.sin(t2d * 0.3 + idx) * 0.12;
+          ctx2d.rotate(tilt);
+          ctx2d.strokeStyle = ringColors[idx];
+          ctx2d.lineWidth = 2;
+          ctx2d.beginPath();
+          ctx2d.ellipse(0, 0, r * mult, r * mult * 0.36, 0, 0, Math.PI * 2);
+          ctx2d.stroke();
+
+          // Traveling packet on ellipse
+          const pAng = t2d * (idx % 2 === 0 ? 1.8 : -1.5) + idx * 2;
+          const px = Math.cos(pAng) * r * mult;
+          const py = Math.sin(pAng) * r * mult * 0.36;
+          ctx2d.fillStyle = '#ffffff';
+          ctx2d.beginPath();
+          ctx2d.arc(px, py, 4.5, 0, Math.PI * 2);
+          ctx2d.fill();
+          ctx2d.restore();
+        });
+
+        // Laptop on left foreground
+        const node = STACK_NODES.find((n) => n.id === activeNodeRef.current) || STACK_NODES[0];
+        drawLaptopScreen(t2d, node);
+        const lx = width * 0.08;
+        const ly = height * 0.34;
+        const lw = width * 0.42;
+        const lh = height * 0.42;
+        ctx2d.drawImage(screenCanvas, lx, ly, lw, lh);
+        ctx2d.restore();
+      };
+      anim2d = requestAnimationFrame(loop2d);
+      return () => cancelAnimationFrame(anim2d);
+    }
+
+    // --------------------------------------------------------------------------
+    // 5. Build Three.js Scene Hierarchy
+    // --------------------------------------------------------------------------
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+    camera.position.set(0, 0.22, 6.75);
+
+    // Multi-point studio lighting rig
+    scene.add(new THREE.AmbientLight(0xffffff, 1.55));
+
+    const keyLight = new THREE.PointLight(0x34d399, 5.5, 28);
+    keyLight.position.set(4.5, 5.5, 6.5);
+    scene.add(keyLight);
+
+    const cyanLight = new THREE.PointLight(0x38bdf8, 4.5, 25);
+    cyanLight.position.set(-5.5, -2.5, 5.5);
+    scene.add(cyanLight);
+
+    const violetLight = new THREE.PointLight(0xc084fc, 3.8, 22);
+    violetLight.position.set(2.5, -4.5, -3.5);
+    scene.add(violetLight);
+
+    // Master Orbital Core Group (Right-Center)
+    const masterGroup = new THREE.Group();
+    masterGroup.position.set(0.32, 0.06, 0);
+    scene.add(masterGroup);
+
+    // A. Cyber Globe + Atmospheric Fresnel Shell + Dual Geodesic Wireframes
+    const globeTex = new THREE.CanvasTexture(globeCanvas);
+    globeTex.anisotropy = 4;
+
+    const globeGeo = new THREE.SphereGeometry(1.18, 64, 64);
+    const globeMat = new THREE.MeshStandardMaterial({
+      map: globeTex,
+      emissive: 0x10b981,
+      emissiveMap: globeTex,
+      emissiveIntensity: 0.72,
+      roughness: 0.22,
+      metalness: 0.55,
+    });
+    const globeMesh = new THREE.Mesh(globeGeo, globeMat);
+    masterGroup.add(globeMesh);
+
+    // Volumetric outer atmosphere rim glow sphere
+    const atmoGeo = new THREE.SphereGeometry(1.26, 48, 48);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x34d399,
+      transparent: true,
+      opacity: 0.14,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
+    masterGroup.add(atmoMesh);
+
+    // Primary Geodesic Wireframe Icosahedron Shell
+    const wireGeo = new THREE.IcosahedronGeometry(1.35, 2);
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: 0x34d399,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.34,
+      blending: THREE.AdditiveBlending,
+    });
+    const wireShell = new THREE.Mesh(wireGeo, wireMat);
+    masterGroup.add(wireShell);
+
+    // Secondary Counter-Rotating Cyan Geodesic Lattice
+    const outerWireGeo = new THREE.IcosahedronGeometry(1.44, 1);
+    const outerWireMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+    });
+    const outerWireShell = new THREE.Mesh(outerWireGeo, outerWireMat);
+    masterGroup.add(outerWireShell);
+
+    // Interactive Shockwave Ring (expands on Pulse or Node click)
+    const shockGeo = new THREE.RingGeometry(1.2, 1.32, 64);
+    const shockMat = new THREE.MeshBasicMaterial({
+      color: 0x6ee7b7,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+    });
+    const shockwaveMesh = new THREE.Mesh(shockGeo, shockMat);
+    masterGroup.add(shockwaveMesh);
+
+    // B. Three Gyroscopic Orbital Rings + Multi-Packet Comet Streams
+    const ringConfigs = [
+      { radius: 1.84, color: 0x34d399, rx: 1.12, ry: 0.28, speed: 0.88 },
+      { radius: 2.1, color: 0x38bdf8, rx: -0.92, ry: 0.52, speed: -0.72 },
+      { radius: 2.34, color: 0xc084fc, rx: 0.68, ry: -0.82, speed: 0.58 },
+    ];
+
+    const orbitalRings: {
+      group: THREE.Group;
+      packets: THREE.Mesh[];
+      radius: number;
+      speed: number;
+    }[] = [];
+
+    ringConfigs.forEach((rc) => {
+      const rg = new THREE.Group();
+      rg.rotation.set(rc.rx, rc.ry, 0);
+
+      // Main glowing orbital track
+      const tGeo = new THREE.TorusGeometry(rc.radius, 0.018, 20, 160);
+      const tMat = new THREE.MeshBasicMaterial({
+        color: rc.color,
+        transparent: true,
+        opacity: 0.82,
+      });
+      rg.add(new THREE.Mesh(tGeo, tMat));
+
+      // Soft outer bloom tube on the orbital track
+      const glowGeo = new THREE.TorusGeometry(rc.radius, 0.042, 12, 120);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: rc.color,
+        transparent: true,
+        opacity: 0.18,
+        blending: THREE.AdditiveBlending,
+      });
+      rg.add(new THREE.Mesh(glowGeo, glowMat));
+
+      // Primary data packet + 3 comet trail spheres
+      const packets: THREE.Mesh[] = [];
+      [0.072, 0.048, 0.034, 0.022].forEach((sz, pIdx) => {
+        const pGeo = new THREE.SphereGeometry(sz, 16, 16);
+        const pMat = new THREE.MeshBasicMaterial({
+          color: pIdx === 0 ? 0xffffff : rc.color,
+          transparent: true,
+          opacity: 1 - pIdx * 0.22,
+        });
+        const pkt = new THREE.Mesh(pGeo, pMat);
+        rg.add(pkt);
+        packets.push(pkt);
+      });
+
+      masterGroup.add(rg);
+      orbitalRings.push({ group: rg, packets, radius: rc.radius, speed: rc.speed });
+    });
+
+    // C. Six Orbiting Crystal Satellites with Equatorial Rings, Cages & Laser Beams
+    const satellites: {
+      id: string;
+      group: THREE.Group;
+      crystal: THREE.Mesh;
+      cage: THREE.Mesh;
+      beam: THREE.Line;
+      radius: number;
+      speed: number;
+      inclination: number;
+      phase: number;
+    }[] = [];
+
+    const clickableMeshes: THREE.Object3D[] = [];
+
+    STACK_NODES.forEach((node, idx) => {
+      const sg = new THREE.Group();
+
+      // Core Octahedron Crystal
+      const cGeo = new THREE.OctahedronGeometry(0.175, 0);
+      const cMat = new THREE.MeshStandardMaterial({
+        color: node.hex,
+        emissive: node.hex,
+        emissiveIntensity: 0.95,
+        roughness: 0.15,
+        metalness: 0.85,
+      });
+      const crystal = new THREE.Mesh(cGeo, cMat);
+      crystal.userData = { nodeId: node.id };
+      sg.add(crystal);
+      clickableMeshes.push(crystal);
+
+      // Counter-rotating Wireframe Cage
+      const cageGeo = new THREE.OctahedronGeometry(0.23, 0);
+      const cageMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35,
+      });
+      const cage = new THREE.Mesh(cageGeo, cageMat);
+      sg.add(cage);
+
+      // Equatorial Saturn Halo Ring
+      const hGeo = new THREE.RingGeometry(0.24, 0.295, 32);
+      const hMat = new THREE.MeshBasicMaterial({
+        color: node.hex,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.75,
+        blending: THREE.AdditiveBlending,
+      });
+      const halo = new THREE.Mesh(hGeo, hMat);
+      halo.rotation.x = Math.PI / 2;
+      sg.add(halo);
+
+      masterGroup.add(sg);
+
+      // Laser Telemetry Beam to Globe Core
+      const bGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(1, 1, 1),
+      ]);
+      const bMat = new THREE.LineBasicMaterial({
+        color: node.hex,
+        transparent: true,
+        opacity: 0.42,
+      });
+      const beam = new THREE.Line(bGeo, bMat);
+      masterGroup.add(beam);
+
+      satellites.push({
+        id: node.id,
+        group: sg,
+        crystal,
+        cage,
+        beam,
+        radius: 2.18 + (idx % 3) * 0.28,
+        speed: (idx % 2 === 0 ? 1 : -1) * (0.44 + idx * 0.055),
+        inclination: (idx - 2.5) * 0.26,
+        phase: (idx * Math.PI) / 3,
+      });
+    });
+
+    // D. High-Craft 3D Holographic Code Terminal Workstation Laptop (Left Foreground)
+    const laptopGroup = new THREE.Group();
+    let laptopBaseY = -0.54;
+    laptopGroup.position.set(-1.36, laptopBaseY, 1.18);
+    laptopGroup.rotation.set(0.07, 0.43, -0.025);
+    scene.add(laptopGroup);
+
+    const applyResponsive3DLayout = (w: number, h: number) => {
+      const aspect = w / Math.max(h, 1);
+      if (w < 540 || aspect < 1.05) {
+        camera.position.set(0, 0.14, Math.max(8.15, 7.05 / Math.max(aspect, 0.72)));
+        masterGroup.position.set(0.14, 0.34, 0);
+        masterGroup.scale.setScalar(0.76);
+        laptopBaseY = -0.68;
+        laptopGroup.position.set(-0.56, laptopBaseY, 1.08);
+        laptopGroup.scale.setScalar(0.64);
+      } else {
+        camera.position.set(0, 0.22, 6.75);
+        masterGroup.position.set(0.32, 0.06, 0);
+        masterGroup.scale.setScalar(1.0);
+        laptopBaseY = -0.54;
+        laptopGroup.position.set(-1.36, laptopBaseY, 1.18);
+        laptopGroup.scale.setScalar(1.0);
+      }
+    };
+    applyResponsive3DLayout(width, height);
+
+    const screenTex = new THREE.CanvasTexture(screenCanvas);
+    screenTex.minFilter = THREE.LinearFilter;
+    screenTex.magFilter = THREE.LinearFilter;
+    screenTex.anisotropy = 4;
+
+    // Sleek CNC Aluminum Lid
+    const lidGeo = new THREE.BoxGeometry(2.22, 1.4, 0.048);
+    const lidMat = new THREE.MeshStandardMaterial({
+      color: 0x091426,
+      emissive: 0x064e3b,
+      emissiveIntensity: 0.22,
+      roughness: 0.25,
+      metalness: 0.85,
+    });
+    const lidMesh = new THREE.Mesh(lidGeo, lidMat);
+    laptopGroup.add(lidMesh);
+
+    // Neon Emerald Edge Highlight on Display Lid
+    const lidEdges = new THREE.EdgesGeometry(lidGeo);
+    const lidEdgeLine = new THREE.LineSegments(
+      lidEdges,
+      new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.75 })
+    );
+    laptopGroup.add(lidEdgeLine);
+
+    // High-DPI Code Display Surface
+    const displayGeo = new THREE.PlaneGeometry(2.12, 1.31);
+    const displayMat = new THREE.MeshBasicMaterial({ map: screenTex });
+    const displayMesh = new THREE.Mesh(displayGeo, displayMat);
+    displayMesh.position.z = 0.026;
+    laptopGroup.add(displayMesh);
+
+    // Backlit Mechanical Keyboard & Trackpad Base Deck
+    const kbTex = new THREE.CanvasTexture(keyboardCanvas);
+    kbTex.anisotropy = 4;
+
+    const baseGeo = new THREE.BoxGeometry(2.24, 0.055, 1.38);
+    const baseMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0x0f293a, metalness: 0.8, roughness: 0.3 }), // right
+      new THREE.MeshStandardMaterial({ color: 0x0f293a, metalness: 0.8, roughness: 0.3 }), // left
+      new THREE.MeshBasicMaterial({ map: kbTex }), // top (backlit keyboard & trackpad)
+      new THREE.MeshStandardMaterial({ color: 0x040b14, metalness: 0.8, roughness: 0.4 }), // bottom
+      new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.45 }), // front lip
+      new THREE.MeshStandardMaterial({ color: 0x0f293a, metalness: 0.8, roughness: 0.3 }), // back
+    ];
+    const baseMesh = new THREE.Mesh(baseGeo, baseMaterials);
+    baseMesh.position.set(0, -0.71, 0.65);
+    baseMesh.rotation.x = 0.16;
+    laptopGroup.add(baseMesh);
+
+    // Neon Edge Highlight on Keyboard Base
+    const baseEdges = new THREE.EdgesGeometry(baseGeo);
+    const baseEdgeLine = new THREE.LineSegments(
+      baseEdges,
+      new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.55 })
+    );
+    baseEdgeLine.position.copy(baseMesh.position);
+    baseEdgeLine.rotation.copy(baseMesh.rotation);
+    laptopGroup.add(baseEdgeLine);
+
+    // E. Dual-Layer Deep-Space Starfield & Cyber Matrix Particles
+    const starCount = 380;
+    const starPos = new Float32Array(starCount * 3);
+    const starColors = new Float32Array(starCount * 3);
+    const cEmerald = new THREE.Color(0x34d399);
+    const cCyan = new THREE.Color(0x38bdf8);
+
+    for (let i = 0; i < starCount; i++) {
+      starPos[i * 3] = (Math.random() - 0.45) * 11.5;
+      starPos[i * 3 + 1] = (Math.random() - 0.5) * 7.5;
+      starPos[i * 3 + 2] = (Math.random() - 0.5) * 6.5 - 1;
+
+      const col = i % 3 === 0 ? cCyan : cEmerald;
+      starColors[i * 3] = col.r;
+      starColors[i * 3 + 1] = col.g;
+      starColors[i * 3 + 2] = col.b;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+    const starMat = new THREE.PointsMaterial({
+      size: 0.052,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.82,
+      blending: THREE.AdditiveBlending,
+    });
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+
+    // --------------------------------------------------------------------------
+    // 6. Interactive Pointer Orbit, Parallax & Satellite Click Raycasting
+    // --------------------------------------------------------------------------
+    let isDragging = false;
+    let pointerDownX = 0;
+    let pointerDownY = 0;
+    let prevX = 0;
+    let prevY = 0;
+    let dragRotX = 0;
+    let dragRotY = 0;
+    let hoverX = 0;
+    let hoverY = 0;
+
+    const raycaster = new THREE.Raycaster();
+    const pointerNDC = new THREE.Vector2();
+
+    const onPointerDown = (e: PointerEvent) => {
+      isDragging = true;
+      pointerDownX = e.clientX;
+      pointerDownY = e.clientY;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      hoverX = ((e.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+      hoverY = -(((e.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1);
+
+      if (isDragging) {
+        dragRotY += (e.clientX - prevX) * 0.008;
+        dragRotX = Math.max(-0.5, Math.min(0.5, dragRotX + (e.clientY - prevY) * 0.008));
+        prevX = e.clientX;
+        prevY = e.clientY;
+      }
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (isDragging) {
+        const movedDist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
+        if (movedDist < 6) {
+          const rect = container.getBoundingClientRect();
+          pointerNDC.x = ((e.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+          pointerNDC.y = -(((e.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1);
+          raycaster.setFromCamera(pointerNDC, camera);
+          const hits = raycaster.intersectObjects(clickableMeshes, false);
+          if (hits.length > 0 && hits[0].object.userData?.nodeId) {
+            handleSelectStackNode(hits[0].object.userData.nodeId);
+          }
+        }
+      }
+      isDragging = false;
+    };
+
+    const domEl = renderer.domElement;
+    domEl.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerup', onPointerUp, { passive: true });
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const cr = entry.contentRect;
+        if (cr.width > 0 && cr.height > 0 && renderer) {
+          width = cr.width;
+          height = cr.height;
+          applyResponsive3DLayout(width, height);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
+        }
+      }
+    });
+    resizeObserver.observe(container);
+
+    // --------------------------------------------------------------------------
+    // 7. 60FPS Render Loop
+    // --------------------------------------------------------------------------
+    let animId = 0;
+    let clockTime = 0;
+    let lastFrameTime = performance.now();
+    let texFrameCounter = 0;
+
+    const animate = (now: number) => {
+      animId = requestAnimationFrame(animate);
+      if (!isInViewRef.current) {
+        lastFrameTime = now;
+        return;
+      }
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+      lastFrameTime = now;
+
+      if (pulseBoostRef.current > 0) {
+        pulseBoostRef.current = Math.max(0, pulseBoostRef.current - dt * 1.8);
+      }
+
+      const speedMult = (isPausedRef.current ? 0 : 1) + pulseBoostRef.current * 2.2;
+      clockTime += dt * speedMult;
+
+      // Rotate Cyber Globe & Dual Geodesic Wireframe Shells
+      globeMesh.rotation.y = clockTime * 0.52;
+      wireShell.rotation.y = -clockTime * 0.36;
+      wireShell.rotation.x = clockTime * 0.2;
+      outerWireShell.rotation.y = clockTime * 0.24;
+      outerWireShell.rotation.z = -clockTime * 0.18;
+
+      const scalePulse = 1 + Math.sin(clockTime * 3.0) * 0.025 + pulseBoostRef.current * 0.045;
+      globeMesh.scale.setScalar(scalePulse);
+      wireShell.scale.setScalar(scalePulse * 1.015);
+
+      // Update Shockwave Ring Expansion
+      if (shockwaveRef.current > 0) {
+        shockwaveRef.current += dt * 2.4;
+        const sProg = shockwaveRef.current;
+        if (sProg >= 1) {
+          shockwaveRef.current = 0;
+          shockMat.opacity = 0;
+        } else {
+          shockwaveMesh.scale.setScalar(1 + sProg * 1.35);
+          shockMat.opacity = (1 - sProg) * 0.75;
+          shockwaveMesh.lookAt(camera.position);
+        }
+      }
+
+      // Update Gyroscopic Orbital Rings & Multi-Packet Comet Streams
+      orbitalRings.forEach((ring, i) => {
+        ring.group.rotation.z += dt * ring.speed * speedMult * 0.38;
+        const baseAngle = clockTime * ring.speed * 1.65 + i * 2.1;
+        ring.packets.forEach((pkt, pIdx) => {
+          const pAngle = baseAngle - pIdx * 0.11 * Math.sign(ring.speed);
+          pkt.position.set(
+            Math.cos(pAngle) * ring.radius,
+            Math.sin(pAngle) * ring.radius,
+            0
+          );
+        });
+      });
+
+      // Update Orbiting Crystal Satellites & Laser Beams
+      satellites.forEach((sat) => {
+        const angle = clockTime * sat.speed + sat.phase;
+        const x = Math.cos(angle) * sat.radius;
+        const z = Math.sin(angle) * sat.radius;
+        const y = Math.sin(angle * 1.3) * sat.inclination;
+
+        sat.group.position.set(x, y, z);
+        sat.crystal.rotation.y += dt * 2.4;
+        sat.crystal.rotation.x += dt * 1.6;
+        sat.cage.rotation.y -= dt * 1.8;
+
+        const isSelected = sat.id === activeNodeRef.current;
+        sat.group.scale.setScalar(isSelected ? 1.35 : 1.0);
+
+        const positions = sat.beam.geometry.attributes.position.array as Float32Array;
+        positions[3] = x;
+        positions[4] = y;
+        positions[5] = z;
+        sat.beam.geometry.attributes.position.needsUpdate = true;
+      });
+
+      // Smooth Floating Levitation & Parallax for Holographic Code Laptop
+      laptopGroup.position.y = laptopBaseY + Math.sin(clockTime * 2.2) * 0.055;
+      laptopGroup.rotation.y = 0.43 + hoverX * 0.11;
+      laptopGroup.rotation.x = 0.07 - hoverY * 0.07;
+
+      // Update Scrolling Code & Oscilloscope on Laptop Screen Texture (throttled for 60fps scroll performance)
+      texFrameCounter++;
+      if (texFrameCounter % 5 === 0) {
+        const currentNode =
+          STACK_NODES.find((n) => n.id === activeNodeRef.current) || STACK_NODES[0];
+        drawLaptopScreen(clockTime, currentNode);
+        screenTex.needsUpdate = true;
+      }
+
+      // Starfield drift + smooth damping for interactive globe tilt
+      starField.rotation.y = clockTime * 0.07;
+      masterGroup.rotation.y += (dragRotY + hoverX * 0.24 - masterGroup.rotation.y) * 0.08;
+      masterGroup.rotation.x += (dragRotX - hoverY * 0.16 - masterGroup.rotation.x) * 0.08;
+
+      renderer?.render(scene, camera);
+    };
+
+    animId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      resizeObserver.disconnect();
+      domEl.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      if (renderer) {
+        renderer.dispose();
+      }
+    };
+  }, [activeTab, handleSelectStackNode]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-auto" style={{ minHeight: '100%' }}>
-      
-      {/* Interactive WebGL Engine HUD Status Control */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-auto hidden sm:block">
-        <button
-          type="button"
-          onClick={() => setIsManuallyPaused(prev => !prev)}
-          className={`px-3 py-1.5 rounded-full border text-[10px] font-mono flex items-center gap-2 backdrop-blur-md transition-all shadow-lg cursor-pointer select-none ${
-            isManuallyPaused || !shouldRender
-              ? 'bg-slate-900/90 border-slate-700/80 text-slate-400 hover:text-slate-200'
-              : 'bg-slate-950/80 border-emerald-500/30 text-emerald-400 hover:border-emerald-400'
-          }`}
-          title={isManuallyPaused ? "Resume 3D Engine" : "Pause 3D WebGL Engine to save power"}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${shouldRender ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-          <span className="font-bold">WebGL {shouldRender ? (isMobile ? '30FPS' : '60FPS') : 'PAUSED'}</span>
-          <span className="text-[9px] uppercase text-slate-500 font-semibold">
-            [{isManuallyPaused ? 'Play ▶' : 'Pause ⏸'}]
-          </span>
-        </button>
+    <div className="relative w-full h-full select-none overflow-hidden rounded-3xl bg-[#020713] flex flex-col justify-between">
+      {/* Multi-Layer Volumetric Cyber Glow Backdrop */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 60% 46%, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.10) 42%, rgba(168, 85, 247, 0.05) 68%, transparent 85%)',
+        }}
+      />
+
+      {/* Subtle Architectural HUD Corner Reticles */}
+      <div className="pointer-events-none absolute inset-2.5 z-20 rounded-2xl border border-emerald-500/[0.08]">
+        <span className="absolute -top-px -left-px w-3.5 h-3.5 border-t-2 border-l-2 border-emerald-400/60 rounded-tl-md" />
+        <span className="absolute -top-px -right-px w-3.5 h-3.5 border-t-2 border-r-2 border-emerald-400/60 rounded-tr-md" />
+        <span className="absolute -bottom-px -left-px w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400/60 rounded-bl-md" />
+        <span className="absolute -bottom-px -right-px w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400/60 rounded-br-md" />
       </div>
 
-      {/* High Performance Suspense Lazy loader fallback wrapper */}
-      <Suspense fallback={
-        <div className="absolute inset-0 flex items-center justify-center bg-[#030712] z-50">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">
-              Booting WebGL 3D Shell...
-            </span>
-          </div>
-        </div>
-      }>
-        <Canvas
-          dpr={isMobile || isLowBattery ? [1, 1] : [1, 1.25]}
-          frameloop={frameloopMode}
-          shadows={!isMobile && !isLowBattery}
-          camera={{ position: [0, 0, 7.2], fov: 46 }}
-          gl={{ antialias: !isMobile && !isLowBattery, powerPreference: isLowBattery ? "low-power" : "high-performance" }}
-          style={{ width: '100%', height: '100%', display: 'block' }}
-          id="react-three-fiber-universe"
-        >
-          {/* Ambient space background styling */}
-          <fog attach="fog" args={['#030712', 4, 18]} />
-
-          {/* Dynamic Interactive lighting */}
-          <ambientLight intensity={0.12} />
-          
-          {/* Main spotlight on planet and laptop */}
-          <directionalLight
-            castShadow={!isMobile && !isLowBattery}
-            position={[4, 5, 3]}
-            intensity={1.2}
-            color="#d1fae5"
-            shadow-mapSize={isMobile || isLowBattery ? [256, 256] : [512, 512]}
+      {/* TOP BAR: AP-SOUTH-1 Live RPS Pill + 3D Core / Pipeline / Topology Switcher */}
+      <div className="relative z-30 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-4 pt-2.5 sm:pt-3.5 pb-1 sm:pb-1.5">
+        {/* Left Region + Live RPS Pill */}
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#040d1d]/90 border border-emerald-500/35 shadow-[0_0_20px_rgba(16,185,129,0.16)] backdrop-blur-xl whitespace-nowrap shrink-0">
+          <Globe
+            className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 animate-spin shrink-0"
+            style={{ animationDuration: '10s' }}
           />
+          <span className="text-[9px] sm:text-[11px] font-mono font-extrabold tracking-wider text-white uppercase whitespace-nowrap">
+            AP-SOUTH-1
+          </span>
+          <span className="text-emerald-500/60">•</span>
+          <span className="text-[9px] sm:text-[11px] font-mono font-extrabold text-emerald-400 whitespace-nowrap tabular-nums">
+            {liveRps.toLocaleString()} RPS
+          </span>
+        </div>
 
-          {/* Deep celestial ambient purple side fill */}
-          <pointLight position={[-6, -4, -2]} intensity={0.5} color="#4c1d95" />
-
-          {/* Moving orbit lighting glow */}
-          <pointLight position={[0, 4, 2]} intensity={0.8} color="#10b981" />
-
-          {/* Starfield galaxy background */}
-          <Stars radius={80} depth={50} count={isMobile || isLowBattery ? 100 : 380} factor={4} saturation={0.5} fade speed={1} />
-          
-          {/* Secondary smaller dust particle swarm */}
-          <Sparkles count={isMobile || isLowBattery ? 15 : 40} scale={8} size={2.5} speed={0.4} color="#6ee7b7" />
-
-          {/* Major components wrapped in Responsive Scene Container */}
-          <ResponsiveSceneContainer>
-            <ParticleGalaxy reducedMotion={reducedMotion || isLowBattery} />
-            <PlanetEarth reducedMotion={reducedMotion || isLowBattery} />
-            <HolographicLaptop reducedMotion={reducedMotion || isLowBattery} />
-
-            {/* High-tech HTML floating telemetry display (Responsive billboard) */}
-            <Float speed={reducedMotion || isLowBattery ? 0 : 1.8} rotationIntensity={reducedMotion ? 0 : 0.2} floatIntensity={reducedMotion ? 0 : 0.5}>
-              <Html
-                position={[0, 2.0, 0]}
-                center
-                distanceFactor={8}
-                className="pointer-events-none"
+        {/* Right 3-Tab Switcher: 3D Core | Pipeline | Topology */}
+        <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-full bg-[#040d1d]/90 border border-slate-800/90 backdrop-blur-xl shadow-lg shrink-0">
+          {(
+            [
+              { id: 'core', label: '3D Core' },
+              { id: 'pipeline', label: 'Pipeline' },
+              { id: 'topology', label: 'Topology' },
+            ] as { id: ShowcaseTab; label: string }[]
+          ).map((tab) => {
+            const isAct = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  soundFx.playTab(880);
+                  setActiveTab(tab.id);
+                }}
+                className={`relative px-2.5 sm:px-3.5 py-1 rounded-full text-[9px] sm:text-[11px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                  isAct ? 'text-slate-950 font-extrabold' : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                <div className="flex glass-card border border-emerald-500/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl items-center gap-2 sm:gap-3 whitespace-nowrap opacity-90 select-none shadow-xl shadow-emerald-950/25">
-                  <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <div className="font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-300">
-                    <span className="text-emerald-400 font-bold">{techString || "JAVA • SPRING BOOT • REACT • MYSQL"}</span>
-                  </div>
+                {isAct && (
+                  <motion.span
+                    layoutId="three-d-hero-tab-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 shadow-[0_0_16px_rgba(16,185,129,0.65)]"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* CENTER STAGE (Explicit absolute child positioning prevents flex height collapse) */}
+      <div className="relative flex-1 w-full min-h-[300px] overflow-hidden">
+        <AnimatePresence mode="wait">
+          {/* ===============================================================
+              TAB 1: 3D CORE (Cyber Globe + Holographic Laptop + Interactive HUD)
+          =============================================================== */}
+          {activeTab === 'core' && (
+            <motion.div
+              key="core"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 w-full h-full"
+            >
+              {/* Subtle Top-Left Active Node Telemetry Micro-HUD */}
+              <motion.div
+                key={activeNode.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.22 }}
+                className="pointer-events-none absolute top-1.5 left-4 z-20 hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#040d1d]/75 border border-emerald-500/25 backdrop-blur-md text-[10px] font-mono"
+              >
+                <span
+                  className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ backgroundColor: activeNode.color }}
+                />
+                <span className="text-slate-200 font-bold">{activeNode.role}</span>
+                <span className="text-slate-600">•</span>
+                <span className="text-emerald-400 font-bold">P99 {activeNode.latency}</span>
+                <span className="text-slate-600">•</span>
+                <span className="text-cyan-300 font-semibold">{activeNode.throughput}</span>
+              </motion.div>
+
+              {/* WebGL 3D Scene Mount */}
+              <div
+                ref={mountRef}
+                className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-10"
+                title="Drag to rotate 3D Cyber Core • Click any satellite or bottom tech node to inspect"
+              />
+            </motion.div>
+          )}
+
+          {/* ===============================================================
+              TAB 2: PIPELINE (Interactive Request Execution Stream)
+          =============================================================== */}
+          {activeTab === 'pipeline' && (
+            <motion.div
+              key="pipeline"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22 }}
+              className="absolute inset-0 w-full h-full px-4 py-3 flex flex-col justify-between overflow-y-auto z-20"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold block">
+                    Live Execution Pipeline
+                  </span>
+                  <h4 className="text-sm font-extrabold text-white">
+                    Distributed Request Choreography (Click Any Stage)
+                  </h4>
                 </div>
-              </Html>
-            </Float>
-          </ResponsiveSceneContainer>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[10px] font-bold">
+                  Roundtrip: 4.4ms
+                </span>
+              </div>
 
-          {/* Mouse Parallax Tracking Camera Control */}
-          <CameraMouseController reducedMotion={reducedMotion || isLowBattery} />
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 my-2">
+                {[
+                  {
+                    idx: 0,
+                    name: 'Client Edge',
+                    sub: 'React 19 + TLS 1.3',
+                    ms: '0.6ms',
+                    icon: <Layers className="w-4 h-4 text-cyan-400" />,
+                  },
+                  {
+                    idx: 1,
+                    name: 'Auth Filter',
+                    sub: 'RS512 JWT Guard',
+                    ms: '0.5ms',
+                    icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />,
+                  },
+                  {
+                    idx: 2,
+                    name: 'Spring Boot',
+                    sub: 'Java 21 Virtual VM',
+                    ms: '1.3ms',
+                    icon: <Server className="w-4 h-4 text-emerald-400" />,
+                  },
+                  {
+                    idx: 3,
+                    name: 'Kafka Mesh',
+                    sub: 'Async Event Bus',
+                    ms: '1.1ms',
+                    icon: <Activity className="w-4 h-4 text-purple-400" />,
+                  },
+                  {
+                    idx: 4,
+                    name: 'MySQL + Redis',
+                    sub: '3NF + L2 Cache',
+                    ms: '0.9ms',
+                    icon: <Database className="w-4 h-4 text-amber-400" />,
+                  },
+                ].map((stage) => {
+                  const isCurrent = activePipelineStep === stage.idx;
+                  return (
+                    <button
+                      key={stage.idx}
+                      type="button"
+                      onClick={() => {
+                        soundFx.playClick();
+                        setActivePipelineStep(stage.idx);
+                      }}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-emerald-500/15 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] scale-[1.02]'
+                          : 'bg-slate-900/80 border-slate-800/90 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        {stage.icon}
+                        <span className="text-[10px] font-mono font-bold text-emerald-400">
+                          {stage.ms}
+                        </span>
+                      </div>
+                      <p className="text-xs font-extrabold text-white truncate">{stage.name}</p>
+                      <p className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
+                        {stage.sub}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
 
-        </Canvas>
-      </Suspense>
+              <div className="p-3 rounded-2xl bg-slate-950/90 border border-emerald-500/25 font-mono text-[11px] text-slate-200">
+                <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold mb-1">
+                  <span>STAGE #{activePipelineStep + 1} TELEMETRY STREAM</span>
+                  <span>HTTP/2 200 OK</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  {
+                    [
+                      '>>> [EDGE_ROUTER] TLS 1.3 handshake complete; routing request to ap-south-1 ingress.',
+                      '>>> [JWT_SECURITY] Verified RS512 token signature & RBAC claims in 0.5ms (stateless).',
+                      '>>> [SPRING_BOOT_3.4] Dispatched controller action on Java 21 VirtualThread[#64].',
+                      '>>> [KAFKA_STREAM] Published audit & analytics event to topic portfolio.telemetry.v2.',
+                      '>>> [MYSQL_3NF_POOL] HikariCP connection returned indexed entity projection with Redis L2 hit.',
+                    ][activePipelineStep]
+                  }
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ===============================================================
+              TAB 3: TOPOLOGY (Interactive Multi-AZ Cloud Architecture Map)
+          =============================================================== */}
+          {activeTab === 'topology' && (
+            <motion.div
+              key="topology"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22 }}
+              className="absolute inset-0 w-full h-full px-4 py-3 flex flex-col justify-between overflow-y-auto z-20"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold block">
+                    Cloud Cluster Topology
+                  </span>
+                  <h4 className="text-sm font-extrabold text-white">
+                    Interactive Microservice Node Matrix
+                  </h4>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-bold">
+                  6 Active Nodes • 99.99% SLA
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-2">
+                {STACK_NODES.map((node) => {
+                  const isSel = node.id === activeNodeId;
+                  return (
+                    <button
+                      key={node.id}
+                      type="button"
+                      onClick={() => handleSelectStackNode(node.id)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        isSel
+                          ? 'bg-emerald-500/15 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                          : 'bg-slate-900/80 border-slate-800/90 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-extrabold text-white">{node.name}</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-400">
+                          {node.latency}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 truncate">{node.role}</p>
+                      <p className="text-[9px] font-mono text-cyan-400 mt-1">{node.throughput}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center justify-between text-[10px] font-mono text-slate-300">
+                <span>
+                  Selected Node: <strong className="text-emerald-400">{activeNode.role}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('core')}
+                  className="text-emerald-400 hover:underline font-bold cursor-pointer"
+                >
+                  View in 3D Core →
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* BOTTOM DOCK BAR: Interactive Stack Links + Pulse (24) + Pause Button */}
+      <div className="relative z-30 mx-2.5 sm:mx-3.5 mb-2.5 sm:mb-3 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl bg-[#040d1d]/90 border border-emerald-500/25 shadow-[0_4px_24px_rgba(0,0,0,0.45)] backdrop-blur-xl flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar text-[9px] sm:text-[11px] font-mono font-bold">
+          {STACK_NODES.map((node, idx) => {
+            const isSel = activeNodeId === node.id;
+            return (
+              <React.Fragment key={node.id}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectStackNode(node.id)}
+                  className={`transition-all cursor-pointer whitespace-nowrap px-1.5 py-0.5 rounded-md ${
+                    isSel
+                      ? 'text-white bg-emerald-500/20 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                      : 'text-emerald-400 hover:text-emerald-300'
+                  }`}
+                >
+                  {node.name}
+                </button>
+                {idx < STACK_NODES.length - 1 && (
+                  <span className="text-slate-600 select-none">·</span>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleTriggerPulse}
+            className="px-2.5 sm:px-3.5 py-1 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/45 text-emerald-300 font-mono text-[9px] sm:text-[11px] font-extrabold flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-[0_0_16px_rgba(16,185,129,0.25)] active:scale-95 whitespace-nowrap"
+          >
+            <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400 shrink-0" />
+            <span>Pulse ({pulseCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFx.playClick();
+              setIsPaused((p) => !p);
+            }}
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            title={isPaused ? 'Resume 3D Animation' : 'Pause 3D Animation'}
+          >
+            {isPaused ? <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -826,6 +826,31 @@ export default function ToolsPage({
                     </div>
                   </div>
 
+                  {/* Workbench CLI Command & Pipeline Stage */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1.5 uppercase">Workflow Pipeline Stage</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 01 · IDE & Code Authoring"
+                        value={formData.workflowStage || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, workflowStage: e.target.value }))}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-bold mb-1.5 uppercase">Workbench CLI / Config Snippet</label>
+                      <input
+                        type="text"
+                        placeholder="$ docker compose up -d --build"
+                        value={formData.cliCommand || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, cliCommand: e.target.value }))}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
                   {/* LOGO MANAGEMENT SECTION */}
                   <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
                     <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase text-xs">

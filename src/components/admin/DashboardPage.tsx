@@ -4,6 +4,8 @@ import {
   ArrowUpRight, RefreshCw, Layers, ShieldCheck, Database, CheckCircle2 
 } from 'lucide-react';
 import { AnalyticsMetric, MessageItem, ProjectItem } from '../../data/cmsMockData';
+import { StaggerContainer, AnimatedCard } from '../PageTransitionWrapper';
+import PlatformActivityInsights from './PlatformActivityInsights';
 
 interface DashboardPageProps {
   analytics: AnalyticsMetric;
@@ -55,20 +57,20 @@ export default function DashboardPage({
         <button 
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-2 transition-all hover:bg-slate-800 disabled:opacity-50"
+          className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-2 transition-all hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
           {isRefreshing ? "Synchronizing..." : "Sync Stats"}
         </button>
       </div>
 
-      {/* Primary Metrics grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Primary Metrics grid with staggered entrance */}
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}
-        <div className="bg-slate-900 border border-slate-800/85 rounded-2xl p-5 relative overflow-hidden group">
+        <AnimatedCard index={0} className="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden group">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-500">Page Views</span>
+              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Page Views</span>
               <h3 className="text-2xl font-bold font-mono text-slate-100 tracking-tight">
                 {Number(pageViews).toLocaleString()}
               </h3>
@@ -84,13 +86,13 @@ export default function DashboardPage({
             <span className="text-slate-500">from last week</span>
           </div>
           <div className="absolute bottom-0 inset-x-0 h-[2px] bg-emerald-500/30 group-hover:bg-emerald-500 transition-colors" />
-        </div>
+        </AnimatedCard>
 
         {/* Metric 2 */}
-        <div className="bg-slate-900 border border-slate-800/85 rounded-2xl p-5 relative overflow-hidden group">
+        <AnimatedCard index={1} className="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden group">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-500">Unique Visitors</span>
+              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Unique Visitors</span>
               <h3 className="text-2xl font-bold font-mono text-slate-100 tracking-tight">
                 {Number(uniqueVisitors).toLocaleString()}
               </h3>
@@ -104,13 +106,13 @@ export default function DashboardPage({
             <span className="text-slate-500">active sessions</span>
           </div>
           <div className="absolute bottom-0 inset-x-0 h-[2px] bg-blue-500/30 group-hover:bg-blue-500 transition-colors" />
-        </div>
+        </AnimatedCard>
 
         {/* Metric 3 */}
-        <div className="bg-slate-900 border border-slate-800/85 rounded-2xl p-5 relative overflow-hidden group">
+        <AnimatedCard index={2} className="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden group">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-500">Avg. Duration</span>
+              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Avg. Duration</span>
               <h3 className="text-2xl font-bold font-mono text-slate-100 tracking-tight">
                 {Math.floor(avgSession / 60)}m {avgSession % 60}s
               </h3>
@@ -124,13 +126,17 @@ export default function DashboardPage({
             <span className="text-slate-500">engagement avg</span>
           </div>
           <div className="absolute bottom-0 inset-x-0 h-[2px] bg-amber-500/30 group-hover:bg-amber-500 transition-colors" />
-        </div>
+        </AnimatedCard>
 
         {/* Metric 4 */}
-        <div className="bg-slate-900 border border-slate-800/85 rounded-2xl p-5 relative overflow-hidden group cursor-pointer" onClick={() => onNavigate('Messages')}>
+        <AnimatedCard
+          index={3}
+          onClick={() => onNavigate('Messages')}
+          className="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden group cursor-pointer"
+        >
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-500">Inbox Messages</span>
+              <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Inbox Messages</span>
               <h3 className="text-2xl font-bold font-mono text-slate-100 tracking-tight">
                 {unreadMessagesCount} <span className="text-xs text-slate-500 font-normal">unread</span>
               </h3>
@@ -148,15 +154,18 @@ export default function DashboardPage({
             <span className="text-slate-500">total records log</span>
           </div>
           <div className="absolute bottom-0 inset-x-0 h-[2px] bg-rose-500/30 group-hover:bg-rose-500 transition-colors" />
-        </div>
-      </div>
+        </AnimatedCard>
+      </StaggerContainer>
+
+      {/* Recharts Platform Activity Insights Telemetry Console */}
+      <PlatformActivityInsights />
 
       {/* Main Layout Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left main: Quick views metrics graph */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+        <StaggerContainer staggerDelay={0.08} delayChildren={0.12} className="lg:col-span-8 space-y-6">
+          <AnimatedCard index={0} hoverLift={true} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-sm font-bold text-slate-200">Traffic Acquisition</h4>
@@ -223,15 +232,15 @@ export default function DashboardPage({
                 </p>
               </div>
             </div>
-          </div>
+          </AnimatedCard>
 
           {/* Quick project list snapshot */}
-          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+          <AnimatedCard index={1} hoverLift={true} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider">Top Featured Portfolio Projects</h4>
               <button 
                 onClick={() => onNavigate('Projects')} 
-                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 Manage Projects <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -265,18 +274,18 @@ export default function DashboardPage({
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </AnimatedCard>
+        </StaggerContainer>
 
         {/* Right sidebar panel: Messages feed & System microservice logs */}
-        <div className="lg:col-span-4 space-y-6">
+        <StaggerContainer staggerDelay={0.08} delayChildren={0.16} className="lg:col-span-4 space-y-6">
           {/* Messages snapshot */}
-          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+          <AnimatedCard index={2} hoverLift={true} tiltIntensity={2.0} className="glass-card glass-card-hover rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider">Unread Messages</h4>
               <button 
                 onClick={() => onNavigate('Messages')} 
-                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 Inbox <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -311,10 +320,10 @@ export default function DashboardPage({
                 ))
               )}
             </div>
-          </div>
+          </AnimatedCard>
 
           {/* Microservice health monitor */}
-          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+          <AnimatedCard index={3} hoverLift={true} tiltIntensity={2.0} className="glass-card glass-card-hover rounded-2xl p-6">
             <h4 className="text-xs font-mono font-bold uppercase text-slate-400 tracking-wider mb-4">API Microservices</h4>
             
             <div className="space-y-3 text-xs">
@@ -349,8 +358,8 @@ export default function DashboardPage({
                 <span>Encrypted using RS512 JWT keys</span>
               </div>
             </div>
-          </div>
-        </div>
+          </AnimatedCard>
+        </StaggerContainer>
 
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   Download, MousePointer, Monitor, Smartphone, Tablet, Layers
 } from 'lucide-react';
 import { AnalyticsMetric } from '../../data/cmsMockData';
+import { StaggerContainer, AnimatedCard } from '../PageTransitionWrapper';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
@@ -96,50 +97,50 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
       </div>
 
       {/* Analytics Summary Stats Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4">
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <AnimatedCard index={0} className="glass-card glass-card-hover rounded-2xl p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
             <Eye className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Total Page Views</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(pageViews || 0).toLocaleString()}</h4>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Total Page Views</span>
+            <h4 className="text-lg font-bold text-slate-100 mt-0.5">{Number(pageViews || 0).toLocaleString()}</h4>
           </div>
-        </div>
+        </AnimatedCard>
 
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4">
+        <AnimatedCard index={1} className="glass-card glass-card-hover rounded-2xl p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Unique Visitors</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(uniqueVisitors || 0).toLocaleString()}</h4>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Unique Visitors</span>
+            <h4 className="text-lg font-bold text-slate-100 mt-0.5">{Number(uniqueVisitors || 0).toLocaleString()}</h4>
           </div>
-        </div>
+        </AnimatedCard>
 
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4">
+        <AnimatedCard index={2} className="glass-card glass-card-hover rounded-2xl p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
             <Download className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Resume Downloads</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{Number(resumeDownloads || 0).toLocaleString()}</h4>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Resume Downloads</span>
+            <h4 className="text-lg font-bold text-slate-100 mt-0.5">{Number(resumeDownloads || 0).toLocaleString()}</h4>
           </div>
-        </div>
+        </AnimatedCard>
 
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4">
+        <AnimatedCard index={3} className="glass-card glass-card-hover rounded-2xl p-5 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Conversion Rate</span>
-            <h4 className="text-lg font-bold text-slate-200 mt-0.5">{contactConversionRate || 0}%</h4>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Conversion Rate</span>
+            <h4 className="text-lg font-bold text-slate-100 mt-0.5">{contactConversionRate || 0}%</h4>
           </div>
-        </div>
-      </div>
+        </AnimatedCard>
+      </StaggerContainer>
 
       {/* Main Charts: Visitor Area Chart */}
-      <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+      <AnimatedCard index={4} tiltIntensity={1.2} className="glass-card glass-card-hover rounded-2xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           <div>
             <h3 className="text-sm font-bold text-slate-200">Traffic Ingestion Chronology</h3>
@@ -221,13 +222,13 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
             </ResponsiveContainer>
           )}
         </div>
-      </div>
+      </AnimatedCard>
 
       {/* Middle Grid: Client-Agent Breakdown & Projects Traction */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Device & Browser Breakdowns */}
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-5 lg:col-span-5 flex flex-col justify-between">
+        <AnimatedCard index={5} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6 space-y-5 lg:col-span-5 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-200">Visitor Client Technology</h3>
             <p className="text-[11px] text-slate-500">User agent platforms parsed in real-time by node middleware.</p>
@@ -341,10 +342,10 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
             </div>
 
           </div>
-        </div>
+        </AnimatedCard>
 
         {/* Project Subsystem Views Traction */}
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4 lg:col-span-7">
+        <AnimatedCard index={6} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6 space-y-4 lg:col-span-7">
           <div>
             <h3 className="text-sm font-bold text-slate-200">Committed Subsystem Traction</h3>
             <p className="text-[11px] text-slate-500">Impressions of project architecture blueprints.</p>
@@ -393,14 +394,14 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
               </ResponsiveContainer>
             )}
           </div>
-        </div>
+        </AnimatedCard>
 
       </div>
 
       {/* Multi Columns: referrers vs countries */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Referrers */}
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+        <AnimatedCard index={7} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6 space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-200">Traffic Acquisition Channels</h3>
             <p className="text-[11px] text-slate-500">Distribution of visitor streams leading to portfolio URLs.</p>
@@ -426,10 +427,10 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
               </div>
             ))}
           </div>
-        </div>
+        </AnimatedCard>
 
         {/* Countries */}
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+        <AnimatedCard index={8} tiltIntensity={1.6} className="glass-card glass-card-hover rounded-2xl p-6 space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-200">Geographic Audience Audits</h3>
             <p className="text-[11px] text-slate-500">Breakdown of system engagements sorted by country.</p>
@@ -455,11 +456,11 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
               );
             })}
           </div>
-        </div>
+        </AnimatedCard>
       </div>
 
       {/* Clicks List Telemetry */}
-      <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+      <AnimatedCard index={9} tiltIntensity={1.2} className="glass-card glass-card-hover rounded-2xl p-6 space-y-4">
         <div>
           <h3 className="text-sm font-bold text-slate-200">Interface Interaction Clicks</h3>
           <p className="text-[11px] text-slate-500">Telemetred logs tracking exact clicks on active outbound nodes.</p>
@@ -493,10 +494,10 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
             </tbody>
           </table>
         </div>
-      </div>
+      </AnimatedCard>
 
       {/* API Performance & Reliability Metrics */}
-      <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-6 text-left">
+      <AnimatedCard index={10} tiltIntensity={1.2} className="glass-card glass-card-hover rounded-2xl p-6 space-y-6 text-left">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-4">
           <div>
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -579,7 +580,7 @@ export default function AnalyticsPage({ analytics }: AnalyticsPageProps) {
             )}
           </div>
         </div>
-      </div>
+      </AnimatedCard>
 
       {/* Spring Boot Microservice Console Log Streamer */}
       <div className="bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-2xl">

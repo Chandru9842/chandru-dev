@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, Database, Code2, ShieldAlert, ArrowRight, BookOpen, GitFork, RefreshCw, Terminal, CheckCircle2, ShieldCheck, Home } from 'lucide-react';
 import StatusCard from './components/StatusCard';
 import PortfolioFrontend from './components/PortfolioFrontend';
 import PublicPreviewWrapper from './components/PublicPreviewWrapper';
 import RecruiterDemoGate from './components/RecruiterDemoGate';
+import { PageTransitionWrapper, StaggerContainer, AnimatedCard } from './components/PageTransitionWrapper';
+import DeepSpaceParticleOverlay from './components/DeepSpaceParticleOverlay';
+import AuroraWaveBackground from './components/AuroraWaveBackground';
+import { TopScrollProgressBar, AmbientSpaceAudioToggle } from './components/TopScrollProgressBar';
 
 const ArchitectureDiagram = React.lazy(() => import('./components/ArchitectureDiagram'));
 const DatabaseERD = React.lazy(() => import('./components/DatabaseERD'));
 const CodeExplorer = React.lazy(() => import('./components/CodeExplorer'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+const DeveloperTerminalModal = React.lazy(() => import('./components/DeveloperTerminalModal'));
 import AdminLogin from './components/AdminLogin';
 
 export default function App() {
@@ -18,6 +23,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [alwaysRequireLogin, setAlwaysRequireLogin] = useState<boolean | null>(null);
   const [showDemoGate, setShowDemoGate] = useState(false);
+  const [isGlobalConsoleOpen, setIsGlobalConsoleOpen] = useState(false);
   const isFirstCheck = React.useRef(true);
 
   // Helper for SPA navigation
@@ -26,13 +32,27 @@ export default function App() {
     setCurrentPath(path);
   };
 
-  // Sync state with popstate browser events
+  // Sync state with popstate browser events and Ctrl+K shortcut on admin routes
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname);
     };
+    const handleAdminKeyDown = (e: KeyboardEvent) => {
+      if (!window.location.pathname.startsWith('/admin')) return;
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === '`')) {
+        e.preventDefault();
+        setIsGlobalConsoleOpen(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setIsGlobalConsoleOpen(false);
+      }
+    };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleAdminKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleAdminKeyDown);
+    };
   }, []);
 
   // Session validation, token refresh & automatic logout on expiration
@@ -278,6 +298,7 @@ export default function App() {
   if (!isCurrentPathAdmin) {
     return (
       <>
+        <TopScrollProgressBar />
         <PublicPreviewWrapper>
           <PortfolioFrontend onEnterCMS={handleEnterCMS} />
         </PublicPreviewWrapper>
@@ -292,9 +313,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col antialiased">
+    <div className="min-h-screen bg-[#020617]/75 text-slate-100 font-sans flex flex-col antialiased relative">
+      <TopScrollProgressBar />
+      <AuroraWaveBackground className="fixed inset-0 z-0" />
       {/* top navbar */}
-      <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+      <header className="border-b border-white/[0.07] bg-slate-950/70 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 relative">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
@@ -310,6 +333,22 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <AmbientSpaceAudioToggle className="py-2 px-3 rounded-xl" />
+
+            <button
+              onClick={() => setIsGlobalConsoleOpen(prev => !prev)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                isGlobalConsoleOpen
+                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.25)]'
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-emerald-400'
+              }`}
+              title="Toggle Developer Command Console (Ctrl+K)"
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Command Console</span>
+              <span className="text-[9px] bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800 hidden sm:inline">Ctrl+K</span>
+            </button>
+
             <button
               onClick={() => navigate('/')}
               className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-slate-900 hover:bg-emerald-500 border border-slate-800 hover:border-transparent text-emerald-400 hover:text-slate-950 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -359,16 +398,23 @@ export default function App() {
       </header>
 
       {/* primary dashboard area */}
-      <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+        <DeepSpaceParticleOverlay
+          variant="dashboard"
+          particleCount={30}
+          className="fixed inset-0 z-0"
+        />
+        <div className="relative z-10">
         <React.Suspense fallback={
           <div className="flex flex-col items-center justify-center py-24">
             <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3" />
             <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">Retrieving Module...</span>
           </div>
         }>
+          <PageTransitionWrapper pageKey={activeTab}>
           {activeTab === 'admin' ? (
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-emerald-950/20 via-slate-900/40 to-slate-900/40 border border-emerald-500/15 rounded-2xl p-5 flex items-start gap-4">
+              <div className="glass-card rounded-2xl p-5 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 </div>
@@ -394,7 +440,7 @@ export default function App() {
               <div className="xl:col-span-8 flex flex-col gap-6">
                 
                 {/* system alert banner */}
-                <div className="bg-gradient-to-r from-emerald-950/20 via-slate-900/40 to-slate-900/40 border border-emerald-500/15 rounded-2xl p-5 flex items-start gap-4">
+                <div className="glass-card rounded-2xl p-5 flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
                     <BookOpen className="w-5 h-5 text-emerald-400" />
                   </div>
@@ -414,7 +460,7 @@ export default function App() {
                 )}
 
                 {/* architecture guidelines panel */}
-                <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                <div className="glass-card rounded-2xl p-6">
                   <h3 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     Completed Architectural Standards • Package: <code className="text-emerald-400 font-mono text-xs">entity</code>
@@ -456,8 +502,49 @@ export default function App() {
               </div>
             </div>
           )}
+          </PageTransitionWrapper>
         </React.Suspense>
+        </div>
       </main>
+
+      {/* Global Floating Developer Command Console Launcher & Window */}
+      <div className="fixed bottom-4 left-4 z-[90] flex items-center">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsGlobalConsoleOpen(prev => !prev)}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full ${
+            isGlobalConsoleOpen
+              ? 'bg-emerald-500/20 border-emerald-400/70 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+              : 'bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400'
+          } border text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group`}
+          title="Toggle Developer Command Console (Ctrl+K)"
+        >
+          <span className={`w-2 h-2 rounded-full ${isGlobalConsoleOpen ? 'bg-emerald-400 animate-ping' : 'bg-emerald-400/80'}`} />
+          <Terminal className="w-4 h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
+          <span className="text-xs font-mono font-bold hidden sm:inline">Command Console</span>
+          <span className="text-[9px] font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800 hidden md:inline">
+            Ctrl+K
+          </span>
+        </motion.button>
+      </div>
+
+      <React.Suspense fallback={null}>
+        {isGlobalConsoleOpen && (
+          <DeveloperTerminalModal
+            isOpen={isGlobalConsoleOpen}
+            onClose={() => setIsGlobalConsoleOpen(false)}
+            currentRoute={`${currentPath} (${activeTab})`}
+            onNavigate={(target) => {
+              if (target === 'explorer' || target === 'schema' || target === 'admin') {
+                setActiveTab(target);
+              } else {
+                navigate(target);
+              }
+            }}
+          />
+        )}
+      </React.Suspense>
 
       {/* footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 px-6 shrink-0 text-center text-xs text-slate-500 font-mono">

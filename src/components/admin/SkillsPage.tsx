@@ -40,6 +40,11 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Frontend');
   const [description, setDescription] = useState('');
+  const [proficiency, setProficiency] = useState<number>(95);
+  const [yearsOfExperience, setYearsOfExperience] = useState<number>(4);
+  const [tierBadge, setTierBadge] = useState<string>('Architect Tier');
+  const [capabilitiesInput, setCapabilitiesInput] = useState<string>('');
+  const [architectureNotes, setArchitectureNotes] = useState<string>('');
   const [displayOrder, setDisplayOrder] = useState(1);
   const [iconName, setIconName] = useState('Code2');
   const [iconUrl, setIconUrl] = useState('');
@@ -236,6 +241,11 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
     setIconName('Code2');
     setIconUrl('');
     setDescription('');
+    setProficiency(95);
+    setYearsOfExperience(4);
+    setTierBadge('Architect Tier');
+    setCapabilitiesInput('Enterprise Ready, Clean Architecture, Production SLA');
+    setArchitectureNotes('');
     setColor('#10b981');
     setAnimation('Glow');
     setVisibility(true);
@@ -262,6 +272,15 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
     setIconName(skill.iconName || 'Code2');
     setIconUrl(skill.iconUrl || '');
     setDescription(skill.description || '');
+    setProficiency(skill.proficiency ?? 95);
+    setYearsOfExperience(skill.yearsOfExperience ?? 4);
+    setTierBadge(skill.tierBadge || 'Architect Tier');
+    setCapabilitiesInput(
+      Array.isArray(skill.capabilities) && skill.capabilities.length > 0
+        ? skill.capabilities.join(', ')
+        : 'Enterprise Ready, Clean Architecture, Production SLA'
+    );
+    setArchitectureNotes(skill.architectureNotes || '');
     setColor(skill.color || '#10b981');
     setAnimation(skill.animation || 'Glow');
     setVisibility(skill.visibility ?? true);
@@ -302,9 +321,19 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
     const resolvedCategory = isCustomCategoryActive ? customCategory.trim() : category;
 
     try {
+      const parsedCapabilities = capabilitiesInput
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+
       const payload = {
         name: name.trim(),
         category: resolvedCategory,
+        proficiency: Number(proficiency) || 95,
+        yearsOfExperience: Number(yearsOfExperience) || 4,
+        tierBadge: tierBadge.trim() || 'Production Ready',
+        capabilities: parsedCapabilities,
+        architectureNotes: architectureNotes.trim(),
         displayOrder: Number(displayOrder),
         iconName,
         iconUrl,
@@ -607,6 +636,86 @@ export default function SkillsPage({ skills, onAdd, onUpdate, onDelete, onReorde
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/50 leading-relaxed"
                 placeholder="Briefly summarize your competencies, frameworks, or projects implemented using this technology."
               />
+            </div>
+
+            {/* 3D Spotlight & Architecture Telemetry Metadata */}
+            <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-semibold text-emerald-400 uppercase tracking-wider">
+                  3D Spotlight & Competency Telemetry Settings
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Powers the SVG Mastery Ring & Blueprint Console
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <label className="text-slate-400 font-semibold">Mastery SLA (%)</label>
+                    <span className="text-emerald-400 font-bold">{proficiency}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={50}
+                    max={100}
+                    value={proficiency}
+                    onChange={(e) => setProficiency(Number(e.target.value))}
+                    className="w-full accent-emerald-500 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono text-slate-400 font-semibold">Years in Production</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={25}
+                    value={yearsOfExperience}
+                    onChange={(e) => setYearsOfExperience(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono text-slate-400 font-semibold">Tier Badge Label</label>
+                  <input
+                    type="text"
+                    value={tierBadge}
+                    onChange={(e) => setTierBadge(e.target.value)}
+                    placeholder="Architect Tier / Principal Core"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono text-slate-400 font-semibold">
+                    Capability Chips (Comma-Separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={capabilitiesInput}
+                    onChange={(e) => setCapabilitiesInput(e.target.value)}
+                    placeholder="JVM 21 Virtual Threads, Spring Cloud Mesh, High-Concurrency APIs"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono text-slate-400 font-semibold">
+                    Production Architecture Role (Expanded Console)
+                  </label>
+                  <input
+                    type="text"
+                    value={architectureNotes}
+                    onChange={(e) => setArchitectureNotes(e.target.value)}
+                    placeholder="Backbone of distributed microservices and high-throughput API gateways..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Custom Brand Color Picker Block */}

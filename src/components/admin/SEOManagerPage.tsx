@@ -56,10 +56,34 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
       .catch(() => triggerToast('Failed to load SEO configuration', 'error'));
   }, []);
 
+  const getAuthToken = () => {
+    return (
+      localStorage.getItem('alex_dev_jwt_token') ||
+      localStorage.getItem('admin_token') ||
+      sessionStorage.getItem('admin_token') ||
+      localStorage.getItem('auth_token') ||
+      localStorage.getItem('token') ||
+      ''
+    );
+  };
+
+  const handleDirectFileUpload = (field: 'websiteLogo' | 'faviconUrl' | 'ogImage', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setSeoConfig((prev: any) => ({ ...prev, [field]: dataUrl }));
+      triggerToast('Asset loaded! Click "Save & Publish Live" to apply.', 'success');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
+      const token = getAuthToken();
       const res = await fetch('/api/seo', {
         method: 'PUT',
         headers: { 
@@ -79,8 +103,15 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
           overrides.seoDescription = seoConfig.metaDescription;
           overrides.seoKeywords = seoConfig.keywords;
           overrides.ogTitle = seoConfig.ogTitle;
-          overrides.ogImage = seoConfig.ogImage;
+          overrides.ogImage = seoConfig.ogImage || '';
           localStorage.setItem('cms_profile_overrides', JSON.stringify(overrides));
+
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+          deleted.websiteLogo = !seoConfig.websiteLogo;
+          deleted.faviconUrl = !seoConfig.faviconUrl;
+          deleted.ogImage = !seoConfig.ogImage;
+          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
         } catch (e) {}
 
         notifyCmsUpdate();
@@ -146,6 +177,10 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
                 <p className="text-[10px] text-slate-500 font-mono">Displayed top-left in the sticky website header</p>
               </div>
               <div className="flex items-center gap-1.5">
+                <label className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer">
+                  Upload
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleDirectFileUpload('websiteLogo', e)} />
+                </label>
                 <button
                   type="button"
                   onClick={() => setMediaModalTarget('websiteLogo')}
@@ -158,7 +193,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
                   <button
                     type="button"
                     onClick={() => setSeoConfig({ ...seoConfig, websiteLogo: '' })}
-                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
                     title="Remove Logo"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -196,6 +231,10 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
                 <p className="text-[10px] text-slate-500 font-mono">Appears in browser tabs and search engine result listings</p>
               </div>
               <div className="flex items-center gap-1.5">
+                <label className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer">
+                  Upload
+                  <input type="file" accept="image/*,.ico,.svg" className="hidden" onChange={(e) => handleDirectFileUpload('faviconUrl', e)} />
+                </label>
                 <button
                   type="button"
                   onClick={() => setMediaModalTarget('faviconUrl')}
@@ -204,12 +243,12 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
                   <Folder className="w-3 h-3" />
                   Media Library
                 </button>
-                {seoConfig.faviconUrl && seoConfig.faviconUrl !== '/favicon.svg' && (
+                {seoConfig.faviconUrl && (
                   <button
                     type="button"
-                    onClick={() => setSeoConfig({ ...seoConfig, faviconUrl: '/favicon.svg' })}
-                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                    title="Reset to Default Favicon"
+                    onClick={() => setSeoConfig({ ...seoConfig, faviconUrl: '' })}
+                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+                    title="Delete / Reset Favicon"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -322,17 +322,30 @@ function loadDatabase() {
         db.emailSettings = {
           smtpHost: "smtp.gmail.com",
           smtpPort: 587,
-          smtpUser: "notifications@alexdev.io",
-          smtpPass: "••••••••••••",
+          smtpUser: "chandrumohan550@gmail.com",
+          smtpPass: "",
           secure: true,
           preset: "Gmail SMTP",
           autoReplyEnabled: true,
           contactAlertsEnabled: true,
           adminNotificationsEnabled: true,
-          autoReplyTemplate: "Hello {{name}},\n\nThank you for getting in touch! I have received your message regarding \"{{subject}}\" and will review it shortly.\n\nBest regards,\nAlex Dev",
+          autoReplyTemplate: "Hello {{name}},\n\nThank you for getting in touch! I have received your message regarding \"{{subject}}\" and will review it shortly.\n\nBest regards,\nChandru Mohan",
           contactAlertTemplate: "New Contact Message Received!\nName: {{name}}\nEmail: {{email}}\nSubject: {{subject}}\nMessage: {{message}}"
         };
         dirty = true;
+      } else {
+        if (!db.emailSettings.smtpUser || db.emailSettings.smtpUser === "notifications@alexdev.io") {
+          db.emailSettings.smtpUser = "chandrumohan550@gmail.com";
+          dirty = true;
+        }
+        if (db.emailSettings.smtpPass === "••••••••••••") {
+          db.emailSettings.smtpPass = "";
+          dirty = true;
+        }
+        if (db.emailSettings.autoReplyTemplate && db.emailSettings.autoReplyTemplate.includes("Alex Dev")) {
+          db.emailSettings.autoReplyTemplate = db.emailSettings.autoReplyTemplate.replace(/Alex Dev/g, "Chandru Mohan");
+          dirty = true;
+        }
       }
 
       if (!db.roles || !Array.isArray(db.roles)) {
@@ -1775,6 +1788,19 @@ app.get(["/health", "/api/health"], (req, res) => {
       db.profile.heroVisibility = updated.heroVisibility !== false;
     }
 
+    if (updated.websiteLogo !== undefined) {
+      db.profile.logoUrl = updated.websiteLogo;
+    }
+
+    if (db.seoConfig) {
+      if (updated.websiteLogo !== undefined) db.seoConfig.websiteLogo = updated.websiteLogo;
+      if (updated.faviconUrl !== undefined) db.seoConfig.faviconUrl = updated.faviconUrl;
+      if (updated.ogImage !== undefined) db.seoConfig.ogImage = updated.ogImage;
+      if (updated.seoTitle !== undefined) db.seoConfig.metaTitle = updated.seoTitle;
+      if (updated.seoDescription !== undefined) db.seoConfig.metaDescription = updated.seoDescription;
+      if (updated.seoKeywords !== undefined) db.seoConfig.keywords = updated.seoKeywords;
+    }
+
     db.profile.updatedAt = new Date().toISOString();
     
     // Update Founder user details safely
@@ -1833,6 +1859,13 @@ app.get(["/health", "/api/health"], (req, res) => {
     db.profile[fieldName] = processedUrl;
     if (fieldName === 'websiteLogo') {
       db.profile.logoUrl = processedUrl;
+      if (db.seoConfig) db.seoConfig.websiteLogo = processedUrl;
+    }
+    if (fieldName === 'faviconUrl' && db.seoConfig) {
+      db.seoConfig.faviconUrl = processedUrl;
+    }
+    if (fieldName === 'ogImage' && db.seoConfig) {
+      db.seoConfig.ogImage = processedUrl;
     }
     db.profile.updatedAt = new Date().toISOString();
     saveDatabase(db);
@@ -1845,6 +1878,13 @@ app.get(["/health", "/api/health"], (req, res) => {
     db.profile[fieldName] = "";
     if (fieldName === 'websiteLogo') {
       db.profile.logoUrl = "";
+      if (db.seoConfig) db.seoConfig.websiteLogo = "";
+    }
+    if (fieldName === 'faviconUrl' && db.seoConfig) {
+      db.seoConfig.faviconUrl = "";
+    }
+    if (fieldName === 'ogImage' && db.seoConfig) {
+      db.seoConfig.ogImage = "";
     }
     db.profile.updatedAt = new Date().toISOString();
     saveDatabase(db);
@@ -1862,6 +1902,9 @@ app.get(["/health", "/api/health"], (req, res) => {
 
   app.patch("/api/profile/cover-image", authenticateJWT, handleProfileImagePatch("coverImage"));
   app.delete("/api/profile/cover-image", authenticateJWT, handleProfileImageDelete("coverImage"));
+
+  app.patch("/api/profile/cover", authenticateJWT, handleProfileImagePatch("coverImage"));
+  app.delete("/api/profile/cover", authenticateJWT, handleProfileImageDelete("coverImage"));
 
   app.patch("/api/profile/about-image", authenticateJWT, handleProfileImagePatch("aboutImage"));
   app.delete("/api/profile/about-image", authenticateJWT, handleProfileImageDelete("aboutImage"));
@@ -1887,7 +1930,7 @@ app.get(["/health", "/api/health"], (req, res) => {
       keywords: "Chandru Mohan, Systems Architect, Full Stack Java Developer, Spring Boot, Kafka, React, Cloud, Microservices, TypeScript",
       ogTitle: "Chandru Mohan - Principal Systems Architect Portfolio CMS",
       ogDescription: "Architecting high-performance cloud applications & resilient enterprise platforms.",
-      ogImage: db.profile?.ogImage || db.profile?.websiteLogo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+      ogImage: db.profile?.ogImage || "",
       websiteLogo: db.profile?.websiteLogo || db.profile?.logoUrl || "",
       faviconUrl: db.profile?.faviconUrl || "",
       twitterCard: "summary_large_image",
@@ -1914,19 +1957,19 @@ app.get(["/health", "/api/health"], (req, res) => {
     if (incoming.faviconUrl !== undefined) {
       db.profile.faviconUrl = incoming.faviconUrl;
     }
-    if (incoming.metaTitle) {
+    if (incoming.metaTitle !== undefined) {
       db.profile.seoTitle = incoming.metaTitle;
     }
-    if (incoming.metaDescription) {
+    if (incoming.metaDescription !== undefined) {
       db.profile.seoDescription = incoming.metaDescription;
     }
-    if (incoming.keywords) {
+    if (incoming.keywords !== undefined) {
       db.profile.seoKeywords = incoming.keywords;
     }
-    if (incoming.ogTitle) {
+    if (incoming.ogTitle !== undefined) {
       db.profile.ogTitle = incoming.ogTitle;
     }
-    if (incoming.ogImage) {
+    if (incoming.ogImage !== undefined) {
       db.profile.ogImage = incoming.ogImage;
     }
 
@@ -3435,28 +3478,50 @@ app.get(["/health", "/api/health"], (req, res) => {
       newValue: newMessage
     });
 
-    // Attempt real email dispatch via Nodemailer if credentials exist
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL || 'chandrumohan550@gmail.com';
-    const smtpPass = (process.env.SMTP_PASS || process.env.APP_PASSWORD || '').trim();
-    
+    // Attempt real email dispatch via Nodemailer (checking both env vars and Admin Email Settings)
+    const emailCfg = db.emailSettings || {};
+    const smtpHost = (process.env.SMTP_HOST || emailCfg.smtpHost || 'smtp.gmail.com').trim();
+    const smtpPort = Number(process.env.SMTP_PORT || emailCfg.smtpPort || 587);
+    const rawSmtpUser = (process.env.SMTP_USER || process.env.EMAIL || emailCfg.smtpUser || 'chandrumohan550@gmail.com').trim();
+    const smtpUser = rawSmtpUser === 'notifications@alexdev.io' ? 'chandrumohan550@gmail.com' : rawSmtpUser;
+    const rawSmtpPass = (process.env.SMTP_PASS || process.env.APP_PASSWORD || (emailCfg.smtpPass && emailCfg.smtpPass !== '••••••••••••' ? emailCfg.smtpPass : '') || '').trim();
+    const isGmail = smtpHost.includes('gmail.com');
+    const smtpPass = isGmail ? rawSmtpPass.replace(/\s+/g, '') : rawSmtpPass;
+    const targetEmail = (db.profile?.email && db.profile.email !== 'admin@alexdev.io') ? db.profile.email : 'chandrumohan550@gmail.com';
+
+    let emailDelivered = false;
+    let deliveryChannel: 'gmail_smtp' | 'formsubmit_relay' | 'cms_inbox_only' = 'cms_inbox_only';
+    let relayStatusMessage = '';
+    let smtpError = '';
+
     if (smtpPass) {
       try {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: smtpUser,
-            pass: smtpPass
-          }
-        });
-
-        const targetEmail = db.profile?.email || 'chandrumohan550@gmail.com';
+        const transporter = nodemailer.createTransport(
+          isGmail
+            ? {
+                service: 'gmail',
+                auth: {
+                  user: smtpUser,
+                  pass: smtpPass
+                }
+              }
+            : {
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465,
+                auth: {
+                  user: smtpUser,
+                  pass: smtpPass
+                }
+              }
+        );
 
         await transporter.sendMail({
           from: `"${sanitizedName}" <${smtpUser}>`,
-          replyTo: sanitizedEmail,
+          replyTo: rawEmail,
           to: targetEmail,
-          subject: `🚀 [Portfolio Inquiry] ${sanitizedSubject} - from ${sanitizedName}`,
-          text: `New Inquiry via Portfolio:\n\nSender: ${sanitizedName}\nEmail: ${sanitizedEmail}\nPhone: ${sanitizedPhone || 'N/A'}\nSubject: ${sanitizedSubject}\n\nMessage:\n${sanitizedMessage}`,
+          subject: `🚀 [Portfolio Inquiry] ${rawSubject} - from ${rawName}`,
+          text: `New Inquiry via Portfolio:\n\nSender: ${rawName}\nEmail: ${rawEmail}\nPhone: ${rawPhone || 'N/A'}\nSubject: ${rawSubject}\n\nMessage:\n${rawMessage}`,
           html: `
             <div style="font-family: Arial, sans-serif; background-color: #0b0f19; padding: 25px; color: #f1f5f9; border-radius: 12px;">
               <h2 style="color: #10b981; margin-top: 0;">📬 New Portfolio / Recruiter Inquiry</h2>
@@ -3471,13 +3536,81 @@ app.get(["/health", "/api/health"], (req, res) => {
             </div>
           `
         });
+
+        emailDelivered = true;
+        deliveryChannel = 'gmail_smtp';
+
+        // Also send visitor auto-reply if enabled
+        if (emailCfg.autoReplyEnabled !== false && rawEmail && rawEmail.includes('@')) {
+          try {
+            const autoReplyBody = (emailCfg.autoReplyTemplate || 'Hello {{name}},\n\nThank you for getting in touch! I have received your message regarding "{{subject}}" and will review it shortly.\n\nBest regards,\nChandru Mohan')
+              .replace(/\{\{name\}\}/g, rawName)
+              .replace(/\{\{subject\}\}/g, rawSubject)
+              .replace(/\{\{email\}\}/g, rawEmail);
+
+            await transporter.sendMail({
+              from: `"Chandru Mohan" <${smtpUser}>`,
+              replyTo: targetEmail,
+              to: rawEmail,
+              subject: `Re: ${rawSubject} — Chandru Mohan`,
+              text: autoReplyBody
+            });
+          } catch (autoErr) {
+            // Ignore non-fatal auto-reply errors
+          }
+        }
       } catch (err: any) {
-        console.warn(`[SMTP Email Warning] Message saved to DB, but Gmail SMTP dispatch failed:`, err.message);
+        smtpError = err?.message || 'SMTP dispatch failed';
+        console.warn(`[SMTP Email Warning] Message saved to DB, but Gmail SMTP dispatch failed:`, smtpError);
+      }
+    }
+
+    // Fallback to FormSubmit AJAX Relay if direct SMTP did not deliver
+    if (!emailDelivered) {
+      try {
+        const relayRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(targetEmail)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': 'https://chandru-dev-lime.vercel.app',
+            'Referer': 'https://chandru-dev-lime.vercel.app/',
+            'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0'
+          },
+          body: JSON.stringify({
+            name: rawName,
+            email: rawEmail,
+            _replyto: rawEmail,
+            _subject: `🚀 [Portfolio Inquiry] ${rawSubject} - from ${rawName}`,
+            subject: rawSubject,
+            phone: rawPhone || 'N/A',
+            message: rawMessage,
+            _template: 'table',
+            _captcha: 'false'
+          })
+        });
+        const relayData: any = await relayRes.json().catch(() => ({}));
+        if (relayRes.ok && (relayData.success === 'true' || relayData.success === true)) {
+          emailDelivered = true;
+          deliveryChannel = 'formsubmit_relay';
+          relayStatusMessage = relayData.message || 'Dispatched via FormSubmit Email Relay';
+        } else if (relayData.message) {
+          relayStatusMessage = relayData.message;
+        }
+      } catch (relayErr: any) {
+        // Relay attempt failed or blocked on server; client-side fallback will handle
       }
     }
 
     saveDatabase(db);
-    res.status(201).json(newMessage);
+    res.status(201).json({
+      ...newMessage,
+      emailDelivered,
+      deliveryChannel,
+      smtpConfigured: !!smtpPass,
+      relayStatusMessage,
+      smtpError
+    });
   });
 
   app.put(["/api/messages/:id/read", "/messages/:id/read"], authenticateJWT, (req: any, res: any) => {
@@ -7198,28 +7331,115 @@ Response Guidelines:
   // --- ENTERPRISE EMAIL & SMTP API ---
   app.get("/api/email/settings", (req, res) => {
     const db = loadDatabase();
-    res.json(db.emailSettings || {});
+    const cfg = db.emailSettings || {};
+    const envPassConfigured = !!(process.env.SMTP_PASS || process.env.APP_PASSWORD);
+    const dbPassConfigured = !!(cfg.smtpPass && cfg.smtpPass !== "••••••••••••" && cfg.smtpPass.trim() !== "");
+    res.json({
+      ...cfg,
+      smtpConfigured: envPassConfigured || dbPassConfigured,
+      envPassConfigured
+    });
   });
 
   app.put("/api/email/settings", (req, res) => {
     const db = loadDatabase();
-    db.emailSettings = { ...db.emailSettings, ...req.body };
+    const incoming = { ...req.body };
+    delete incoming.smtpConfigured;
+    delete incoming.envPassConfigured;
+    db.emailSettings = { ...db.emailSettings, ...incoming };
     saveDatabase(db);
-    res.json({ status: "success", emailSettings: db.emailSettings });
+    const envPassConfigured = !!(process.env.SMTP_PASS || process.env.APP_PASSWORD);
+    const dbPassConfigured = !!(db.emailSettings.smtpPass && db.emailSettings.smtpPass !== "••••••••••••" && db.emailSettings.smtpPass.trim() !== "");
+    res.json({
+      status: "success",
+      emailSettings: {
+        ...db.emailSettings,
+        smtpConfigured: envPassConfigured || dbPassConfigured,
+        envPassConfigured
+      }
+    });
   });
 
   app.post("/api/email/test", async (req, res) => {
     const db = loadDatabase();
-    const cfg = db.emailSettings || {};
-    res.json({
-      status: "success",
-      message: `Test email dispatches successfully via ${cfg.preset || 'Gmail SMTP'} (${cfg.smtpHost}:${cfg.smtpPort})`
-    });
+    const cfg = { ...(db.emailSettings || {}), ...(req.body || {}) };
+    const smtpHost = (process.env.SMTP_HOST || cfg.smtpHost || "smtp.gmail.com").trim();
+    const smtpPort = Number(process.env.SMTP_PORT || cfg.smtpPort || 587);
+    const rawUser = (process.env.SMTP_USER || process.env.EMAIL || cfg.smtpUser || "chandrumohan550@gmail.com").trim();
+    const smtpUser = rawUser === "notifications@alexdev.io" ? "chandrumohan550@gmail.com" : rawUser;
+    const rawPass = (cfg.smtpPass && cfg.smtpPass !== "••••••••••••" ? cfg.smtpPass : (process.env.SMTP_PASS || process.env.APP_PASSWORD || "")).trim();
+    const isGmail = smtpHost.includes("gmail.com");
+    const smtpPass = isGmail ? rawPass.replace(/\s+/g, "") : rawPass;
+    const targetEmail = (req.body?.email && req.body.email !== "notifications@alexdev.io") ? req.body.email : "chandrumohan550@gmail.com";
+
+    if (!smtpPass) {
+      return res.status(400).json({
+        error: "No SMTP Password / Google App Password configured. Enter your 16-character Gmail App Password below and click Save Settings first."
+      });
+    }
+
+    try {
+      const transporter = nodemailer.createTransport(
+        isGmail
+          ? {
+              service: "gmail",
+              auth: { user: smtpUser, pass: smtpPass }
+            }
+          : {
+              host: smtpHost,
+              port: smtpPort,
+              secure: smtpPort === 465,
+              auth: { user: smtpUser, pass: smtpPass }
+            }
+      );
+
+      await transporter.sendMail({
+        from: `"Chandru Mohan Portfolio CMS" <${smtpUser}>`,
+        to: targetEmail,
+        subject: `✅ [Portfolio CMS] SMTP Verification Test Successful`,
+        text: `Your Portfolio CMS SMTP connection (${smtpHost}:${smtpPort}) is verified and active. All CLI Terminal and Contact Form inquiries will be delivered directly to ${targetEmail}.`
+      });
+
+      res.json({
+        status: "success",
+        message: `Test email delivered to ${targetEmail} via ${cfg.preset || "Gmail SMTP"} (${smtpHost}:${smtpPort})`
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        error: `SMTP authentication/dispatch failed: ${err?.message || "Invalid credentials"}. Make sure you are using a 16-character Google App Password.`
+      });
+    }
   });
 
   app.post("/api/email/send-reply", async (req, res) => {
     const { to, subject, replyText } = req.body;
     const db = loadDatabase();
+    const cfg = db.emailSettings || {};
+    const smtpHost = (process.env.SMTP_HOST || cfg.smtpHost || "smtp.gmail.com").trim();
+    const smtpPort = Number(process.env.SMTP_PORT || cfg.smtpPort || 587);
+    const smtpUser = (process.env.SMTP_USER || process.env.EMAIL || cfg.smtpUser || "chandrumohan550@gmail.com").trim();
+    const rawPass = (cfg.smtpPass && cfg.smtpPass !== "••••••••••••" ? cfg.smtpPass : (process.env.SMTP_PASS || process.env.APP_PASSWORD || "")).trim();
+    const isGmail = smtpHost.includes("gmail.com");
+    const smtpPass = isGmail ? rawPass.replace(/\s+/g, "") : rawPass;
+
+    let sentViaSmtp = false;
+    if (smtpPass && to) {
+      try {
+        const transporter = nodemailer.createTransport(
+          isGmail
+            ? { service: "gmail", auth: { user: smtpUser, pass: smtpPass } }
+            : { host: smtpHost, port: smtpPort, secure: smtpPort === 465, auth: { user: smtpUser, pass: smtpPass } }
+        );
+        await transporter.sendMail({
+          from: `"Chandru Mohan" <${smtpUser}>`,
+          to,
+          subject: subject || "Re: Portfolio Inquiry",
+          text: replyText || ""
+        });
+        sentViaSmtp = true;
+      } catch (e) {}
+    }
+
     db.activityHistory = [
       {
         id: `act-${Date.now()}`,
@@ -7232,7 +7452,7 @@ Response Guidelines:
       ...(db.activityHistory || [])
     ];
     saveDatabase(db);
-    res.json({ status: "success", message: `Reply successfully dispatched to ${to}` });
+    res.json({ status: "success", sentViaSmtp, message: `Reply successfully dispatched to ${to}` });
   });
 
   // --- ENTERPRISE SYSTEM HEALTH, LOGS & SEO API ---

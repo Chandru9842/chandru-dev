@@ -1,29 +1,6 @@
 {
   "projects": [
     {
-      "title": "h vgyuuihui h",
-      "slug": "h-vgyuuihui-h",
-      "description": "ijuh u89u89knjnbnhiojiooj",
-      "liveUrl": "",
-      "githubUrl": "",
-      "startDate": "2026-02-01",
-      "endDate": "",
-      "isFeatured": false,
-      "displayOrder": 1,
-      "skills": [
-        "spring boot"
-      ],
-      "imageUrl": "",
-      "category": "Full-Stack",
-      "status": "Completed",
-      "videoUrl": "",
-      "gallery": [],
-      "createdAt": "2026-08-30T03:58:38.899Z",
-      "updatedAt": "2026-08-30T03:59:13.085Z",
-      "id": 4,
-      "order": 1
-    },
-    {
       "id": 1,
       "title": "AI-Powered Meeting Summarizer",
       "slug": "ai-meeting-summarizer",
@@ -675,8 +652,8 @@
     "professionalLabel": "",
     "statusBadgeText": "",
     "highlightTags": "",
-    "websiteLogo": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
-    "logoUrl": "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+    "websiteLogo": "",
+    "logoUrl": "",
     "faviconUrl": "/favicon.svg",
     "ogTitle": "Chandru Mohan - Principal Systems Architect Portfolio CMS",
     "ogImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop"
@@ -889,39 +866,99 @@
   "technologies": [
     {
       "id": 1,
-      "name": "Java",
+      "name": "Java 21",
       "enabled": true,
       "order": 1
     },
     {
       "id": 2,
-      "name": "Spring Boot",
+      "name": "Spring Boot 3",
       "enabled": true,
       "order": 2
     },
     {
       "id": 3,
-      "name": "React",
+      "name": "React 19",
       "enabled": true,
       "order": 3
     },
     {
       "id": 4,
-      "name": "MySQL",
+      "name": "TypeScript",
       "enabled": true,
       "order": 4
     },
     {
       "id": 5,
-      "name": "Docker",
+      "name": "Microservices",
       "enabled": true,
       "order": 5
     },
     {
       "id": 6,
-      "name": "AWS",
+      "name": "Apache Kafka",
       "enabled": true,
       "order": 6
+    },
+    {
+      "id": 7,
+      "name": "PostgreSQL",
+      "enabled": true,
+      "order": 7
+    },
+    {
+      "id": 8,
+      "name": "MySQL",
+      "enabled": true,
+      "order": 8
+    },
+    {
+      "id": 9,
+      "name": "Redis",
+      "enabled": true,
+      "order": 9
+    },
+    {
+      "id": 10,
+      "name": "Docker",
+      "enabled": true,
+      "order": 10
+    },
+    {
+      "id": 11,
+      "name": "Kubernetes",
+      "enabled": true,
+      "order": 11
+    },
+    {
+      "id": 12,
+      "name": "AWS Cloud",
+      "enabled": true,
+      "order": 12
+    },
+    {
+      "id": 13,
+      "name": "System Design",
+      "enabled": true,
+      "order": 13
+    },
+    {
+      "id": 14,
+      "name": "GraphQL",
+      "enabled": true,
+      "order": 14
+    },
+    {
+      "id": 15,
+      "name": "Terraform",
+      "enabled": true,
+      "order": 15
+    },
+    {
+      "id": 16,
+      "name": "CI/CD Pipelines",
+      "enabled": true,
+      "order": 16
     }
   ],
   "tools": [

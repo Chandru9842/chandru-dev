@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import PageTransitionWrapper from './PageTransitionWrapper';
+import DeepSpaceParticleOverlay from './DeepSpaceParticleOverlay';
 import { 
   Layout, BookOpen, Cpu, Award, Briefcase, GraduationCap, 
   BarChart3, Mail, Settings, RefreshCw, Terminal, LogOut, Code2, Database, ShieldAlert,
@@ -17,6 +19,9 @@ import CertificatesPage from './admin/CertificatesPage';
 import AchievementsPage from './admin/AchievementsPage';
 import ExperiencePage from './admin/ExperiencePage';
 import EducationPage from './admin/EducationPage';
+import EducationExperienceManagerPage from './admin/EducationExperienceManagerPage';
+import CertificationsAchievementsManagerPage from './admin/CertificationsAchievementsManagerPage';
+import PlatformActivityInsights from './admin/PlatformActivityInsights';
 import AnalyticsPage from './admin/AnalyticsPage';
 import MessagesPage from './admin/MessagesPage';
 import SettingsPage from './admin/SettingsPage';
@@ -1822,6 +1827,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   // Navigation config
   const navItems = [
     { name: 'Dashboard', icon: <Layout className="w-4 h-4" /> },
+    { name: 'Platform Activity Insights', icon: <Activity className="w-4 h-4 text-emerald-400" /> },
     { name: 'Notification Center', icon: <Bell className="w-4 h-4 text-emerald-400" /> },
     { name: 'Media Manager', icon: <Folder className="w-4 h-4 text-emerald-400" /> },
     { name: 'Profile', icon: <User className="w-4 h-4" /> },
@@ -1831,8 +1837,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
     { name: 'Projects', icon: <BookOpen className="w-4 h-4" /> },
     { name: 'Skills', icon: <Cpu className="w-4 h-4" /> },
     { name: 'Tools & Technologies', icon: <Terminal className="w-4 h-4 text-emerald-400" /> },
+    { name: 'Certifications & Achievements', icon: <Award className="w-4 h-4 text-emerald-400" /> },
     { name: 'Certificates', icon: <Award className="w-4 h-4" /> },
     { name: 'Achievements', icon: <Trophy className="w-4 h-4" /> },
+    { name: 'Education & Experience', icon: <Briefcase className="w-4 h-4 text-emerald-400" /> },
     { name: 'Experience', icon: <Briefcase className="w-4 h-4" /> },
     { name: 'Education', icon: <GraduationCap className="w-4 h-4" /> },
     { name: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
@@ -1853,7 +1861,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   ];
 
   return (
-    <div className="flex flex-col w-full min-h-[580px] bg-slate-950 border border-slate-900 rounded-3xl overflow-hidden shadow-2xl relative text-slate-100">
+    <div className="flex flex-col w-full min-h-[580px] glass-card rounded-3xl overflow-hidden relative text-slate-100">
       
       <div className="flex flex-col md:flex-row flex-1 relative">
       
@@ -2017,26 +2025,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
               <button
                 key={item.name}
                 onClick={() => setActiveTab(item.name)}
-                className={`w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-3.5 transition-all text-left ${
+                className={`relative w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-3.5 transition-colors text-left overflow-hidden cursor-pointer ${
                   activeTab === item.name
-                    ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/10'
+                    ? 'text-slate-950 font-extrabold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
                 }`}
               >
-                {item.icon}
-                {item.name}
-                
-                {item.name === 'Messages' && messages.filter(m => !m.isRead).length > 0 && (
-                  <span className="ml-auto bg-rose-500 text-white font-mono text-[9px] px-1.5 py-0.2 rounded-full font-bold">
-                    {messages.filter(m => !m.isRead).length}
-                  </span>
+                {activeTab === item.name && (
+                  <motion.span
+                    layoutId="admin-sidebar-active-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 bg-emerald-500 rounded-xl shadow-lg shadow-emerald-500/15"
+                  />
                 )}
+                <span className="relative z-10 flex items-center gap-3.5 w-full">
+                  {item.icon}
+                  <span className="truncate">{item.name}</span>
+                  
+                  {item.name === 'Messages' && messages.filter(m => !m.isRead).length > 0 && (
+                    <span className="ml-auto bg-rose-500 text-white font-mono text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                      {messages.filter(m => !m.isRead).length}
+                    </span>
+                  )}
 
-                {(item.name === 'Notification Center' || item.name === 'Notifications') && notifications.filter(n => !n.read).length > 0 && (
-                  <span className="ml-auto bg-emerald-500 text-slate-950 font-mono text-[9px] px-1.5 py-0.2 rounded-full font-bold shadow-sm">
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
+                  {(item.name === 'Notification Center' || item.name === 'Notifications') && notifications.filter(n => !n.read).length > 0 && (
+                    <span className="ml-auto bg-emerald-500 text-slate-950 font-mono text-[9px] px-1.5 py-0.2 rounded-full font-bold shadow-sm">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </span>
               </button>
             ))}
           </nav>
@@ -2059,8 +2076,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         </div>
       </aside>
 
-      {/* Main active workspace page panel */}
-      <section className="flex-1 p-5 sm:p-7 bg-slate-950/20 overflow-x-hidden min-h-[500px]">
+      {/* Main active workspace page panel with Framer Motion Deep-Space Particle Overlay */}
+      <section className="flex-1 p-5 sm:p-7 bg-slate-950/30 overflow-x-hidden min-h-[500px] relative">
+        <DeepSpaceParticleOverlay
+          variant="dashboard"
+          particleCount={36}
+          className="absolute inset-0 z-0"
+        />
+        <div className="relative z-10">
         {/* Recruiter / Guest Demo Tour Welcome Banner */}
         {isDemoSession && showTourBanner && (
           <motion.div
@@ -2154,6 +2177,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             </div>
           </motion.div>
         )}
+        <PageTransitionWrapper pageKey={activeTab}>
         {activeTab === 'Dashboard' && (
           <DashboardPage 
             analytics={analytics} 
@@ -2165,6 +2189,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onRefresh={handleRefreshStats}
             isRefreshing={isRefreshing}
           />
+        )}
+
+        {activeTab === 'Platform Activity Insights' && (
+          <PlatformActivityInsights />
         )}
 
         {(activeTab === 'Notification Center' || activeTab === 'Notifications') && (
@@ -2276,6 +2304,23 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
           />
         )}
 
+        {activeTab === 'Certifications & Achievements' && (
+          <CertificationsAchievementsManagerPage
+            certificates={certificates}
+            achievements={achievements}
+            onAddCertificate={handleAddCertificate}
+            onUpdateCertificate={handleUpdateCertificate}
+            onDeleteCertificate={handleDeleteCertificate}
+            onReorderCertificates={handleReorderCertificates}
+            onAddAchievement={handleAddAchievement}
+            onUpdateAchievement={handleUpdateAchievement}
+            onDeleteAchievement={handleDeleteAchievement}
+            onToggleAchievementVisibility={handleToggleAchievementVisibility}
+            onToggleAchievementFeatured={handleToggleAchievementFeatured}
+            onReorderAchievements={handleReorderAchievements}
+          />
+        )}
+
         {activeTab === 'Certificates' && (
           <CertificatesPage 
             certificates={certificates}
@@ -2295,6 +2340,21 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
             onToggleVisibility={handleToggleAchievementVisibility}
             onToggleFeatured={handleToggleAchievementFeatured}
             onReorder={handleReorderAchievements}
+          />
+        )}
+
+        {activeTab === 'Education & Experience' && (
+          <EducationExperienceManagerPage
+            experiences={experiences}
+            education={education}
+            onAddExperience={handleAddExperience}
+            onUpdateExperience={handleUpdateExperience}
+            onDeleteExperience={handleDeleteExperience}
+            onReorderExperiences={handleReorderExperiences}
+            onAddEducation={handleAddEducation}
+            onUpdateEducation={handleUpdateEducation}
+            onDeleteEducation={handleDeleteEducation}
+            onReorderEducation={handleReorderEducation}
           />
         )}
 
@@ -2408,6 +2468,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         {activeTab === 'Activity History' && (
           <ActivityHistoryPage />
         )}
+        </PageTransitionWrapper>
+        </div>
       </section>
       </div>
 

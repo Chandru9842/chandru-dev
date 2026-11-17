@@ -12,7 +12,18 @@ import {
 } from 'lucide-react';
 const ThreeDHero = React.lazy(() => import('./ThreeDHero'));
 import DynamicBackground from './DynamicBackground';
+import DeepSpaceParticleOverlay from './DeepSpaceParticleOverlay';
+import AuroraWaveBackground from './AuroraWaveBackground';
 import SkillMediaRenderer from './SkillMediaRenderer';
+import ProjectPerformanceDashboard from './ProjectPerformanceDashboard';
+import ProjectRechartsMetricsPanel from './ProjectRechartsMetricsPanel';
+import AboutBiographyTimeline from './AboutBiographyTimeline';
+import ArticleMonographCard from './ArticleMonographCard';
+import CodingProfileSpotlightCard from './CodingProfileSpotlightCard';
+import SkillsArchitectureShowcase from './SkillsArchitectureShowcase';
+import ToolsEcosystemWorkbench from './ToolsEcosystemWorkbench';
+import ExperienceEducationShowcase from './ExperienceEducationShowcase';
+import CertificationsAchievementsShowcase from './CertificationsAchievementsShowcase';
 import { AnimatedProfileAvatar } from './AnimatedProfileAvatar';
 import { soundFx } from '../utils/soundEffects';
 import { notifyCmsUpdate } from '../utils/notifyCmsSync';
@@ -369,18 +380,184 @@ const mobileNavItems = [
   { id: "contact", label: "Contact" },
 ];
 
+interface DeploymentLogEntry {
+  timestamp: string;
+  stage: "INIT" | "BUILD" | "VERIFY" | "DEPLOY" | "READY";
+  message: string;
+}
+
+function buildProjectDeploymentLogs(proj: ProjectItem): DeploymentLogEntry[] {
+  const customLines = Array.isArray(proj.deploymentLogs)
+    ? proj.deploymentLogs.map((l) => l.trim()).filter(Boolean)
+    : [];
+
+  if (customLines.length > 0) {
+    const stages: Array<DeploymentLogEntry["stage"]> = [
+      "INIT",
+      "BUILD",
+      "VERIFY",
+      "DEPLOY",
+      "READY",
+    ];
+    return customLines.map((line, idx) => ({
+      timestamp: `00:0${Math.min(idx + 1, 9)}.${(idx * 17 + 12) % 90 + 10}s`,
+      stage:
+        idx === customLines.length - 1
+          ? "READY"
+          : stages[idx % (stages.length - 1)],
+      message: line,
+    }));
+  }
+
+  const slugName =
+    proj.slug ||
+    proj.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") ||
+    "service-core";
+  const skills = (proj.skills || (proj as any).tags || []) as string[];
+  const primaryStack =
+    skills.slice(0, 3).join(", ") || "Java 21, Spring Boot, React";
+  const secondaryStack =
+    skills.slice(3, 6).join(", ") || "Docker, MySQL, REST API";
+  const archLabel =
+    proj.architectureType || `${proj.category || "Full-Stack"} Architecture`;
+  const targetEndpoint =
+    proj.liveUrl && proj.liveUrl !== "#"
+      ? proj.liveUrl
+      : `https://${slugName}.production.cluster.local`;
+
+  return [
+    {
+      timestamp: "00:00.14s",
+      stage: "INIT",
+      message: `Cloning repository /${slugName} (${archLabel})`,
+    },
+    {
+      timestamp: "00:00.82s",
+      stage: "BUILD",
+      message: `Compiling runtime modules [${primaryStack}] — 0 warnings, 0 errors`,
+    },
+    {
+      timestamp: "00:01.64s",
+      stage: "VERIFY",
+      message: `Binding ${secondaryStack} & executing integration health checks... PASS`,
+    },
+    {
+      timestamp: "00:02.38s",
+      stage: "DEPLOY",
+      message: `Publishing immutable container image sha256:${slugName.slice(0, 8)}9f4a to edge cluster`,
+    },
+    {
+      timestamp: "00:02.95s",
+      stage: "READY",
+      message: `Status: ${proj.status || "Completed"} · Active endpoint → ${targetEndpoint}`,
+    },
+  ];
+}
+
 interface ProjectCardProps {
   proj: ProjectItem;
+  index?: number;
   prefersReduced: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: (id: number) => void;
   setSelectedProjectForModal: (proj: ProjectItem) => void;
   setActiveSlideIndex: (index: number) => void;
   trackProjectView: (slug: string, title: string) => void;
+  onSelectTechTag?: (tag: string) => void;
 }
 
-function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActiveSlideIndex, trackProjectView }: ProjectCardProps) {
+function ProjectCard({
+  proj,
+  index = 0,
+  prefersReduced,
+  isExpanded = false,
+  onToggleExpand,
+  setSelectedProjectForModal,
+  setActiveSlideIndex,
+  trackProjectView,
+  onSelectTechTag,
+}: ProjectCardProps) {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [parallaxOffset, setParallaxOffset] = useState({ nx: 0, ny: 0 });
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [previewFrameIdx, setPreviewFrameIdx] = useState(0);
+  const [spotlightMediaTab, setSpotlightMediaTab] = useState<
+    "screenshots" | "video"
+  >("screenshots");
+  const [spotlightConsoleTab, setSpotlightConsoleTab] = useState<
+    "overview" | "metrics"
+  >("overview");
+  const [visibleLogCount, setVisibleLogCount] = useState<number>(5);
+  const [copiedDeployLog, setCopiedDeployLog] = useState(false);
+
+  const allFrames = useMemo(() => {
+    const frames: string[] = [];
+    if (proj.imageUrl) frames.push(proj.imageUrl);
+    if (Array.isArray(proj.gallery)) {
+      proj.gallery.forEach((g) => {
+        if (g && !frames.includes(g)) frames.push(g);
+      });
+    }
+    return frames;
+  }, [proj.imageUrl, proj.gallery]);
+
+  const activeImageSrc = allFrames[previewFrameIdx] || proj.imageUrl || "";
+
+  const deploymentLogs = useMemo(
+    () => buildProjectDeploymentLogs(proj),
+    [proj]
+  );
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setVisibleLogCount(deploymentLogs.length);
+      return;
+    }
+    setVisibleLogCount(1);
+    const interval = window.setInterval(() => {
+      setVisibleLogCount((prev) => {
+        if (prev >= deploymentLogs.length) {
+          window.clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 220);
+    return () => window.clearInterval(interval);
+  }, [isExpanded, deploymentLogs.length]);
+
+  const handleRerunDeploymentSimulation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundFx.playClick(980);
+    setVisibleLogCount(0);
+    window.setTimeout(() => {
+      let step = 0;
+      const timer = window.setInterval(() => {
+        step += 1;
+        setVisibleLogCount(step);
+        if (step >= deploymentLogs.length) {
+          window.clearInterval(timer);
+        }
+      }, 210);
+    }, 60);
+  };
+
+  const handleCopyDeploymentLog = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const formatted = deploymentLogs
+      .map((l) => `[${l.timestamp}] [${l.stage}] ${l.message}`)
+      .join("\n");
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    setCopiedDeployLog(true);
+    soundFx.playClick(1080);
+    window.setTimeout(() => setCopiedDeployLog(false), 2000);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -389,184 +566,967 @@ function ProjectCard({ proj, prefersReduced, setSelectedProjectForModal, setActi
     setCoords({ x, y });
 
     if (!prefersReduced) {
-      // Calculate 3D tilt angles (-6deg to +6deg)
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      const rotateX = ((y - centerY) / centerY) * -6;
-      const rotateY = ((x - centerX) / centerX) * 6;
-      setTilt({ rotateX, rotateY });
+      const nx = centerX > 0 ? (x - centerX) / centerX : 0;
+      const ny = centerY > 0 ? (y - centerY) / centerY : 0;
+      setParallaxOffset({ nx, ny });
+      const maxTilt = isExpanded ? 1.8 : 5.5;
+      setTilt({
+        rotateX: ny * -maxTilt,
+        rotateY: nx * maxTilt,
+      });
     }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    setParallaxOffset({ nx: 0, ny: 0 });
     setTilt({ rotateX: 0, rotateY: 0 });
+    if (!isExpanded) {
+      setPreviewFrameIdx(0);
+    }
   };
 
   const projectSkills = (proj.skills || (proj as any).tags || []) as string[];
+  const projectHighlights = Array.isArray(proj.highlights)
+    ? proj.highlights.filter(Boolean)
+    : [];
+  const projectMetrics = Array.isArray(proj.metrics)
+    ? proj.metrics.filter((m) => m && (m.label || m.value))
+    : [];
+
+  const handleCardToggle = () => {
+    soundFx.playClick(isExpanded ? 740 : 920);
+    if (onToggleExpand) {
+      onToggleExpand(proj.id);
+      if (!isExpanded) {
+        trackProjectView(proj.slug, proj.title);
+      }
+    } else {
+      soundFx.playModalOpen();
+      setSelectedProjectForModal(proj);
+      setActiveSlideIndex(0);
+      trackProjectView(proj.slug, proj.title);
+    }
+  };
 
   return (
-    <div style={{ perspective: 1000 }} className="h-full">
-      <motion.article 
+    <div style={{ perspective: 1400 }} className="h-full">
+      <motion.article
+        layout="position"
         initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: 1, 
+        animate={{
+          opacity: 1,
           y: 0,
           rotateX: prefersReduced ? 0 : tilt.rotateX,
           rotateY: prefersReduced ? 0 : tilt.rotateY,
-          transformStyle: "preserve-3d"
+          transformStyle: "preserve-3d",
         }}
-        transition={{ 
-          duration: isHovered ? 0.1 : 0.45, 
-          ease: isHovered ? "linear" : [0.16, 1, 0.3, 1] 
+        transition={{
+          duration: isHovered ? 0.14 : 0.45,
+          ease: isHovered ? "linear" : [0.16, 1, 0.3, 1],
         }}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
-        onClick={() => {
-          setSelectedProjectForModal(proj);
-          setActiveSlideIndex(0);
-          trackProjectView(proj.slug, proj.title);
-        }}
-        className="relative rounded-2xl overflow-hidden flex flex-col h-full group border border-emerald-500/20 bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-[#020617] backdrop-blur-xl transition-all duration-300 cursor-pointer shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-emerald-500/15 hover:border-emerald-400/50"
-        whileHover={prefersReduced ? {} : {
-          scale: 1.02,
-          transition: { duration: 0.25, ease: "easeOut" }
-        }}
+        onClick={handleCardToggle}
+        className={`glass-card relative rounded-2xl overflow-hidden flex flex-col h-full group border backdrop-blur-2xl transition-all duration-300 cursor-pointer ${
+          isExpanded
+            ? "spotlight-card-active-pulse border-emerald-400/90 bg-gradient-to-b from-slate-900/98 via-slate-950/98 to-[#020617] ring-1 ring-emerald-400/50 z-30"
+            : isHovered && !prefersReduced
+            ? "spotlight-card-active-pulse border-emerald-400/85 bg-gradient-to-b from-slate-900/98 via-slate-950/98 to-[#020617] z-20"
+            : "border-white/[0.08] bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-[#020617] shadow-xl shadow-black/50"
+        }`}
+        whileHover={
+          prefersReduced || isExpanded
+            ? {}
+            : {
+                y: -6,
+                transition: { duration: 0.22, ease: "easeOut" },
+              }
+        }
       >
-        {/* Cybernetic HUD Corner Brackets */}
-        <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
-        <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
-        <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
-        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400/70 z-30 pointer-events-none group-hover:border-emerald-300 transition-colors" />
-
-        {/* Laser Sweep Scan Highlight (Active on Hover) */}
-        {isHovered && !prefersReduced && (
-          <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden z-30 pointer-events-none">
-            <div className="w-full h-full bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-laser-sweep shadow-[0_0_8px_#34d399]" />
+        {/* Glowing Pulse-Animated Active Perimeter Border Overlay + Laser Sweep */}
+        {(isHovered || isExpanded) && (
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl z-30 spotlight-ring-pulse overflow-hidden"
+            style={{
+              boxShadow:
+                "inset 0 0 0 1.5px rgba(52, 211, 153, 0.78), inset 0 0 28px rgba(16, 185, 129, 0.22)",
+            }}
+          >
+            {/* Top & Bottom Glowing Laser Edge Accents */}
+            <div className="absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r from-transparent via-emerald-300 to-transparent shadow-[0_0_12px_rgba(52,211,153,0.95)]" />
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent animate-laser-sweep" />
+            <div className="absolute bottom-0 left-10 right-10 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400/90 to-transparent shadow-[0_0_10px_rgba(56,189,248,0.85)]" />
           </div>
         )}
 
-        {/* Interactive Radial Spotlight */}
+        {/* Interactive Radial 3D Mouse Spotlight Glare */}
         {!prefersReduced && isHovered && (
           <div
             className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-300 z-10"
             style={{
-              background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, rgba(16, 185, 129, 0.12), transparent 80%)`,
+              background: `radial-gradient(520px circle at ${coords.x}px ${coords.y}px, rgba(16, 185, 129, 0.16), rgba(56, 189, 248, 0.06) 45%, transparent 75%)`,
             }}
           />
         )}
 
-        {/* Card Media Section */}
-        <div className="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0 z-10 border-b border-white/[0.06]">
-          <SkillMediaRenderer 
-            src={proj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"} 
-            alt={proj.title}
-            variant="cover"
-            className="group-hover:scale-108 group-hover:brightness-110 transition-all duration-700 opacity-85 group-hover:opacity-100"
-          />
-          
-          {/* Engineering HUD Telemetry Tag */}
-          <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-20">
-            <span className="bg-slate-950/90 backdrop-blur-md text-emerald-400 font-mono text-[9px] font-bold px-2.5 py-0.5 rounded-md border border-emerald-500/40 uppercase tracking-widest flex items-center gap-1 shadow-lg">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {proj.category || "Full-Stack"}
+        {/* Top Developer Spotlight Chrome Bar */}
+        <div
+          className={`relative z-20 flex items-center justify-between px-4 py-2.5 border-b text-[11px] font-mono transition-colors duration-300 ${
+            isHovered || isExpanded
+              ? "bg-emerald-950/35 border-emerald-400/35"
+              : "bg-slate-950/90 border-white/[0.06]"
+          }`}
+          style={
+            !prefersReduced && isHovered
+              ? {
+                  transform: `translate3d(${parallaxOffset.nx * 4}px, ${parallaxOffset.ny * 2}px, 16px)`,
+                  transition: "transform 120ms ease-out",
+                }
+              : undefined
+          }
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-emerald-400 font-bold tabular-nums">
+              {String(index + 1).padStart(2, "0")}.
             </span>
-            <span className={`backdrop-blur-md font-mono text-[9px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${
-              proj.status === 'Completed' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/30' :
-              proj.status === 'In Development' ? 'bg-amber-950/90 text-amber-300 border-amber-500/30' :
-              proj.status === 'Concept' ? 'bg-purple-950/90 text-purple-300 border-purple-500/30' :
-              proj.status === 'Maintained' ? 'bg-sky-950/90 text-sky-300 border-sky-500/30' :
-              'bg-slate-950/90 text-slate-300 border-slate-500/30'
-            }`}>
-              {proj.status || "Completed"}
+            <span className="text-slate-300 truncate max-w-[200px] sm:max-w-[260px]">
+              /{proj.slug || proj.title.toLowerCase().replace(/\s+/g, "-")}
             </span>
+            {isExpanded && (
+              <span className="hidden sm:inline-block text-[10px] font-mono text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                3D Spotlight Active
+              </span>
+            )}
           </div>
 
-          {proj.isFeatured && (
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[9px] font-black px-2.5 py-0.5 rounded-md border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1 z-20">
-              <Sparkles className="w-2.5 h-2.5" />
-              <span>Production Blueprint</span>
-            </div>
-          )}
-
-          {/* Bottom Gradient Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent pointer-events-none" />
+          <div className="flex items-center gap-2.5 shrink-0">
+            {proj.metricsBadge && (
+              <span className="text-[10px] font-mono text-cyan-300 font-semibold hidden sm:inline">
+                {proj.metricsBadge}
+              </span>
+            )}
+            {proj.isFeatured && (
+              <span className="text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                Featured
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCardToggle();
+              }}
+              className={`px-2 py-0.5 rounded-md border text-[10px] font-mono font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                isExpanded
+                  ? "bg-emerald-500 text-slate-950 border-emerald-400 font-bold"
+                  : "bg-slate-900/90 border-white/[0.1] text-slate-300 hover:border-emerald-400/50 hover:text-emerald-300"
+              }`}
+              title={
+                isExpanded
+                  ? "Collapse Project Spotlight"
+                  : "Expand 3D Project Spotlight & Deployment Log"
+              }
+            >
+              <span>{isExpanded ? "Collapse" : "Spotlight"}</span>
+              {isExpanded ? (
+                <ChevronUp className="w-3 h-3" />
+              ) : (
+                <ChevronDown className="w-3 h-3" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Card Content Section */}
-        <div className="p-6 flex flex-col flex-grow justify-between gap-5 z-20">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-[10px] font-mono text-emerald-400/80">
-              <span className="flex items-center gap-1">
-                <span className="text-slate-500">TIMELINE:</span>
-                <span>{proj.startDate} — {proj.endDate || 'Present'}</span>
-              </span>
-              {proj.gallery && proj.gallery.length > 0 && (
-                <span className="text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-1.5 py-0.2 rounded text-[9px]">
-                  +{proj.gallery.length} Arch Diagrams
-                </span>
-              )}
-            </div>
-            
-            <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-1 font-display tracking-tight">
-              {proj.title}
-            </h3>
-            
-            <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-              {proj.description}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {/* Tech Stack Chips */}
-            <div className="flex flex-wrap gap-1.5">
-              {projectSkills.map((skill, idx) => (
-                <span 
-                  key={idx} 
-                  className="text-[9px] font-mono bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded text-emerald-300/90 group-hover:border-emerald-500/40 transition-colors"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-
-            {/* Card Action Footer */}
-            <div className="flex items-center justify-between border-t border-white/[0.06] pt-3.5 text-xs font-semibold">
-              <span className="text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all flex items-center gap-1.5 font-mono text-[10px] uppercase font-bold tracking-wider">
-                <span>Inspect Blueprint</span>
-                <ChevronRight className="w-3.5 h-3.5 group-hover:scale-125 transition-transform" />
-              </span>
-
-              <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
-                {proj.liveUrl && (
-                  <a 
-                    href={proj.liveUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-all flex items-center justify-center"
-                    title={`Live Deployment of ${proj.title}`}
-                    aria-label={`Live site for ${proj.title}`}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                  </a>
+        {/* ================================================================= */}
+        {/* EXPANDED 3D PROJECT SPOTLIGHT CONSOLE VIEW                        */}
+        {/* ================================================================= */}
+        {isExpanded ? (
+          <div
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 sm:p-7 z-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left Column (5 cols): 3D Parallax Media Stage + Action Links */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-4">
+              <div className="space-y-3">
+                {/* Media Viewport Header Switcher if Video exists */}
+                {proj.videoUrl && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono text-slate-400">
+                      INTERACTIVE MEDIA VIEWPORT
+                    </span>
+                    <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-white/[0.08] text-[11px] font-mono">
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightMediaTab("screenshots")}
+                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                          spotlightMediaTab === "screenshots"
+                            ? "bg-emerald-500 text-slate-950 font-bold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Frames ({allFrames.length || 1})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightMediaTab("video")}
+                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                          spotlightMediaTab === "video"
+                            ? "bg-emerald-500 text-slate-950 font-bold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Video Demo
+                      </button>
+                    </div>
+                  </div>
                 )}
-                {proj.githubUrl && (
-                  <a 
-                    href={proj.githubUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/30 text-slate-400 hover:text-white transition-all flex items-center justify-center"
-                    title={`Source Repository for ${proj.title}`}
-                    aria-label={`Source repository for ${proj.title}`}
-                  >
-                    <Github className="w-3.5 h-3.5" />
-                  </a>
+
+                {/* 3D Parallax Media Frame */}
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-950 border border-white/[0.1] shadow-2xl">
+                  {spotlightMediaTab === "video" && proj.videoUrl ? (
+                    <iframe
+                      src={proj.videoUrl}
+                      title={`${proj.title} Demo Video`}
+                      className="absolute inset-0 w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : activeImageSrc ? (
+                    <div
+                      className="w-full h-full transition-transform duration-200 ease-out"
+                      style={
+                        !prefersReduced && isHovered
+                          ? {
+                              transform: `translate3d(${parallaxOffset.nx * -12}px, ${parallaxOffset.ny * -8}px, 0) scale(1.06)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <SkillMediaRenderer
+                        src={activeImageSrc}
+                        alt={proj.title}
+                        variant="cover"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full relative flex flex-col justify-between p-6 bg-gradient-to-br from-slate-950 via-[#07131e] to-slate-950 overflow-hidden">
+                      <div
+                        className="absolute inset-0 opacity-[0.08]"
+                        style={{
+                          backgroundImage:
+                            "linear-gradient(to right, #10b981 1px, transparent 1px), linear-gradient(to bottom, #10b981 1px, transparent 1px)",
+                          backgroundSize: "24px 24px",
+                        }}
+                      />
+                      <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                        <span>{proj.category || "Full-Stack"}</span>
+                        {proj.architectureType && (
+                          <span className="text-emerald-400">
+                            {proj.architectureType}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative z-10 my-auto space-y-2">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                          <Code2 className="w-5 h-5" />
+                        </div>
+                        <div className="text-base font-bold text-white tracking-tight">
+                          {proj.title}
+                        </div>
+                      </div>
+                      <div className="relative z-10 text-[11px] font-mono text-slate-400 truncate">
+                        {projectSkills.slice(0, 4).join(" · ") ||
+                          "System Architecture"}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+                </div>
+
+                {/* Multi-Screenshot Thumbnail Selector */}
+                {allFrames.length > 1 && spotlightMediaTab === "screenshots" && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {allFrames.map((frameUrl, fIdx) => (
+                      <button
+                        key={fIdx}
+                        type="button"
+                        onClick={() => setPreviewFrameIdx(fIdx)}
+                        className={`relative w-16 h-10 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                          previewFrameIdx === fIdx
+                            ? "border-emerald-400 scale-105 shadow-md"
+                            : "border-white/15 opacity-65 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={frameUrl}
+                          alt={`${proj.title} frame ${fIdx + 1}`}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {/* Custom Metrics Grid inside Expanded Spotlight */}
+              {projectMetrics.length > 0 && (
+                <div className="grid grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-slate-950/80 border border-white/[0.07]">
+                  {projectMetrics.map((m, mIdx) => (
+                    <div key={mIdx} className="space-y-0.5">
+                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                        {m.label}
+                      </div>
+                      <div className="text-sm font-mono font-bold text-emerald-300 tabular-nums">
+                        {m.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Launch Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-white/[0.06]">
+                {proj.liveUrl && proj.liveUrl !== "#" && (
+                  <a
+                    href={proj.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => soundFx.playClick()}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-bold text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Live Deployment</span>
+                  </a>
+                )}
+
+                {proj.githubUrl && proj.githubUrl !== "#" && (
+                  <a
+                    href={proj.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => soundFx.playClick()}
+                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-white font-mono font-semibold text-xs transition-all flex items-center gap-1.5"
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    <span>Source Code</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playModalOpen();
+                    setSelectedProjectForModal(proj);
+                    setActiveSlideIndex(previewFrameIdx);
+                    trackProjectView(proj.slug, proj.title);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-400/40 text-slate-300 hover:text-emerald-300 font-mono font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Fullscreen Lightbox</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column (7 cols): Segmented Console Tabs -> Overview & Deploy Log vs Performance Metrics (Recharts) */}
+            <div className="lg:col-span-7 flex flex-col justify-between gap-5">
+              {/* Spotlight Subsystem Tab Switcher */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
+                <div className="flex items-center p-1 rounded-xl bg-slate-950/95 border border-white/[0.08]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playTab(780);
+                      setSpotlightConsoleTab("overview");
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                      spotlightConsoleTab === "overview"
+                        ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>Architecture &amp; Deploy Log</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playTab(880);
+                      setSpotlightConsoleTab("metrics");
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                      spotlightConsoleTab === "metrics"
+                        ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Gauge className="w-3.5 h-3.5" />
+                    <span>Performance Metrics</span>
+                  </button>
+                </div>
+
+                <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+                  {spotlightConsoleTab === "metrics"
+                    ? "Recharts Traffic, Latency & Resource Telemetry"
+                    : "System Specs & CI/CD Pipeline"}
+                </span>
+              </div>
+
+              {spotlightConsoleTab === "metrics" ? (
+                <ProjectRechartsMetricsPanel
+                  project={proj}
+                  onSoundClick={(freq) => soundFx.playClick(freq)}
+                />
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {/* Metadata Header */}
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400">
+                        <span className="text-emerald-400 font-semibold">
+                          {proj.category || "Full-Stack"}
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span
+                          className={
+                            proj.status === "Completed"
+                              ? "text-emerald-300"
+                              : proj.status === "In Development"
+                              ? "text-amber-300"
+                              : "text-sky-300"
+                          }
+                        >
+                          {proj.status || "Completed"}
+                        </span>
+                        {proj.startDate && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="tabular-nums">
+                              {proj.startDate} — {proj.endDate || "Present"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                        {proj.title}
+                      </h3>
+
+                      {(proj.role || proj.architectureType) && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-300">
+                          {proj.role && (
+                            <span>
+                              Role: <strong className="text-white">{proj.role}</strong>
+                            </span>
+                          )}
+                          {proj.role && proj.architectureType && (
+                            <span className="text-slate-600" aria-hidden="true">
+                              ·
+                            </span>
+                          )}
+                          {proj.architectureType && (
+                            <span>
+                              Architecture:{" "}
+                              <strong className="text-emerald-300">
+                                {proj.architectureType}
+                              </strong>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Full Description */}
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      {proj.description}
+                    </p>
+
+                    {/* Engineering Highlights */}
+                    {projectHighlights.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                        <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
+                          Engineering Highlights &amp; Outcomes
+                        </div>
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {projectHighlights.map((hl, hIdx) => (
+                            <li
+                              key={hIdx}
+                              className="text-xs text-slate-200 flex items-start gap-2 leading-relaxed"
+                            >
+                              <span className="text-emerald-400 font-mono font-bold shrink-0">
+                                ▹
+                              </span>
+                              <span>{hl}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Interactive Tech Stack Filter Tags */}
+                    {projectSkills.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                        <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                          Technology Stack (Click tag to filter gallery)
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {projectSkills.map((skill, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                if (onSelectTechTag) {
+                                  soundFx.playTab(840);
+                                  onSelectTechTag(skill);
+                                }
+                              }}
+                              className="text-[11px] font-mono bg-slate-900/90 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/40 px-2.5 py-1 rounded-lg text-slate-200 hover:text-emerald-300 transition-colors cursor-pointer"
+                              title={`Filter projects by ${skill}`}
+                            >
+                              {skill}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* D3.js Project Performance Dashboard (Traffic, Deploy Success, Uptime Trends) */}
+                  <ProjectPerformanceDashboard project={proj} />
+
+                  {/* Simulated Deployment Pipeline Log Terminal */}
+                  <div className="rounded-xl bg-[#030712] border border-emerald-500/25 overflow-hidden shadow-inner">
+                    <div className="flex items-center justify-between px-3.5 py-2 bg-slate-950 border-b border-white/[0.07] text-[11px] font-mono">
+                      <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                        <Terminal className="w-3.5 h-3.5" />
+                        <span>DEPLOYMENT PIPELINE LOG</span>
+                        <span className="text-slate-600">·</span>
+                        <span className="text-slate-400 tabular-nums">
+                          {Math.min(visibleLogCount, deploymentLogs.length)}/
+                          {deploymentLogs.length} stages
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleRerunDeploymentSimulation}
+                          className="px-2 py-0.5 rounded bg-slate-900 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/30 text-[10px] font-mono text-slate-300 hover:text-emerald-300 flex items-center gap-1 transition cursor-pointer"
+                          title="Replay deployment pipeline simulation"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Replay</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCopyDeploymentLog}
+                          className="px-2 py-0.5 rounded bg-slate-900 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/30 text-[10px] font-mono text-slate-300 hover:text-emerald-300 flex items-center gap-1 transition cursor-pointer"
+                          title="Copy deployment log"
+                        >
+                          {copiedDeployLog ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span className="text-emerald-400">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 space-y-1.5 font-mono text-[11px] max-h-44 overflow-y-auto custom-scrollbar">
+                      {deploymentLogs
+                        .slice(0, visibleLogCount)
+                        .map((entry, lIdx) => (
+                          <div
+                            key={lIdx}
+                            className="flex items-start gap-2.5 leading-relaxed"
+                          >
+                            <span className="text-slate-500 tabular-nums shrink-0">
+                              {entry.timestamp}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold shrink-0 ${
+                                entry.stage === "READY"
+                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                  : entry.stage === "DEPLOY"
+                                  ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
+                                  : entry.stage === "VERIFY"
+                                  ? "bg-amber-500/15 text-amber-300 border border-amber-500/25"
+                                  : "bg-slate-800 text-slate-300 border border-white/[0.06]"
+                              }`}
+                            >
+                              {entry.stage}
+                            </span>
+                            <span
+                              className={
+                                entry.stage === "READY"
+                                  ? "text-emerald-300 font-semibold break-all"
+                                  : "text-slate-300 break-all"
+                              }
+                            >
+                              {entry.message}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
+        ) : (
+          /* ================================================================= */
+          /* COMPACT 3D PARALLAX SPOTLIGHT CARD (CLICK TO EXPAND INLINE)       */
+          /* ================================================================= */
+          <>
+            {/* Interactive Multi-Plane 3D Parallax Media Viewport */}
+            <div className="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0 z-10 border-b border-white/[0.06]">
+              {activeImageSrc ? (
+                <div
+                  className="w-full h-full transition-transform duration-200 ease-out"
+                  style={
+                    !prefersReduced && isHovered
+                      ? {
+                          transform: `translate3d(${parallaxOffset.nx * -12}px, ${parallaxOffset.ny * -8}px, 0) scale(1.07)`,
+                        }
+                      : undefined
+                  }
+                >
+                  <SkillMediaRenderer
+                    src={activeImageSrc}
+                    alt={proj.title}
+                    variant="cover"
+                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="w-full h-full relative flex flex-col justify-between p-6 bg-gradient-to-br from-slate-950 via-[#07131e] to-slate-950 overflow-hidden transition-transform duration-200 ease-out"
+                  style={
+                    !prefersReduced && isHovered
+                      ? {
+                          transform: `translate3d(${parallaxOffset.nx * -8}px, ${parallaxOffset.ny * -6}px, 0) scale(1.03)`,
+                        }
+                      : undefined
+                  }
+                >
+                  <div
+                    className="absolute inset-0 opacity-[0.07]"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(to right, #10b981 1px, transparent 1px), linear-gradient(to bottom, #10b981 1px, transparent 1px)",
+                      backgroundSize: "24px 24px",
+                    }}
+                  />
+                  <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                    <span>{proj.category || "Full-Stack"}</span>
+                    {proj.architectureType && (
+                      <span className="text-emerald-400">
+                        {proj.architectureType}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative z-10 my-auto space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                      <Code2 className="w-5 h-5" />
+                    </div>
+                    <div className="text-base font-bold text-white tracking-tight line-clamp-2">
+                      {proj.title}
+                    </div>
+                  </div>
+                  <div className="relative z-10 text-[11px] font-mono text-slate-400 truncate">
+                    {projectSkills.slice(0, 4).join(" · ") ||
+                      "System Architecture"}
+                  </div>
+                </div>
+              )}
+
+              {/* Animated Glass Sheen Sweep on Hover */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-glass-sheen" />
+              </div>
+
+              {/* Subtle Contrast Vignette Scrim */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent pointer-events-none" />
+
+              {/* Interactive Screenshot Frame Scrubber (when multiple images exist) */}
+              {allFrames.length > 1 && (
+                <div
+                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-20"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/[0.1]">
+                    {allFrames.slice(0, 6).map((_, fIdx) => (
+                      <button
+                        key={fIdx}
+                        type="button"
+                        onMouseEnter={() => setPreviewFrameIdx(fIdx)}
+                        onClick={() => setPreviewFrameIdx(fIdx)}
+                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                          previewFrameIdx === fIdx
+                            ? "w-5 bg-emerald-400"
+                            : "w-1.5 bg-slate-500 hover:bg-slate-300"
+                        }`}
+                        title={`Preview snapshot ${fIdx + 1}`}
+                        aria-label={`Preview snapshot ${fIdx + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-200 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/[0.08] tabular-nums">
+                    {previewFrameIdx + 1}/{allFrames.length}
+                  </span>
+                </div>
+              )}
+
+              {proj.videoUrl && (
+                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/[0.1] text-[10px] font-mono text-sky-300 flex items-center gap-1.5 z-20">
+                  <Video className="w-3 h-3 text-sky-400" />
+                  <span>Video Demo</span>
+                </div>
+              )}
+            </div>
+
+            {/* Card Content Section with Foreground 3D Parallax Shift */}
+            <div
+              className="p-6 flex flex-col flex-grow justify-between gap-5 z-20"
+              style={
+                !prefersReduced && isHovered
+                  ? {
+                      transform: `translate3d(${parallaxOffset.nx * 5}px, ${parallaxOffset.ny * 4}px, 22px)`,
+                      transition: "transform 140ms ease-out",
+                    }
+                  : undefined
+              }
+            >
+              <div className="space-y-3">
+                {/* Signature Glowing Icon Box + Clean Metadata Line */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/35 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.22)] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    {(proj.category || "").toLowerCase().includes("database") ||
+                    (proj.title || "").toLowerCase().includes("sql") ? (
+                      <Database className="w-5 h-5" />
+                    ) : (proj.category || "").toLowerCase().includes("security") ||
+                      (proj.title || "").toLowerCase().includes("auth") ? (
+                      <ShieldCheck className="w-5 h-5" />
+                    ) : (proj.category || "").toLowerCase().includes("cloud") ||
+                      (proj.category || "").toLowerCase().includes("microservice") ? (
+                      <Cpu className="w-5 h-5" />
+                    ) : (
+                      <Layers className="w-5 h-5" />
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 text-[11px] font-mono text-slate-400">
+                    <span className="text-emerald-400 font-semibold">
+                      {proj.category || "Full-Stack"}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span
+                      className={
+                        proj.status === "Completed"
+                          ? "text-emerald-300 font-semibold"
+                          : proj.status === "In Development"
+                          ? "text-amber-300 font-semibold"
+                          : "text-sky-300 font-semibold"
+                      }
+                    >
+                      {proj.status || "Completed"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Project Title */}
+                <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors tracking-tight leading-snug">
+                  {proj.title}
+                </h3>
+
+                {/* Optional Role & Architecture Pattern */}
+                {(proj.role || proj.architectureType) && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300 font-medium">
+                    {proj.role && <span>{proj.role}</span>}
+                    {proj.role && proj.architectureType && (
+                      <span className="text-slate-600" aria-hidden="true">
+                        ·
+                      </span>
+                    )}
+                    {proj.architectureType && (
+                      <span className="text-cyan-300 font-mono text-[11px]">
+                        {proj.architectureType}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Project Description */}
+                <p className="text-xs sm:text-[13px] text-slate-300/90 leading-relaxed line-clamp-3">
+                  {proj.description}
+                </p>
+
+                {/* Optional Custom Metrics from Admin Panel with Animated Emerald-Cyan Progress Bars */}
+                {projectMetrics.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/[0.05]">
+                    {projectMetrics.slice(0, 2).map((m, mIdx) => (
+                      <div
+                        key={mIdx}
+                        className="p-2.5 rounded-xl bg-[#040a18]/90 border border-emerald-500/20 space-y-1.5"
+                      >
+                        <div className="text-xs font-mono font-extrabold text-emerald-300 tabular-nums">
+                          {m.value}
+                        </div>
+                        <div className="text-[9px] font-mono text-slate-300 uppercase tracking-wider font-bold truncate">
+                          {m.label}
+                        </div>
+                        <div className="h-1 w-full rounded-full bg-slate-900 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400"
+                            style={{ width: mIdx === 0 ? "92%" : "88%" }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Optional Key Highlights from Admin Panel */}
+                {projectHighlights.length > 0 && (
+                  <ul className="space-y-1 pt-1 border-t border-white/[0.05]">
+                    {projectHighlights.slice(0, 2).map((hl, hIdx) => (
+                      <li
+                        key={hIdx}
+                        className="text-[11px] text-slate-300 flex items-start gap-2 leading-relaxed"
+                      >
+                        <span className="text-emerald-400 font-bold shrink-0">
+                          ▹
+                        </span>
+                        <span className="line-clamp-1">{hl}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {/* Compact D3.js Performance Telemetry Strip */}
+                <ProjectPerformanceDashboard project={proj} compact />
+
+                {/* Interactive Technology Stack Filter Buttons */}
+                {projectSkills.length > 0 && (
+                  <div
+                    className="flex flex-wrap gap-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {projectSkills.slice(0, 6).map((skill, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (onSelectTechTag) {
+                            soundFx.playTab(840);
+                            onSelectTechTag(skill);
+                          }
+                        }}
+                        className="text-[10px] font-mono bg-slate-900/90 hover:bg-emerald-500/15 border border-white/[0.07] hover:border-emerald-500/40 px-2.5 py-1 rounded-lg text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer whitespace-nowrap"
+                        title={`Filter projects by ${skill}`}
+                      >
+                        {skill}
+                      </button>
+                    ))}
+                    {projectSkills.length > 6 && (
+                      <span className="text-[10px] font-mono text-slate-400 px-1.5 py-1 tabular-nums">
+                        +{projectSkills.length - 6}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Card Action Footer */}
+                <div className="flex items-center justify-between border-t border-white/[0.06] pt-3.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-all flex items-center gap-1.5 font-mono text-[11px] font-bold">
+                      <Terminal className="w-3.5 h-3.5" />
+                      <span>Spotlight</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSpotlightConsoleTab("metrics");
+                        if (!isExpanded && onToggleExpand) {
+                          soundFx.playClick(920);
+                          onToggleExpand(proj.id);
+                          trackProjectView(proj.slug, proj.title);
+                        }
+                      }}
+                      className="px-2 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-semibold flex items-center gap-1 transition cursor-pointer"
+                      title="Open Recharts Performance Metrics tab"
+                    >
+                      <Gauge className="w-3 h-3 text-cyan-400" />
+                      <span>Metrics</span>
+                    </button>
+                  </div>
+
+                  <div
+                    className="flex items-center gap-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFx.playModalOpen();
+                        setSelectedProjectForModal(proj);
+                        setActiveSlideIndex(previewFrameIdx);
+                        trackProjectView(proj.slug, proj.title);
+                      }}
+                      className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/35 text-slate-300 hover:text-emerald-300 transition-all cursor-pointer"
+                      title={`Open fullscreen view for ${proj.title}`}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    {proj.liveUrl && proj.liveUrl !== "#" && (
+                      <a
+                        href={proj.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => soundFx.playClick()}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-[11px] font-mono font-semibold transition-all flex items-center gap-1"
+                        title={`Live Deployment of ${proj.title}`}
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Live</span>
+                      </a>
+                    )}
+                    {proj.githubUrl && proj.githubUrl !== "#" && (
+                      <a
+                        href={proj.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => soundFx.playClick()}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/30 text-slate-300 hover:text-white text-[11px] font-mono font-semibold transition-all flex items-center gap-1"
+                        title={`Source Repository for ${proj.title}`}
+                      >
+                        <Github className="w-3.5 h-3.5" />
+                        <span>Code</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </motion.article>
     </div>
   );
@@ -583,7 +1543,7 @@ const ScrollProgressBar = React.memo(function ScrollProgressBar() {
           const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
           if (totalHeight > 0 && barRef.current) {
             const progress = Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100));
-            barRef.current.style.width = `${progress}%`;
+            barRef.current.style.transform = `scaleX(${progress / 100})`;
           }
           ticking = false;
         });
@@ -591,18 +1551,22 @@ const ScrollProgressBar = React.memo(function ScrollProgressBar() {
       }
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, []);
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-0.5 sm:h-1 bg-slate-950/40 overflow-hidden pointer-events-none">
+    <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-950/60 overflow-hidden pointer-events-none z-[60]">
       <div 
         ref={barRef}
-        className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 transition-all duration-150 ease-out shadow-[0_0_10px_rgba(52,211,153,0.8)]"
-        style={{ width: '0%' }}
+        className="h-full w-full origin-left bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 will-change-transform"
+        style={{ transform: 'scaleX(0)' }}
         role="progressbar"
-        aria-valuenow={0}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Reading progress"
@@ -643,27 +1607,35 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [activeTestimonialIndex, setActiveTestimonialIndex] = useState<number>(0);
   const [isTestimonialAutoplay, setIsTestimonialAutoplay] = useState<boolean>(true);
 
-  // Article Autoplay, Speed Control & Interactive Showcase State
+  // Interactive Editorial Articles State (No auto-sliding timer)
   const [activeArticleIndex, setActiveArticleIndex] = useState<number>(0);
-  const [isArticleAutoplay, setIsArticleAutoplay] = useState<boolean>(true);
-  const [articleAutoplaySpeed, setArticleAutoplaySpeed] = useState<number>(5000); // 5.0s default (1.0x)
-  const [articleDisplayMode, setArticleDisplayMode] = useState<'showcase' | 'grid'>('showcase');
+  const [isArticleAutoplay, setIsArticleAutoplay] = useState<boolean>(false);
+  const [articleAutoplaySpeed, setArticleAutoplaySpeed] = useState<number>(5000);
+  const [articleDisplayMode, setArticleDisplayMode] = useState<'showcase' | 'grid'>('grid');
+  const [showFeaturedArticlesOnly, setShowFeaturedArticlesOnly] = useState<boolean>(false);
+  const [articleReaderFontSize, setArticleReaderFontSize] = useState<'sm' | 'base' | 'lg'>('base');
+  const [articleReaderProgress, setArticleReaderProgress] = useState<number>(0);
+  const [copiedCodeBlockIdx, setCopiedCodeBlockIdx] = useState<number | null>(null);
   const [isArticleHovered, setIsArticleHovered] = useState<boolean>(false);
 
-  // Project Autoplay, Speed Control & Interactive Showcase State
+  // Interactive Developer Portfolio Projects State (No auto-sliding timer)
   const [activeProjectIndex, setActiveProjectIndex] = useState<number>(0);
-  const [isProjectAutoplay, setIsProjectAutoplay] = useState<boolean>(true);
-  const [projectAutoplaySpeed, setProjectAutoplaySpeed] = useState<number>(4500); // 4.5s default (1.0x)
-  const [projectDisplayMode, setProjectDisplayMode] = useState<'showcase' | 'grid'>('showcase');
+  const [isProjectAutoplay, setIsProjectAutoplay] = useState<boolean>(false);
+  const [projectAutoplaySpeed, setProjectAutoplaySpeed] = useState<number>(4500);
+  const [projectDisplayMode, setProjectDisplayMode] = useState<'showcase' | 'grid'>('grid');
   const [selectedProjectCategory, setSelectedProjectCategory] = useState<string>('All');
+  const [showFeaturedProjectsOnly, setShowFeaturedProjectsOnly] = useState<boolean>(false);
   const [projectSearchQuery, setProjectSearchQuery] = useState<string>('');
   const [isProjectHovered, setIsProjectHovered] = useState<boolean>(false);
   const [projectActiveSubsystemTab, setProjectActiveSubsystemTab] = useState<'overview' | 'tech' | 'milestones'>('overview');
+  const [explorerMediaTab, setExplorerMediaTab] = useState<'screenshots' | 'video'>('screenshots');
+  const [explorerFrameIndex, setExplorerFrameIndex] = useState<number>(0);
+  const [expandedSpotlightProjectId, setExpandedSpotlightProjectId] = useState<number | null>(null);
   const [expandedArticleId, setExpandedArticleId] = useState<number | null>(null);
 
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  const [render3D, setRender3D] = useState<boolean>(false);
+  const [render3D, setRender3D] = useState<boolean>(true);
   const [shouldMountChat, setShouldMountChat] = useState<boolean>(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
@@ -680,6 +1652,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   
   // Interactive Coding Profiles & Skills Animation States
   const [selectedCodingPlatformFilter, setSelectedCodingPlatformFilter] = useState<string>('All');
+  const [codingProfileSearchQuery, setCodingProfileSearchQuery] = useState<string>('');
+  const [showFeaturedCodingProfilesOnly, setShowFeaturedCodingProfilesOnly] = useState<boolean>(false);
+  const [expandedCodingProfileId, setExpandedCodingProfileId] = useState<number | null>(null);
   const [copiedHandleKey, setCopiedHandleKey] = useState<string | null>(null);
   const [skillSearchQuery, setSkillSearchQuery] = useState<string>('');
   const [skillSortMode, setSkillSortMode] = useState<'default' | 'proficiency' | 'name'>('default');
@@ -727,23 +1702,33 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     setIsArticleHovered(false);
   };
 
-  // Auto-reset hover states on window scroll / touch interaction to prevent permanent pause locks
+  // Auto-reset hover states on touch interaction to prevent permanent pause locks
   useEffect(() => {
     const handleResetHover = () => {
-      setIsProjectHovered(false);
-      setIsArticleHovered(false);
+      setIsProjectHovered((prev) => (prev ? false : prev));
+      setIsArticleHovered((prev) => (prev ? false : prev));
     };
-    window.addEventListener('scroll', handleResetHover, { passive: true });
     window.addEventListener('touchstart', handleResetHover, { passive: true });
     return () => {
-      window.removeEventListener('scroll', handleResetHover);
       window.removeEventListener('touchstart', handleResetHover);
     };
   }, []);
 
+  const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(() => soundFx.isAmbientPlaying());
+
+  useEffect(() => {
+    const handleAudioSync = () => {
+      setIsSoundMuted(soundFx.isMuted());
+      setIsAmbientPlaying(soundFx.isAmbientPlaying());
+    };
+    window.addEventListener('ambient-audio-state-changed', handleAudioSync);
+    return () => window.removeEventListener('ambient-audio-state-changed', handleAudioSync);
+  }, []);
+
   const handleToggleSound = () => {
-    const newMuted = soundFx.toggleMute();
-    setIsSoundMuted(newMuted);
+    const active = soundFx.toggleAmbientSpace();
+    setIsAmbientPlaying(active);
+    setIsSoundMuted(soundFx.isMuted());
   };
 
   // Defer 3D on desktop and chat assistant until after initial paint
@@ -759,10 +1744,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => clearTimeout(chatTimer);
   }, []);
 
-  // Global Keyboard Shortcut Listener for Developer Terminal (Ctrl+K, Cmd+K)
+  // Global Keyboard Shortcut & State Mutation Listener for Developer Command Console (Ctrl+K, Cmd+K, Ctrl+`)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === '`')) {
         e.preventDefault();
         setIsTerminalOpen(prev => !prev);
       }
@@ -770,9 +1755,108 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         setIsTerminalOpen(false);
       }
     };
+
+    const handleCliMutation = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { type, payload } = customEvent.detail || {};
+      if (!type) return;
+
+      switch (type) {
+        case 'SET_THEME':
+          setTheme((prev: any) => ({
+            ...prev,
+            primaryColor: payload.primaryColor,
+            secondaryColor: payload.secondaryColor
+          }));
+          setFeedbackToast(`⚡ CLI State Mutated: Active Theme → ${String(payload.name || 'custom').toUpperCase()}`);
+          break;
+        case 'SET_HERO_BADGE':
+          setProfile((prev: any) => ({
+            ...prev,
+            heroBadge: payload.heroBadge
+          }));
+          setFeedbackToast(`⚡ CLI State Mutated: Hero Badge → ${payload.heroBadge}`);
+          break;
+        case 'SET_AVAILABILITY':
+          setProfile((prev: any) => ({
+            ...prev,
+            availability: payload.availabilityStatus,
+            availabilityStatus: payload.availabilityStatus
+          }));
+          setFeedbackToast(`⚡ CLI State Mutated: Availability → ${payload.availabilityStatus}`);
+          break;
+        case 'TOGGLE_PROJECT_FEATURED':
+          setProjects((prev: ProjectItem[]) =>
+            prev.map(p => (p.id === payload.projectId ? { ...p, isFeatured: payload.isFeatured } : p))
+          );
+          setFeedbackToast(`⚡ CLI State Mutated: Project #${payload.projectId} Featured = ${payload.isFeatured}`);
+          break;
+        case 'FILTER_PROJECTS':
+          setSelectedProjectCategory(payload.category || 'All');
+          document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+          setFeedbackToast(`⚡ CLI State Mutated: Projects Filter → ${payload.category}`);
+          break;
+        case 'SET_PROJECT_VIEW':
+          setProjectDisplayMode(payload.mode === 'grid' ? 'grid' : 'showcase');
+          document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+          setFeedbackToast(`⚡ CLI State Mutated: Projects View → ${String(payload.mode).toUpperCase()}`);
+          break;
+        case 'BOOST_SKILL':
+          setSkills((prev: SkillItem[]) =>
+            prev.map(s => (s.id === payload.skillId ? { ...s, proficiency: payload.proficiency } : s))
+          );
+          setFeedbackToast(`⚡ CLI State Mutated: ${payload.name} Proficiency → ${payload.proficiency}%`);
+          break;
+        case 'SET_METRIC':
+          setPortfolioMetrics((prev: PortfolioMetricItem[]) =>
+            prev.map(m => (m.id === payload.metricId ? { ...m, value: payload.value } : m))
+          );
+          setFeedbackToast(`⚡ CLI State Mutated: KPI Metric Updated → ${payload.value}`);
+          break;
+        case 'TOGGLE_3D_CORE':
+          setRender3D(Boolean(payload.enabled));
+          setFeedbackToast(`⚡ CLI State Mutated: 3D Core Engine → ${payload.enabled ? 'ONLINE' : 'PAUSED'}`);
+          break;
+        case 'OPEN_CMS':
+          if (onEnterCMS) onEnterCMS();
+          break;
+        case 'PULSE_TELEMETRY':
+          setAnalytics((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  totalPageViews: (prev.totalPageViews || 0) + 1,
+                  uniqueVisitors: (prev.uniqueVisitors || 0) + 1
+                }
+              : prev
+          );
+          setFeedbackToast('⚡ CLI Telemetry Pulse Dispatched • Live Analytics Updated');
+          break;
+        case 'RESET_STATE':
+          setTheme(initialThemeSettings);
+          setSelectedProjectCategory('All');
+          setProjectDisplayMode('showcase');
+          setRender3D(true);
+          setProfile((prev: any) => ({
+            ...prev,
+            heroBadge: initialProfile.heroBadge,
+            availability: initialProfile.availability,
+            availabilityStatus: initialProfile.availability
+          }));
+          setFeedbackToast('⚡ CLI State Reset to Default Production Baseline');
+          break;
+        default:
+          break;
+      }
+    };
+
     window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+    window.addEventListener('portfolio-cli-mutation', handleCliMutation as EventListener);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('portfolio-cli-mutation', handleCliMutation as EventListener);
+    };
+  }, [onEnterCMS]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -901,7 +1985,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
-  useEffect(() => {    const sections = ["hero", "home", "about", "projects", "articles", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "testimonials", "contact"];
+  const isProgrammaticScrollRef = useRef<boolean>(false);
+  const programmaticScrollTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const sections = ["hero", "home", "about", "projects", "articles", "coding-profiles", "skills", "tools", "timeline", "experience", "education", "credentials", "certificates", "achievements", "testimonials", "contact"];
     const observers = sections.map((id) => {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -915,10 +2003,11 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     };
 
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      if (isProgrammaticScrollRef.current) return;
       const intersectingEntries = entries.filter(e => e.isIntersecting);
       if (intersectingEntries.length > 0) {
         const currentId = intersectingEntries[0].target.id;
-        setActiveSection(currentId);
+        setActiveSection(prev => (prev === currentId ? prev : currentId));
 
         if (window.parent && window.parent !== window) {
           let mappedId = currentId;
@@ -943,7 +2032,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     return () => {
       observers.forEach(({ el }) => observer.unobserve(el));
     };
-  }, [projects, skills, certificates, achievements, experiences, education, tools, testimonials, articles]);
+  }, [projects.length, skills.length, certificates.length, achievements.length, experiences.length, education.length, tools.length, testimonials.length, articles.length]);
 
   // Prevent body scrolling when mobile drawer is open
   useEffect(() => {
@@ -1017,36 +2106,38 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       );
     };
 
-    const performScroll = () => {
-      const element = findTargetElement();
-
-      if (element) {
-        setActiveSection(normalizedId);
-
-        if (window.history && window.history.replaceState) {
-          try {
-            window.history.replaceState(null, '', `#${normalizedId}`);
-          } catch (err) {
-            // Ignore state mutation errors in sandboxed iframes
-          }
-        }
-
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const headerOffset = 76;
-        const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = Math.max(0, elementTop - headerOffset);
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: prefersReducedMotion ? 'auto' : 'smooth'
-        });
+    const element = findTargetElement();
+    if (element) {
+      isProgrammaticScrollRef.current = true;
+      if (programmaticScrollTimerRef.current) {
+        clearTimeout(programmaticScrollTimerRef.current);
       }
-    };
+      programmaticScrollTimerRef.current = setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 380);
 
-    performScroll();
-    requestAnimationFrame(performScroll);
-    setTimeout(performScroll, 50);
-    setTimeout(performScroll, 150);
+      setActiveSection(normalizedId);
+
+      if (window.history && window.history.replaceState) {
+        try {
+          window.history.replaceState(null, '', `#${normalizedId}`);
+        } catch (err) {
+          // Ignore state mutation errors in sandboxed iframes
+        }
+      }
+
+      const headerOffset = 76;
+      const elementTop = element.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = Math.max(0, elementTop - headerOffset);
+      const distance = Math.abs(offsetPosition - window.scrollY);
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Instant jump for long-distance navigation (>800px) so clicking any section is immediate
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: prefersReducedMotion || distance > 800 ? 'auto' : 'smooth'
+      });
+    }
   };
 
   const handleNavLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -1055,26 +2146,25 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   };
 
   const sectionVariants = {
-    hidden: prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
+    hidden: prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.18,
         ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
       }
     }
   };
 
   const projectsSectionVariants = {
-    hidden: prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
+    hidden: prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.18,
         ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-        when: "beforeChildren",
       }
     }
   };
@@ -1095,6 +2185,49 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       .map((t: any) => t.name)
       .join(" • ");
   }, [technologies]);
+
+  const marqueeTechItems = useMemo(() => {
+    const fromTech = (technologies || [])
+      .filter((t: any) => t.enabled !== false && t.name)
+      .sort((a: any, b: any) => ((a.order ?? a.displayOrder) || 0) - ((b.order ?? b.displayOrder) || 0))
+      .map((t: any) => String(t.name).trim());
+
+    const fromSkills = (skills || [])
+      .filter((s: any) => s.name)
+      .map((s: any) => String(s.name).trim());
+
+    const enterpriseDefaults = [
+      'Java 21',
+      'Spring Boot 3',
+      'React 19',
+      'TypeScript',
+      'Microservices',
+      'Apache Kafka',
+      'PostgreSQL',
+      'MySQL',
+      'Redis',
+      'Docker',
+      'Kubernetes',
+      'AWS Cloud',
+      'System Design',
+      'GraphQL',
+      'Terraform',
+      'CI/CD Pipelines',
+    ];
+
+    const seen = new Set<string>();
+    const combined: string[] = [];
+
+    for (const item of [...fromTech, ...fromSkills, ...enterpriseDefaults]) {
+      const key = item.toLowerCase();
+      if (item && !seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
+    }
+
+    return combined.slice(0, 18);
+  }, [technologies, skills]);
 
   // Filter/tab selection for skills and projects
   const [selectedSkillCategory, setSelectedSkillCategory] = useState<string>('All');
@@ -1129,7 +2262,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, [displayTools, selectedToolCategory, toolSearchQuery, toolSortMode]);
 
   const displayArticles = useMemo(() => {
-    return articles.length > 0 ? articles : initialArticles;
+    const raw = articles.length > 0 ? articles : initialArticles;
+    return raw
+      .filter((a) => a.isPublished !== false)
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.displayOrder ?? a.order ?? 999) -
+          (b.displayOrder ?? b.order ?? 999)
+      );
   }, [articles]);
 
   const articleCategories = useMemo(() => {
@@ -1139,15 +2280,21 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
   const filteredArticles = useMemo(() => {
     return displayArticles.filter(a => {
+      if (showFeaturedArticlesOnly && !a.isFeatured) return false;
       const matchesCategory = selectedArticleCategory === 'All' || a.category === selectedArticleCategory;
+      if (!matchesCategory) return false;
       const q = articleSearchQuery.trim().toLowerCase();
-      return (!matchesCategory ? false : true) && (!q || 
-        a.title.toLowerCase().includes(q) || 
-        ((a.excerpt || (a as any).summary || '').toLowerCase().includes(q)) || 
+      if (!q) return true;
+      return (
+        (a.title || '').toLowerCase().includes(q) ||
+        ((a.excerpt || (a as any).summary || '').toLowerCase().includes(q)) ||
+        ((a.executiveSummary || '').toLowerCase().includes(q)) ||
+        (Array.isArray(a.keyTakeaways) && a.keyTakeaways.some(k => (k || '').toLowerCase().includes(q))) ||
         (a.tags && a.tags.some(tag => tag.toLowerCase().includes(q))) ||
-        (a.category && a.category.toLowerCase().includes(q)));
+        (a.category && a.category.toLowerCase().includes(q))
+      );
     });
-  }, [displayArticles, selectedArticleCategory, articleSearchQuery]);
+  }, [displayArticles, selectedArticleCategory, articleSearchQuery, showFeaturedArticlesOnly]);
 
   const certOrganizations = useMemo(() => {
     const orgs = new Set<string>();
@@ -1169,14 +2316,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     });
   }, [certificates, selectedCertOrg, certSearchQuery]);
 
-  // Article Autoplay interval with speed control & pause-on-hover
+  // Article Autoplay interval with speed control, pause-on-hover, & viewport gating
   useEffect(() => {
-    if (!isArticleAutoplay || isArticleHovered || filteredArticles.length <= 1) return;
+    if (!isArticleAutoplay || isArticleHovered || filteredArticles.length <= 1 || activeSection !== 'articles') return;
     const interval = setInterval(() => {
       setActiveArticleIndex(prev => (prev + 1) % filteredArticles.length);
     }, articleAutoplaySpeed);
     return () => clearInterval(interval);
-  }, [isArticleAutoplay, isArticleHovered, filteredArticles.length, articleAutoplaySpeed]);
+  }, [isArticleAutoplay, isArticleHovered, filteredArticles.length, articleAutoplaySpeed, activeSection]);
 
   // Ensure active article index stays within bounds when category/search filter changes
   useEffect(() => {
@@ -1186,7 +2333,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, [filteredArticles.length, activeArticleIndex]);
 
   const displayProjects = useMemo(() => {
-    return projects.length > 0 ? projects : initialProjects;
+    const raw = projects.length > 0 ? projects : initialProjects;
+    return raw
+      .filter((p) => (p as any).isVisible !== false)
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.displayOrder ?? (a as any).order ?? 999) -
+          (b.displayOrder ?? (b as any).order ?? 999)
+      );
   }, [projects]);
 
   const projectCategories = useMemo(() => {
@@ -1197,31 +2352,27 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const filteredProjects = useMemo(() => {
     return displayProjects.filter(p => {
       const matchesCategory = selectedProjectCategory === 'All' || p.category === selectedProjectCategory;
+      const matchesFeatured = !showFeaturedProjectsOnly || Boolean(p.isFeatured);
       const q = projectSearchQuery.trim().toLowerCase();
       const projectTags = (p as any).tags || p.skills || [];
       const matchesSearch = !q || 
         p.title.toLowerCase().includes(q) || 
         ((p.description || '').toLowerCase().includes(q)) || 
+        ((p.role || '').toLowerCase().includes(q)) ||
+        ((p.architectureType || '').toLowerCase().includes(q)) ||
         (projectTags.some((tag: string) => tag.toLowerCase().includes(q))) ||
         (p.category && p.category.toLowerCase().includes(q));
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesFeatured && matchesSearch;
     });
-  }, [displayProjects, selectedProjectCategory, projectSearchQuery]);
-
-  // Project Autoplay interval with speed control & pause-on-hover
-  useEffect(() => {
-    if (!isProjectAutoplay || isProjectHovered || filteredProjects.length <= 1) return;
-    const interval = setInterval(() => {
-      setActiveProjectIndex(prev => (prev + 1) % filteredProjects.length);
-    }, projectAutoplaySpeed);
-    return () => clearInterval(interval);
-  }, [isProjectAutoplay, isProjectHovered, filteredProjects.length, projectAutoplaySpeed]);
+  }, [displayProjects, selectedProjectCategory, showFeaturedProjectsOnly, projectSearchQuery]);
 
   // Ensure active index stays within bounds when category/search filter changes
   useEffect(() => {
     if (activeProjectIndex >= filteredProjects.length && filteredProjects.length > 0) {
       setActiveProjectIndex(0);
     }
+    setExplorerFrameIndex(0);
+    setExplorerMediaTab('screenshots');
   }, [filteredProjects.length, activeProjectIndex]);
 
   const displayTestimonials = useMemo(() => {
@@ -1229,12 +2380,12 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, [testimonials]);
 
   useEffect(() => {
-    if (!isTestimonialAutoplay || displayTestimonials.length <= 1) return;
+    if (!isTestimonialAutoplay || displayTestimonials.length <= 1 || activeSection !== 'testimonials') return;
     const interval = setInterval(() => {
       setActiveTestimonialIndex(prev => (prev + 1) % displayTestimonials.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [isTestimonialAutoplay, displayTestimonials.length]);
+  }, [isTestimonialAutoplay, displayTestimonials.length, activeSection]);
   const [selectedAchievementCategory, setSelectedAchievementCategory] = useState<string>('All');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isBackendOffline, setIsBackendOffline] = useState<boolean>(false);
@@ -1474,8 +2625,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       const seoTitle = data.profile?.seoTitle || (data.profile?.fullName ? `${data.profile.fullName} | ${data.profile.title || 'Engineering Portfolio'}` : (data.settings?.siteName || "Chandru Mohan Portfolio"));
       document.title = seoTitle;
 
-      // Dynamic Favicon / Logo
-      const faviconTarget = data.profile?.faviconUrl || data.profile?.websiteLogo || data.profile?.logoUrl;
+      // Dynamic Favicon (Strictly independent from Website Logo)
+      const faviconTarget = data.profile?.faviconUrl || "/favicon.svg";
       if (faviconTarget) {
         let linkFavicon = document.querySelector('link[rel~="icon"]') as HTMLLinkElement;
         if (!linkFavicon) {
@@ -1527,7 +2678,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         ogImage.setAttribute('property', 'og:image');
         document.head.appendChild(ogImage);
       }
-      ogImage.setAttribute('content', data.profile?.ogImage || data.profile?.websiteLogo || data.profile?.profileImage || "");
+      ogImage.setAttribute('content', data.profile?.ogImage || "");
 
       setSettings(data.settings);
 
@@ -1642,7 +2793,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       const dynamicTitle = finalProfile.seoTitle || (finalProfile.fullName ? `${finalProfile.fullName} | ${finalProfile.title || 'Principal Systems Architect'}` : "Chandru Mohan | Principal Systems Architect & Portfolio");
       document.title = dynamicTitle;
 
-      const dynamicFavicon = finalProfile.faviconUrl || finalProfile.websiteLogo || "/favicon.svg";
+      const dynamicFavicon = finalProfile.faviconUrl || "/favicon.svg";
       if (dynamicFavicon) {
         let linkFavicon = document.querySelector('link[rel~="icon"]') as HTMLLinkElement;
         if (!linkFavicon) {
@@ -1877,6 +3028,30 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       });
 
       if (response.ok) {
+        const resData = await response.json().catch(() => ({}));
+        if (!resData.emailDelivered) {
+          try {
+            const targetEmail = profile?.email || 'chandrumohan550@gmail.com';
+            await fetch(`https://formsubmit.co/ajax/${targetEmail}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                name: formName,
+                email: formEmail,
+                _replyto: formEmail,
+                _subject: `🚀 [Portfolio Contact] ${formSubject} - from ${formName}`,
+                subject: formSubject,
+                message: formMessage,
+                _template: 'table',
+                _captcha: 'false'
+              })
+            });
+          } catch (relayErr) {}
+        }
+
         setFormSuccess(true);
         setFormName('');
         setFormEmail('');
@@ -1953,9 +3128,25 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   }, [codingProfiles]);
 
   const filteredCodingProfiles = React.useMemo(() => {
-    if (selectedCodingPlatformFilter === 'All') return codingProfiles;
-    return codingProfiles.filter(p => (p.platformType || p.displayName) === selectedCodingPlatformFilter);
-  }, [codingProfiles, selectedCodingPlatformFilter]);
+    return codingProfiles.filter(p => {
+      if (showFeaturedCodingProfilesOnly && !p.featured) return false;
+      const matchesPlatform =
+        selectedCodingPlatformFilter === 'All' ||
+        (p.platformType || p.displayName) === selectedCodingPlatformFilter;
+      if (!matchesPlatform) return false;
+      const q = codingProfileSearchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        (p.displayName || '').toLowerCase().includes(q) ||
+        (p.platformType || '').toLowerCase().includes(q) ||
+        (p.username || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q) ||
+        (p.primaryLanguage || '').toLowerCase().includes(q) ||
+        (p.ratingOrRank || '').toLowerCase().includes(q) ||
+        (Array.isArray(p.highlights) && p.highlights.some(h => (h || '').toLowerCase().includes(q)))
+      );
+    });
+  }, [codingProfiles, selectedCodingPlatformFilter, codingProfileSearchQuery, showFeaturedCodingProfilesOnly]);
 
   // Dynamic achievements filtering & sorting
   const visibleAchievements = React.useMemo(() => {
@@ -2138,21 +3329,50 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             background-color: rgba(var(--primary-rgb), 0.1) !important;
           }
           .glass-card {
-            background-color: var(--card-bg) !important;
+            background:
+              radial-gradient(120% 100% at 15% 0%, rgba(var(--primary-rgb), 0.09) 0%, rgba(6, 182, 212, 0.04) 45%, transparent 80%),
+              linear-gradient(145deg, rgba(255, 255, 255, 0.065) 0%, rgba(15, 23, 42, 0.72) 38%, rgba(3, 8, 22, 0.88) 100%) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
             border-color: var(--border-color) !important;
             border-radius: var(--border-radius) !important;
+            box-shadow:
+              inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+              inset 0 0 22px 0 rgba(var(--primary-rgb), 0.075),
+              inset 0 -1px 0 0 rgba(6, 182, 212, 0.12),
+              0 20px 45px -15px rgba(0, 0, 0, 0.75),
+              0 8px 20px -6px rgba(2, 6, 23, 0.65),
+              0 0 0 1px rgba(var(--primary-rgb), 0.06) !important;
           }
         `}} />
       )}
 
-      {/* Custom Global Wallpaper Layer */}
-      {theme?.customWallpaper?.enabled && (
-        <DynamicBackground bg={theme.customWallpaper} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
-      )}
+      {/* Full-Screen High-Performance SVG 'Aurora Wave' Animated Mesh Gradient Background */}
+      <AuroraWaveBackground
+        primaryColor={theme?.gradientStart || '#10b981'}
+        secondaryColor={theme?.gradientEnd || '#06b6d4'}
+        className="fixed inset-0 z-0"
+      />
+      <DynamicBackground
+        bg={theme?.customWallpaper?.enabled ? theme.customWallpaper : theme?.heroBackground}
+        gradientStart={theme?.gradientStart}
+        gradientEnd={theme?.gradientEnd}
+        alwaysRenderAmbient={true}
+      />
+      <DeepSpaceParticleOverlay
+        variant="hero"
+        particleCount={48}
+        className="fixed inset-0 z-[2]"
+      />
       
-      {/* Background radial atmosphere */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-emerald-500/3 rounded-full blur-[160px] pointer-events-none" />
+      {/* Fixed End-to-End Radial Atmosphere Blooms (Zero-Filter GPU Gradients) */}
+      <div
+        className="fixed inset-0 pointer-events-none z-[1]"
+        style={{
+          background:
+            'radial-gradient(520px circle at 25% 10%, rgba(16,185,129,0.08), transparent 70%), radial-gradient(620px circle at 75% 75%, rgba(6,182,212,0.06), transparent 70%)',
+        }}
+      />
 
       {/* Floating System-Wide Alerts/Toasts */}
       {feedbackToast && (
@@ -2270,19 +3490,47 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               />
             ))}
 
-            {/* Sound Effects Audio Feedback Toggle */}
+            {/* Ambient Space Audio Loop & Sound FX Mute/Unmute Toggle */}
             <button
               onClick={handleToggleSound}
-              className={`p-1.5 sm:p-2 rounded-lg border transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0 ${
-                !isSoundMuted
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.2)] hover:bg-emerald-500/20 hover:border-emerald-500/60'
-                  : 'border-white/[0.08] bg-slate-900/60 text-slate-500 hover:text-slate-300 hover:border-white/[0.15]'
+              aria-pressed={isAmbientPlaying}
+              className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0 inline-flex items-center gap-1.5 ${
+                isAmbientPlaying
+                  ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.28)] hover:bg-emerald-500/25 hover:border-emerald-400/70'
+                  : 'border-white/[0.08] bg-slate-900/60 text-slate-400 hover:text-emerald-300 hover:border-emerald-500/35'
               }`}
-              title={!isSoundMuted ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted (Click to Enable)'}
-              aria-label={!isSoundMuted ? 'Mute Sound FX' : 'Unmute Sound FX'}
+              title={isAmbientPlaying ? 'Ambient Space Audio Active (Click to Mute)' : 'Unmute Ambient Space Audio Loop'}
+              aria-label={isAmbientPlaying ? 'Mute Ambient Space Audio' : 'Unmute Ambient Space Audio'}
               id="btn-sound-toggle-header"
             >
-              {!isSoundMuted ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {isAmbientPlaying ? (
+                <>
+                  <Volume2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="flex items-end gap-[2px] h-3" aria-hidden="true">
+                    <motion.span
+                      animate={{ height: ['35%', '100%', '45%'] }}
+                      transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-[2px] bg-emerald-400 rounded-full"
+                    />
+                    <motion.span
+                      animate={{ height: ['90%', '35%', '100%'] }}
+                      transition={{ duration: 0.75, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-[2px] bg-teal-300 rounded-full"
+                    />
+                    <motion.span
+                      animate={{ height: ['50%', '95%', '30%'] }}
+                      transition={{ duration: 1.05, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-[2px] bg-emerald-400 rounded-full"
+                    />
+                  </span>
+                  <span className="hidden xl:inline text-[11px] font-mono font-semibold text-emerald-300">Ambient</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-4 h-4 shrink-0" />
+                  <span className="hidden xl:inline text-[11px] font-mono font-semibold">Ambient</span>
+                </>
+              )}
             </button>
 
             {/* Desktop Dashboard Access Button */}
@@ -2369,41 +3617,44 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         </AnimatePresence>
       </header>
 
-      {/* Main Landmark Container */}
-      <main id="main-content" tabIndex={-1} className="focus:outline-none">
+      {/* Main Landmark Container elevated above end-to-end animated background */}
+      <main id="main-content" tabIndex={-1} className="relative z-10 focus:outline-none">
 
       {/* Hero Section */}
       {profile?.heroVisibility !== false && (
       <section 
-        className="relative w-full min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-28 sm:pt-32 md:pt-36 lg:pt-32 xl:pt-36 2xl:pt-40 pb-12 sm:pb-16 lg:pb-20 overflow-x-hidden border-b border-white/[0.02]" 
+        className="relative w-full flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-24 sm:pt-28 lg:pt-28 pb-5 sm:pb-6 lg:pb-8 overflow-x-hidden border-b border-white/[0.05]" 
         id="hero"
-        style={profile?.heroBackground ? {
-          backgroundImage: `linear-gradient(to bottom, rgba(3, 7, 18, 0.85), rgba(3, 7, 18, 0.95)), url("${profile.heroBackground}")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        } : undefined}
       >
-        
-        {theme?.heroBackground?.enabled && (
-          <DynamicBackground bg={theme.heroBackground} gradientStart={theme.gradientStart} gradientEnd={theme.gradientEnd} />
-        )}
-
-        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-10 xl:gap-12 relative z-10">
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 items-center gap-6 lg:gap-8 xl:gap-10 relative z-10">
           
           {/* Textual Overlays (Left column in Desktop grid) */}
-          <div className="lg:col-span-7 xl:col-span-6 flex flex-col items-center text-center lg:items-start lg:text-left w-full gap-4 sm:gap-5 lg:gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-7 xl:col-span-6 flex flex-col items-center text-center lg:items-start lg:text-left w-full gap-5 sm:gap-6 relative"
+          >
+            {/* Subtle Ambient Radial Backlight for Hero Typography */}
+            <div className="absolute -top-10 -left-10 w-80 h-80 bg-emerald-500/12 rounded-full blur-[100px] pointer-events-none" />
 
             {/* Top Badges & Status Container */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 shrink-0">
-              {/* Developer Badge */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 shrink-0">
+              {/* Illuminated Command Badge */}
               {profile?.heroBadge && profile.heroBadge.trim() !== "" && (
-                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-bold whitespace-nowrap">
+                <motion.div
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  className="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-cyan-500/15 border border-emerald-400/40 px-4 py-1.5 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.2),inset_0_1px_0_0_rgba(255,255,255,0.15)] backdrop-blur-xl"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.18em] text-emerald-300 font-extrabold whitespace-nowrap">
                     {profile.heroBadge}
                   </span>
-                </div>
+                </motion.div>
               )}
 
               {/* Dynamic Highlight Tags */}
@@ -2415,7 +3666,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     return (
                       <span
                         key={idx}
-                        className="text-[9px] sm:text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 font-semibold shadow-xs"
+                        className="text-[9px] sm:text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-semibold shadow-xs backdrop-blur-md"
                       >
                         {cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`}
                       </span>
@@ -2444,76 +3695,91 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               )}
             </div>
 
-            {/* Name, Professional Eyebrow, Title & Subtitle */}
-            <div className="flex flex-col gap-2 sm:gap-2.5 w-full">
+            {/* Monumental Hero Display Name, Role Ribbon & HUD Typewriter */}
+            <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
               {profile?.professionalLabel && profile.professionalLabel.trim() !== "" && (
                 <span className="text-[10px] sm:text-xs font-mono text-emerald-400/90 uppercase tracking-widest block font-bold">
                   {profile.professionalLabel}
                 </span>
               )}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-luxury tracking-normal">
+
+              <h1 className="text-4xl sm:text-6xl lg:text-[64px] font-black leading-[1.06] font-luxury tracking-tight bg-gradient-to-br from-white via-slate-100 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_4px_28px_rgba(16,185,129,0.22)]">
                 {profile?.heroName || profile?.fullName || "CHANDRU M"}
               </h1>
+
               {(profile?.heroTitle || profile?.title) && (
-                <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-widest font-bold">
-                  {profile?.heroTitle || profile?.title}
-                </p>
+                <div className="inline-flex items-center justify-center lg:justify-start gap-2.5 pt-0.5">
+                  <span className="h-[2px] w-8 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full hidden lg:inline-block shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
+                  <p className="text-xs sm:text-sm font-mono text-emerald-400 uppercase tracking-[0.22em] font-extrabold">
+                    {profile?.heroTitle || profile?.title}
+                  </p>
+                </div>
               )}
+
               {(profile?.heroSubtitle || profile?.shortTagline || profile?.typingText) && (
-                <h2 className="text-sm sm:text-lg lg:text-xl font-display font-medium text-slate-300 leading-snug flex flex-wrap items-center gap-1.5 justify-center lg:justify-start">
+                <h2 className="text-sm sm:text-lg lg:text-xl font-display font-semibold text-slate-100 leading-snug flex flex-wrap items-center gap-2 justify-center lg:justify-start pt-0.5">
                   {(profile?.heroSubtitle || profile?.shortTagline) && (
-                    <span>{profile?.heroSubtitle || profile?.shortTagline}</span>
+                    <span className="text-slate-200">{profile?.heroSubtitle || profile?.shortTagline}</span>
                   )}
                   {profile?.typingText && (
-                    <>
-                      {(profile?.heroSubtitle || profile?.shortTagline) && (
-                        <span className="text-slate-600 hidden sm:inline">•</span>
-                      )}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.12)] backdrop-blur-md">
+                      <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <HeroTypewriter wordsString={profile.typingText} />
-                    </>
+                    </span>
                   )}
                 </h2>
               )}
             </div>
 
-            {/* Short Introduction */}
+            {/* Editorial Bio with Luminous Left Accent Line */}
             {(profile?.heroDescription || profile?.shortIntroduction) && (
-              <p className="text-xs sm:text-sm lg:text-base text-slate-400 leading-relaxed max-w-lg lg:max-w-xl">
-                {profile?.heroDescription || profile?.shortIntroduction}
-              </p>
+              <div className="relative max-w-lg lg:max-w-xl lg:border-l-2 lg:border-emerald-500/45 lg:pl-4 lg:py-1 lg:bg-gradient-to-r lg:from-emerald-500/[0.04] lg:to-transparent lg:rounded-r-xl">
+                <p className="text-xs sm:text-sm lg:text-[15px] text-slate-300/95 leading-relaxed">
+                  {profile?.heroDescription || profile?.shortIntroduction}
+                </p>
+              </div>
             )}
 
-            {/* Primary Buttons */}
-            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-1 sm:pt-2 w-full">
-              <a 
-                href={profile?.primaryCtaUrl || "#projects"} 
-                className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
-                onClick={(e) => {
-                  trackClick('explore_btn_hero', 'Explore Projects Click');
-                  const target = profile?.primaryCtaUrl || '#projects';
-                  if (target.startsWith('#')) {
-                    scrollToSection(target.replace('#', ''), e);
-                  }
-                }}
-              >
-                <span>{profile?.primaryCtaText || "Explore Engineering"}</span>
-                <ChevronRight className="w-4 h-4" />
-              </a>
-              <a 
-                href={profile?.secondaryCtaUrl || "#contact"} 
-                className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 glass-card hover:bg-white/[0.03] text-white font-medium text-xs rounded-xl transition-all flex items-center justify-center gap-2 border border-white/[0.08]"
-                onClick={(e) => {
-                  trackClick('contact_btn_hero', 'Contact Click');
-                  const target = profile?.secondaryCtaUrl || '#contact';
-                  if (target.startsWith('#')) {
-                    scrollToSection(target.replace('#', ''), e);
-                  }
-                }}
-              >
-                <Mail className="w-4 h-4 text-emerald-400" />
-                <span>{profile?.secondaryCtaText || "Get in Touch"}</span>
-              </a>
+            {/* Primary & Resume Action Dock */}
+            <div className="flex flex-col gap-3.5 pt-1 w-full max-w-xl">
+              {/* Row 1: Primary CTAs */}
+              <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 w-full">
+                <motion.a 
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={profile?.primaryCtaUrl || "#projects"} 
+                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-[13px] rounded-xl transition-all shadow-[0_0_28px_rgba(16,185,129,0.35),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:shadow-[0_0_36px_rgba(16,185,129,0.55)] flex items-center justify-center gap-2 cursor-pointer group"
+                  onClick={(e) => {
+                    trackClick('explore_btn_hero', 'Explore Projects Click');
+                    const target = profile?.primaryCtaUrl || '#projects';
+                    if (target.startsWith('#')) {
+                      scrollToSection(target.replace('#', ''), e);
+                    }
+                  }}
+                >
+                  <span>{profile?.primaryCtaText || "Explore Engineering"}</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </motion.a>
 
+                <motion.a 
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  href={profile?.secondaryCtaUrl || "#contact"} 
+                  className="w-full sm:w-auto px-6 py-3 bg-slate-900/80 hover:bg-emerald-500/15 text-white font-bold text-xs sm:text-[13px] rounded-xl transition-all flex items-center justify-center gap-2 border border-emerald-500/30 hover:border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.1),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-xl cursor-pointer"
+                  onClick={(e) => {
+                    trackClick('contact_btn_hero', 'Contact Click');
+                    const target = profile?.secondaryCtaUrl || '#contact';
+                    if (target.startsWith('#')) {
+                      scrollToSection(target.replace('#', ''), e);
+                    }
+                  }}
+                >
+                  <Mail className="w-4 h-4 text-emerald-400" />
+                  <span>{profile?.secondaryCtaText || "Get in Touch"}</span>
+                </motion.a>
+              </div>
+
+              {/* Row 2: Resume Capsule Bar */}
               {!isValidResumeUrl(profile?.resumeUrl) ? (
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
                   <button 
@@ -2527,38 +3793,39 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               ) : (
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full sm:w-auto">
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full sm:w-auto">
-                    {/* View Resume Button */}
-                    <a 
+                    <motion.a 
+                      whileHover={{ scale: 1.02, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
                       href={profile?.resumeUrl || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => handleViewResume(e, 'resume_view_hero', 'View Resume')}
-                      className="w-full sm:w-auto px-4 py-2.5 border border-white/[0.08] hover:border-emerald-500/30 bg-white/[0.02] hover:bg-emerald-500/5 text-slate-300 hover:text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full sm:w-auto px-4 py-2.5 border border-white/[0.12] hover:border-emerald-400/50 bg-slate-900/75 hover:bg-emerald-500/10 text-slate-200 hover:text-emerald-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-xl shadow-md"
                     >
                       <Eye className="w-4 h-4 text-emerald-400" />
                       <span>View Resume</span>
-                    </a>
+                    </motion.a>
 
-                    {/* Download Resume Button */}
                     {(activeResume ? activeResume.isDownloadEnabled !== false : true) && (
-                      <a 
+                      <motion.a 
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
                         href={profile?.resumeUrl || '#'}
                         download={activeResume?.fileName || 'resume.pdf'}
                         onClick={(e) => handleDownloadResume(e, 'resume_download_hero', 'Download Resume')}
-                        className="w-full sm:w-auto px-4 py-2.5 border border-emerald-500/30 hover:border-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full sm:w-auto px-4 py-2.5 border border-emerald-500/40 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-xl shadow-[0_0_18px_rgba(16,185,129,0.15)]"
                       >
                         <Download className="w-4 h-4" />
                         <span>{profile?.resumeDownloadText || profile?.downloadCtaText || "Download CV"}</span>
-                      </a>
+                      </motion.a>
                     )}
                   </div>
                   
-                  {/* Resume Last Updated & Version Metadata */}
-                  <div className="flex flex-col text-[10px] font-mono text-slate-500 items-center sm:items-start pl-0 sm:pl-3 sm:border-l sm:border-white/[0.06] select-none shrink-0">
-                    <span className="text-emerald-400/80 font-bold">
+                  <div className="flex flex-col text-[10px] font-mono text-slate-400 items-center sm:items-start pl-0 sm:pl-3 sm:border-l sm:border-emerald-500/20 select-none shrink-0">
+                    <span className="text-emerald-400 font-extrabold">
                       {profile?.versionText || (activeResume ? `Version ${activeResume.version}` : "Version 2.4.0")}
                     </span>
-                    <span className="mt-0.5 text-slate-600">
+                    <span className="mt-0.5 text-slate-400/80">
                       {profile?.updateText || (activeResume ? `Updated ${new Date(activeResume.updatedAt).toLocaleDateString(undefined, {month: 'short', year: 'numeric'})}` : "Updated Recently")}
                     </span>
                   </div>
@@ -2568,7 +3835,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
             {/* Dedicated Hero Section Links */}
             {socialLinks.filter(l => l.showInHero === true).length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-3 relative z-30">
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-1 relative z-30">
                 {socialLinks.filter(l => l.showInHero === true).map((link) => (
                   <SocialLinkAnchor
                     key={link.id}
@@ -2581,17 +3848,19 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
             )}
 
-            {/* Dynamic Social Links in Hero Section (Coordinates Channels) */}
+            {/* Dynamic Social Links in Hero Section (Glassmorphic Coordinates Dock) */}
             {socialLinks.filter(l => l.showInCoordinates !== false).length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-5 border-t border-white/[0.04] w-full max-w-lg lg:max-w-xl relative z-30">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-semibold">Coordinates Channels:</span>
+              <div className="inline-flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 px-4 py-2.5 rounded-2xl bg-slate-950/65 border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl relative z-30">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-[0.18em] block font-bold">
+                  Coordinates Channels:
+                </span>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {socialLinks.filter(l => l.showInCoordinates !== false).map((link) => (
                     <SocialLinkAnchor
                       key={link.id}
                       link={link}
                       onClick={() => trackClick('social_hero_' + link.platform.toLowerCase(), link.platform)}
-                      className="w-8.5 h-8.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/60 bg-slate-900/90 hover:bg-slate-950/95 text-slate-200 hover:text-emerald-400 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer group relative shadow-md"
+                      className="w-9 h-9 rounded-xl border border-slate-700/80 hover:border-emerald-400 bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 cursor-pointer group relative shadow-md"
                       childrenClassName="w-4.5 h-4.5 object-contain"
                     />
                   ))}
@@ -2599,100 +3868,213 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               </div>
             )}
 
-          </div>
+          </motion.div>
 
-          {/* Right Column: 3D Canvas Universe / Interactive Cyber Showcase on ALL screen sizes */}
-          <div className="lg:col-span-5 xl:col-span-6 w-full h-[320px] sm:h-[380px] md:h-[440px] lg:h-[480px] xl:h-[540px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center my-2 lg:my-0 shadow-2xl shadow-emerald-500/5">
+          {/* Right Column: Interactive 3D Systems Command Center on ALL screen sizes */}
+          <div className="lg:col-span-5 xl:col-span-6 w-full h-[420px] sm:h-[450px] md:h-[470px] lg:h-[490px] xl:h-[510px] relative rounded-3xl overflow-hidden border border-emerald-500/30 bg-[#020617]/90 backdrop-blur-xl flex items-center justify-center my-1 lg:my-0 shadow-[0_0_50px_-12px_rgba(16,185,129,0.28)] ring-1 ring-white/[0.06]">
             <CanvasErrorBoundary>
               <React.Suspense fallback={
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-                  <div className="inline-block w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Initializing Universe...</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]">
+                  <div className="inline-block w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2.5" />
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">Booting 3D Systems Core...</p>
                 </div>
               }>
-                {render3D ? (
-                  <ThreeDHero techString={techString} />
-                ) : (
-                  <div className="relative w-full h-full flex flex-col items-center justify-center p-6 select-none overflow-hidden">
-                    {/* Background ambient glow */}
-                    <div className="absolute w-44 h-44 rounded-full bg-emerald-500/10 blur-2xl animate-pulse" />
-                    
-                    {/* Outer rotating orbit ring */}
-                    <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-emerald-500/20 flex items-center justify-center animate-[spin_20s_linear_infinite]">
-                      {/* Orbital node */}
-                      <div className="absolute -top-1.5 w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399]" />
-                      
-                      {/* Middle counter-rotating ring */}
-                      <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-dashed border-emerald-400/30 flex items-center justify-center animate-[spin_15s_linear_infinite_reverse]">
-                        {/* Inner core glowing planet */}
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-slate-950 via-emerald-950/80 to-emerald-500/20 border border-emerald-400/40 shadow-[0_0_30px_rgba(16,185,129,0.25)] flex items-center justify-center">
-                          <Sparkles className="w-8 h-8 text-emerald-400 animate-pulse" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Futuristic telemetry pill & Launch 3D Button */}
-                    <div className="mt-4 flex flex-col items-center gap-2.5 z-10">
-                      <div className="px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-950/40 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                        <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
-                          {techString || "JAVA • SPRING BOOT • REACT • MYSQL"}
-                        </span>
-                      </div>
-                      
-                      <button
-                        type="button"
-                        onClick={() => setRender3D(true)}
-                        className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 hover:border-emerald-400 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer group"
-                        title="Experience interactive 3D WebGL universe"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
-                        <span>Interactive 3D Mode</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <ThreeDHero techString={techString} />
               </React.Suspense>
             </CanvasErrorBoundary>
           </div>
 
-          {/* Hero Analytics Grid (Spanning full width of Hero section) */}
+        </div>
+
+        {/* Unified Hero Telemetry & Architecture Command Dock (Compact, Zero-Gap Layout) */}
+        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto mt-5 pt-4 border-t border-white/[0.07] relative z-10 space-y-3">
           {portfolioMetrics && portfolioMetrics.length > 0 && (
-            <div className="lg:col-span-12 w-full pt-6 sm:pt-10 border-t border-white/[0.06] mt-4 lg:mt-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 md:gap-4 w-full">
-                {portfolioMetrics.map((metric) => {
-                  const colorConfig = COLOR_ACCENTS[metric.color || 'emerald'] || COLOR_ACCENTS.emerald;
+            <div className="w-full">
+              {/* Telemetry Strip Header */}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-1">
+                <div className="inline-flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                  </span>
+                  <span className="text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-emerald-400">
+                    Live Systems Telemetry & Engineering Impact
+                  </span>
+                </div>
+                <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-slate-400 hidden sm:inline-flex items-center gap-1.5">
+                  <Activity className="w-3 h-3 text-cyan-400" />
+                  Click any metric node to inspect section
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3 w-full">
+                {portfolioMetrics.map((metric, idx) => {
+                  const titleLower = (metric.title || '').toLowerCase();
+                  const targetSection =
+                    titleLower.includes('project') ? 'projects' :
+                    titleLower.includes('leetcode') || titleLower.includes('github') || titleLower.includes('repo') || titleLower.includes('coding') ? 'coding-profiles' :
+                    titleLower.includes('cert') || titleLower.includes('award') || titleLower.includes('hackathon') ? 'credentials' :
+                    titleLower.includes('experience') || titleLower.includes('year') ? 'timeline' :
+                    titleLower.includes('skill') ? 'skills' :
+                    'about';
+
+                  const statusLabel =
+                    titleLower.includes('view') ? 'LIVE' :
+                    titleLower.includes('visitor') ? 'VERIFIED' :
+                    titleLower.includes('project') ? 'PRODUCTION' :
+                    titleLower.includes('leetcode') ? 'TOP 1%' :
+                    titleLower.includes('github') ? 'OPEN SOURCE' :
+                    titleLower.includes('cert') ? 'CREDENTIALED' :
+                    'ACTIVE';
+
+                  const accentThemes: Record<string, {
+                    topLine: string;
+                    iconVault: string;
+                    iconText: string;
+                    badge: string;
+                    dot: string;
+                    barFill: string;
+                    hoverBorder: string;
+                    cornerGlow: string;
+                  }> = {
+                    emerald: {
+                      topLine: 'from-transparent via-emerald-400 to-transparent',
+                      iconVault: 'bg-emerald-500/12 border-emerald-500/35 shadow-[0_0_16px_rgba(16,185,129,0.2)]',
+                      iconText: 'text-emerald-400',
+                      badge: 'bg-emerald-500/12 text-emerald-300 border-emerald-500/30',
+                      dot: 'bg-emerald-400',
+                      barFill: 'from-emerald-500 to-teal-400',
+                      hoverBorder: 'hover:border-emerald-500/45',
+                      cornerGlow: 'rgba(16, 185, 129, 0.14)',
+                    },
+                    blue: {
+                      topLine: 'from-transparent via-cyan-400 to-transparent',
+                      iconVault: 'bg-cyan-500/12 border-cyan-500/35 shadow-[0_0_16px_rgba(6,182,212,0.2)]',
+                      iconText: 'text-cyan-400',
+                      badge: 'bg-cyan-500/12 text-cyan-300 border-cyan-500/30',
+                      dot: 'bg-cyan-400',
+                      barFill: 'from-cyan-500 to-sky-400',
+                      hoverBorder: 'hover:border-cyan-500/45',
+                      cornerGlow: 'rgba(6, 182, 212, 0.14)',
+                    },
+                    purple: {
+                      topLine: 'from-transparent via-teal-400 to-transparent',
+                      iconVault: 'bg-teal-500/12 border-teal-500/35 shadow-[0_0_16px_rgba(20,184,166,0.2)]',
+                      iconText: 'text-teal-300',
+                      badge: 'bg-teal-500/12 text-teal-300 border-teal-500/30',
+                      dot: 'bg-teal-400',
+                      barFill: 'from-teal-500 to-emerald-400',
+                      hoverBorder: 'hover:border-teal-500/45',
+                      cornerGlow: 'rgba(20, 184, 166, 0.14)',
+                    },
+                    amber: {
+                      topLine: 'from-transparent via-amber-400 to-transparent',
+                      iconVault: 'bg-amber-500/12 border-amber-500/35 shadow-[0_0_16px_rgba(245,158,11,0.2)]',
+                      iconText: 'text-amber-400',
+                      badge: 'bg-amber-500/12 text-amber-300 border-amber-500/30',
+                      dot: 'bg-amber-400',
+                      barFill: 'from-amber-500 to-emerald-400',
+                      hoverBorder: 'hover:border-amber-500/45',
+                      cornerGlow: 'rgba(245, 158, 11, 0.13)',
+                    },
+                    cyan: {
+                      topLine: 'from-transparent via-sky-400 to-transparent',
+                      iconVault: 'bg-sky-500/12 border-sky-500/35 shadow-[0_0_16px_rgba(56,189,248,0.2)]',
+                      iconText: 'text-sky-400',
+                      badge: 'bg-sky-500/12 text-sky-300 border-sky-500/30',
+                      dot: 'bg-sky-400',
+                      barFill: 'from-sky-500 to-cyan-400',
+                      hoverBorder: 'hover:border-sky-500/45',
+                      cornerGlow: 'rgba(56, 189, 248, 0.14)',
+                    },
+                    indigo: {
+                      topLine: 'from-transparent via-emerald-400 to-transparent',
+                      iconVault: 'bg-emerald-500/12 border-emerald-500/35 shadow-[0_0_16px_rgba(16,185,129,0.2)]',
+                      iconText: 'text-emerald-300',
+                      badge: 'bg-emerald-500/12 text-emerald-300 border-emerald-500/30',
+                      dot: 'bg-emerald-400',
+                      barFill: 'from-emerald-500 to-cyan-400',
+                      hoverBorder: 'hover:border-emerald-500/45',
+                      cornerGlow: 'rgba(16, 185, 129, 0.14)',
+                    },
+                  };
+
+                  const themeStyle = accentThemes[metric.color || 'emerald'] || accentThemes.emerald;
+                  const fillPercents = [94, 88, 92, 96, 89, 95];
+                  const barWidth = fillPercents[idx % fillPercents.length];
+
+                  const displayValue =
+                    titleLower === 'projects delivered' && metric.value === '15+' && projects.length > 15
+                      ? `${projects.length}+`
+                      : titleLower === 'certifications' && metric.value === '12+' && (certificates.length + achievements.length) > 12
+                      ? `${certificates.length + achievements.length}+`
+                      : metric.value;
+
                   return (
-                    <motion.div 
+                    <motion.div
                       key={metric.id}
-                      initial={metric.animationEnabled ? { opacity: 0, y: 10 } : false}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`w-full h-full min-h-[68px] sm:min-h-[76px] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border ${colorConfig.border} ${colorConfig.bg} backdrop-blur-md flex items-center gap-2.5 sm:gap-3 shadow-md group hover:scale-[1.02] transition-all duration-200`}
-                      title={metric.tooltip || undefined}
+                      initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                      viewport={{ once: false, amount: 0.15, margin: '-20px' }}
+                      transition={{ duration: 0.32, delay: idx * 0.03, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={(e) => scrollToSection(targetSection, e)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          scrollToSection(targetSection, e);
+                        }
+                      }}
+                      className={`relative overflow-hidden w-full h-full min-h-[96px] sm:min-h-[104px] p-3 sm:p-3.5 rounded-2xl border border-white/[0.08] ${themeStyle.hoverBorder} bg-gradient-to-br from-[#070f20]/95 via-[#050b18]/95 to-[#030712]/98 backdrop-blur-md flex flex-col justify-between gap-2 shadow-[0_12px_28px_-10px_rgba(0,0,0,0.85),inset_0_1px_0_0_rgba(255,255,255,0.12)] group hover:-translate-y-0.5 transition-all duration-300 cursor-pointer select-none`}
+                      title={metric.tooltip || `Click to explore ${metric.title}`}
                     >
-                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${colorConfig.bg} ${colorConfig.border} border flex items-center justify-center ${colorConfig.text} shrink-0 group-hover:rotate-6 transition-transform`}>
-                        <MetricIconRenderer metric={metric} className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm sm:text-base lg:text-lg font-bold font-mono text-white tracking-tight leading-none truncate">
-                            {metric.value}
-                          </span>
-                          {metric.color === 'emerald' && (
-                            <span className="relative flex h-1.5 w-1.5 shrink-0">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                            </span>
-                          )}
+                      {/* Top Laser Accent Highlight */}
+                      <div className={`absolute top-0 left-4 right-4 h-[2px] bg-gradient-to-r ${themeStyle.topLine} opacity-80 group-hover:opacity-100 transition-opacity`} />
+
+                      {/* Subtle Corner Radial Aura */}
+                      <div
+                        className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none transition-transform duration-300 group-hover:scale-125"
+                        style={{
+                          background: `radial-gradient(circle, ${themeStyle.cornerGlow} 0%, transparent 70%)`,
+                        }}
+                      />
+
+                      {/* Top Row: 3D Icon Vault + Telemetry Status Badge */}
+                      <div className="flex items-center justify-between gap-2 relative z-10">
+                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border ${themeStyle.iconVault} flex items-center justify-center ${themeStyle.iconText} shrink-0 group-hover:scale-105 transition-transform duration-300`}>
+                          <MetricIconRenderer metric={metric} className="w-4 h-4" />
                         </div>
-                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-200 block truncate mt-0.5">
+
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase tracking-wider border ${themeStyle.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${themeStyle.dot} animate-pulse`} />
+                          {statusLabel}
+                        </span>
+                      </div>
+
+                      {/* Middle Row: Monumental Value + Metric Label */}
+                      <div className="min-w-0 relative z-10">
+                        <div className="flex items-baseline justify-between gap-1">
+                          <span className="text-base sm:text-lg lg:text-xl font-black font-mono bg-gradient-to-r from-white via-slate-100 to-emerald-200 bg-clip-text text-transparent tracking-tight leading-none truncate">
+                            {displayValue}
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-100 group-hover:text-emerald-300 transition-colors block truncate mt-0.5">
                           {metric.title}
                         </span>
                         {metric.subtitle && (
-                          <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 block truncate mt-0.5">
+                          <span className="text-[9px] font-mono text-slate-400 block truncate">
                             {metric.subtitle}
                           </span>
                         )}
+                      </div>
+
+                      {/* Bottom Row: Micro Telemetry Capacity Bar */}
+                      <div className="w-full h-1 rounded-full bg-slate-900/90 border border-white/[0.04] overflow-hidden relative z-10">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${themeStyle.barFill}`}
+                          style={{ width: `${barWidth}%` }}
+                        />
                       </div>
                     </motion.div>
                   );
@@ -2701,97 +4083,201 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             </div>
           )}
 
-        </div>
+          {/* Seamless Infinite Enterprise Architecture & Tech Stack Marquee Bar */}
+          <div className="relative w-full py-2 sm:py-2.5 px-3 sm:px-3.5 overflow-hidden select-none rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-[#061121]/95 via-[#040a15]/95 to-[#061121]/95 shadow-[0_12px_28px_-10px_rgba(0,0,0,0.85),inset_0_1px_0_0_rgba(255,255,255,0.1)] flex items-center gap-3">
+            {/* Top Laser Edge */}
+            <div className="absolute top-0 left-12 right-12 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent pointer-events-none" />
 
-        {/* Technology marquee/ticker for All Viewports */}
-        <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto py-2.5 sm:py-3 overflow-hidden select-none bg-emerald-500/5 border-y border-emerald-500/10 mt-8 mb-2 rounded-2xl relative z-10">
-          <div className="flex w-max animate-marquee gap-8">
-            <div className="flex shrink-0 items-center gap-8 text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase">
-              <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS • KUBERNETES • REDIS • POSTGRESQL • GRAPHQL • NEXT.JS • TAILWIND"}</span>
-              <span className="text-slate-600">•</span>
+            {/* Left Pinned HUD Badge */}
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-500/12 border border-emerald-500/35 text-[10px] font-mono font-extrabold uppercase tracking-[0.15em] text-emerald-300 shrink-0 z-20 shadow-[0_0_14px_rgba(16,185,129,0.15)]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+              </span>
+              <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Architecture Stack</span>
             </div>
-            <div className="flex shrink-0 items-center gap-8 text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-emerald-400 uppercase" aria-hidden="true">
-              <span>{techString || "JAVA • SPRING BOOT • REACT • MYSQL • DOCKER • AWS • KUBERNETES • REDIS • POSTGRESQL • GRAPHQL • NEXT.JS • TAILWIND"}</span>
-              <span className="text-slate-600">•</span>
+
+            {/* Center Seamless Dual-Half Marquee Track (36 Pills per Half = Zero Gaps on Any Screen) */}
+            <div
+              className="flex-1 overflow-hidden relative"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%)',
+              }}
+            >
+              <div className="animate-marquee flex items-center">
+                {[0, 1].map((halfIndex) => (
+                  <div
+                    key={halfIndex}
+                    className="flex shrink-0 items-center gap-2 sm:gap-2.5 pr-2 sm:pr-2.5"
+                    aria-hidden={halfIndex === 1 ? 'true' : undefined}
+                  >
+                    {[...marqueeTechItems, ...marqueeTechItems].map((techName, idx) => (
+                      <button
+                        key={`${halfIndex}-${idx}-${techName}`}
+                        type="button"
+                        onClick={(e) => scrollToSection('skills', e)}
+                        className="group/pill inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-400/50 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider text-slate-200 hover:text-emerald-300 uppercase transition-all duration-200 cursor-pointer shrink-0"
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            idx % 3 === 0
+                              ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]'
+                              : idx % 3 === 1
+                              ? 'bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.9)]'
+                              : 'bg-teal-400 shadow-[0_0_6px_rgba(45,212,191,0.9)]'
+                          }`}
+                        />
+                        <span>{techName}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* Right Pinned Status Pill */}
+            <button
+              type="button"
+              onClick={(e) => scrollToSection('skills', e)}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 shrink-0 z-20 transition-colors cursor-pointer"
+            >
+              <Zap className="w-3 h-3 text-cyan-400" />
+              <span>{marqueeTechItems.length} Core Nodes</span>
+            </button>
           </div>
-        </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-50 z-10 pointer-events-none hidden sm:flex">
-          <span className="text-[9px] font-mono uppercase tracking-widest text-slate-500">Scroll Down</span>
-          <ArrowDown className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+          {/* Compact Interactive Scroll Down Indicator */}
+          <div className="pt-1 flex justify-center">
+            <button
+              type="button"
+              onClick={(e) => scrollToSection('about', e)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/60 border border-white/[0.06] hover:border-emerald-500/30 opacity-80 hover:opacity-100 transition-all cursor-pointer group"
+              aria-label="Scroll down to About section"
+            >
+              <span className="text-[9px] font-mono uppercase tracking-[0.22em] text-slate-400 group-hover:text-emerald-300 transition-colors">
+                Scroll Down
+              </span>
+              <ArrowDown className="w-3 h-3 text-emerald-400 animate-bounce" />
+            </button>
+          </div>
         </div>
       </section>
       )}
 
-      <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-16 pb-10 space-y-20 lg:space-y-24">
+      <div className="w-full max-w-[1536px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-8 sm:pt-10 pb-10 space-y-12 sm:space-y-14 lg:space-y-16">
 
-          {/* About Section */}
+          {/* About Section — 100% Admin-Controlled Premium Developer Portfolio Layout */}
           <motion.section 
             id="about" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-10 sm:space-y-12 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={sectionVariants}
           >
-            <div className="space-y-2.5">
-              <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">ABOUT ME</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">
-                {profile?.aboutHeading || "Who I Am"}
-              </h2>
-              <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
+            {/* Ambient radial glow backdrops */}
+            <div className="absolute -top-16 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
+
+            {/* Section Header (Controlled via Admin -> Biography & Taglines) */}
+            <div className="space-y-3 border-b border-white/[0.06] pb-6 relative z-10">
+              {(profile?.aboutBadge ?? "ABOUT ME") !== "" && (
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-[10px] sm:text-[11px] font-mono text-emerald-300 uppercase tracking-[0.2em] font-extrabold">
+                    {profile?.aboutBadge || "ABOUT ME"}
+                  </span>
+                </div>
+              )}
+
+              {profile?.aboutHeading && (
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury bg-gradient-to-r from-white via-slate-100 to-emerald-300 bg-clip-text text-transparent tracking-tight leading-tight">
+                  {profile.aboutHeading}
+                </h2>
+              )}
+              <div className="h-1 w-16 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-              {/* Image & Stats side */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className="flex items-center justify-center w-full">
-                  <AnimatedProfileAvatar
-                    src={profile?.aboutImage || profile?.profileImage}
-                    alt={profile?.fullName || "Founder"}
-                    size="about"
-                    shape="squircle"
-                    glowIntensity="vibrant"
-                    showStatus={false}
-                    showBadge={false}
-                    enableTilt={true}
-                  />
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start relative z-10">
+              {/* LEFT COLUMN: 3D Interactive Portrait, Short Bio & Profile Channels */}
+              <div className="lg:col-span-5 flex flex-col gap-6">
+                {/* 3D Glassmorphic Portrait Card */}
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 22 }}
+                  className="glass-card glass-card-hover rounded-3xl p-5 sm:p-6 border border-emerald-500/25 relative overflow-hidden flex flex-col items-center"
+                >
+                  <div className="relative w-full flex items-center justify-center py-2">
+                    <AnimatedProfileAvatar
+                      src={profile?.aboutImage || ""}
+                      alt={profile?.fullName || "Chandru Mohan"}
+                      size="about"
+                      shape="squircle"
+                      glowIntensity="vibrant"
+                      showStatus={false}
+                      showBadge={false}
+                      enableTilt={true}
+                    />
+                  </div>
 
-                {/* Quick Statistics block */}
-                {profile?.quickStats && (
-                  <div className="glass-card p-5 rounded-2xl border border-white/[0.05] bg-slate-950/40 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold mb-3">Operational Metrics</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {profile.quickStats.split('|').map((stat, idx) => {
-                        const parts = stat.split(' ');
-                        const value = parts[0] || '';
-                        const label = parts.slice(1).join(' ') || 'Metric';
-                        return (
-                          <div key={idx} className="space-y-0.5">
-                            <span className="text-lg font-bold font-mono text-white block">{value}</span>
-                            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">{label}</span>
-                          </div>
-                        );
-                      })}
+                  {/* Dynamic Portrait Footer (100% bound to Admin Profile fields) */}
+                  {(profile?.fullName || profile?.title || profile?.availability) && (
+                    <div className="w-full mt-5 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                      <div>
+                        {profile?.fullName && (
+                          <p className="text-white font-extrabold text-sm tracking-tight">
+                            {profile.fullName}
+                          </p>
+                        )}
+                        {profile?.title && (
+                          <p className="text-[11px] text-emerald-400 font-semibold">
+                            {profile.title}
+                          </p>
+                        )}
+                      </div>
+                      {profile?.availability && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>{profile.availability}</span>
+                        </div>
+                      )}
                     </div>
+                  )}
+                </motion.div>
+
+                {/* Optional Short Bio Card (Controlled via Admin -> Short Bio) */}
+                {profile?.shortBio && profile.shortBio.trim() !== "" && (
+                  <div className="glass-card rounded-3xl p-5 border border-white/[0.08] relative overflow-hidden">
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+                      {profile.shortBio}
+                    </p>
                   </div>
                 )}
 
-                {/* Dynamic Profile Social Links */}
+                {/* Dynamic Profile Social Channels (Controlled via Admin -> Social Links) */}
                 {socialLinks.filter(l => l.showInDynamicProfile !== false).length > 0 && (
-                  <div className="glass-card p-4 rounded-2xl border border-white/[0.05] bg-slate-950/40 relative space-y-2">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Profile Channels</span>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="glass-card p-5 rounded-3xl border border-white/[0.08] relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-[0.18em] block font-extrabold">
+                        Profile Channels
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        Direct coordinates &amp; social networks
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
                       {socialLinks.filter(l => l.showInDynamicProfile !== false).map((link) => (
                         <SocialLinkAnchor
                           key={link.id}
                           link={link}
                           onClick={() => trackClick('social_profile_' + link.platform.toLowerCase(), link.platform)}
-                          className="w-8.5 h-8.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/60 bg-slate-900/90 hover:bg-slate-950/95 text-slate-200 hover:text-emerald-400 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer group relative shadow-md"
+                          className="w-10 h-10 rounded-xl border border-slate-700/70 hover:border-emerald-400/70 bg-slate-900/90 hover:bg-emerald-500/15 text-slate-200 hover:text-emerald-300 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 cursor-pointer group relative shadow-lg"
                           childrenClassName="w-4.5 h-4.5 object-contain"
                         />
                       ))}
@@ -2800,143 +4286,274 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 )}
               </div>
 
-              {/* Text description & detailed data side */}
-              <div className="lg:col-span-7 space-y-6">
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold font-display text-white">
-                    {profile?.fullName || "Chandru Mohan"}
-                  </h3>
-                  <p className="text-xs font-mono text-emerald-400">
-                    {profile?.title || "Principal Architect"} {profile?.currentCompany ? `@ ${profile.currentCompany}` : ""}
-                  </p>
-                </div>
+              {/* RIGHT COLUMN: 100% Admin-Driven Biography, Custom Highlights, Objective & Metadata */}
+              <div className="lg:col-span-7 flex flex-col gap-6">
+                {/* Main Biography & Identity Card */}
+                <div className="glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.08] relative overflow-hidden space-y-6">
+                  {/* Identity Header */}
+                  {(profile?.fullName || profile?.title || profile?.currentCompany || profile?.professionalLabel) && (
+                    <div className="space-y-2 border-b border-white/[0.06] pb-5">
+                      {(profile?.professionalLabel || profile?.title) && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-wider">
+                            {profile?.professionalLabel || profile?.title}
+                          </span>
+                          {profile?.currentCompany && (
+                            <span className="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-mono font-bold text-cyan-300 uppercase tracking-wider">
+                              @ {profile.currentCompany}
+                            </span>
+                          )}
+                        </div>
+                      )}
 
-                {/* Professional Biography */}
-                <div className="space-y-3">
-                  <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Professional Biography</h4>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line">
-                    {profile?.biography || profile?.aboutDescription || "Designing clean-coded enterprise ecosystems and highly responsive visualizers. A bespoke, fully decentralized engineering environment connected directly to real-time micro-databases."}
-                  </p>
-                </div>
+                      {profile?.fullName && (
+                        <h3 className="text-2xl sm:text-3xl font-extrabold font-display text-white tracking-tight">
+                          {profile.fullName}
+                        </h3>
+                      )}
 
-                {/* Career Objective */}
-                {profile?.careerObjective && (
-                  <div className="glass-card p-4 rounded-xl border border-white/[0.03] bg-emerald-500/[0.01] relative">
-                    <span className="text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest block mb-1.5 font-bold">Career Mission Statement</span>
-                    <p className="text-xs text-slate-400 leading-relaxed italic">
-                      "{profile.careerObjective}"
-                    </p>
-                  </div>
-                )}
-
-                {/* Skills Summary */}
-                {profile?.skillsSummary && (
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Core Competency Architecture</h4>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {profile.skillsSummary}
-                    </p>
-                  </div>
-                )}
-
-                {/* Grid of Key Metadata */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/[0.04] text-xs font-mono">
-                  {profile?.experienceSummary ? (
-                    <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold tracking-wider">Experience Summary</span>
-                      <span className="text-white font-medium">{profile.experienceSummary}</span>
-                    </div>
-                  ) : profile?.yearsExperience !== undefined ? (
-                    <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold tracking-wider">Professional Track</span>
-                      <span className="text-white font-medium">{profile.yearsExperience}+ Years Systems Experience</span>
-                    </div>
-                  ) : null}
-
-                  {profile?.currentPosition && (
-                    <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold tracking-wider">Current Post</span>
-                      <span className="text-white font-medium">{profile.currentPosition} {profile.currentCompany ? `@ ${profile.currentCompany}` : ""}</span>
+                      {profile?.title && (
+                        <p className="text-xs sm:text-sm font-mono text-emerald-400 font-semibold">
+                          {profile.title} {profile?.currentCompany ? `@ ${profile.currentCompany}` : ""}
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {profile?.location && (
-                    <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold tracking-wider">Base Operations</span>
-                      <span className="text-white font-medium">{profile.location}, {profile.country || "US"}</span>
+                  {/* Full Biography & Secondary About Description */}
+                  {(profile?.biography || profile?.aboutDescription) && (
+                    <div className="space-y-3.5">
+                      {profile?.biography && (
+                        <p className="text-sm sm:text-[15px] text-slate-200 leading-relaxed font-sans whitespace-pre-line">
+                          {profile.biography}
+                        </p>
+                      )}
+                      {profile?.aboutDescription && profile.aboutDescription !== profile?.biography && (
+                        <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-sans whitespace-pre-line">
+                          {profile.aboutDescription}
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {profile?.availability && (
-                    <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold tracking-wider">Availability Status</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          profile.availability === 'Open to Work' || profile.availability === 'Available' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                        }`} />
-                        <span className="text-white font-medium">{profile.availability}</span>
+                  {/* Career Objective Callout (Controlled via Admin -> Career Objective) */}
+                  {profile?.careerObjective && profile.careerObjective.trim() !== "" && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-slate-900/85 to-cyan-500/10 border border-emerald-500/30 relative">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Quote className="w-4 h-4 text-emerald-400" />
+                        <span className="text-[10px] font-mono text-emerald-300 uppercase tracking-[0.2em] font-extrabold">
+                          Career Mission Statement
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed italic font-medium">
+                        &ldquo;{profile.careerObjective}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Core Competency Architecture Tags (Controlled via Admin -> Skills & Competency Summary) */}
+                  {profile?.skillsSummary && profile.skillsSummary.trim() !== "" && (
+                    <div className="space-y-2.5 pt-1">
+                      <h4 className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-400 font-bold">
+                        Core Competency Architecture
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.skillsSummary.split(',').filter((s: string) => s.trim() !== '').map((item: string, i: number) => (
+                          <motion.span
+                            key={i}
+                            whileHover={{ scale: 1.04, y: -1 }}
+                            className="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/25 hover:border-emerald-400/60 text-xs font-mono text-emerald-300 font-medium inline-flex items-center gap-1.5 transition-colors shadow-sm"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>{item.trim()}</span>
+                          </motion.span>
+                        ))}
                       </div>
                     </div>
                   )}
+
+                  {/* Custom Admin-Created About Highlight Cards (Only shown if created in Admin Panel) */}
+                  {Array.isArray(profile?.aboutHighlights) && profile.aboutHighlights.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      {profile.aboutHighlights.map((hl: any, idx: number) => (
+                        <motion.div
+                          key={hl.id || idx}
+                          whileHover={{ y: -3, scale: 1.01 }}
+                          className="p-4 rounded-2xl bg-slate-950/80 border border-emerald-500/25 hover:border-emerald-400/50 transition-all space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-bold text-white">{hl.title}</span>
+                            {hl.badge && (
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-300">
+                                {hl.badge}
+                              </span>
+                            )}
+                          </div>
+                          {hl.description && (
+                            <p className="text-xs text-slate-300 leading-relaxed">{hl.description}</p>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Dynamic Metadata Grid (Only renders fields configured in Admin Panel) */}
+                  {(profile?.experienceSummary || profile?.yearsExperience || profile?.currentPosition || profile?.location || profile?.availability) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/[0.06] text-xs font-mono">
+                      {(profile?.experienceSummary || profile?.yearsExperience !== undefined) && (
+                        <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/[0.06] flex items-start gap-3">
+                          <Briefcase className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-slate-400 text-[10px] block uppercase font-bold tracking-wider">
+                              {profile?.experienceSummary ? "Experience Summary" : "Professional Track"}
+                            </span>
+                            <span className="text-white font-bold mt-0.5 block">
+                              {profile?.experienceSummary || `${profile?.yearsExperience}+ Years Systems Experience`}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {profile?.currentPosition && (
+                        <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/[0.06] flex items-start gap-3">
+                          <Cpu className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-slate-400 text-[10px] block uppercase font-bold tracking-wider">Current Post</span>
+                            <span className="text-white font-bold mt-0.5 block">
+                              {profile.currentPosition} {profile.currentCompany ? `@ ${profile.currentCompany}` : ""}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {profile?.location && (
+                        <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/[0.06] flex items-start gap-3">
+                          <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-slate-400 text-[10px] block uppercase font-bold tracking-wider">Base Operations</span>
+                            <span className="text-white font-bold mt-0.5 block">
+                              {profile.location}{profile.country ? `, ${profile.country}` : ""}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {profile?.availability && (
+                        <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/[0.06] flex items-start gap-3">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-slate-400 text-[10px] block uppercase font-bold tracking-wider">Availability Status</span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`w-2 h-2 rounded-full ${
+                                profile.availability === 'Open to Work' || profile.availability === 'Available'
+                                  ? 'bg-emerald-400 animate-pulse'
+                                  : 'bg-amber-400'
+                              }`} />
+                              <span className="text-emerald-300 font-bold">{profile.availability}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Resume / CV Actions (Controlled via Admin -> Buttons & CTA) */}
+                  {isValidResumeUrl(profile?.resumeUrl) && (
+                    <div className="pt-4 border-t border-white/[0.06] flex flex-wrap items-center gap-3">
+                      <a
+                        href={profile?.resumeUrl || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => handleViewResume(e, 'about_view_resume_btn', 'View Resume from About')}
+                        className="px-4 py-2.5 rounded-xl bg-slate-900/90 hover:bg-emerald-500/15 border border-white/[0.12] hover:border-emerald-400/50 text-slate-100 hover:text-emerald-300 font-bold text-xs inline-flex items-center gap-2 transition-all cursor-pointer shadow-md"
+                      >
+                        <Eye className="w-4 h-4 text-emerald-400" />
+                        <span>{profile?.resumeCtaText || "View Resume"}</span>
+                      </a>
+
+                      <a 
+                        href={profile?.resumeUrl || '#'}
+                        download={activeResume?.fileName || 'Chandru_Mohan_Resume.pdf'}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition-all inline-flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.28)]"
+                        onClick={(e) => handleDownloadResume(e, 'about_resume_btn', 'Download Resume from About')}
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>{profile?.resumeDownloadText || profile?.downloadCtaText || "Download Resume / Curriculum Vitae"}</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
 
-                {/* Optional Resume Button in About section */}
-                {!isValidResumeUrl(profile?.resumeUrl) ? (
-                  <div className="pt-4 flex flex-wrap gap-3">
-                    <button 
-                      disabled
-                      className="px-5 py-2.5 border border-white/[0.04] bg-white/[0.01] text-slate-500 font-bold text-xs rounded-lg flex items-center gap-2 cursor-not-allowed opacity-50"
-                    >
-                      <XCircle className="w-4 h-4 text-slate-500" />
-                      <span>Resume not available</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="pt-4 flex flex-wrap gap-3">
-                    <a 
-                      href={profile?.resumeUrl || '#'}
-                      download={activeResume?.fileName || 'Chandru_Mohan_Resume.pdf'}
-                      className="px-5 py-2.5 border border-emerald-500/20 hover:border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/5 hover:shadow-emerald-500/15"
-                      onClick={(e) => handleDownloadResume(e, 'about_resume_btn', 'Download Resume from About')}
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>{profile?.resumeDownloadText || profile?.downloadCtaText || "Download Resume / Curriculum Vitae"}</span>
-                    </a>
-                  </div>
-                )}
+                {/* Interactive Scroll-Triggered Biography Timeline with Glass-Morphism Career Phases */}
+                <div className="glass-card rounded-3xl p-6 sm:p-8 border border-emerald-500/25 relative overflow-hidden">
+                  <AboutBiographyTimeline
+                    profile={profile}
+                    experiences={experiences}
+                    education={education}
+                    prefersReduced={prefersReduced}
+                    onSoundClick={(freq) => soundFx.playClick(freq)}
+                  />
+                </div>
               </div>
             </div>
           </motion.section>
 
-          {/* Featured Projects Section with Autoplay Showcase & Grid Mode */}
-          <motion.section 
-            id="projects" 
+          {/* Selected Engineering Case Studies & Developer Portfolio Projects Section */}
+          <motion.section
+            id="projects"
             className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={projectsSectionVariants}
           >
-            {/* Header, Search & Mode Toggle */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Featured Subsystems & Case Studies</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Committed Projects</h2>
-                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                  High-throughput distributed systems, production architectures, and full-stack solutions. Explore via interactive autoplay or browse the full database.
-                </p>
+            {/* Ambient Radial Emerald/Cyan Aurora Glow */}
+            <div className="pointer-events-none absolute -top-24 left-1/4 w-96 h-96 bg-emerald-500/[0.07] rounded-full blur-[130px] -z-10" />
+            <div className="pointer-events-none absolute top-1/3 right-10 w-80 h-80 bg-cyan-500/[0.06] rounded-full blur-[120px] -z-10" />
+
+            {/* Section Header, Interactive Filters & View Switcher */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-white/[0.06] pb-6">
+              <div className="space-y-3 max-w-2xl">
+                {(profile.projectsBadge ?? "Featured Engineering Work") && (
+                  <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="font-bold tracking-wider uppercase">
+                      {profile.projectsBadge ?? "Featured Engineering Work"}
+                    </span>
+                    <span className="text-slate-600" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="text-cyan-300 font-semibold tabular-nums">
+                      {filteredProjects.length}{" "}
+                      {filteredProjects.length === 1 ? "Case Study" : "Case Studies"}
+                    </span>
+                  </div>
+                )}
+
+                {(profile.projectsHeading ??
+                  "Selected Case Studies & Production Systems") && (
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury bg-gradient-to-r from-white via-slate-100 to-emerald-300 bg-clip-text text-transparent tracking-tight text-balance">
+                    {profile.projectsHeading ??
+                      "Selected Case Studies & Production Systems"}
+                  </h2>
+                )}
+
+                {(profile.projectsSubtitle ??
+                  "End-to-end cloud architectures, distributed microservices, and interactive full-stack applications.") && (
+                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                    {profile.projectsSubtitle ??
+                      "End-to-end cloud architectures, distributed microservices, and interactive full-stack applications."}
+                  </p>
+                )}
+
+                <div className="h-1 w-20 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 rounded-full shadow-[0_0_14px_rgba(16,185,129,0.65)]" />
               </div>
 
-              {/* View Switcher & Search */}
+              {/* Search, Featured Filter & Layout Mode Switcher */}
               <div className="flex flex-wrap items-center gap-3">
-                {/* Search Box */}
-                <div className="relative w-full sm:w-60 shrink-0">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                {/* Search Input */}
+                <div className="relative w-full sm:w-64 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={projectSearchQuery}
@@ -2944,547 +4561,812 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       setProjectSearchQuery(e.target.value);
                       setActiveProjectIndex(0);
                     }}
-                    placeholder="Search projects, stack..."
-                    className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                    placeholder="Filter by title, stack, role..."
+                    className="w-full bg-slate-900/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500"
                   />
                   {projectSearchQuery && (
                     <button
+                      type="button"
                       onClick={() => {
-                        setProjectSearchQuery('');
+                        setProjectSearchQuery("");
                         setActiveProjectIndex(0);
                       }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                      title="Clear search"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-                {/* Display Mode Toggle */}
-                <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-white/[0.08] shadow-inner">
+                {/* Featured Only Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playToggle(!showFeaturedProjectsOnly);
+                    setShowFeaturedProjectsOnly((prev) => !prev);
+                    setActiveProjectIndex(0);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                    showFeaturedProjectsOnly
+                      ? "bg-amber-500/15 border-amber-400/50 text-amber-300 shadow-lg shadow-amber-500/10"
+                      : "bg-slate-900/90 border-white/[0.08] text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Featured Only</span>
+                </button>
+
+                {/* View Mode Segmented Switcher (Grid vs Interactive Split Explorer) */}
+                <div className="grid grid-cols-2 sm:flex items-center p-1 rounded-xl bg-slate-900/95 border border-white/[0.08] w-full sm:w-auto">
                   <button
-                    onClick={() => {
-                      soundFx.playToggle(true);
-                      setProjectDisplayMode('showcase');
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      projectDisplayMode === 'showcase'
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="Autoplay Showcase Carousel"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Showcase</span>
-                  </button>
-                  <button
+                    type="button"
                     onClick={() => {
                       soundFx.playToggle(false);
-                      setProjectDisplayMode('grid');
+                      setProjectDisplayMode("grid");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      projectDisplayMode === 'grid'
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                        : 'text-slate-400 hover:text-white'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                      projectDisplayMode === "grid"
+                        ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
+                        : "text-slate-400 hover:text-white"
                     }`}
-                    title="All Projects Grid View"
                   >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Grid</span>
+                    <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                    <span>3D Spotlight Gallery</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playToggle(true);
+                      setProjectDisplayMode("showcase");
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                      projectDisplayMode === "showcase"
+                        ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5 shrink-0" />
+                    <span>Split Explorer</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Category Filter Pills */}
+            {/* Verified Operational Telemetry Banner for Projects */}
+            <div className="rounded-3xl bg-gradient-to-b from-[#04111d]/95 via-[#030816]/95 to-[#020617]/95 border border-emerald-500/25 p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(52,211,153,0.22)] relative overflow-hidden">
+              <div className="pointer-events-none absolute -top-16 left-1/3 w-72 h-28 bg-emerald-500/15 rounded-full blur-3xl" />
+
+              <div className="flex items-center justify-between gap-3 mb-4 relative z-10">
+                <div className="flex items-center gap-2 text-xs font-mono font-extrabold uppercase tracking-[0.16em] text-emerald-400">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <span>Verified Operational Telemetry</span>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-950/90 border border-white/[0.1] text-[10px] font-mono text-slate-300 tracking-wider uppercase">
+                  LIVE BENCHMARK
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  className="p-4 rounded-2xl bg-[#030712]/95 border border-emerald-500/20 hover:border-emerald-400/50 transition-all space-y-2"
+                >
+                  <div className="text-2xl sm:text-3xl font-mono font-extrabold text-emerald-400 tabular-nums">
+                    {displayProjects.length}+
+                  </div>
+                  <div className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-200">
+                    PRODUCTION SYSTEMS MAPPED
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-900 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "92%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.6)]"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  className="p-4 rounded-2xl bg-[#030712]/95 border border-cyan-500/20 hover:border-cyan-400/50 transition-all space-y-2"
+                >
+                  <div className="text-2xl sm:text-3xl font-mono font-extrabold text-cyan-400 tabular-nums">
+                    {displayProjects.filter((p) => p.isFeatured).length || displayProjects.length}
+                  </div>
+                  <div className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-200">
+                    FEATURED ARCHITECTURES
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-900 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "88%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 shadow-[0_0_10px_rgba(6,182,212,0.6)]"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  className="p-4 rounded-2xl bg-[#030712]/95 border border-emerald-500/20 hover:border-emerald-400/50 transition-all space-y-2"
+                >
+                  <div className="text-2xl sm:text-3xl font-mono font-extrabold text-emerald-400 tabular-nums">
+                    99.96%
+                  </div>
+                  <div className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-200">
+                    CORE SLA UPTIME TARGET
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-900 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "99%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.6)]"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  className="p-4 rounded-2xl bg-[#030712]/95 border border-cyan-500/20 hover:border-cyan-400/50 transition-all space-y-2"
+                >
+                  <div className="text-2xl sm:text-3xl font-mono font-extrabold text-emerald-400 tabular-nums">
+                    {Array.from(
+                      new Set(
+                        displayProjects.flatMap(
+                          (p) => p.skills || (p as any).tags || []
+                        )
+                      )
+                    ).length || 24}
+                    +
+                  </div>
+                  <div className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-200">
+                    VERIFIED STACK TECHNOLOGIES
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-900 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: "94%" }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.05, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.6)]"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Interactive Category Filter Bar */}
             {projectCategories.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {projectCategories.map((cat) => {
-                  const isActive = selectedProjectCategory === cat;
-                  return (
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {projectCategories.map((cat) => {
+                    const isActive = selectedProjectCategory === cat;
+                    const count =
+                      cat === "All"
+                        ? displayProjects.length
+                        : displayProjects.filter((p) => p.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          soundFx.playTab(780);
+                          setSelectedProjectCategory(cat);
+                          setActiveProjectIndex(0);
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                          isActive
+                            ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20"
+                            : "bg-slate-900/70 text-slate-300 hover:bg-slate-800/90 hover:text-white border border-white/[0.06]"
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        <span
+                          className={`text-[10px] tabular-nums ${
+                            isActive ? "text-slate-950/80" : "text-slate-500"
+                          }`}
+                        >
+                          ({count})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {expandedSpotlightProjectId !== null &&
+                    projectDisplayMode === "grid" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFx.playClick(760);
+                          setExpandedSpotlightProjectId(null);
+                        }}
+                        className="text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Collapse Spotlight</span>
+                      </button>
+                    )}
+
+                  {(selectedProjectCategory !== "All" ||
+                    showFeaturedProjectsOnly ||
+                    projectSearchQuery.trim() !== "") && (
                     <button
-                      key={cat}
+                      type="button"
                       onClick={() => {
-                        soundFx.playTab(780);
-                        setSelectedProjectCategory(cat);
+                        setSelectedProjectCategory("All");
+                        setShowFeaturedProjectsOnly(false);
+                        setProjectSearchQuery("");
                         setActiveProjectIndex(0);
                       }}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                        isActive
-                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
-                          : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                      }`}
+                      className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
                     >
-                      {cat}
+                      <X className="w-3.5 h-3.5" />
+                      <span>Reset active filters</span>
                     </button>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             )}
 
             {/* ========================================================================= */}
-            {/* OPTION 1: AUTOPLAY SHOWCASE CAROUSEL MODE                                  */}
+            {/* MODE 1: INTERACTIVE 3D-PERSPECTIVE 'PROJECT SPOTLIGHT' GALLERY (DEFAULT)  */}
             {/* ========================================================================= */}
-            {projectDisplayMode === 'showcase' && filteredProjects.length > 0 && (
-              <div className="space-y-6">
-                {/* Autoplay Speed & Navigation Control Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/60 border border-white/[0.06] backdrop-blur-xl">
-                  {/* Left: Previous / Next & Play / Pause */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        soundFx.playClick(950);
-                        setActiveProjectIndex(prev => (prev === 0 ? filteredProjects.length - 1 : prev - 1));
+            {projectDisplayMode === "grid" && filteredProjects.length > 0 && (
+              <motion.div
+                key="projects-grid-mode"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch group/spotlight-grid"
+              >
+                {filteredProjects.map((proj, pIdx) => {
+                  const isCardExpanded = expandedSpotlightProjectId === proj.id;
+                  return (
+                    <motion.div
+                      layout="position"
+                      key={proj.id || `grid-proj-${pIdx}`}
+                      initial={
+                        prefersReduced
+                          ? { opacity: 1, y: 0 }
+                          : { opacity: 0, y: 18 }
+                      }
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.12, margin: "-20px" }}
+                      transition={{
+                        duration: 0.34,
+                        delay: Math.min(pIdx * 0.04, 0.18),
                       }}
-                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
-                      title="Previous Project"
-                      aria-label="Previous Project"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        soundFx.playClick(1150);
-                        setActiveProjectIndex(prev => (prev + 1) % filteredProjects.length);
-                      }}
-                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-emerald-500/10 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer"
-                      title="Next Project"
-                      aria-label="Next Project"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        soundFx.playToggle(!isProjectAutoplay);
-                        setIsProjectAutoplay(prev => !prev);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isProjectAutoplay
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-                          : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
+                      className={`h-full transition-opacity duration-300 ${
+                        isCardExpanded
+                          ? "md:col-span-2 lg:col-span-3 opacity-100"
+                          : "col-span-1 group-hover/spotlight-grid:opacity-75 hover:!opacity-100"
                       }`}
-                      title="Toggle Autoplay Rotation"
                     >
-                      {isProjectAutoplay ? (
-                        <>
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Autoplay ON</span>
-                        </>
-                      ) : (
-                        <>
-                          <Pause className="w-3 h-3 text-slate-400" />
-                          <span>Autoplay OFF</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                      <ProjectCard
+                        proj={proj}
+                        index={pIdx}
+                        prefersReduced={prefersReduced}
+                        isExpanded={isCardExpanded}
+                        onToggleExpand={(projId) =>
+                          setExpandedSpotlightProjectId((prev) =>
+                            prev === projId ? null : projId
+                          )
+                        }
+                        setSelectedProjectForModal={setSelectedProjectForModal}
+                        setActiveSlideIndex={setActiveSlideIndex}
+                        trackProjectView={trackProjectView}
+                        onSelectTechTag={(tag) => {
+                          setProjectSearchQuery(tag);
+                          setActiveProjectIndex(0);
+                        }}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
 
-                  {/* Center/Right: Speed Presets Selection */}
-                  <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-                    <div className="flex items-center gap-1 px-2 text-[10px] font-mono text-slate-400 uppercase font-semibold">
-                      <Gauge className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="hidden sm:inline">Speed:</span>
+            {/* ========================================================================= */}
+            {/* MODE 2: INTERACTIVE SPLIT-PANE CASE STUDY EXPLORER (100% MANUAL)          */}
+            {/* ========================================================================= */}
+            {projectDisplayMode === "showcase" &&
+              filteredProjects.length > 0 &&
+              (() => {
+                const currentProj =
+                  filteredProjects[activeProjectIndex] || filteredProjects[0];
+                if (!currentProj) return null;
+
+                const projFrames: string[] = [];
+                if (currentProj.imageUrl) projFrames.push(currentProj.imageUrl);
+                if (Array.isArray(currentProj.gallery)) {
+                  currentProj.gallery.forEach((g) => {
+                    if (g && !projFrames.includes(g)) projFrames.push(g);
+                  });
+                }
+                const currentFrameUrl =
+                  projFrames[explorerFrameIndex] ||
+                  currentProj.imageUrl ||
+                  "";
+
+                const currentSkills = (currentProj.skills ||
+                  (currentProj as any).tags ||
+                  []) as string[];
+                const currentHighlights = Array.isArray(currentProj.highlights)
+                  ? currentProj.highlights.filter(Boolean)
+                  : [];
+
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Left Column (4 cols): Interactive Case Study Index Directory */}
+                    <div className="lg:col-span-4 space-y-2.5 lg:sticky lg:top-24">
+                      <div className="flex items-center justify-between px-2 pb-1 text-[11px] font-mono text-slate-400">
+                        <span>SELECT CASE STUDY TO INSPECT</span>
+                        <span className="tabular-nums text-emerald-400 font-bold">
+                          {String(activeProjectIndex + 1).padStart(2, "0")} /{" "}
+                          {String(filteredProjects.length).padStart(2, "0")}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1 custom-scrollbar">
+                        {filteredProjects.map((p, idx) => {
+                          const isSelected = activeProjectIndex === idx;
+                          const pSkills = (p.skills ||
+                            (p as any).tags ||
+                            []) as string[];
+                          return (
+                            <button
+                              key={p.id || idx}
+                              type="button"
+                              onClick={() => {
+                                soundFx.playTab(740 + idx * 30);
+                                setActiveProjectIndex(idx);
+                                setExplorerFrameIndex(0);
+                                setExplorerMediaTab("screenshots");
+                              }}
+                              className={`w-full p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3.5 ${
+                                isSelected
+                                  ? "bg-slate-900/95 border-emerald-400/60 shadow-lg shadow-emerald-500/10"
+                                  : "bg-slate-950/60 border-white/[0.06] hover:border-white/[0.15] hover:bg-slate-900/50"
+                              }`}
+                            >
+                              <span
+                                className={`text-xs font-mono font-bold tabular-nums mt-0.5 ${
+                                  isSelected
+                                    ? "text-emerald-400"
+                                    : "text-slate-500"
+                                }`}
+                              >
+                                {String(idx + 1).padStart(2, "0")}
+                              </span>
+
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4
+                                    className={`text-sm font-bold truncate ${
+                                      isSelected
+                                        ? "text-white"
+                                        : "text-slate-200"
+                                    }`}
+                                  >
+                                    {p.title}
+                                  </h4>
+                                  {p.isFeatured && (
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+                                  <span className="text-emerald-400/90">
+                                    {p.category || "Full-Stack"}
+                                  </span>
+                                  <span aria-hidden="true">·</span>
+                                  <span>{p.status || "Completed"}</span>
+                                </div>
+
+                                {pSkills.length > 0 && (
+                                  <div className="text-[10px] font-mono text-slate-500 truncate pt-0.5">
+                                    {pSkills.slice(0, 4).join(" · ")}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    {[
-                      { label: '0.5x', name: 'Slow', ms: 8000, mult: 0.5 },
-                      { label: '1.0x', name: 'Normal', ms: 4500, mult: 1.0 },
-                      { label: '1.5x', name: 'Fast', ms: 3000, mult: 1.5 },
-                      { label: '2.0x', name: 'Turbo', ms: 1800, mult: 2.0 }
-                    ].map((preset) => {
-                      const isSelected = projectAutoplaySpeed === preset.ms;
-                      return (
-                        <button
-                          key={preset.label}
-                          onClick={() => {
-                            soundFx.playSpeedChange(preset.mult);
-                            setProjectAutoplaySpeed(preset.ms);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
-                          }`}
-                          title={`Autoplay speed: ${preset.name} (${preset.ms / 1000}s)`}
-                        >
-                          {preset.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Counter & Indicator */}
-                  <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
-                    <span className="text-emerald-400 font-bold">
-                      {String(activeProjectIndex + 1).padStart(2, '0')}
-                    </span>
-                    <span>/</span>
-                    <span>{String(filteredProjects.length).padStart(2, '0')}</span>
-                  </div>
-                </div>
-
-                {/* Main Showcase Featured Architectural Blueprint Card with AnimatePresence */}
-                {(() => {
-                  const currentProj = filteredProjects[activeProjectIndex] || filteredProjects[0];
-                  if (!currentProj) return null;
-
-                  return (
-                    <div
-                      onMouseEnter={handleProjectMouseEnter}
-                      onMouseLeave={handleProjectMouseLeave}
-                      className="relative"
-                    >
+                    {/* Right Column (8 cols): Interactive Case Study Workbench */}
+                    <div className="lg:col-span-8">
                       <AnimatePresence mode="wait">
                         <motion.div
-                          key={currentProj.id || `proj-${activeProjectIndex}`}
-                          initial={{ opacity: 0, x: 40, scale: 0.96 }}
-                          animate={{ opacity: 1, x: 0, scale: 1 }}
-                          exit={{ opacity: 0, x: -40, scale: 0.96 }}
-                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                          className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-950/90 to-slate-900/95 shadow-2xl shadow-emerald-500/10 relative group"
-                          style={{
-                            boxShadow: '0 20px 50px -15px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255,255,255,0.08)'
-                          }}
+                          key={currentProj.id || `explorer-${activeProjectIndex}`}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -12 }}
+                          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                          className="glass-card rounded-3xl border border-white/[0.09] bg-gradient-to-br from-slate-900/95 via-slate-950/95 to-slate-900/95 overflow-hidden shadow-2xl"
                         >
-                          {/* Live Dynamic Autoplay Progress Countdown Bar */}
-                          {isProjectAutoplay && !isProjectHovered && (
-                            <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-900 overflow-hidden z-30">
-                              <motion.div
-                                key={`progress-${activeProjectIndex}-${projectAutoplaySpeed}`}
-                                initial={{ width: '0%' }}
-                                animate={{ width: '100%' }}
-                                transition={{ duration: projectAutoplaySpeed / 1000, ease: 'linear' }}
-                                className="h-full bg-gradient-to-r from-emerald-500 via-teal-300 to-cyan-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
-                              />
+                          {/* Workbench Window Bar */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 bg-slate-950/90 border-b border-white/[0.06]">
+                            <div className="flex items-center gap-2 text-xs font-mono">
+                              <span className="text-emerald-400 font-bold tabular-nums">
+                                CASE STUDY {String(activeProjectIndex + 1).padStart(2, "0")}
+                              </span>
+                              <span className="text-slate-600">/</span>
+                              <span className="text-slate-300">
+                                {currentProj.slug || currentProj.title}
+                              </span>
                             </div>
-                          )}
 
-                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                            {/* Left Viewport / Image Container with 3D Hologram Effect */}
-                            <div className="lg:col-span-6 relative bg-slate-950 min-h-[280px] sm:min-h-[360px] lg:min-h-[440px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
-                              <SkillMediaRenderer
-                                src={currentProj.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"}
-                                alt={currentProj.title}
-                                variant="cover"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
-                              />
-
-                              {/* Cyber Hologram Grid & Scanline */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
-                              <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
-
-                              {/* Top Badges */}
-                              <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
-                                <span className="bg-slate-950/85 backdrop-blur-md text-emerald-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/30 uppercase tracking-wider shadow-lg flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                  <span>{currentProj.category || "Enterprise Core"}</span>
-                                </span>
-                                <span className={`backdrop-blur-md font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider shadow-lg ${
-                                  currentProj.status === 'Completed' ? 'bg-emerald-950/85 text-emerald-400 border-emerald-500/30' :
-                                  currentProj.status === 'In Development' ? 'bg-amber-950/85 text-amber-400 border-amber-500/30' :
-                                  currentProj.status === 'Concept' ? 'bg-purple-950/85 text-purple-400 border-purple-500/30' :
-                                  'bg-sky-950/85 text-sky-400 border-sky-500/30'
-                                }`}>
-                                  {currentProj.status || "Production Ready"}
-                                </span>
-                              </div>
-
-                              {currentProj.isFeatured && (
-                                <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1.5 z-20">
-                                  <Sparkles className="w-3 h-3" />
-                                  <span>Featured System</span>
+                            <div className="flex items-center gap-2">
+                              {currentProj.videoUrl && (
+                                <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-white/[0.08] text-[11px] font-mono">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExplorerMediaTab("screenshots")}
+                                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                      explorerMediaTab === "screenshots"
+                                        ? "bg-emerald-500 text-slate-950 font-bold"
+                                        : "text-slate-400 hover:text-white"
+                                    }`}
+                                  >
+                                    Screenshots ({projFrames.length || 1})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setExplorerMediaTab("video")}
+                                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                      explorerMediaTab === "video"
+                                        ? "bg-emerald-500 text-slate-950 font-bold"
+                                        : "text-slate-400 hover:text-white"
+                                    }`}
+                                  >
+                                    Video Demo
+                                  </button>
                                 </div>
                               )}
 
-                              {/* Overlay Quick-Open Modal Trigger */}
                               <button
+                                type="button"
                                 onClick={() => {
                                   soundFx.playModalOpen();
                                   setSelectedProjectForModal(currentProj);
-                                  setActiveSlideIndex(0);
-                                  trackProjectView(currentProj.slug, currentProj.title);
+                                  setActiveSlideIndex(explorerFrameIndex);
+                                  trackProjectView(
+                                    currentProj.slug,
+                                    currentProj.title
+                                  );
                                 }}
-                                className="absolute bottom-4 left-4 right-4 sm:right-auto px-4 py-2 rounded-xl bg-slate-950/90 hover:bg-emerald-500/20 border border-white/[0.1] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center justify-center gap-2 cursor-pointer shadow-xl z-20"
+                                className="px-3 py-1 rounded-lg bg-white/[0.05] hover:bg-emerald-500/20 border border-white/[0.08] hover:border-emerald-500/40 text-xs font-mono text-slate-200 hover:text-emerald-300 transition cursor-pointer"
                               >
-                                <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Inspect Full Architecture Blueprint</span>
+                                Fullscreen View
                               </button>
                             </div>
+                          </div>
 
-                            {/* Right Project Details & Interactive Subsystem Console */}
-                            <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
-                              <div className="space-y-4">
-                                {/* Header Info Strip */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
-                                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                                    <Calendar className="w-3.5 h-3.5" />
-                                    <span>{currentProj.startDate} — {currentProj.endDate || 'Present'}</span>
-                                  </span>
-                                  {currentProj.gallery && currentProj.gallery.length > 0 && (
-                                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                                      +{currentProj.gallery.length} System Snapshots
+                          {/* Media Viewport (Screenshots or Embedded Video) */}
+                          <div className="relative bg-slate-950 border-b border-white/[0.06]">
+                            {explorerMediaTab === "video" &&
+                            currentProj.videoUrl ? (
+                              <div className="relative aspect-video w-full bg-black">
+                                <iframe
+                                  src={currentProj.videoUrl}
+                                  title={`${currentProj.title} Demo Video`}
+                                  className="absolute inset-0 w-full h-full border-0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                  allowFullScreen
+                                />
+                              </div>
+                            ) : (
+                              <div className="relative aspect-video w-full overflow-hidden">
+                                <SkillMediaRenderer
+                                  src={currentFrameUrl}
+                                  alt={currentProj.title}
+                                  variant="cover"
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent pointer-events-none" />
+
+                                {/* Thumbnail Strip if multiple screenshots exist */}
+                                {projFrames.length > 1 && (
+                                  <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2 overflow-x-auto pb-1 z-20">
+                                    {projFrames.map((frameUrl, fIdx) => (
+                                      <button
+                                        key={fIdx}
+                                        type="button"
+                                        onClick={() => setExplorerFrameIndex(fIdx)}
+                                        className={`relative w-16 h-10 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                                          explorerFrameIndex === fIdx
+                                            ? "border-emerald-400 scale-105 shadow-lg"
+                                            : "border-white/20 opacity-65 hover:opacity-100"
+                                        }`}
+                                      >
+                                        <img
+                                          src={frameUrl}
+                                          alt={`${currentProj.title} preview ${fIdx + 1}`}
+                                          referrerPolicy="no-referrer"
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Case Study Content Body */}
+                          <div className="p-6 sm:p-8 space-y-6">
+                            {/* Metadata & Title */}
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400">
+                                <span className="text-emerald-400 font-semibold">
+                                  {currentProj.category || "Full-Stack"}
+                                </span>
+                                <span aria-hidden="true">·</span>
+                                <span>{currentProj.status || "Completed"}</span>
+                                {currentProj.startDate && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="tabular-nums">
+                                      {currentProj.startDate} —{" "}
+                                      {currentProj.endDate || "Present"}
+                                    </span>
+                                  </>
+                                )}
+                                {currentProj.metricsBadge && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="text-cyan-300 font-semibold">
+                                      {currentProj.metricsBadge}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+
+                              <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                                {currentProj.title}
+                              </h3>
+
+                              {(currentProj.role ||
+                                currentProj.architectureType) && (
+                                <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-300 pt-1">
+                                  {currentProj.role && (
+                                    <span>
+                                      Role:{" "}
+                                      <strong className="text-white">
+                                        {currentProj.role}
+                                      </strong>
+                                    </span>
+                                  )}
+                                  {currentProj.role &&
+                                    currentProj.architectureType && (
+                                      <span className="text-slate-600">·</span>
+                                    )}
+                                  {currentProj.architectureType && (
+                                    <span>
+                                      Architecture:{" "}
+                                      <strong className="text-emerald-300">
+                                        {currentProj.architectureType}
+                                      </strong>
                                     </span>
                                   )}
                                 </div>
+                              )}
+                            </div>
 
-                                {/* Project Title */}
-                                <h3 className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-emerald-300 transition-colors tracking-tight">
-                                  {currentProj.title}
-                                </h3>
+                            {/* Description */}
+                            <p className="text-sm text-slate-300 leading-relaxed">
+                              {currentProj.description}
+                            </p>
 
-                                {/* Subsystem Perspective View Selector Tabs */}
-                                <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-xl border border-white/[0.06] text-[11px] font-mono">
-                                  {[
-                                    { key: 'overview', label: '📐 Overview', icon: Layers },
-                                    { key: 'tech', label: '⚡ Stack & APIs', icon: Cpu },
-                                    { key: 'milestones', label: '🚀 Milestones', icon: Sparkles }
-                                  ].map(tab => (
+                            {/* Key Engineering Highlights (Admin-configured only) */}
+                            {currentHighlights.length > 0 && (
+                              <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
+                                <h4 className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold">
+                                  Key Engineering Highlights &amp; Outcomes
+                                </h4>
+                                <ul className="grid grid-cols-1 gap-2">
+                                  {currentHighlights.map((hl, hIdx) => (
+                                    <li
+                                      key={hIdx}
+                                      className="text-xs sm:text-sm text-slate-200 flex items-start gap-2.5"
+                                    >
+                                      <span className="text-emerald-400 font-mono font-bold tabular-nums mt-0.5">
+                                        0{hIdx + 1}.
+                                      </span>
+                                      <span>{hl}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Technology Stack */}
+                            {currentSkills.length > 0 && (
+                              <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
+                                <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+                                  Technology Stack &amp; Tooling
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {currentSkills.map((tag, idx) => (
                                     <button
-                                      key={tab.key}
+                                      key={idx}
+                                      type="button"
                                       onClick={() => {
                                         soundFx.playTab(820);
-                                        setProjectActiveSubsystemTab(tab.key as any);
+                                        setProjectSearchQuery(tag);
                                       }}
-                                      className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                                        projectActiveSubsystemTab === tab.key
-                                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-                                      }`}
+                                      className="text-xs font-mono px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/40 text-emerald-300 transition cursor-pointer"
+                                      title={`Filter projects by ${tag}`}
                                     >
-                                      <tab.icon className="w-3 h-3" />
-                                      <span>{tab.label}</span>
+                                      {tag}
                                     </button>
                                   ))}
                                 </div>
-
-                                {/* Subsystem Dynamic Content Body */}
-                                <div className="min-h-[140px]">
-                                  {projectActiveSubsystemTab === 'overview' && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 5 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      className="space-y-3"
-                                    >
-                                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                                        {currentProj.description}
-                                      </p>
-                                      <div className="p-3 rounded-xl bg-slate-950/60 border border-white/[0.04] text-[11px] font-mono text-slate-400 flex items-center justify-between">
-                                        <span>Architecture: <strong className="text-emerald-400 font-bold">Distributed Microservices</strong></span>
-                                        <span>Fault-Tolerance: <strong className="text-cyan-400 font-bold">99.99% SLA</strong></span>
-                                      </div>
-                                    </motion.div>
-                                  )}
-
-                                  {projectActiveSubsystemTab === 'tech' && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 5 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      className="space-y-3"
-                                    >
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
-                                        Subsystem Technologies & Orchestration:
-                                      </span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {((currentProj as any).tags || currentProj.skills || []).map((tag: string, idx: number) => (
-                                          <span
-                                            key={idx}
-                                            className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-emerald-500/20 text-emerald-300 font-semibold hover:border-emerald-500/50 transition-colors"
-                                          >
-                                            #{tag}
-                                          </span>
-                                        ))}
-                                      </div>
-                                      <p className="text-xs text-slate-400 pt-1 font-sans">
-                                        Configured with strict containerized CI/CD pipelines, automated testing suites, and observability telemetry.
-                                      </p>
-                                    </motion.div>
-                                  )}
-
-                                  {projectActiveSubsystemTab === 'milestones' && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 5 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      className="space-y-2"
-                                    >
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
-                                        Key Architectural Highlights & Performance:
-                                      </span>
-                                      {((currentProj as any).highlights && (currentProj as any).highlights.length > 0) ? (
-                                        <ul className="space-y-1.5">
-                                          {((currentProj as any).highlights as string[]).slice(0, 3).map((hl: string, hIdx: number) => (
-                                            <li key={hIdx} className="text-xs text-slate-300 flex items-start gap-2">
-                                              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
-                                              <span>{hl}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      ) : (
-                                        <ul className="space-y-1.5 text-xs text-slate-300">
-                                          <li className="flex items-start gap-2">
-                                            <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
-                                            <span>Full ACID transactional integrity with resilient failover design.</span>
-                                          </li>
-                                          <li className="flex items-start gap-2">
-                                            <span className="text-emerald-400 font-bold shrink-0 mt-0.5">▹</span>
-                                            <span>Sub-50ms API endpoint response time under high concurrent loads.</span>
-                                          </li>
-                                        </ul>
-                                      )}
-                                    </motion.div>
-                                  )}
-                                </div>
                               </div>
+                            )}
 
-                              {/* Interactive Action Buttons */}
-                              <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
+                            {/* D3.js Project Performance Dashboard in Split Explorer */}
+                            <ProjectPerformanceDashboard project={currentProj} />
+
+                            {/* Simulated Deployment Pipeline Log in Split Explorer */}
+                            <div className="rounded-xl bg-[#030712] border border-emerald-500/25 overflow-hidden">
+                              <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-white/[0.07] text-[11px] font-mono">
+                                <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                                  <Terminal className="w-3.5 h-3.5" />
+                                  <span>DEPLOYMENT PIPELINE LOG</span>
+                                </div>
+                                <span className="text-slate-400">
+                                  {currentProj.status || "Completed"}
+                                </span>
+                              </div>
+                              <div className="p-3.5 space-y-1.5 font-mono text-[11px]">
+                                {buildProjectDeploymentLogs(currentProj).map(
+                                  (entry, lIdx) => (
+                                    <div
+                                      key={lIdx}
+                                      className="flex items-start gap-2.5 leading-relaxed"
+                                    >
+                                      <span className="text-slate-500 tabular-nums shrink-0">
+                                        {entry.timestamp}
+                                      </span>
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded text-[10px] font-bold shrink-0 ${
+                                          entry.stage === "READY"
+                                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                            : entry.stage === "DEPLOY"
+                                            ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/25"
+                                            : "bg-slate-800 text-slate-300 border border-white/[0.06]"
+                                        }`}
+                                      >
+                                        {entry.stage}
+                                      </span>
+                                      <span className="text-slate-300 break-all">
+                                        {entry.message}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/[0.06]">
+                              <div className="flex flex-wrap items-center gap-3">
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     soundFx.playModalOpen();
                                     setSelectedProjectForModal(currentProj);
-                                    setActiveSlideIndex(0);
-                                    trackProjectView(currentProj.slug, currentProj.title);
+                                    setActiveSlideIndex(explorerFrameIndex);
+                                    trackProjectView(
+                                      currentProj.slug,
+                                      currentProj.title
+                                    );
                                   }}
-                                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:opacity-90 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
+                                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-bold text-xs transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer"
                                 >
                                   <Layers className="w-4 h-4" />
-                                  <span>View Architecture Details</span>
+                                  <span>Inspect Full Case Study</span>
                                 </button>
 
-                                {(currentProj.liveUrl || (currentProj as any).demoUrl) && (currentProj.liveUrl || (currentProj as any).demoUrl) !== '#' && (
-                                  <a
-                                    href={currentProj.liveUrl || (currentProj as any).demoUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() => soundFx.playClick()}
-                                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Live System Demo</span>
-                                  </a>
-                                )}
+                                {currentProj.liveUrl &&
+                                  currentProj.liveUrl !== "#" && (
+                                    <a
+                                      href={currentProj.liveUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={() => soundFx.playClick()}
+                                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-semibold transition-colors flex items-center gap-2"
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>Live Deployment</span>
+                                    </a>
+                                  )}
 
-                                {currentProj.githubUrl && currentProj.githubUrl !== '#' && (
-                                  <a
-                                    href={currentProj.githubUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() => soundFx.playClick()}
-                                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 text-xs font-mono font-semibold transition-colors flex items-center gap-2 cursor-pointer"
-                                  >
-                                    <Github className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>GitHub Source</span>
-                                  </a>
-                                )}
+                                {currentProj.githubUrl &&
+                                  currentProj.githubUrl !== "#" && (
+                                    <a
+                                      href={currentProj.githubUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={() => soundFx.playClick()}
+                                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-emerald-500/40 text-slate-200 hover:text-emerald-300 text-xs font-mono font-semibold transition-colors flex items-center gap-2"
+                                    >
+                                      <Github className="w-3.5 h-3.5 text-slate-400" />
+                                      <span>Source Repository</span>
+                                    </a>
+                                  )}
                               </div>
+
+                              {/* Manual Prev/Next Stepper */}
+                              {filteredProjects.length > 1 && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      soundFx.playClick(950);
+                                      setActiveProjectIndex((prev) =>
+                                        prev === 0
+                                          ? filteredProjects.length - 1
+                                          : prev - 1
+                                      );
+                                    }}
+                                    className="p-2 rounded-xl border border-white/[0.08] bg-slate-900 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition cursor-pointer"
+                                    title="Previous Case Study"
+                                  >
+                                    <ChevronLeft className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      soundFx.playClick(1100);
+                                      setActiveProjectIndex(
+                                        (prev) =>
+                                          (prev + 1) % filteredProjects.length
+                                      );
+                                    }}
+                                    className="p-2 rounded-xl border border-white/[0.08] bg-slate-900 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 transition cursor-pointer"
+                                    title="Next Case Study"
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </motion.div>
                       </AnimatePresence>
                     </div>
-                  );
-                })()}
-
-                {/* Cloud Server Blade Rack Selector Strip */}
-                <div className="pt-2">
-                  <div className="flex items-center justify-between pb-2">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>SELECT SYSTEM ARCHITECTURE NODE:</span>
-                    </span>
-                    {isProjectHovered && (
-                      <button
-                        onClick={() => setIsProjectHovered(false)}
-                        className="text-[10px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
-                        title="Click to resume autoplay rotation"
-                      >
-                        <Pause className="w-3 h-3" /> Autoplay Paused (Click to Resume)
-                      </button>
-                    )}
                   </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {filteredProjects.map((p, idx) => {
-                      const isActive = activeProjectIndex === idx;
-                      return (
-                        <button
-                          key={p.id || idx}
-                          onClick={() => {
-                            soundFx.playTab(700 + idx * 50);
-                            setActiveProjectIndex(idx);
-                          }}
-                          className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2.5 ${
-                            isActive
-                              ? 'bg-slate-950 border-emerald-400 shadow-xl shadow-emerald-500/20 scale-[1.03] ring-1 ring-emerald-500/30'
-                              : 'bg-slate-950/60 border-white/[0.06] hover:border-emerald-500/30 hover:bg-slate-900/80'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between text-[10px] font-mono">
-                            <span className={`font-bold ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
-                              NODE {String(idx + 1).padStart(2, '0')}
-                            </span>
-                            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400 animate-ping' : 'bg-slate-700'}`} />
-                          </div>
-
-                          <div className="font-bold text-xs text-white line-clamp-1 font-sans">
-                            {p.title}
-                          </div>
-
-                          <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider line-clamp-1">
-                            {p.category || 'Architecture'}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* OPTION 2: ALL PROJECTS GRID MODE                                          */}
-            {/* ========================================================================= */}
-            {projectDisplayMode === 'grid' && filteredProjects.length > 0 && (
-              <motion.div 
-                key="projects-grid-mode"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredProjects.map((proj, pIdx) => (
-                  <motion.div
-                    key={proj.id || `grid-proj-${pIdx}`}
-                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: Math.min(pIdx * 0.05, 0.3) }}
-                    className="h-full"
-                  >
-                    <ProjectCard
-                      proj={proj}
-                      prefersReduced={prefersReduced}
-                      setSelectedProjectForModal={setSelectedProjectForModal}
-                      setActiveSlideIndex={setActiveSlideIndex}
-                      trackProjectView={trackProjectView}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
+                );
+              })()}
 
             {/* Empty State when filter query yields zero projects */}
             {filteredProjects.length === 0 && (
-              <div className="text-center py-16 px-4 bg-slate-900/40 rounded-3xl border border-white/[0.04]">
+              <div className="text-center py-16 px-4 bg-slate-900/40 rounded-3xl border border-white/[0.06]">
                 <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-slate-200">No project subsystems found</h3>
+                <h3 className="text-sm font-bold text-slate-200">
+                  No matching projects found
+                </h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                   No projects match your current search query or category filter.
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
-                    setSelectedProjectCategory('All');
-                    setProjectSearchQuery('');
+                    setSelectedProjectCategory("All");
+                    setShowFeaturedProjectsOnly(false);
+                    setProjectSearchQuery("");
                     setActiveProjectIndex(0);
                   }}
                   className="mt-4 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
@@ -3495,36 +5377,69 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             )}
           </motion.section>
 
-          {/* Engineering Blog & Technical Articles Section */}
+          {/* Engineering Monographs & Technical Publications Section — Distinct Editorial Journal Architecture */}
           {displayArticles.length > 0 && (
-            <motion.section 
-              id="articles" 
+            <motion.section
+              id="articles"
               className="space-y-8 scroll-mt-24 relative"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, amount: 0.01, margin: "120px" }}
               variants={sectionVariants}
             >
-              {/* Header, Search & Mode Toggle */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Thought Leadership & Publications</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      {filteredArticles.length} {filteredArticles.length === 1 ? 'Article' : 'Articles'}
-                    </span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Engineering Blog & Articles</h2>
-                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                    Deep dives into high-throughput distributed systems, Java 21 Virtual Threads, Kafka event streams, zero-downtime database migrations, and microservices scalability.
-                  </p>
+              {/* Warm Editorial Amber-Gold & Indigo Ambient Illumination (Distinct from Projects) */}
+              <div className="pointer-events-none absolute -top-24 right-1/4 w-96 h-96 bg-amber-500/[0.07] rounded-full blur-[135px] -z-10" />
+              <div className="pointer-events-none absolute top-1/3 left-10 w-80 h-80 bg-indigo-500/[0.07] rounded-full blur-[125px] -z-10" />
+
+              {/* Editorial Journal Masthead Header */}
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-amber-500/20 pb-6">
+                <div className="space-y-3 max-w-2xl">
+                  {(profile.articlesBadge ??
+                    "Architectural Journal & Monographs") && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-amber-400">
+                      <BookOpenCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="font-bold tracking-[0.16em] uppercase">
+                        {profile.articlesBadge ??
+                          "Architectural Journal & Monographs"}
+                      </span>
+                      <span className="text-slate-600" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold tabular-nums text-[11px]">
+                        ISSN-2026 · {filteredArticles.length}{" "}
+                        {filteredArticles.length === 1
+                          ? "Monograph"
+                          : "Monographs"}
+                      </span>
+                    </div>
+                  )}
+
+                  {(profile.articlesHeading ??
+                    "Engineering Monographs & System Design Papers") && (
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury bg-gradient-to-r from-white via-amber-100 to-indigo-300 bg-clip-text text-transparent tracking-tight text-balance">
+                      {profile.articlesHeading ??
+                        "Engineering Monographs & System Design Papers"}
+                    </h2>
+                  )}
+
+                  {(profile.articlesSubtitle ??
+                    "Peer-grade technical essays on high-throughput distributed systems, Java 21 Virtual Threads, Kafka event streams, zero-downtime 3NF database migrations, and cloud resilience.") && (
+                    <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed font-serif italic">
+                      &ldquo;
+                      {profile.articlesSubtitle ??
+                        "Peer-grade technical essays on high-throughput distributed systems, Java 21 Virtual Threads, Kafka event streams, zero-downtime 3NF database migrations, and cloud resilience."}
+                      &rdquo;
+                    </p>
+                  )}
+
+                  <div className="h-1 w-24 bg-gradient-to-r from-amber-400 via-orange-400 to-indigo-400 rounded-full shadow-[0_0_14px_rgba(245,158,11,0.65)]" />
                 </div>
 
-                {/* View Switcher & Search */}
+                {/* Search, Featured Filter & View Mode Switcher */}
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Article Search Input */}
-                  <div className="relative w-full sm:w-60 shrink-0">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div className="relative w-full sm:w-64 shrink-0">
+                    <Search className="w-4 h-4 text-amber-400/80 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       value={articleSearchQuery}
@@ -3532,853 +5447,827 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         setArticleSearchQuery(e.target.value);
                         setActiveArticleIndex(0);
                       }}
-                      placeholder="Search articles, stack..."
-                      className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500 shadow-inner"
+                      placeholder="Search essays, citations, tags..."
+                      className="w-full bg-[#090814]/90 border border-amber-500/20 text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-amber-400/60 transition-all placeholder:text-slate-500"
                     />
                     {articleSearchQuery && (
                       <button
+                        type="button"
                         onClick={() => {
-                          setArticleSearchQuery('');
+                          setArticleSearchQuery("");
                           setActiveArticleIndex(0);
                         }}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                        title="Clear search"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
 
-                  {/* Display Mode Toggle */}
-                  <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-white/[0.08] shadow-inner">
+                  {/* Featured Only Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playToggle(!showFeaturedArticlesOnly);
+                      setShowFeaturedArticlesOnly((prev) => !prev);
+                      setActiveArticleIndex(0);
+                    }}
+                    className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                      showFeaturedArticlesOnly
+                        ? "bg-amber-500/20 border-amber-400/60 text-amber-200 shadow-lg shadow-amber-500/15"
+                        : "bg-[#090814]/90 border-white/[0.08] text-slate-400 hover:text-amber-200 hover:border-amber-500/30"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Featured Issue</span>
+                  </button>
+
+                  {/* View Mode Segmented Switcher */}
+                  <div className="grid grid-cols-2 sm:flex items-center p-1 rounded-xl bg-[#090814]/95 border border-amber-500/20 w-full sm:w-auto">
                     <button
-                      onClick={() => {
-                        soundFx.playToggle(true);
-                        setArticleDisplayMode('showcase');
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                        articleDisplayMode === 'showcase'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Autoplay Article Showcase"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Showcase</span>
-                    </button>
-                    <button
+                      type="button"
                       onClick={() => {
                         soundFx.playToggle(false);
-                        setArticleDisplayMode('grid');
+                        setArticleDisplayMode("grid");
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                        articleDisplayMode === 'grid'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                          : 'text-slate-400 hover:text-white'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                        articleDisplayMode === "grid"
+                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold shadow-sm"
+                          : "text-slate-400 hover:text-white"
                       }`}
-                      title="All Articles Grid View"
                     >
-                      <LayoutGrid className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Grid</span>
+                      <BookOpenCheck className="w-3.5 h-3.5 shrink-0" />
+                      <span>Journal Spreads</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFx.playToggle(true);
+                        setArticleDisplayMode("showcase");
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                        articleDisplayMode === "showcase"
+                          ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold shadow-sm"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span>Split-Pane Reader</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Category Filter Pills */}
-              {articleCategories.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                  {articleCategories.map((cat) => {
-                    const isActive = selectedArticleCategory === cat;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          soundFx.playTab(780);
-                          setSelectedArticleCategory(cat);
-                          setActiveArticleIndex(0);
-                        }}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                          isActive
-                            ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
-                            : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              {/* Editorial Anthology Masthead Ribbon (Distinct from Projects' 4-box green telemetry grid) */}
+              <div className="rounded-2xl bg-gradient-to-r from-[#0d0b18]/95 via-[#090d1a]/95 to-[#0d0b18]/95 border border-amber-500/25 p-4 sm:p-5 shadow-[0_18px_45px_rgba(0,0,0,0.75)] relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-12 left-1/4 w-64 h-24 bg-amber-500/10 rounded-full blur-2xl" />
+                <div className="pointer-events-none absolute -bottom-12 right-1/4 w-64 h-24 bg-indigo-500/10 rounded-full blur-2xl" />
 
-              {/* ========================================================================= */}
-              {/* OPTION 1: EDITORIAL MAGAZINE JOURNAL SHOWCASE MODE                        */}
-              {/* ========================================================================= */}
-              {articleDisplayMode === 'showcase' && filteredArticles.length > 0 && (
-                <div className="space-y-6">
-                  {/* Editorial Navigation & Reading Speed Control Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/70 border border-white/[0.08] backdrop-blur-xl">
-                    {/* Left: Previous Issue / Next Issue & Page-Turner */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          soundFx.playClick(920);
-                          setActiveArticleIndex(prev => (prev === 0 ? filteredArticles.length - 1 : prev - 1));
-                        }}
-                        className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-amber-500/10 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                        title="Previous Publication Issue"
-                        aria-label="Previous Publication Issue"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span>Prev Issue</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          soundFx.playClick(1120);
-                          setActiveArticleIndex(prev => (prev + 1) % filteredArticles.length);
-                        }}
-                        className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-slate-900/80 hover:bg-amber-500/10 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                        title="Next Publication Issue"
-                        aria-label="Next Publication Issue"
-                      >
-                        <span>Next Issue</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          soundFx.playToggle(!isArticleAutoplay);
-                          setIsArticleAutoplay(prev => !prev);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          isArticleAutoplay
-                            ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
-                            : 'border-white/[0.08] bg-slate-900/80 text-slate-400'
-                        }`}
-                        title="Toggle Auto Page-Turn"
-                      >
-                        {isArticleAutoplay ? (
-                          <>
-                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                            <span>Auto-Turn ON</span>
-                          </>
-                        ) : (
-                          <>
-                            <Pause className="w-3 h-3 text-slate-400" />
-                            <span>Auto-Turn OFF</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Center/Right: Reading Pace Presets */}
-                    <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-                      <div className="flex items-center gap-1 px-2 text-[10px] font-mono text-slate-400 uppercase font-semibold">
-                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                        <span className="hidden sm:inline">Reading Pace:</span>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+                  {/* Left: Editorial Anthology Volume & Reading Digest */}
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-300 font-serif font-black text-base shadow-inner">
+                        §
                       </div>
-
-                      {[
-                        { label: 'Deep Read', ms: 9000 },
-                        { label: 'Standard', ms: 5000 },
-                        { label: 'Skim', ms: 2500 }
-                      ].map((preset) => {
-                        const isSelected = articleAutoplaySpeed === preset.ms;
-                        return (
-                          <button
-                            key={preset.label}
-                            onClick={() => {
-                              soundFx.playTab(850);
-                              setArticleAutoplaySpeed(preset.ms);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-sm shadow-amber-500/30'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
-                            }`}
-                            title={`Reading pace: ${preset.label} (${preset.ms / 1000}s)`}
-                          >
-                            {preset.label}
-                          </button>
-                        );
-                      })}
+                      <div>
+                        <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-amber-400 font-bold">
+                          ARCHITECTURAL ANTHOLOGY · VOL. IV
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-white">
+                          Curated Systems Engineering &amp; Distributed Computing Dossiers
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Issue Counter */}
-                    <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-slate-400">
-                      <span className="text-amber-400 font-bold">
-                        ISSUE #{String(activeArticleIndex + 1).padStart(2, '0')}
-                      </span>
-                      <span>/</span>
-                      <span>{String(filteredArticles.length).padStart(2, '0')}</span>
+                    <div className="hidden sm:block h-8 w-px bg-white/[0.08]" />
+
+                    <div className="flex items-center gap-5 text-xs font-mono">
+                      <div>
+                        <span className="text-slate-400 block text-[9px] uppercase tracking-wider">
+                          Monographs
+                        </span>
+                        <span className="text-amber-300 font-extrabold text-sm tabular-nums">
+                          {displayArticles.length} Papers
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[9px] uppercase tracking-wider">
+                          Anthology Reading Time
+                        </span>
+                        <span className="text-indigo-300 font-extrabold text-sm tabular-nums">
+                          {displayArticles.reduce(
+                            (acc, a) => acc + (a.readTimeMinutes || 5),
+                            0
+                          )}{" "}
+                          mins total
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[9px] uppercase tracking-wider">
+                          Domains Covered
+                        </span>
+                        <span className="text-amber-200 font-extrabold text-sm tabular-nums">
+                          {Math.max(1, articleCategories.length - 1)} Tracks
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Main Editorial Publication Card with Vertical Page-Glide Physics */}
-                  {(() => {
-                    const currentArt = filteredArticles[activeArticleIndex] || filteredArticles[0];
-                    if (!currentArt) return null;
-
-                    const coverImg = currentArt.coverImageUrl || (currentArt as any).coverImage || "";
-                    const excerptText = currentArt.excerpt || (currentArt as any).summary || "";
-                    const authorName = currentArt.author || (currentArt as any).authorName || "Chandru Mohan";
-                    const isFeatured = currentArt.isFeatured ?? (currentArt as any).featured ?? false;
-                    const readMins = currentArt.readTimeMinutes || 5;
-                    const isAbstractOpen = expandedArticleId === currentArt.id;
-
-                    return (
-                      <div
-                        onMouseEnter={handleArticleMouseEnter}
-                        onMouseLeave={handleArticleMouseLeave}
-                        className="relative"
-                      >
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={currentArt.id || `art-${activeArticleIndex}`}
-                            initial={{ opacity: 0, y: 30, rotateX: -4 }}
-                            animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                            exit={{ opacity: 0, y: -30, rotateX: 4 }}
-                            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                            className="glass-card rounded-3xl border border-amber-500/20 overflow-hidden bg-gradient-to-br from-slate-900/95 via-[#0a0d14] to-slate-950/95 shadow-2xl shadow-amber-500/5 relative group"
-                            style={{
-                              boxShadow: '0 20px 50px -15px rgba(245, 158, 11, 0.1), inset 0 1px 0 rgba(255,255,255,0.08)'
+                  {/* Right: Quick Interactive Topic Index Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {Array.from(
+                      new Set(displayArticles.flatMap((a) => a.tags || []))
+                    )
+                      .slice(0, 5)
+                      .map((tag) => {
+                        const isTagSelected =
+                          articleSearchQuery.toLowerCase() === tag.toLowerCase();
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              soundFx.playTab(810);
+                              setArticleSearchQuery(isTagSelected ? "" : tag);
+                              setActiveArticleIndex(0);
                             }}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer ${
+                              isTagSelected
+                                ? "bg-amber-400 text-slate-950 font-bold shadow-sm"
+                                : "bg-slate-950/90 hover:bg-amber-500/15 text-slate-300 hover:text-amber-300 border border-white/[0.07] hover:border-amber-500/35"
+                            }`}
                           >
-                            {/* Live Dynamic Editorial Reading Progress Bar */}
-                            {isArticleAutoplay && !isArticleHovered && (
-                              <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-900 overflow-hidden z-30">
-                                <motion.div
-                                  key={`art-progress-${activeArticleIndex}-${articleAutoplaySpeed}`}
-                                  initial={{ width: '0%' }}
-                                  animate={{ width: '100%' }}
-                                  transition={{ duration: articleAutoplaySpeed / 1000, ease: 'linear' }}
-                                  className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-cyan-400 shadow-[0_0_10px_rgba(245,158,11,0.9)]"
-                                />
-                              </div>
-                            )}
+                            #{tag}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                              {/* Left Cover Photo Container with Editorial Masthead */}
-                              <div className="lg:col-span-5 relative bg-slate-950 min-h-[260px] sm:min-h-[320px] lg:min-h-[400px] overflow-hidden flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/[0.06]">
-                                {coverImg ? (
-                                  <img
-                                    src={coverImg}
-                                    alt={currentArt.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
-                                    <BookOpenCheck className="w-16 h-16 text-amber-400/40 mb-2" />
-                                    <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-widest">Engineering Publication</span>
-                                  </div>
-                                )}
-
-                                {/* Gradient Vignette */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
-
-                                {/* Top Editorial Badges */}
-                                <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
-                                  <span className="bg-slate-950/85 backdrop-blur-md text-amber-300 font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-500/30 uppercase tracking-wider shadow-lg">
-                                    {currentArt.category || "Architecture"}
-                                  </span>
-                                  {isFeatured && (
-                                    <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-mono text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-300 uppercase tracking-widest shadow-xl flex items-center gap-1.5">
-                                      <Sparkles className="w-3 h-3" />
-                                      <span>Featured Paper</span>
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-[11px] font-mono text-slate-200 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/[0.08] shadow-lg z-20">
-                                  <Clock className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>{readMins} min architectural read</span>
-                                </div>
-
-                                {/* Overlay Quick Read Trigger */}
-                                <button
-                                  onClick={() => {
-                                    soundFx.playModalOpen();
-                                    setSelectedArticleForModal(currentArt);
-                                  }}
-                                  className="absolute bottom-4 right-4 px-3.5 py-1.5 rounded-xl bg-slate-950/90 hover:bg-amber-500/20 border border-white/[0.1] hover:border-amber-500/40 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold transition-all backdrop-blur-md flex items-center gap-1.5 cursor-pointer shadow-xl z-20"
-                                >
-                                  <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>Open Publication Reader</span>
-                                </button>
-                              </div>
-
-                              {/* Right Article Details, Abstract & Insights */}
-                              <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
-                                <div className="space-y-4">
-                                  {/* Author Byline & Date */}
-                                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-400 border-b border-white/[0.04] pb-3">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-400/40 bg-slate-950 shrink-0">
-                                        {profile?.profileImage ? (
-                                          <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                          <span className="text-[10px] font-bold text-amber-400 flex items-center justify-center h-full">C</span>
-                                        )}
-                                      </div>
-                                      <div>
-                                        <span className="text-slate-200 font-bold block">{authorName}</span>
-                                        <span className="text-[10px] text-emerald-400 font-medium">Principal Systems Architect</span>
-                                      </div>
-                                    </div>
-                                    <span className="text-amber-400/90 font-bold">
-                                      {new Date(currentArt.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    </span>
-                                  </div>
-
-                                  {/* Article Title */}
-                                  <h3 
-                                    onClick={() => {
-                                      soundFx.playModalOpen();
-                                      setSelectedArticleForModal(currentArt);
-                                    }}
-                                    className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-amber-300 transition-colors tracking-tight leading-snug cursor-pointer font-serif"
-                                  >
-                                    {currentArt.title}
-                                  </h3>
-
-                                  {/* Excerpt */}
-                                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-                                    {excerptText}
-                                  </p>
-
-                                  {/* Interactive Executive Abstract Accordion Drawer */}
-                                  <div className="pt-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        soundFx.playClick();
-                                        setExpandedArticleId(isAbstractOpen ? null : currentArt.id);
-                                      }}
-                                      className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer"
-                                    >
-                                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                                      <span>{isAbstractOpen ? 'Hide Executive Summary' : '⚡ Read Executive Abstract'}</span>
-                                      {isAbstractOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                    </button>
-
-                                    <AnimatePresence>
-                                      {isAbstractOpen && (
-                                        <motion.div
-                                          initial={{ opacity: 0, height: 0 }}
-                                          animate={{ opacity: 1, height: 'auto' }}
-                                          exit={{ opacity: 0, height: 0 }}
-                                          transition={{ duration: 0.25, ease: 'easeOut' }}
-                                          className="overflow-hidden pt-3"
-                                        >
-                                          <div className="p-4 rounded-2xl bg-slate-950/80 border border-amber-500/20 text-xs text-slate-300 space-y-2 font-sans shadow-inner">
-                                            <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
-                                              Key Architectural Findings:
-                                            </span>
-                                            <p className="leading-relaxed text-slate-300">
-                                              This engineering study documents high-concurrency transactional optimization, microservice boundary modeling, and low-latency data access patterns verified in production scale.
-                                            </p>
-                                          </div>
-                                        </motion.div>
-                                      )}
-                                    </AnimatePresence>
-                                  </div>
-
-                                  {/* Tags & Topics */}
-                                  {currentArt.tags && currentArt.tags.length > 0 && (
-                                    <div className="space-y-1.5 pt-2">
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">Research Disciplines & Focus:</span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {currentArt.tags.map((tag: string, idx: number) => (
-                                          <span
-                                            key={idx}
-                                            className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-slate-950 border border-white/[0.08] text-slate-300 hover:border-amber-500/40 hover:text-amber-300 transition-colors"
-                                          >
-                                            #{tag}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.04]">
-                                  <button
-                                    onClick={() => {
-                                      soundFx.playModalOpen();
-                                      setSelectedArticleForModal(currentArt);
-                                    }}
-                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:opacity-90 text-slate-950 font-mono font-extrabold text-xs transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
-                                  >
-                                    <BookOpenCheck className="w-4 h-4" />
-                                    <span>Read Full Technical Publication</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => {
-                                      soundFx.playModalOpen();
-                                      setSelectedArticleForModal(currentArt);
-                                    }}
-                                    className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/[0.06] hover:border-amber-500/40 text-amber-400 hover:text-amber-300 transition-all flex items-center justify-center cursor-pointer shadow-md group"
-                                    title="View Publication"
-                                    aria-label="View Publication"
-                                  >
-                                    <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Journal Table of Contents / Volume Index Strip */}
-                  <div className="pt-2">
-                    <div className="flex items-center justify-between pb-2">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold flex items-center gap-2">
-                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                        <span>TABLE OF CONTENTS / JOURNAL EDITIONS:</span>
-                      </span>
-                      {isArticleHovered && (
+              {/* Interactive Category Filter Bar */}
+              {articleCategories.length > 1 && (
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {articleCategories.map((cat) => {
+                      const isActive = selectedArticleCategory === cat;
+                      const count =
+                        cat === "All"
+                          ? displayArticles.length
+                          : displayArticles.filter((a) => a.category === cat)
+                              .length;
+                      return (
                         <button
-                          onClick={() => setIsArticleHovered(false)}
-                          className="text-[10px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition-colors"
-                          title="Click to resume autoplay rotation"
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            soundFx.playTab(780);
+                            setSelectedArticleCategory(cat);
+                            setActiveArticleIndex(0);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                            isActive
+                              ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold shadow-md shadow-amber-500/20"
+                              : "bg-[#090814]/85 text-slate-300 hover:bg-slate-900 hover:text-amber-200 border border-white/[0.07]"
+                          }`}
                         >
-                          <Pause className="w-3 h-3" /> Auto-Turn Paused (Click to Resume)
+                          <span>{cat}</span>
+                          <span
+                            className={`text-[10px] tabular-nums ${
+                              isActive ? "text-slate-950/80" : "text-slate-500"
+                            }`}
+                          >
+                            ({count})
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {expandedArticleId !== null &&
+                      articleDisplayMode === "grid" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFx.playClick(760);
+                            setExpandedArticleId(null);
+                          }}
+                          className="text-xs font-mono text-slate-300 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Collapse Dossier</span>
                         </button>
                       )}
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {filteredArticles.map((art, idx) => {
-                        const isActive = activeArticleIndex === idx;
-                        return (
-                          <button
-                            key={art.id || idx}
-                            onClick={() => {
-                              soundFx.playTab(720 + idx * 40);
-                              setActiveArticleIndex(idx);
-                            }}
-                            className={`p-3 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2.5 ${
-                              isActive
-                                ? 'bg-slate-950 border-amber-400 shadow-xl shadow-amber-500/15 scale-[1.02] ring-1 ring-amber-500/30'
-                                : 'bg-slate-950/60 border-white/[0.06] hover:border-amber-500/30 hover:bg-slate-900/80'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between text-[10px] font-mono">
-                              <span className={`font-bold ${isActive ? 'text-amber-400' : 'text-slate-500'}`}>
-                                VOL. {String(idx + 1).padStart(2, '0')}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-slate-400">{art.readTimeMinutes || 5}m read</span>
-                                {isActive && (
-                                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="font-bold text-xs text-white line-clamp-1 font-serif">
-                              {art.title}
-                            </div>
-
-                            <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider line-clamp-1">
-                              {art.category || 'Architecture'}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {(selectedArticleCategory !== "All" ||
+                      showFeaturedArticlesOnly ||
+                      articleSearchQuery.trim() !== "") && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedArticleCategory("All");
+                          setShowFeaturedArticlesOnly(false);
+                          setArticleSearchQuery("");
+                          setActiveArticleIndex(0);
+                        }}
+                        className="text-xs font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Reset journal filters</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* ========================================================================= */}
-              {/* OPTION 2: ANIMATED ARTICLES GRID MODE                                     */}
+              {/* MODE 1: 2-COLUMN HORIZONTAL EDITORIAL JOURNAL SPREADS (DISTINCT FROM PROJECTS) */}
               {/* ========================================================================= */}
-              {articleDisplayMode === 'grid' && filteredArticles.length > 0 && (
-                <motion.div 
+              {articleDisplayMode === "grid" && filteredArticles.length > 0 && (
+                <motion.div
                   key="articles-grid-mode"
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch group/articles-grid"
                 >
                   {filteredArticles.map((art, aIdx) => {
-                    const coverImg = art.coverImageUrl || (art as any).coverImage || "";
-                    const excerptText = art.excerpt || (art as any).summary || "";
-                    const authorName = art.author || (art as any).authorName || "Chandru Mohan";
-                    const isFeatured = art.isFeatured ?? (art as any).featured ?? false;
-                    const readMins = art.readTimeMinutes || 5;
-
+                    const isExpanded = expandedArticleId === art.id;
                     return (
-                      <motion.article
+                      <motion.div
+                        layout="position"
                         key={art.id || `grid-art-${aIdx}`}
-                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                        initial={
+                          prefersReduced
+                            ? { opacity: 1, y: 0 }
+                            : { opacity: 0, y: 16 }
+                        }
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: Math.min(aIdx * 0.06, 0.35), ease: [0.16, 1, 0.3, 1] }}
-                        whileHover={prefersReduced ? {} : { 
-                          y: -8, 
-                          transition: { duration: 0.28, ease: 'easeOut' } 
+                        transition={{
+                          duration: 0.35,
+                          delay: Math.min(aIdx * 0.05, 0.25),
                         }}
-                        className={`rounded-2xl border flex flex-col justify-between overflow-hidden group transition-all duration-300 h-full relative cursor-pointer ${
-                          isFeatured
-                            ? 'border-amber-500/40 bg-gradient-to-b from-slate-900/95 via-[#0b0e17] to-slate-950/95 shadow-xl shadow-amber-500/10 hover:border-amber-400 hover:shadow-2xl hover:shadow-amber-500/25'
-                            : 'border-white/[0.08] border-l-[3px] border-l-amber-500/80 bg-gradient-to-b from-slate-900/85 via-[#0a0d15] to-slate-950/95 hover:border-amber-500/40 hover:border-l-amber-400 hover:shadow-2xl hover:shadow-amber-500/20'
+                        className={`h-full transition-opacity duration-300 ${
+                          isExpanded
+                            ? "xl:col-span-2 opacity-100"
+                            : "col-span-1 group-hover/articles-grid:opacity-80 hover:!opacity-100"
                         }`}
-                        style={{
-                          boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05)'
-                        }}
-                        onClick={() => setSelectedArticleForModal(art)}
                       >
-                        {/* Top Subtle Amber Sheen Line */}
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent group-hover:via-amber-400 transition-colors z-20" />
-
-                        {/* Card Cover Image with Editorial Overlay */}
-                        <div className="relative h-48 bg-slate-950 overflow-hidden shrink-0">
-                          {coverImg ? (
-                            <img
-                              src={coverImg}
-                              alt={art.title}
-                              className="w-full h-full object-cover group-hover:scale-106 group-hover:brightness-105 transition-all duration-700 opacity-90 group-hover:opacity-100"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
-                              <BookOpenCheck className="w-12 h-12 text-amber-400/40 mb-1" />
-                              <span className="text-[9px] font-mono text-amber-400/80 uppercase tracking-widest font-bold">Research Paper</span>
-                            </div>
-                          )}
-
-                          {/* Diagonal Silk Sheen Sweep on Hover */}
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden">
-                            <div className="w-[120%] h-[120%] bg-gradient-to-r from-transparent via-white/10 to-transparent animate-journal-sheen" />
-                          </div>
-
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/50 to-transparent pointer-events-none" />
-                          
-                          {/* Editorial Masthead Badges */}
-                          <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5 items-center z-10">
-                            <span className="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-slate-950/90 backdrop-blur-md text-amber-300 border border-amber-500/40 uppercase tracking-wider shadow-lg">
-                              {art.category || "Architecture"}
-                            </span>
-                            {isFeatured && (
-                              <span className="px-2.5 py-1 rounded-md text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 uppercase flex items-center gap-1 shadow-lg shadow-amber-500/30">
-                                <Sparkles className="w-3 h-3" />
-                                Editorial Choice
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Reading Time Tag */}
-                          <div className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 text-[10px] font-mono text-amber-200 bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-amber-500/30 shadow-md z-10">
-                            <Clock className="w-3 h-3 text-amber-400" />
-                            <span>{readMins} min read</span>
-                          </div>
-                        </div>
-
-                        {/* Card Body & Journal Metadata */}
-                        <div className="p-5 flex-1 flex flex-col justify-between gap-4 z-10">
-                          <div className="space-y-2.5">
-                            <div className="text-[9px] font-mono text-amber-400/90 uppercase tracking-widest font-bold flex items-center gap-2">
-                              <span>VOL. {String(aIdx + 1).padStart(2, '0')} // PUBLICATION</span>
-                              <span className="w-1 h-1 rounded-full bg-amber-400" />
-                              <span className="text-slate-400">
-                                {new Date(art.publishedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                              </span>
-                            </div>
-
-                            <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors leading-snug line-clamp-2 font-serif">
-                              {art.title}
-                            </h3>
-
-                            <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                              {excerptText}
-                            </p>
-                          </div>
-
-                          <div className="space-y-3 pt-3 border-t border-white/[0.06]">
-                            {/* Tags */}
-                            {art.tags && art.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {art.tags.slice(0, 3).map((tag, i) => (
-                                  <span key={i} className="text-[9px] font-mono text-amber-300/80 bg-amber-950/30 px-2 py-0.5 rounded border border-amber-500/20">
-                                    #{tag}
-                                  </span>
-                                ))}
-                                {art.tags.length > 3 && (
-                                  <span className="text-[9px] font-mono text-slate-500 px-1 py-0.5">
-                                    +{art.tags.length - 3}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Footer Action */}
-                            <div className="flex items-center justify-between pt-1">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full overflow-hidden border border-amber-400/50 bg-slate-950 shrink-0">
-                                  {profile?.profileImage ? (
-                                    <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
-                                  ) : (
-                                    <span className="text-[9px] font-bold text-amber-400 flex items-center justify-center h-full">C</span>
-                                  )}
-                                </div>
-                                <span className="text-[11px] font-medium text-slate-300 truncate">{authorName}</span>
-                              </div>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  soundFx.playModalOpen();
-                                  setSelectedArticleForModal(art);
-                                }}
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-all cursor-pointer group-hover:translate-x-1"
-                              >
-                                <BookOpen className="w-3.5 h-3.5" />
-                                <span>Read Paper</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.article>
+                        <ArticleMonographCard
+                          art={art}
+                          index={aIdx}
+                          prefersReduced={prefersReduced}
+                          isExpanded={isExpanded}
+                          onToggleExpand={(articleId) =>
+                            setExpandedArticleId((prev) =>
+                              prev === articleId ? null : articleId
+                            )
+                          }
+                          onOpenModal={(article) => {
+                            setArticleReaderProgress(0);
+                            setSelectedArticleForModal(article);
+                          }}
+                          onSelectTag={(tag) => {
+                            setArticleSearchQuery(tag);
+                            setActiveArticleIndex(0);
+                          }}
+                          profileAvatar={profile?.profileImage}
+                          soundFx={soundFx}
+                        />
+                      </motion.div>
                     );
                   })}
                 </motion.div>
               )}
 
+              {/* ========================================================================= */}
+              {/* MODE 2: INTERACTIVE SPLIT-PANE EDITORIAL READER WORKBENCH (100% MANUAL)  */}
+              {/* ========================================================================= */}
+              {articleDisplayMode === "showcase" &&
+                filteredArticles.length > 0 &&
+                (() => {
+                  const currentArt =
+                    filteredArticles[activeArticleIndex] || filteredArticles[0];
+                  if (!currentArt) return null;
+
+                  const coverImg =
+                    currentArt.coverImageUrl ||
+                    (currentArt as any).coverImage ||
+                    "";
+                  const excerptText =
+                    currentArt.excerpt || (currentArt as any).summary || "";
+                  const authorName =
+                    currentArt.author ||
+                    (currentArt as any).authorName ||
+                    "Chandru Mohan";
+                  const authorRoleText =
+                    currentArt.authorRole || "Principal Systems Architect";
+                  const readMins = currentArt.readTimeMinutes || 5;
+                  const currentTakeaways = Array.isArray(
+                    currentArt.keyTakeaways
+                  )
+                    ? currentArt.keyTakeaways.filter(Boolean)
+                    : [];
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                      {/* Left Column (4 cols): Publication Volume Index */}
+                      <div className="lg:col-span-4 space-y-2.5 lg:sticky lg:top-24">
+                        <div className="flex items-center justify-between px-2 pb-1 text-[11px] font-mono text-slate-400">
+                          <span>SELECT MONOGRAPH ISSUE</span>
+                          <span className="tabular-nums text-amber-400 font-bold">
+                            {String(activeArticleIndex + 1).padStart(2, "0")} /{" "}
+                            {String(filteredArticles.length).padStart(2, "0")}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1 custom-scrollbar">
+                          {filteredArticles.map((art, idx) => {
+                            const isSelected = activeArticleIndex === idx;
+                            return (
+                              <button
+                                key={art.id || idx}
+                                type="button"
+                                onClick={() => {
+                                  soundFx.playTab(740 + idx * 30);
+                                  setActiveArticleIndex(idx);
+                                }}
+                                className={`w-full p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3.5 ${
+                                  isSelected
+                                    ? "bg-[#110e1f]/95 border-amber-400/60 shadow-lg shadow-amber-500/10"
+                                    : "bg-slate-950/60 border-white/[0.06] hover:border-amber-500/30 hover:bg-slate-900/50"
+                                }`}
+                              >
+                                <span
+                                  className={`text-xs font-mono font-bold tabular-nums mt-0.5 ${
+                                    isSelected
+                                      ? "text-amber-400"
+                                      : "text-slate-500"
+                                  }`}
+                                >
+                                  §{String(idx + 1).padStart(2, "0")}
+                                </span>
+
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4
+                                      className={`text-sm font-bold truncate ${
+                                        isSelected
+                                          ? "text-white"
+                                          : "text-slate-200"
+                                      }`}
+                                    >
+                                      {art.title}
+                                    </h4>
+                                    {art.isFeatured && (
+                                      <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+                                    <span className="text-amber-300/90">
+                                      {art.category || "System Design"}
+                                    </span>
+                                    <span aria-hidden="true">·</span>
+                                    <span>{art.readTimeMinutes || 5}m read</span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Right Column (8 cols): Interactive Editorial Monograph Reader Pane */}
+                      <div className="lg:col-span-8">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={
+                              currentArt.id || `art-explorer-${activeArticleIndex}`
+                            }
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -12 }}
+                            transition={{
+                              duration: 0.25,
+                              ease: [0.16, 1, 0.3, 1],
+                            }}
+                            className="glass-card rounded-3xl border border-amber-500/25 bg-gradient-to-br from-[#0d0a1a]/95 via-slate-950/95 to-[#080d1a]/95 overflow-hidden shadow-2xl"
+                          >
+                            {/* Workbench Top Chrome */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 bg-slate-950/90 border-b border-amber-500/15">
+                              <div className="flex items-center gap-2 text-xs font-mono">
+                                <span className="text-amber-400 font-bold tabular-nums">
+                                  ISSUE{" "}
+                                  {String(activeArticleIndex + 1).padStart(
+                                    2,
+                                    "0"
+                                  )}
+                                </span>
+                                <span className="text-slate-600">/</span>
+                                <span className="text-slate-300">
+                                  {currentArt.slug || currentArt.category}
+                                </span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundFx.playModalOpen();
+                                  setArticleReaderProgress(0);
+                                  setSelectedArticleForModal(currentArt);
+                                }}
+                                className="px-3 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-xs font-mono font-bold text-amber-300 transition cursor-pointer"
+                              >
+                                Fullscreen Manuscript Reader
+                              </button>
+                            </div>
+
+                            {/* Cover Banner */}
+                            {coverImg && (
+                              <div className="relative h-56 sm:h-64 w-full bg-slate-950 overflow-hidden border-b border-white/[0.06]">
+                                <img
+                                  src={coverImg}
+                                  alt={currentArt.title}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
+                              </div>
+                            )}
+
+                            {/* Monograph Body */}
+                            <div className="p-6 sm:p-8 space-y-6">
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400">
+                                  <span className="text-amber-400 font-semibold">
+                                    {currentArt.category || "System Design"}
+                                  </span>
+                                  <span aria-hidden="true">·</span>
+                                  <span>{readMins} min read</span>
+                                  {currentArt.readingDifficulty && (
+                                    <>
+                                      <span aria-hidden="true">·</span>
+                                      <span className="text-indigo-300">
+                                        {currentArt.readingDifficulty}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                                  {currentArt.title}
+                                </h3>
+
+                                <div className="flex items-center gap-2 text-xs font-mono text-slate-400 pt-1">
+                                  <span>
+                                    By{" "}
+                                    <strong className="text-white">
+                                      {authorName}
+                                    </strong>{" "}
+                                    ({authorRoleText})
+                                  </span>
+                                </div>
+                              </div>
+
+                              <p className="text-sm text-slate-300 leading-relaxed font-serif italic border-l-2 border-amber-400/50 pl-4">
+                                &ldquo;{excerptText}&rdquo;
+                              </p>
+
+                              {(currentArt.executiveSummary ||
+                                currentTakeaways.length > 0) && (
+                                <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/25 space-y-2.5">
+                                  <div className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
+                                    Executive Abstract &amp; Architectural Takeaways
+                                  </div>
+                                  {currentArt.executiveSummary && (
+                                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                                      {currentArt.executiveSummary}
+                                    </p>
+                                  )}
+                                  {currentTakeaways.length > 0 && (
+                                    <ul className="space-y-1.5 pt-1">
+                                      {currentTakeaways.map((tk, idx) => (
+                                        <li
+                                          key={idx}
+                                          className="text-xs sm:text-sm text-slate-300 flex items-start gap-2.5"
+                                        >
+                                          <span className="text-amber-400 font-mono font-bold">
+                                            §0{idx + 1}
+                                          </span>
+                                          <span>{tk}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Footer Actions & Manual Prev/Next */}
+                              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/[0.06]">
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      soundFx.playModalOpen();
+                                      setArticleReaderProgress(0);
+                                      setSelectedArticleForModal(currentArt);
+                                    }}
+                                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-mono font-bold text-xs transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <BookOpenCheck className="w-4 h-4" />
+                                    <span>Open Full Manuscript</span>
+                                  </button>
+
+                                  {currentArt.externalUrl && (
+                                    <a
+                                      href={currentArt.externalUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.08] hover:border-amber-500/40 text-slate-200 hover:text-amber-300 text-xs font-mono font-semibold transition-colors flex items-center gap-2"
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>Canonical Source</span>
+                                    </a>
+                                  )}
+                                </div>
+
+                                {filteredArticles.length > 1 && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        soundFx.playClick(950);
+                                        setActiveArticleIndex((prev) =>
+                                          prev === 0
+                                            ? filteredArticles.length - 1
+                                            : prev - 1
+                                        );
+                                      }}
+                                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 transition cursor-pointer"
+                                      title="Previous Publication"
+                                    >
+                                      <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        soundFx.playClick(1100);
+                                        setActiveArticleIndex(
+                                          (prev) =>
+                                            (prev + 1) % filteredArticles.length
+                                        );
+                                      }}
+                                      className="p-2 rounded-xl border border-white/[0.08] bg-slate-900 hover:border-amber-500/40 text-slate-300 hover:text-amber-400 transition cursor-pointer"
+                                      title="Next Publication"
+                                    >
+                                      <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               {/* Empty State when filter query yields zero articles */}
               {filteredArticles.length === 0 && (
-                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
-                  <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-300">No matching articles found</h3>
+                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-amber-500/20">
+                  <BookOpen className="w-10 h-10 text-amber-400/60 mx-auto mb-3" />
+                  <h3 className="text-sm font-semibold text-slate-200">
+                    No matching monographs found
+                  </h3>
                   <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    No publications match your filter query. Try searching for different keywords or reset the filter.
+                    No publications match your filter query. Try searching for different keywords or reset the journal filter.
                   </p>
-                  {(articleSearchQuery || selectedArticleCategory !== 'All') && (
-                    <button
-                      onClick={() => {
-                        setSelectedArticleCategory('All');
-                        setArticleSearchQuery('');
-                        setActiveArticleIndex(0);
-                      }}
-                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                    >
-                      Reset Filters
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedArticleCategory("All");
+                      setShowFeaturedArticlesOnly(false);
+                      setArticleSearchQuery("");
+                      setActiveArticleIndex(0);
+                    }}
+                    className="mt-4 px-4 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs font-mono font-medium hover:bg-amber-500/25 transition-colors cursor-pointer"
+                  >
+                    Reset Journal Filters
+                  </button>
                 </div>
               )}
             </motion.section>
           )}
 
-          {/* Coding Profiles Section */}
+          {/* Coding Profiles & Algorithmic Telemetry Section */}
           <motion.section 
             id="coding-profiles" 
             className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={sectionVariants}
           >
-            {/* Header & Filter Controls */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">CODING PROFILES & ALGORITHMS</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+            {/* Ambient Neon Illumination */}
+            <div className="pointer-events-none absolute -top-20 left-1/4 w-96 h-96 bg-purple-500/[0.06] rounded-full blur-[130px] -z-10" />
+            <div className="pointer-events-none absolute top-1/3 right-12 w-80 h-80 bg-emerald-500/[0.06] rounded-full blur-[120px] -z-10" />
+
+            {/* Header, Search & Filter Controls */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-5 border-b border-white/[0.06]">
+              <div className="space-y-2.5 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Code2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-[0.16em] font-bold">
+                    {profile?.codingProfilesBadge || "CODING PROFILES & ALGORITHMIC TELEMETRY"}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-emerald-400" />
-                    <span>{codingProfiles.length} Developer Tracks</span>
+                    <span>{filteredCodingProfiles.length} Verified Arenas</span>
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
-                  Competitive Programming & Repos
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury bg-gradient-to-r from-white via-slate-100 to-emerald-300 bg-clip-text text-transparent tracking-tight">
+                  {profile?.codingProfilesHeading || "Competitive Programming & Open-Source Velocity"}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
-                  Verified developer profiles across algorithmic problem-solving ecosystems, open-source communities, and competitive benchmarks.
+                <p className="text-xs sm:text-sm text-slate-400 font-sans leading-relaxed">
+                  {profile?.codingProfilesSubtitle ||
+                    "Live algorithmic benchmarks, data-structure problem velocity, submission heatmaps, and open-source repository contributions across global developer platforms."}
                 </p>
-                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-amber-400 to-transparent rounded-full" />
+                <div className="h-1 w-20 bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-400 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
               </div>
 
-              {/* Interactive Platform Filter Pills */}
-              {codingPlatformCategories.length > 2 && (
-                <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
+              {/* Search & Featured Filter Bar */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative w-full sm:w-64 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={codingProfileSearchQuery}
+                    onChange={(e) => setCodingProfileSearchQuery(e.target.value)}
+                    placeholder="Search handle, platform, language..."
+                    className="w-full bg-slate-900/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-500"
+                  />
+                  {codingProfileSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCodingProfileSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playToggle(!showFeaturedCodingProfilesOnly);
+                    setShowFeaturedCodingProfilesOnly((prev) => !prev);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                    showFeaturedCodingProfilesOnly
+                      ? "bg-amber-500/15 border-amber-400/50 text-amber-300 shadow-lg shadow-amber-500/10"
+                      : "bg-slate-900/90 border-white/[0.08] text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Featured Arenas</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive Platform Filter Pills & Collapse Control */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              {codingPlatformCategories.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar sm:flex-wrap p-1.5 rounded-2xl bg-slate-950/85 border border-white/[0.08] backdrop-blur-xl shadow-xl w-full sm:w-auto">
                   {codingPlatformCategories.map((cat) => {
                     const isActive = selectedCodingPlatformFilter === cat;
+                    const count =
+                      cat === "All"
+                        ? codingProfiles.length
+                        : codingProfiles.filter(
+                            (p) => (p.platformType || p.displayName) === cat
+                          ).length;
                     return (
                       <button
                         key={cat}
                         type="button"
                         onClick={() => {
                           setSelectedCodingPlatformFilter(cat);
-                          soundFx.playClick();
+                          soundFx.playTab(820);
                         }}
-                        className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                           isActive
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25"
+                            : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
                         }`}
                       >
                         <span>{cat}</span>
-                        {cat === 'All' && <span className="text-[10px] opacity-70">({codingProfiles.length})</span>}
+                        <span
+                          className={`text-[10px] tabular-nums ${
+                            isActive ? "text-slate-950/80" : "text-slate-500"
+                          }`}
+                        >
+                          ({count})
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               )}
-            </div>
 
-            {/* Grid Layout for Coding Profile Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 font-sans">
-              {filteredCodingProfiles.map((p, pIdx) => {
-                const IconComponent = getCodingPlatformIconComponent(p.platformType);
-                const isCopied = copiedHandleKey === `handle-${p.id}`;
-                
-                // Platform Theme Configs
-                const isLeetCode = p.platformType === 'LeetCode';
-                const isGitHub = p.platformType === 'GitHub';
-                const isGFG = p.platformType === 'GeeksforGeeks';
-                const isCodeforces = p.platformType === 'Codeforces';
-                const isCodeChef = p.platformType === 'CodeChef';
-                const isHackerRank = p.platformType === 'HackerRank';
-
-                const themeAccent = p.featured
-                  ? 'border-amber-500/40 hover:border-amber-400 shadow-amber-500/10 hover:shadow-amber-500/20'
-                  : isLeetCode ? 'border-amber-500/30 hover:border-amber-400 shadow-amber-500/10'
-                  : isGitHub ? 'border-purple-500/30 hover:border-purple-400 shadow-purple-500/10'
-                  : isGFG ? 'border-emerald-500/30 hover:border-emerald-400 shadow-emerald-500/10'
-                  : isCodeforces ? 'border-red-500/30 hover:border-red-400 shadow-red-500/10'
-                  : isCodeChef ? 'border-amber-700/30 hover:border-amber-600 shadow-amber-700/10'
-                  : isHackerRank ? 'border-teal-500/30 hover:border-teal-400 shadow-teal-500/10'
-                  : 'border-white/[0.06] hover:border-emerald-500/40';
-
-                return (
-                  <motion.div
-                    key={p.id}
-                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.45, delay: Math.min(pIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                    whileHover={prefersReduced ? {} : { y: -6, scale: 1.015 }}
-                    onMouseEnter={() => soundFx.playHover()}
-                    className={`relative backdrop-blur-xl border rounded-2xl p-5 sm:p-6 bg-slate-900/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col justify-between group shadow-xl overflow-hidden ${themeAccent}`}
+              <div className="flex items-center gap-3">
+                {expandedCodingProfileId !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playClick(740);
+                      setExpandedCodingProfileId(null);
+                    }}
+                    className="text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
                   >
-                    {/* Ambient Glow Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                    <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Collapse Active Dossier</span>
+                  </button>
+                )}
 
-                    {/* Featured / Live Active Badge */}
-                    <div className="flex items-center justify-between gap-2 mb-4">
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-950/80 border border-white/[0.08] text-[9px] font-mono text-slate-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Verified Account</span>
-                      </div>
-
-                      {p.featured && (
-                        <div className="flex items-center gap-1 px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[10px] font-mono font-bold uppercase rounded-md tracking-wider shadow-sm">
-                          <Flame className="w-3 h-3 text-amber-400 animate-pulse" />
-                          <span>Featured</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      {/* Card Platform Header */}
-                      <div className="flex items-start gap-3.5 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-950 border border-white/[0.08] flex items-center justify-center p-2.5 shrink-0 transition-transform group-hover:scale-110 group-hover:rotate-6 duration-300 shadow-md group-hover:border-emerald-500/40">
-                          {p.logoUrl ? (
-                            <img 
-                              src={p.logoUrl} 
-                              alt={p.displayName} 
-                              className="w-full h-full object-contain" 
-                              referrerPolicy="no-referrer"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <IconComponent className="w-6 h-6 text-emerald-400" />
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-base font-extrabold text-white font-luxury tracking-wide truncate group-hover:text-emerald-300 transition-colors">
-                            {p.displayName}
-                          </h3>
-                          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest block font-bold">
-                            {p.platformType || 'Algorithm Platform'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Username / Handle with Copy Button */}
-                      <div className="bg-slate-950/80 border border-white/[0.06] group-hover:border-emerald-500/30 rounded-xl p-2.5 sm:p-3 mb-4 font-mono transition-colors flex items-center justify-between gap-2 shadow-inner">
-                        <div className="min-w-0 flex-1">
-                          <span className="text-[9px] text-slate-500 uppercase tracking-widest block font-bold">Handle</span>
-                          <span className="text-xs sm:text-sm font-bold text-slate-200 truncate block group-hover:text-emerald-300 transition-colors">
-                            {p.username}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(p.username);
-                            setCopiedHandleKey(`handle-${p.id}`);
-                            soundFx.playSuccess();
-                            setTimeout(() => setCopiedHandleKey(null), 2200);
-                          }}
-                          aria-label={`Copy handle ${p.username}`}
-                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
-                            isCopied
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
-                              : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-white/[0.06]'
-                          }`}
-                        >
-                          {isCopied ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-400" />
-                              <span className="text-[9px] font-bold">Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3 text-slate-400" />
-                              <span className="text-[9px]">Copy</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Description / Highlights */}
-                      {p.description && (
-                        <div className="mb-4 px-3 py-2 bg-white/[0.02] border border-white/[0.04] rounded-xl text-xs text-slate-400 leading-relaxed flex items-start gap-2">
-                          <span className="text-emerald-400 text-xs mt-0.5">▹</span>
-                          <p className="flex-1 font-mono text-[11px] font-medium text-slate-300">
-                            {p.description}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Button */}
-                    <a
-                      href={p.profileUrl}
-                      target={p.openInNewTab !== false ? "_blank" : "_self"}
-                      rel="noopener noreferrer"
-                      onClick={() => soundFx.playClick()}
-                      aria-label={`Visit ${p.displayName || p.platformType || 'Coding'} Profile of ${p.username}`}
-                      className="w-full py-2.5 bg-slate-950/90 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 hover:text-slate-950 border border-white/[0.08] hover:border-emerald-400 text-center font-mono text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2 cursor-pointer text-slate-300 shadow-md group-hover:shadow-emerald-500/20"
-                    >
-                      <span>Visit Live Profile</span>
-                      <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </a>
-                  </motion.div>
-                );
-              })}
+                {(selectedCodingPlatformFilter !== "All" ||
+                  showFeaturedCodingProfilesOnly ||
+                  codingProfileSearchQuery.trim() !== "") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCodingPlatformFilter("All");
+                      setShowFeaturedCodingProfilesOnly(false);
+                      setCodingProfileSearchQuery("");
+                    }}
+                    className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reset filters</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* 3D Interactive Coding Profile Spotlight Cards Grid */}
+            {filteredCodingProfiles.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-sans items-stretch group/coding-grid">
+                {filteredCodingProfiles.map((p, pIdx) => {
+                  const isExpanded = expandedCodingProfileId === p.id;
+                  return (
+                    <motion.div
+                      layout="position"
+                      key={p.id || `coding-prof-${pIdx}`}
+                      className={`h-full transition-opacity duration-300 ${
+                        isExpanded
+                          ? "md:col-span-2 lg:col-span-3 opacity-100"
+                          : "col-span-1 group-hover/coding-grid:opacity-80 hover:!opacity-100"
+                      }`}
+                    >
+                      <CodingProfileSpotlightCard
+                        profile={p}
+                        index={pIdx}
+                        prefersReduced={prefersReduced}
+                        isExpanded={isExpanded}
+                        onToggleExpand={(id) =>
+                          setExpandedCodingProfileId((prev) =>
+                            prev === id ? null : id
+                          )
+                        }
+                        soundFx={soundFx}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.06] space-y-3">
+                <Code2 className="w-10 h-10 text-slate-600 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-300">
+                  No matching coding profiles found
+                </h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  No coding platforms match your current search or filter criteria.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCodingPlatformFilter("All");
+                    setShowFeaturedCodingProfilesOnly(false);
+                    setCodingProfileSearchQuery("");
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                >
+                  Reset Coding Profile Filters
+                </button>
+              </div>
+            )}
           </motion.section>
 
           {/* Skill Matrix Section */}
@@ -4387,307 +6276,17 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             className="space-y-8 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={sectionVariants}
           >
             <div id="techstack" className="absolute -top-24" />
-            
-            {/* Header with Title and Search/Sort Controls */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">COMPETENCY LEDGER & SYSTEM CAPABILITIES</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-400" />
-                    <span>{filteredSkills.length} Technologies</span>
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
-                  Expertise & Core Competencies
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
-                  Deep technical proficiency across enterprise backend architectures, reactive frontends, distributed databases, and cloud systems.
-                </p>
-                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
-              </div>
-
-              {/* Real-time Search and Sort Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                {/* Search Bar */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={skillSearchQuery}
-                    onChange={(e) => setSkillSearchQuery(e.target.value)}
-                    placeholder="Search skills, tags, tech..."
-                    className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
-                  />
-                  {skillSearchQuery && (
-                    <button
-                      onClick={() => setSkillSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Sort Toggle */}
-                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSkillSortMode('default');
-                      soundFx.playClick();
-                    }}
-                    className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                      skillSortMode === 'default'
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="System Priority Order"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span>Featured</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSkillSortMode('name');
-                      soundFx.playClick();
-                    }}
-                    className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                      skillSortMode === 'name'
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="Sort Alphabetically"
-                  >
-                    <ArrowUpDown className="w-3 h-3" />
-                    <span>A-Z</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Categorization controls */}
-            <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
-              {skillCategories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedSkillCategory(cat);
-                    soundFx.playClick();
-                  }}
-                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
-                    selectedSkillCategory === cat 
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                  }`}
-                >
-                  <span>{cat}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Skills Grid */}
-            <motion.div 
-              key={`skills-grid-${selectedSkillCategory}-${skillSearchQuery}-${skillSortMode}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
-            >
-              {filteredSkills.map((skill, sIdx) => {
-                const itemColor = skill.color || '#10b981';
-                
-                // Determine continuous / hover animation styles
-                const isPulse = skill.animation === 'Pulse';
-                const isSpin = skill.animation === 'Spin Slow';
-                const isGlow = skill.animation === 'Glow';
-
-                // Professional Tier & Category classification
-                const sName = (skill.name || '').toLowerCase();
-                const sCat = (skill.category || '').toLowerCase();
-                let tierTag = 'Core Stack';
-                let tierPill = 'Production Ready';
-                let tierBadgeColor = itemColor;
-                let capabilityChips = ['Enterprise Ready', 'Clean Architecture', 'Production SLA'];
-
-                if (sName.includes('java') || sName.includes('spring boot') || sName.includes('architect')) {
-                  tierTag = 'Architect Tier';
-                  tierPill = 'Core System';
-                  tierBadgeColor = '#10b981';
-                  capabilityChips = ['Spring Cloud', 'JVM 21', 'Microservices'];
-                } else if (sName.includes('security') || sName.includes('jwt')) {
-                  tierTag = 'Security & Auth';
-                  tierPill = 'Zero-Trust';
-                  tierBadgeColor = '#10b981';
-                  capabilityChips = ['OAuth2.0 / JWT', 'RBAC Security', 'Stateless Auth'];
-                } else if (sName.includes('sql') || sName.includes('postgres') || sName.includes('redis') || sName.includes('kafka') || sName.includes('mysql') || sName.includes('hibernate')) {
-                  tierTag = 'High Throughput';
-                  tierPill = 'Distributed Scale';
-                  tierBadgeColor = '#06b6d4';
-                  capabilityChips = ['ACID Transactions', 'Index Tuning', 'JPA 3NF Mapping'];
-                } else if (sName.includes('react') || sName.includes('next')) {
-                  tierTag = 'Modern Reactive';
-                  tierPill = 'Enterprise UI';
-                  tierBadgeColor = '#3b82f6';
-                  capabilityChips = ['SSR / React 19', 'Custom State Hooks', 'Fluid Motion'];
-                } else if (sName.includes('typescript') || sName.includes('javascript')) {
-                  tierTag = 'Type Architecture';
-                  tierPill = 'Strict Mode';
-                  tierBadgeColor = '#38bdf8';
-                  capabilityChips = ['Type-Safe Models', 'ESNext Pipelines', 'Clean Code'];
-                } else if (sName.includes('tailwind') || sName.includes('css')) {
-                  tierTag = 'Design System';
-                  tierPill = 'Custom Tokens';
-                  tierBadgeColor = '#38bdf8';
-                  capabilityChips = ['Glassmorphism', 'Dark Themes', 'Responsive 3NF'];
-                } else if (sName.includes('docker') || sName.includes('aws') || sName.includes('kubernetes') || sName.includes('cloud') || sName.includes('ci/cd')) {
-                  tierTag = 'Cloud Native';
-                  tierPill = 'DevOps & Infra';
-                  tierBadgeColor = '#a855f7';
-                  capabilityChips = ['Container Pods', 'CI/CD Pipelines', 'Zero Downtime'];
-                } else if (sName.includes('cloudinary')) {
-                  tierTag = 'Media Pipeline';
-                  tierPill = 'CDN Edge';
-                  tierBadgeColor = '#6366f1';
-                  capabilityChips = ['Global CDN', 'WebP Transcoding', 'Signed URLs'];
-                }
-
-                return (
-                  <motion.div 
-                    key={skill.id || `skill-${sIdx}`} 
-                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.35, delay: Math.min(sIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
-                    whileHover={prefersReduced ? {} : { 
-                      y: -7, 
-                      scale: 1.025,
-                      transition: { duration: 0.2, ease: 'easeOut' }
-                    }}
-                    onMouseEnter={() => soundFx.playHover()}
-                    onClick={() => {
-                      setSelectedSkillForModal(skill);
-                      soundFx.playModalOpen();
-                    }}
-                    className={`glass-card rounded-2xl p-5 border border-white/[0.08] hover:border-emerald-500/50 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between gap-4 relative overflow-hidden group bg-gradient-to-b from-slate-900/90 via-slate-950/95 to-slate-900/90 cursor-pointer shadow-lg ${
-                      isPulse ? 'animate-pulse' : ''
-                    }`}
-                    style={{
-                      boxShadow: isGlow ? `0 0 24px ${itemColor}25` : undefined
-                    }}
-                  >
-                    {/* Top Right Ambient Neon Flare */}
-                    <div 
-                      className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-0 group-hover:opacity-25 transition-opacity duration-300 pointer-events-none blur-2xl"
-                      style={{ background: itemColor }}
-                    />
-
-                    {/* Top Row: Icon, Title & Category */}
-                    <div className="space-y-3 relative z-10">
-                      <div className="flex items-center justify-between gap-3">
-                        <div 
-                          className="w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 overflow-hidden bg-slate-950 p-2.5 shadow-inner"
-                          style={{ 
-                            borderColor: `${itemColor}45`,
-                            boxShadow: `0 0 14px ${itemColor}25`
-                          }}
-                        >
-                          <SkillMediaRenderer 
-                            src={skill.iconUrl} 
-                            fallbackIcon={skill.iconName || 'Code2'} 
-                            fallbackColor={itemColor} 
-                            isSpin={isSpin} 
-                            alt={skill.name} 
-                          />
-                        </div>
-
-                        <span 
-                          className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 transition-colors"
-                          style={{
-                            backgroundColor: `${tierBadgeColor}15`,
-                            color: tierBadgeColor,
-                            border: `1px solid ${tierBadgeColor}35`
-                          }}
-                        >
-                          {tierPill}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="font-extrabold text-white text-base sm:text-lg tracking-tight group-hover:text-emerald-300 transition-colors truncate" title={skill.name}>
-                          {skill.name}
-                        </h3>
-                        <span className="text-[10px] font-mono block uppercase tracking-widest font-semibold mt-0.5" style={{ color: itemColor }}>
-                          {skill.category}
-                        </span>
-                      </div>
-
-                      {skill.description && (
-                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2 font-sans">
-                          {skill.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Architectural Capability Chips */}
-                    <div className="space-y-2.5 relative z-10 pt-2 border-t border-white/[0.05]">
-                      <div className="flex flex-wrap gap-1.5">
-                        {capabilityChips.map((chip, cIdx) => (
-                          <span 
-                            key={cIdx}
-                            className="px-2 py-0.5 rounded-md text-[9px] font-mono font-medium bg-slate-950/80 text-slate-300 border border-white/[0.06] shadow-sm"
-                          >
-                            {chip}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Bottom Live Status Bar */}
-                      <div className="flex items-center justify-between text-[10px] font-mono pt-1 text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <span className="relative flex h-2 w-2 shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          <span className="font-bold text-slate-300">{tierTag}</span>
-                        </div>
-
-                        <span className="text-[9px] text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
-                          <span>Specs</span>
-                          <span>↗</span>
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-
-            {/* Empty Search Result Fallback */}
-            {filteredSkills.length === 0 && (
-              <div className="text-center py-12 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04] space-y-3">
-                <Code2 className="w-10 h-10 text-slate-600 mx-auto" />
-                <h4 className="text-sm font-bold text-slate-300">No matching technical skills found</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Try searching for different keywords or reset your category filters.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSkillSearchQuery('');
-                    setSelectedSkillCategory('All');
-                  }}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                >
-                  Reset Skill Filters
-                </button>
-              </div>
-            )}
+            <SkillsArchitectureShowcase
+              skills={skills}
+              projects={projects}
+              prefersReduced={prefersReduced}
+              onSelectSkillForModal={(skill) => setSelectedSkillForModal(skill)}
+              soundFx={soundFx}
+            />
           </motion.section>
 
           {/* Tools & Technologies Section */}
@@ -4697,250 +6296,15 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               className="space-y-8 scroll-mt-24 relative"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, amount: 0.01, margin: "120px" }}
               variants={sectionVariants}
             >
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">ECOSYSTEM TOOLS & STACK UTILITIES</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <Wrench className="w-3 h-3 text-emerald-400" />
-                      <span>{filteredTools.length} {filteredTools.length === 1 ? 'Tool' : 'Tools'}</span>
-                    </span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
-                    Tools & Technologies
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
-                    Frameworks, IDEs, databases, development platforms, and specialized tools utilized across high-scale distributed systems and responsive web engineering.
-                  </p>
-                  <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
-                </div>
-
-                {/* Real-time Search and Sort Bar */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  {/* Search Bar */}
-                  <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={toolSearchQuery}
-                      onChange={(e) => setToolSearchQuery(e.target.value)}
-                      placeholder="Search tools, platforms..."
-                      className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
-                    />
-                    {toolSearchQuery && (
-                      <button
-                        onClick={() => setToolSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Sort Toggles */}
-                  <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-white/[0.08] text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolSortMode('featured');
-                        soundFx.playClick();
-                      }}
-                      className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                        toolSortMode === 'featured'
-                          ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Featured Tools First"
-                    >
-                      <Star className="w-3 h-3" />
-                      <span>Featured</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolSortMode('name');
-                        soundFx.playClick();
-                      }}
-                      className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                        toolSortMode === 'name'
-                          ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="Sort Alphabetically"
-                    >
-                      <ArrowUpDown className="w-3 h-3" />
-                      <span>A-Z</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Category Filter Pills */}
-              {toolCategories.length > 1 && (
-                <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
-                  {toolCategories.map((cat) => {
-                    const isActive = selectedToolCategory === cat;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          setSelectedToolCategory(cat);
-                          soundFx.playClick();
-                        }}
-                        className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
-                          isActive
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                        }`}
-                      >
-                        <span>{cat}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Empty state if search/filter produces no items */}
-              {filteredTools.length === 0 ? (
-                <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
-                  <Wrench className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-slate-300">No matching tools found</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    No software tools match your current filter query. Try searching for another keyword or resetting the category filter.
-                  </p>
-                  {(toolSearchQuery || selectedToolCategory !== 'All') && (
-                    <button
-                      onClick={() => {
-                        setSelectedToolCategory('All');
-                        setToolSearchQuery('');
-                      }}
-                      className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                    >
-                      Reset Filters
-                    </button>
-                  )}
-                </div>
-              ) : (
-                /* Tools Cards Grid with Staggered Motion */
-                <motion.div 
-                  key={`tools-grid-${selectedToolCategory}-${toolSearchQuery}-${toolSortMode}`}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35 }}
-                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5"
-                >
-                  {filteredTools.map((tool, tIdx) => {
-                    const brandColor = tool.brandColor || '#10B981';
-
-                    return (
-                      <motion.div
-                        key={tool.id || `tool-${tIdx}`}
-                        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 15, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 0.35, delay: Math.min(tIdx * 0.03, 0.3), ease: [0.16, 1, 0.3, 1] }}
-                        whileHover={prefersReduced ? {} : { 
-                          y: -7, 
-                          scale: 1.025,
-                          transition: { duration: 0.2, ease: "easeOut" } 
-                        }}
-                        onMouseEnter={() => soundFx.playHover()}
-                        onClick={() => {
-                          setSelectedToolForModal(tool);
-                          soundFx.playModalOpen();
-                        }}
-                        className="group relative bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-4 sm:p-5 hover:border-emerald-500/50 hover:bg-slate-900/90 transition-all duration-300 flex flex-col justify-between shadow-lg overflow-hidden cursor-pointer"
-                        style={{
-                          boxShadow: tool.hasGlow ? `0 0 24px -6px ${brandColor}30` : undefined
-                        }}
-                      >
-                        {/* Top Ambient Glow */}
-                        <div 
-                          className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none rounded-2xl"
-                          style={{ background: `radial-gradient(circle at top right, ${brandColor}, transparent 70%)` }}
-                        />
-
-                        <div className="space-y-2.5 sm:space-y-3 relative z-10">
-                          {/* Header: Icon + Category Badge + Star if featured */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div 
-                              className="p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300 shrink-0 shadow-inner bg-slate-950"
-                              style={{ 
-                                borderColor: tool.borderColor || `${brandColor}40`,
-                                borderWidth: '1px',
-                                boxShadow: `0 0 12px ${brandColor}20`
-                              }}
-                            >
-                              <ToolIconRenderer tool={tool} />
-                            </div>
-                            <div className="flex items-center gap-1 flex-wrap justify-end min-w-0">
-                              {tool.isFeatured && (
-                                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[9px] font-bold flex items-center gap-1 shadow-sm shrink-0" title="Core Ecosystem Tool">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400" />
-                                  <span>Core</span>
-                                </span>
-                              )}
-                              {tool.category && (
-                                <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-mono tracking-wider font-semibold uppercase bg-slate-800/90 text-slate-300 border border-white/[0.08] truncate">
-                                  {tool.category}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Tool Name & Description */}
-                          <div>
-                            <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1 truncate" title={tool.name}>
-                              {tool.name}
-                            </h3>
-                            {tool.description && (
-                              <p className="text-[10px] sm:text-xs text-slate-400 leading-relaxed mt-1 line-clamp-2 font-sans">
-                                {tool.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Footer Meta & Website Link */}
-                        <div className="pt-2.5 mt-3 border-t border-white/[0.05] flex items-center justify-between text-[10px] font-mono text-slate-400 relative z-10">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="relative flex h-2 w-2 shrink-0">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-slate-300 font-bold truncate">
-                              {tool.experienceLevel || 'Production Tool'}
-                            </span>
-                          </div>
-
-                          {tool.officialWebsite ? (
-                            <a
-                              href={tool.officialWebsite}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors py-0.5 px-2 rounded-lg bg-white/[0.04] hover:bg-emerald-500/10 shrink-0 font-bold"
-                              title={`Visit ${tool.name} official website`}
-                              aria-label={`Visit ${tool.name} official website`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                soundFx.playClick();
-                              }}
-                            >
-                              <span>Website</span>
-                              <ExternalLink className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </a>
-                          ) : (
-                            <span className="text-[9px] text-slate-500 font-mono">Specs ↗</span>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              )}
+              <ToolsEcosystemWorkbench
+                tools={tools.length > 0 ? tools : initialTools}
+                prefersReduced={prefersReduced}
+                onSelectToolForModal={(tool) => setSelectedToolForModal(tool)}
+                soundFx={soundFx}
+              />
             </motion.section>
           )}
 
@@ -4950,849 +6314,30 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             className="space-y-10 scroll-mt-24 relative"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={sectionVariants}
           >
             <div id="timeline" className="absolute -top-24" />
             <div id="education" className="absolute -top-24" />
             
-            {/* Header with Title and Interactive Filter Tabs */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Chronology of Achievements</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-400" />
-                    <span>Career & Academic Tracks</span>
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
-                  Experience & Education
-                </h2>
-                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
-              </div>
-
-              {/* Interactive Tab Switcher */}
-              <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimelineFilter('all');
-                    soundFx.playClick();
-                  }}
-                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                    timelineFilter === 'all'
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>All Tracks</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimelineFilter('experience');
-                    soundFx.playClick();
-                  }}
-                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                    timelineFilter === 'experience'
-                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                      : 'text-slate-400 hover:text-emerald-400 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <Briefcase className="w-3.5 h-3.5" />
-                  <span>Work Milestones ({experiences.length})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimelineFilter('education');
-                    soundFx.playClick();
-                  }}
-                  className={`px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                    timelineFilter === 'education'
-                      ? 'bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 scale-[1.02]'
-                      : 'text-slate-400 hover:text-teal-400 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <GraduationCap className="w-3.5 h-3.5" />
-                  <span>Academic Degrees ({education.length})</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-emerald-500/30 transition-all">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 transition-transform">
-                  <Briefcase className="w-4.5 h-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Experience</span>
-                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">8+ Years Industry</span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-teal-500/30 transition-all">
-                <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0 group-hover:scale-110 transition-transform">
-                  <GraduationCap className="w-4.5 h-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Academics</span>
-                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">{education.length} Degrees Completed</span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-cyan-500/30 transition-all">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 group-hover:scale-110 transition-transform">
-                  <Cpu className="w-4.5 h-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Current Status</span>
-                  <span className="text-xs sm:text-sm font-bold text-emerald-400 font-mono truncate block flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Principal Architect</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-white/[0.05] flex items-center gap-3 backdrop-blur-sm group hover:border-amber-500/30 transition-all">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:scale-110 transition-transform">
-                  <Award className="w-4.5 h-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Track Record</span>
-                  <span className="text-xs sm:text-sm font-bold text-white font-mono truncate block">High-SLA Delivery</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Columns Container with Responsive Grid */}
-            <div className={`grid grid-cols-1 ${timelineFilter === 'all' ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto'} gap-8 lg:gap-10`}>
-              
-              {/* Professional Work Experience Column */}
-              {(timelineFilter === 'all' || timelineFilter === 'experience') && (
-                <div className={`${timelineFilter === 'all' ? 'lg:col-span-6' : 'w-full'} space-y-6 relative`}>
-                  
-                  <div className="flex items-center justify-between gap-3 text-white mb-2 p-3 rounded-2xl bg-slate-900/60 border border-emerald-500/20 backdrop-blur-md shadow-md">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-sm">
-                        <Briefcase className="w-4.5 h-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold font-display text-white">Work Milestones</h3>
-                        <span className="text-[10px] font-mono text-emerald-400/80">Enterprise & Systems Architecture</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-lg border border-emerald-500/30">
-                      {experiences.length} Positions
-                    </span>
-                  </div>
-
-                  {/* Animated Vertical Laser Rail */}
-                  <div className="relative pl-7 sm:pl-8 ml-3 space-y-8">
-                    {/* Glowing Laser Rail Line */}
-                    <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-gradient-to-b from-emerald-400 via-emerald-500/40 to-transparent shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-
-                    {experiences.map((exp, eIdx) => {
-                      const isExpanded = expandedExperienceId === exp.id;
-                      const isHovered = hoveredTimelineKey === `exp-${exp.id}`;
-
-                      return (
-                        <motion.div 
-                          key={exp.id} 
-                          initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -25 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 0.45, delay: Math.min(eIdx * 0.1, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                          whileHover={prefersReduced ? {} : { y: -4, scale: 1.01 }}
-                          onMouseEnter={() => {
-                            setHoveredTimelineKey(`exp-${exp.id}`);
-                            soundFx.playHover();
-                          }}
-                          onMouseLeave={() => setHoveredTimelineKey(null)}
-                          className={`relative group rounded-2xl p-4 sm:p-5 transition-all duration-300 backdrop-blur-xl border ${
-                            exp.isCurrent
-                              ? 'bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-slate-950/90 border-emerald-500/40 shadow-xl shadow-emerald-950/30 hover:border-emerald-400 hover:shadow-emerald-500/15'
-                              : 'bg-slate-900/50 hover:bg-slate-900/80 border-white/[0.06] hover:border-emerald-500/30 shadow-lg'
-                          }`}
-                        >
-                          {/* Laser Milestone Node on the Spine */}
-                          <div className="absolute -left-[35px] sm:-left-[39px] top-5 flex items-center justify-center">
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                              exp.isCurrent
-                                ? 'bg-slate-950 border-2 border-emerald-400 shadow-[0_0_15px_#34d399]'
-                                : isHovered
-                                  ? 'bg-emerald-500 border-2 border-white scale-125 shadow-[0_0_12px_#34d399]'
-                                  : 'bg-slate-950 border-2 border-emerald-500/60 shadow-[0_0_8px_rgba(52,211,153,0.4)]'
-                            }`}>
-                              <span className={`w-2 h-2 rounded-full ${exp.isCurrent ? 'bg-emerald-400' : 'bg-emerald-500/60'}`} />
-                            </span>
-                            {exp.isCurrent && (
-                              <span className="absolute w-5 h-5 rounded-full bg-emerald-400/40 animate-ping pointer-events-none" />
-                            )}
-                          </div>
-
-                          {/* Ambient background hover flare */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-
-                          {/* Card Content */}
-                          <div className="space-y-3 relative z-10">
-                            
-                            {/* Date Badge & Location */}
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 shadow-sm ${
-                                exp.isCurrent
-                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10'
-                                  : 'bg-slate-950/80 text-emerald-400/90 border-emerald-500/20'
-                              }`}>
-                                <Calendar className="w-3 h-3 text-emerald-400" />
-                                <span>{exp.startDate} — {exp.isCurrent ? 'Present' : exp.endDate}</span>
-                                {exp.isCurrent && (
-                                  <span className="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-emerald-400 text-slate-950 font-black uppercase tracking-wider animate-pulse">
-                                    Active
-                                  </span>
-                                )}
-                              </span>
-
-                              {exp.location && (
-                                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-white/[0.04]">
-                                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                                  <span>{exp.location}</span>
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Role Title & Company */}
-                            <div className="flex items-start gap-3 pt-1">
-                              <div className="w-10 h-10 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold font-mono text-sm shrink-0 group-hover:scale-110 group-hover:rotate-6 group-hover:border-emerald-400 transition-all shadow-md">
-                                <Building2 className="w-5 h-5 text-emerald-400" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h4 className="text-sm sm:text-base font-extrabold text-white leading-tight group-hover:text-emerald-300 transition-colors">
-                                  {exp.role}
-                                </h4>
-                                <p className="text-xs font-mono text-emerald-400 font-semibold pt-0.5 flex items-center gap-1.5">
-                                  <span>@</span>
-                                  <span className="text-slate-200 font-bold">{exp.company}</span>
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Description text */}
-                            <p className="text-xs text-slate-300 leading-relaxed pt-0.5">
-                              {exp.description}
-                            </p>
-
-                            {/* Interactive Architectural Highlights toggle */}
-                            <div className="pt-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setExpandedExperienceId(isExpanded ? null : exp.id);
-                                  soundFx.playClick();
-                                }}
-                                className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400 hover:text-emerald-300 transition-colors py-1 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 cursor-pointer"
-                              >
-                                <span>{isExpanded ? 'Hide Architecture Details' : 'Inspect Key Systems & Tech'}</span>
-                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                              </button>
-
-                              <AnimatePresence>
-                                {isExpanded && (
-                                  <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                                    className="overflow-hidden pt-3 space-y-2.5"
-                                  >
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/20 space-y-2">
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
-                                        Architectural Highlights & Impact:
-                                      </span>
-                                      <ul className="space-y-1 text-xs text-slate-300 font-sans">
-                                        <li className="flex items-start gap-2">
-                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
-                                          <span>Engineered resilient microservice architectures with Java 21, Spring Boot, and PostgreSQL.</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
-                                          <span>Orchestrated high-throughput Kafka streaming pipelines and low-latency API gateways.</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                          <span className="text-emerald-400 font-bold mt-0.5">▹</span>
-                                          <span>Enforced zero-downtime CI/CD container deployments via Docker and Kubernetes.</span>
-                                        </li>
-                                      </ul>
-
-                                      <div className="pt-2 flex flex-wrap gap-1.5">
-                                        {["Java 21", "Spring Boot", "Kafka", "PostgreSQL", "Docker", "Cloud Native"].map((tech, tIdx) => (
-                                          <span key={tIdx} className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-semibold">
-                                            #{tech}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Academic Education Column */}
-              {(timelineFilter === 'all' || timelineFilter === 'education') && (
-                <div className={`${timelineFilter === 'all' ? 'lg:col-span-6' : 'w-full'} space-y-6 relative`}>
-                  
-                  <div className="flex items-center justify-between gap-3 text-white mb-2 p-3 rounded-2xl bg-slate-900/60 border border-teal-500/20 backdrop-blur-md shadow-md">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 shadow-sm">
-                        <GraduationCap className="w-4.5 h-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold font-display text-white">Academic Background</h3>
-                        <span className="text-[10px] font-mono text-teal-400/80">Degrees & Computer Science Foundations</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold bg-teal-500/10 text-teal-400 px-2.5 py-1 rounded-lg border border-teal-500/30">
-                      {education.length} Credentials
-                    </span>
-                  </div>
-
-                  {/* Animated Vertical Laser Rail */}
-                  <div className="relative pl-7 sm:pl-8 ml-3 space-y-8">
-                    {/* Glowing Laser Rail Line */}
-                    <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-gradient-to-b from-teal-400 via-cyan-500/40 to-transparent shadow-[0_0_8px_rgba(45,212,191,0.6)]" />
-
-                    {education.map((edu, edIdx) => {
-                      const isExpanded = expandedEducationId === edu.id;
-                      const isHovered = hoveredTimelineKey === `edu-${edu.id}`;
-
-                      return (
-                        <motion.div 
-                          key={edu.id} 
-                          initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 25 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 0.45, delay: Math.min(edIdx * 0.1, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                          whileHover={prefersReduced ? {} : { y: -4, scale: 1.01 }}
-                          onMouseEnter={() => {
-                            setHoveredTimelineKey(`edu-${edu.id}`);
-                            soundFx.playHover();
-                          }}
-                          onMouseLeave={() => setHoveredTimelineKey(null)}
-                          className="relative group rounded-2xl p-4 sm:p-5 transition-all duration-300 backdrop-blur-xl border bg-slate-900/50 hover:bg-slate-900/80 border-white/[0.06] hover:border-teal-500/40 shadow-lg hover:shadow-teal-500/10"
-                        >
-                          {/* Laser Milestone Node on the Spine */}
-                          <div className="absolute -left-[35px] sm:-left-[39px] top-5 flex items-center justify-center">
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                              isHovered
-                                ? 'bg-teal-400 border-2 border-white scale-125 shadow-[0_0_12px_#2dd4bf]'
-                                : 'bg-slate-950 border-2 border-teal-500/60 shadow-[0_0_8px_rgba(45,212,191,0.4)]'
-                            }`}>
-                              <span className="w-2 h-2 rounded-full bg-teal-400" />
-                            </span>
-                          </div>
-
-                          {/* Ambient background hover flare */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-teal-500/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-
-                          {/* Card Content */}
-                          <div className="space-y-3 relative z-10">
-                            
-                            {/* Date Badge & Grade / Honors */}
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border bg-slate-950/80 text-teal-400 border-teal-500/20 flex items-center gap-1.5 shadow-sm">
-                                <Calendar className="w-3 h-3 text-teal-400" />
-                                <span>{edu.startDate} — {edu.endDate}</span>
-                              </span>
-
-                              {edu.grade && (
-                                <span className="text-[10px] font-mono text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-xs">
-                                  <Star className="w-3 h-3 text-amber-400" />
-                                  <span>{edu.grade}</span>
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Degree Title & Field */}
-                            <div className="flex items-start gap-3 pt-1">
-                              <div className="w-10 h-10 rounded-xl bg-slate-950 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold font-mono text-sm shrink-0 group-hover:scale-110 group-hover:-rotate-6 group-hover:border-teal-400 transition-all shadow-md">
-                                <GraduationCap className="w-5 h-5 text-teal-400" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h4 className="text-sm sm:text-base font-extrabold text-white leading-tight group-hover:text-teal-300 transition-colors">
-                                  {edu.degree}
-                                </h4>
-                                <p className="text-xs font-mono text-teal-400 font-semibold pt-0.5">
-                                  in <span className="text-slate-200 font-bold">{edu.fieldOfStudy}</span>
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Institution Name */}
-                            <p className="text-xs text-slate-300 leading-normal flex items-center gap-1.5">
-                              <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                              <span className="text-slate-300 font-semibold">{edu.institution}</span>
-                            </p>
-
-                            {/* Interactive Coursework toggle */}
-                            <div className="pt-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setExpandedEducationId(isExpanded ? null : edu.id);
-                                  soundFx.playClick();
-                                }}
-                                className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-teal-400 hover:text-teal-300 transition-colors py-1 px-2.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/20 cursor-pointer"
-                              >
-                                <span>{isExpanded ? 'Hide Academic Highlights' : 'Inspect Specialization & Highlights'}</span>
-                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                              </button>
-
-                              <AnimatePresence>
-                                {isExpanded && (
-                                  <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                                    className="overflow-hidden pt-3 space-y-2.5"
-                                  >
-                                    <div className="p-3 rounded-xl bg-slate-950/80 border border-teal-500/20 space-y-2">
-                                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">
-                                        Core Computer Science Competencies:
-                                      </span>
-                                      <ul className="space-y-1 text-xs text-slate-300 font-sans">
-                                        <li className="flex items-start gap-2">
-                                          <span className="text-teal-400 font-bold mt-0.5">▹</span>
-                                          <span>Advanced Algorithms, Distributed Systems, Data Structures & Concurrency.</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                          <span className="text-teal-400 font-bold mt-0.5">▹</span>
-                                          <span>Relational Database Internals, Query Optimization, and Object-Oriented Architecture.</span>
-                                        </li>
-                                      </ul>
-
-                                      <div className="pt-2 flex flex-wrap gap-1.5">
-                                        {["Data Structures", "Distributed Systems", "Database Design", "Operating Systems", "Cloud Computing"].map((topic, topIdx) => (
-                                          <span key={topIdx} className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-teal-950/40 border border-teal-500/30 text-teal-400 font-semibold">
-                                            #{topic}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-            </div>
+            <ExperienceEducationShowcase
+              experiences={experiences}
+              education={education}
+              projects={projects}
+              prefersReduced={prefersReduced}
+              soundFx={soundFx}
+            />
           </motion.section>
 
-          {/* Credentials and Certifications */}
-          <motion.section 
-            id="credentials" 
-            className="space-y-8 scroll-mt-24 relative"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={sectionVariants}
-          >
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-white/[0.04]">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">VERIFIED ACCREDITATIONS & LICENSES</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <Award className="w-3 h-3 text-emerald-400" />
-                    <span>{filteredCertificates.length} {filteredCertificates.length === 1 ? 'Credential' : 'Credentials'}</span>
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-luxury text-white tracking-wide">
-                  Industry Certifications
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-2xl leading-relaxed">
-                  Accredited professional certifications verifying software architecture, cloud platforms, database optimization, and development standards.
-                </p>
-                <div className="h-0.5 w-16 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent rounded-full" />
-              </div>
-
-              {/* Real-time Search Input */}
-              <div className="relative w-full sm:w-72 shrink-0">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={certSearchQuery}
-                  onChange={(e) => setCertSearchQuery(e.target.value)}
-                  placeholder="Search certificates, issuers, IDs..."
-                  className="w-full bg-slate-950/80 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500 shadow-inner backdrop-blur-md"
-                />
-                {certSearchQuery && (
-                  <button
-                    onClick={() => setCertSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Organization Filter Tabs */}
-            {certOrganizations.length > 2 && (
-              <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-950/80 border border-white/[0.08] text-xs backdrop-blur-xl shadow-inner">
-                {certOrganizations.map((org) => {
-                  const isActive = selectedCertOrg === org;
-                  return (
-                    <button
-                      key={org}
-                      onClick={() => {
-                        setSelectedCertOrg(org);
-                        soundFx.playClick();
-                      }}
-                      className={`px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer ${
-                        isActive
-                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <span>{org}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Empty State */}
-            {filteredCertificates.length === 0 ? (
-              <div className="text-center py-14 px-4 bg-slate-900/40 rounded-2xl border border-white/[0.04]">
-                <Award className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-sm font-semibold text-slate-300">No matching certifications found</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  No credentials match your filter. Try adjusting the search query or resetting the organization filter.
-                </p>
-                {(certSearchQuery || selectedCertOrg !== 'All') && (
-                  <button
-                    onClick={() => {
-                      setSelectedCertOrg('All');
-                      setCertSearchQuery('');
-                    }}
-                    className="mt-4 px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-medium hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                  >
-                    Reset Filter
-                  </button>
-                )}
-              </div>
-            ) : (
-              /* Certifications Grid */
-              <motion.div 
-                key={`cert-grid-${selectedCertOrg}-${certSearchQuery}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6"
-              >
-                {filteredCertificates.map((cert, cIdx) => (
-                  <motion.div 
-                    key={cert.id} 
-                    initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.4, delay: Math.min(cIdx * 0.08, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                    whileHover={prefersReduced ? {} : { 
-                      y: -7, 
-                      scale: 1.02,
-                      transition: { duration: 0.2, ease: 'easeOut' }
-                    }}
-                    onMouseEnter={() => soundFx.playHover()}
-                    onClick={() => {
-                      setSelectedCertForModal(cert);
-                      soundFx.playModalOpen();
-                    }}
-                    className="glass-card rounded-3xl p-6 border border-white/[0.08] hover:border-emerald-500/50 hover:bg-slate-900/90 transition-all duration-300 flex flex-col justify-between gap-6 shadow-2xl relative overflow-hidden group bg-gradient-to-br from-slate-900/90 via-slate-950/95 to-slate-900/90 cursor-pointer"
-                  >
-                    {/* Top Ambient Holographic Flare */}
-                    <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-2xl pointer-events-none" />
-
-                    <div className="space-y-4 relative z-10">
-                      {/* Top Security & Verification Status */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/30 font-bold shadow-sm">
-                          <Award className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{cert.issuingOrganization}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                            Verified Authentic
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Certification Title */}
-                      <div>
-                        <h3 className="text-base sm:text-lg font-extrabold text-white group-hover:text-emerald-300 transition-colors leading-snug">
-                          {cert.name}
-                        </h3>
-                        
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-slate-400 mt-2">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-emerald-400" />
-                            <span>Issued: {cert.issueDate}</span>
-                          </span>
-                          <span>•</span>
-                          <span>Expires: {cert.expirationDate || 'Lifetime Accreditation'}</span>
-                        </div>
-                      </div>
-
-                      {/* Credential ID Badge with One-Click Copy */}
-                      {cert.credentialId && (
-                        <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-white/[0.06]">
-                          <div className="text-[10px] font-mono text-slate-300 truncate">
-                            <span className="text-slate-500">Credential ID: </span>
-                            <span className="text-emerald-400 font-bold">{cert.credentialId}</span>
-                          </div>
-                          
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (cert.credentialId) {
-                                navigator.clipboard.writeText(cert.credentialId);
-                                setCopiedCertId(cert.credentialId);
-                                soundFx.playSuccess();
-                                setTimeout(() => setCopiedCertId(null), 2500);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 border border-white/[0.06] transition-all shrink-0 cursor-pointer"
-                            title="Copy Credential ID"
-                          >
-                            {copiedCertId === cert.credentialId ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom Action Footer */}
-                    <div className="pt-3 border-t border-white/[0.05] flex items-center justify-between gap-3 relative z-10">
-                      <span className="text-[10px] font-mono text-slate-400 group-hover:text-emerald-400 transition-colors flex items-center gap-1 font-bold">
-                        <span>Inspect Verification</span>
-                        <span className="group-hover:translate-x-1 transition-transform">↗</span>
-                      </span>
-
-                      {cert.credentialUrl && (
-                        <a 
-                          href={cert.credentialUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            soundFx.playClick();
-                          }}
-                          className="px-3.5 py-1.5 border border-emerald-500/30 hover:border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-mono font-bold text-[11px] rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
-                          title="Open official verification page"
-                        >
-                          <span>Official Portal</span>
-                          <ExternalLink className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                        </a>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </motion.section>
-
-          {/* Achievements & Milestones Section */}
-          <motion.section 
-            id="achievements" 
-            className="space-y-12 scroll-mt-24"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={sectionVariants}
-          >
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-bold">Proven Milestones</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {filteredAchievements.length} Awards
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-luxury text-white tracking-wide">Achievements & Awards</h2>
-              <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
-            </div>
-
-            {/* Category Filter Pills */}
-            {achievementCategories.length > 2 && (
-              <div className="flex flex-wrap gap-2">
-                {achievementCategories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedAchievementCategory(cat)}
-                    className={`px-3.5 py-1.5 text-[10px] font-mono font-bold tracking-wider rounded-xl border transition-all cursor-pointer uppercase ${
-                      selectedAchievementCategory === cat
-                        ? 'bg-emerald-500 text-slate-950 border-transparent shadow-lg shadow-emerald-500/20'
-                        : 'border-white/[0.04] bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Grid layout */}
-            <motion.div 
-              key={`achieve-grid-${selectedAchievementCategory}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {filteredAchievements.map((item, aIdx) => (
-                <motion.div 
-                  key={item.id || `achieve-${aIdx}`}
-                  initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: Math.min(aIdx * 0.05, 0.3) }}
-                  whileHover={prefersReduced ? {} : { y: -6, scale: 1.015 }}
-                  onClick={() => setSelectedAchievementForModal(item)}
-                  className={`group rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xl ${
-                    item.featured 
-                      ? 'border-emerald-500/40 bg-emerald-500/[0.02] hover:border-emerald-500/60 shadow-2xl shadow-emerald-500/10' 
-                      : 'border-white/[0.05] bg-slate-900/50 hover:bg-slate-900/80 hover:border-emerald-500/30'
-                  }`}
-                >
-                  {/* Card Banner Image / Header */}
-                  <div className="relative h-44 bg-slate-950/80 flex items-center justify-center overflow-hidden border-b border-white/[0.04]">
-                    {item.imageUrl ? (
-                      <SkillMediaRenderer 
-                        src={item.imageUrl} 
-                        alt={item.title} 
-                        variant="cover"
-                        className="group-hover:scale-108 transition-all duration-700 opacity-90 group-hover:opacity-100"
-                      />
-                    ) : (
-                      <div className="text-center p-6 text-slate-700 group-hover:text-slate-500 transition-colors">
-                        <Award className="w-10 h-10 mx-auto mb-2 opacity-40 text-emerald-400" />
-                        <span className="text-[10px] font-mono tracking-wider text-slate-400">Milestone asset</span>
-                      </div>
-                    )}
-
-                    {/* Gradient atmosphere overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/40 to-transparent pointer-events-none" />
-
-                    {/* Badge Pill layout */}
-                    <div className="absolute top-3.5 right-3.5 flex flex-wrap gap-1.5 items-center z-10">
-                      <span className="text-[9px] font-mono font-bold tracking-wider bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase shadow-md">
-                        {item.category}
-                      </span>
-                      {item.featured && (
-                        <span className="text-[9px] font-bold tracking-wider bg-emerald-500 text-slate-950 px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-lg shadow-emerald-500/20">
-                          <Sparkles className="w-2.5 h-2.5" />
-                          Featured
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Organization Logo and details */}
-                    <div className="absolute bottom-3.5 left-3.5 flex items-center gap-2.5 z-10">
-                      <div className="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/[0.1] flex items-center justify-center overflow-hidden shrink-0 shadow-md">
-                        {item.logoUrl ? (
-                          <img src={item.logoUrl} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <Award className="w-4 h-4 text-emerald-400" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-mono text-slate-200 font-bold leading-none truncate">{item.organization}</p>
-                        <p className="text-[9px] text-emerald-400/90 font-mono mt-1 leading-none">
-                          {new Date(item.achievementDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Content details */}
-                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                    <div className="space-y-2">
-                      {item.badge && (
-                        <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider">
-                          {item.badge}
-                        </span>
-                      )}
-                      <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors leading-snug">
-                        {item.title}
-                      </h3>
-                      {item.subtitle && (
-                        <p className="text-[10px] font-mono text-emerald-400 leading-tight">
-                          {item.subtitle}
-                        </p>
-                      )}
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                        {item.shortDescription}
-                      </p>
-                    </div>
-
-                    {/* Footer tags */}
-                    <div className="space-y-2.5 pt-3 border-t border-white/[0.04]">
-                      {item.skills && item.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {item.skills.slice(0, 3).map((sk, i) => (
-                            <span key={i} className="text-[8px] font-mono text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-white/[0.06]">
-                              {sk}
-                            </span>
-                          ))}
-                          {item.skills.length > 3 && (
-                            <span className="text-[8px] font-mono text-slate-500 px-1 py-0.5">
-                              +{item.skills.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {item.technologies && item.technologies.length > 0 && (
-                        <div className="flex flex-wrap gap-1 items-center">
-                          <span className="text-[8px] font-mono text-slate-500">Tech:</span>
-                          {item.technologies.slice(0, 3).map((tc, i) => (
-                            <span key={i} className="text-[8px] font-mono text-slate-400 px-1.5 py-0.5 bg-slate-950/60 border border-white/[0.04] rounded">
-                              {tc}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.section>
+          {/* Top 1% Industry Certifications & Proven Milestones Showcase */}
+          <CertificationsAchievementsShowcase
+            certificates={certificates}
+            achievements={achievements}
+            prefersReduced={prefersReduced}
+            onSelectCertificate={(cert) => setSelectedCertForModal(cert)}
+            onSelectAchievement={(ach) => setSelectedAchievementForModal(ach)}
+            soundFx={soundFx}
+          />
 
           {/* Client & Peer Testimonials Section */}
           {displayTestimonials.length > 0 && (
@@ -5801,7 +6346,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               className="space-y-8 scroll-mt-24 relative"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, amount: 0.01, margin: "120px" }}
               variants={sectionVariants}
             >
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/[0.04] pb-6">
@@ -5996,10 +6541,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
           <motion.section 
             id="contact" 
-            className="space-y-12 scroll-mt-24"
+            className="space-y-8 sm:space-y-12 scroll-mt-24"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.01, margin: "120px" }}
             variants={sectionVariants}
           >
             <div className="space-y-2.5">
@@ -6008,10 +6553,10 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               <div className="h-0.5 w-12 bg-emerald-500/60 rounded" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
               
               {/* Info panel */}
-              <div className="lg:col-span-5 glass-card rounded-2xl p-8 border border-white/[0.04] space-y-6">
+              <div className="lg:col-span-5 glass-card rounded-2xl p-5 sm:p-8 border border-white/[0.04] space-y-6">
                 <h3 className="text-lg font-bold font-display text-white">{profile?.contactFormTitle || "Let's coordinate on new paradigms"}</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   {profile?.contactDescription || "Have an open enterprise role, a microservices system challenge, or want to collaborate on clean-architecture solutions? Send an inquiry."}
@@ -6658,7 +7203,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       </div>
                       <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/[0.08] bg-slate-950">
                         <SkillMediaRenderer
-                          src={selectedProjectForModal.imageUrl || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"}
+                          src={selectedProjectForModal.imageUrl || ""}
                           alt={selectedProjectForModal.title}
                           variant="cover"
                         />
@@ -6671,50 +7216,69 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 <div className="lg:col-span-5 space-y-6">
                   
                   {/* Scope of Work date ledger */}
-                  <div className="bg-slate-950/40 border border-white/[0.04] rounded-2xl p-4 space-y-3 font-mono text-xs text-slate-300">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-widest block font-bold font-semibold">Ledger Attributes</span>
+                  <div className="bg-slate-950/40 border border-white/[0.04] rounded-2xl p-4 space-y-2.5 font-mono text-xs text-slate-300">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest block font-bold">Case Study Metadata</span>
                     
-                    <div className="flex justify-between py-1.5 border-b border-white/[0.02]">
-                      <span className="text-slate-500">Initiated:</span>
-                      <span className="font-semibold text-slate-200">{selectedProjectForModal.startDate}</span>
+                    <div className="flex justify-between py-1 border-b border-white/[0.03]">
+                      <span className="text-slate-500">Timeline:</span>
+                      <span className="font-semibold text-slate-200 tabular-nums">
+                        {selectedProjectForModal.startDate} — {selectedProjectForModal.endDate || 'Present'}
+                      </span>
                     </div>
 
-                    <div className="flex justify-between py-1.5 border-b border-white/[0.02]">
-                      <span className="text-slate-500">Completed:</span>
-                      <span className="font-semibold text-emerald-400">{selectedProjectForModal.endDate || 'Ongoing Lifecycle'}</span>
-                    </div>
+                    {selectedProjectForModal.role && (
+                      <div className="flex justify-between py-1 border-b border-white/[0.03]">
+                        <span className="text-slate-500">Engineering Role:</span>
+                        <span className="font-semibold text-white">{selectedProjectForModal.role}</span>
+                      </div>
+                    )}
 
-                    <div className="flex justify-between py-1.5 border-b border-white/[0.02]">
-                      <span className="text-slate-500">Sequence Index:</span>
-                      <span className="font-semibold text-slate-200">{selectedProjectForModal.displayOrder}</span>
-                    </div>
+                    {selectedProjectForModal.architectureType && (
+                      <div className="flex justify-between py-1 border-b border-white/[0.03]">
+                        <span className="text-slate-500">Architecture:</span>
+                        <span className="font-semibold text-emerald-400">{selectedProjectForModal.architectureType}</span>
+                      </div>
+                    )}
 
-                    {selectedProjectForModal.createdAt && (
-                      <div className="flex justify-between py-1.5 text-[11px] text-slate-500">
-                        <span>Database commit:</span>
-                        <span className="truncate max-w-[150px]" title={selectedProjectForModal.createdAt}>
-                          {selectedProjectForModal.createdAt.substring(0, 10)}
-                        </span>
+                    {selectedProjectForModal.metricsBadge && (
+                      <div className="flex justify-between py-1 border-b border-white/[0.03]">
+                        <span className="text-slate-500">Impact / Benchmark:</span>
+                        <span className="font-semibold text-cyan-300">{selectedProjectForModal.metricsBadge}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Project description */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold font-semibold">Systems Architecture Scope</span>
-                    <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Case Study Overview</span>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
                       {selectedProjectForModal.description}
                     </p>
                   </div>
 
+                  {/* Key Engineering Highlights from Admin Panel */}
+                  {Array.isArray(selectedProjectForModal.highlights) && selectedProjectForModal.highlights.filter(Boolean).length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest block font-bold">Key Engineering Highlights</span>
+                      <ul className="space-y-1.5">
+                        {selectedProjectForModal.highlights.filter(Boolean).map((hl, hIdx) => (
+                          <li key={hIdx} className="text-xs text-slate-200 flex items-start gap-2">
+                            <span className="text-emerald-400 font-mono font-bold shrink-0">0{hIdx + 1}.</span>
+                            <span>{hl}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Tech stack */}
                   <div className="space-y-2.5">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold font-semibold">Integrated Core Technologies</span>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Technology Stack</span>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedProjectForModal.skills.map((tag, i) => (
                         <span
                           key={i}
-                          className="text-[9.5px] font-mono bg-emerald-500/5 text-emerald-400 border border-emerald-500/10 px-2.5 py-1 rounded"
+                          className="text-[10px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-1 rounded-lg"
                         >
                           {tag}
                         </span>
@@ -6730,8 +7294,8 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-white/[0.04] bg-slate-950/40 flex flex-wrap items-center justify-between gap-4">
-              <span className="text-[10px] font-mono text-slate-500">
-                Data securely synchronized from Spring REST endpoint
+              <span className="text-[11px] font-mono text-slate-400">
+                /{selectedProjectForModal.slug || selectedProjectForModal.title.toLowerCase().replace(/\s+/g, '-')}
               </span>
 
               <div className="flex items-center gap-3">
@@ -6972,167 +7536,379 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         </div>
       )}
 
-      {/* Full-Screen Article Reader Modal */}
+      {/* Full-Screen Interactive Monograph Reader Modal */}
       <AnimatePresence>
         {selectedArticleForModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div
+            className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-xl overflow-y-auto"
+            onClick={() => setSelectedArticleForModal(null)}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-5xl max-h-[92vh] bg-[#040917] border border-emerald-500/25 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto relative"
             >
-              {/* Modal Header */}
-              <div className="relative h-48 sm:h-64 bg-slate-950 shrink-0 overflow-hidden">
-                {(selectedArticleForModal.coverImageUrl || (selectedArticleForModal as any).coverImage) ? (
-                  <img
-                    src={selectedArticleForModal.coverImageUrl || (selectedArticleForModal as any).coverImage}
-                    alt={selectedArticleForModal.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                    <BookOpenCheck className="w-16 h-16 text-emerald-400/30" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+              {/* Live Reading Progress Bar inside Modal */}
+              <div className="h-1 w-full bg-slate-900 shrink-0 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-cyan-400 transition-all duration-150"
+                  style={{ width: `${articleReaderProgress}%` }}
+                />
+              </div>
 
-                <button
-                  onClick={() => setSelectedArticleForModal(null)}
-                  className="absolute top-4 right-4 p-2 rounded-xl bg-slate-950/80 backdrop-blur-md border border-white/[0.1] text-slate-300 hover:text-white hover:border-emerald-500/50 transition-all cursor-pointer z-10"
-                  aria-label="Close Article Reader"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              {/* Reader Top Toolbar */}
+              <div className="px-5 py-3 bg-slate-950/95 border-b border-white/[0.07] flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 text-xs font-mono">
+                  <span className="text-emerald-400 font-bold">
+                    {selectedArticleForModal.category || "System Design"}
+                  </span>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-slate-300">
+                    {selectedArticleForModal.readTimeMinutes || 5} min read
+                  </span>
+                  {selectedArticleForModal.readingDifficulty && (
+                    <>
+                      <span className="text-slate-600 hidden sm:inline">·</span>
+                      <span className="text-cyan-300 hidden sm:inline">
+                        {selectedArticleForModal.readingDifficulty}
+                      </span>
+                    </>
+                  )}
+                </div>
 
-                <div className="absolute bottom-4 left-6 right-6 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500 text-slate-950 uppercase">
-                      {selectedArticleForModal.category}
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-slate-950/80 text-slate-300 border border-white/[0.1] flex items-center gap-1.5">
-                      <Clock className="w-3 h-3 text-emerald-400" />
-                      {selectedArticleForModal.readTimeMinutes} min read
-                    </span>
+                <div className="flex items-center gap-2">
+                  {/* Font Size Comfort Controls */}
+                  <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-white/[0.08] text-[10px] font-mono">
+                    {(
+                      [
+                        { id: "sm", label: "A-" },
+                        { id: "base", label: "A" },
+                        { id: "lg", label: "A+" },
+                      ] as const
+                    ).map((sz) => (
+                      <button
+                        key={sz.id}
+                        type="button"
+                        onClick={() => setArticleReaderFontSize(sz.id)}
+                        className={`px-2 py-1 rounded transition cursor-pointer ${
+                          articleReaderFontSize === sz.id
+                            ? "bg-emerald-500 text-slate-950 font-bold"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                        title={`Reading font size: ${sz.id}`}
+                      >
+                        {sz.label}
+                      </button>
+                    ))}
                   </div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-luxury leading-tight">
-                    {selectedArticleForModal.title}
-                  </h1>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedArticleForModal(null)}
+                    className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.1] text-slate-300 hover:text-white transition-all cursor-pointer"
+                    aria-label="Close Article Reader"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              {/* Modal Body / Article Content */}
-              <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
-                {/* Author Card */}
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950/60 border border-white/[0.04]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl overflow-hidden border border-emerald-500/40 bg-slate-900 shrink-0">
-                      {profile?.profileImage ? (
-                        <img src={profile.profileImage} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-bold text-emerald-400 flex items-center justify-center h-full">C</span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{selectedArticleForModal.author || "Chandru Mohan"}</h4>
-                      <p className="text-[11px] font-mono text-emerald-400">Principal Systems Architect & Full Stack Java Developer</p>
-                    </div>
-                  </div>
-                  <div className="text-right text-[11px] font-mono text-slate-400 hidden sm:block">
-                    <p>Published: {new Date(selectedArticleForModal.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                  </div>
-                </div>
-
-                {/* Article Markdown Renderer */}
-                <div className="max-w-none space-y-4 text-slate-300 text-sm leading-relaxed font-sans">
-                  {selectedArticleForModal.content.split('\n\n').map((block, idx) => {
-                    if (block.startsWith('### ')) {
-                      return (
-                        <h3 key={idx} className="text-lg font-bold text-emerald-400 mt-6 mb-2 font-display">
-                          {block.replace('### ', '')}
-                        </h3>
-                      );
-                    }
-                    if (block.startsWith('## ')) {
-                      return (
-                        <h2 key={idx} className="text-xl font-extrabold text-white mt-8 mb-3 font-display border-b border-white/[0.06] pb-2">
-                          {block.replace('## ', '')}
-                        </h2>
-                      );
-                    }
-                    if (block.startsWith('# ')) {
-                      return (
-                        <h1 key={idx} className="text-2xl font-black text-white mt-6 mb-4 font-display">
-                          {block.replace('# ', '')}
-                        </h1>
-                      );
-                    }
-                    if (block.startsWith('```')) {
-                      const lines = block.split('\n');
-                      const lang = lines[0].replace('```', '') || 'code';
-                      const codeContent = lines.slice(1, lines.length - 1).join('\n');
-                      return (
-                        <div key={idx} className="my-4 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
-                          <div className="px-4 py-2 bg-slate-900/80 border-b border-slate-800 text-[10px] font-mono text-emerald-400 uppercase font-bold flex items-center justify-between">
-                            <span>{lang} snippet</span>
-                            <span className="text-slate-500">production code</span>
-                          </div>
-                          <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed">
-                            <code>{codeContent}</code>
-                          </pre>
-                        </div>
-                      );
-                    }
-                    if (block.startsWith('- ') || block.startsWith('* ')) {
-                      const items = block.split('\n').filter(Boolean);
-                      return (
-                        <ul key={idx} className="list-disc list-inside space-y-1.5 pl-2 text-slate-300">
-                          {items.map((item, itemIdx) => (
-                            <li key={itemIdx} className="text-xs leading-relaxed">
-                              {item.replace(/^[-*]\s+/, '')}
-                            </li>
-                          ))}
-                        </ul>
-                      );
-                    }
-                    return (
-                      <p key={idx} className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                        {block}
-                      </p>
+              {/* Scrollable Monograph Body */}
+              <div
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const maxScroll = el.scrollHeight - el.clientHeight;
+                  if (maxScroll > 0) {
+                    setArticleReaderProgress(
+                      Math.min(100, Math.round((el.scrollTop / maxScroll) * 100))
                     );
-                  })}
+                  }
+                }}
+                className="overflow-y-auto flex-1 custom-scrollbar"
+              >
+                {/* Cover Masthead */}
+                <div className="relative h-52 sm:h-64 bg-slate-950 overflow-hidden border-b border-white/[0.06]">
+                  {selectedArticleForModal.coverImageUrl ||
+                  (selectedArticleForModal as any).coverImage ? (
+                    <img
+                      src={
+                        selectedArticleForModal.coverImageUrl ||
+                        (selectedArticleForModal as any).coverImage
+                      }
+                      alt={selectedArticleForModal.title}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover opacity-85"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                      <BookOpenCheck className="w-16 h-16 text-emerald-400/30" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#040917] via-[#040917]/65 to-transparent" />
+
+                  <div className="absolute bottom-5 left-6 right-6 space-y-2">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                      {selectedArticleForModal.title}
+                    </h1>
+                  </div>
                 </div>
 
-                {/* Article Footer Tags */}
-                {selectedArticleForModal.tags && selectedArticleForModal.tags.length > 0 && (
-                  <div className="pt-6 border-t border-white/[0.06] space-y-2">
-                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block font-bold">Related Topics & Skills:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedArticleForModal.tags.map((tag, i) => (
-                        <span key={i} className="px-3 py-1 rounded-lg text-xs font-mono bg-slate-950 text-emerald-400 border border-emerald-500/20">
-                          #{tag}
-                        </span>
-                      ))}
+                <div className="p-6 sm:p-8 space-y-6">
+                  {/* Author Byline Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-slate-950/80 border border-white/[0.06]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden border border-emerald-500/40 bg-slate-900 shrink-0">
+                        {selectedArticleForModal.authorAvatar ||
+                        profile?.profileImage ? (
+                          <img
+                            src={
+                              selectedArticleForModal.authorAvatar ||
+                              profile.profileImage
+                            }
+                            alt={selectedArticleForModal.author || "Chandru Mohan"}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="font-bold text-emerald-400 flex items-center justify-center h-full">
+                            C
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white">
+                          {selectedArticleForModal.author || "Chandru Mohan"}
+                        </h4>
+                        <p className="text-[11px] font-mono text-emerald-400">
+                          {selectedArticleForModal.authorRole ||
+                            "Principal Systems Architect & Full Stack Java Developer"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right text-[11px] font-mono text-slate-400">
+                      <p>
+                        Published:{" "}
+                        {new Date(
+                          selectedArticleForModal.publishedAt
+                        ).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
                     </div>
                   </div>
-                )}
+
+                  {/* Executive Abstract & Key Architectural Takeaways Callout */}
+                  {(selectedArticleForModal.executiveSummary ||
+                    (Array.isArray(selectedArticleForModal.keyTakeaways) &&
+                      selectedArticleForModal.keyTakeaways.filter(Boolean)
+                        .length > 0)) && (
+                    <div className="p-5 rounded-2xl bg-slate-950/90 border border-emerald-500/30 space-y-3">
+                      <div className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold">
+                        Executive Abstract &amp; Key Architectural Takeaways
+                      </div>
+                      {selectedArticleForModal.executiveSummary && (
+                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                          {selectedArticleForModal.executiveSummary}
+                        </p>
+                      )}
+                      {Array.isArray(selectedArticleForModal.keyTakeaways) &&
+                        selectedArticleForModal.keyTakeaways.filter(Boolean)
+                          .length > 0 && (
+                          <ul className="space-y-1.5 pt-1">
+                            {selectedArticleForModal.keyTakeaways
+                              .filter(Boolean)
+                              .map((tk, tIdx) => (
+                                <li
+                                  key={tIdx}
+                                  className="text-xs sm:text-sm text-slate-200 flex items-start gap-2.5"
+                                >
+                                  <span className="text-emerald-400 font-mono font-bold shrink-0">
+                                    0{tIdx + 1}.
+                                  </span>
+                                  <span>{tk}</span>
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                    </div>
+                  )}
+
+                  {/* Article Markdown Renderer */}
+                  <div
+                    className={`max-w-none space-y-4 text-slate-300 leading-relaxed font-sans ${
+                      articleReaderFontSize === "lg"
+                        ? "text-base"
+                        : articleReaderFontSize === "sm"
+                        ? "text-xs"
+                        : "text-sm"
+                    }`}
+                  >
+                    {selectedArticleForModal.content
+                      .split("\n\n")
+                      .map((block, idx) => {
+                        if (block.startsWith("### ")) {
+                          return (
+                            <h3
+                              key={idx}
+                              className="text-lg font-bold text-emerald-400 mt-6 mb-2 font-display"
+                            >
+                              {block.replace("### ", "")}
+                            </h3>
+                          );
+                        }
+                        if (block.startsWith("## ")) {
+                          return (
+                            <h2
+                              key={idx}
+                              className="text-xl font-extrabold text-white mt-8 mb-3 font-display border-b border-white/[0.06] pb-2"
+                            >
+                              {block.replace("## ", "")}
+                            </h2>
+                          );
+                        }
+                        if (block.startsWith("# ")) {
+                          return (
+                            <h1
+                              key={idx}
+                              className="text-2xl font-black text-white mt-6 mb-4 font-display"
+                            >
+                              {block.replace("# ", "")}
+                            </h1>
+                          );
+                        }
+                        if (block.startsWith("```")) {
+                          const lines = block.split("\n");
+                          const lang = lines[0].replace("```", "").trim() || "code";
+                          const codeContent = lines
+                            .slice(1, lines.length - 1)
+                            .join("\n");
+                          return (
+                            <div
+                              key={idx}
+                              className="my-4 rounded-xl overflow-hidden border border-slate-800 bg-slate-950"
+                            >
+                              <div className="px-4 py-2 bg-slate-900/90 border-b border-slate-800 text-[10px] font-mono text-emerald-400 uppercase font-bold flex items-center justify-between">
+                                <span>{lang} implementation</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (navigator?.clipboard?.writeText) {
+                                      navigator.clipboard
+                                        .writeText(codeContent)
+                                        .catch(() => {});
+                                    }
+                                    setCopiedCodeBlockIdx(idx);
+                                    soundFx.playClick(1040);
+                                    window.setTimeout(
+                                      () => setCopiedCodeBlockIdx(null),
+                                      2000
+                                    );
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 flex items-center gap-1 transition cursor-pointer"
+                                >
+                                  {copiedCodeBlockIdx === idx ? (
+                                    <>
+                                      <Check className="w-3 h-3 text-emerald-400" />
+                                      <span className="text-emerald-400">
+                                        Copied
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="w-3 h-3" />
+                                      <span>Copy Code</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                              <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed">
+                                <code>{codeContent}</code>
+                              </pre>
+                            </div>
+                          );
+                        }
+                        if (block.startsWith("- ") || block.startsWith("* ")) {
+                          const items = block.split("\n").filter(Boolean);
+                          return (
+                            <ul
+                              key={idx}
+                              className="list-disc list-inside space-y-1.5 pl-2 text-slate-300"
+                            >
+                              {items.map((item, itemIdx) => (
+                                <li key={itemIdx} className="leading-relaxed">
+                                  {item.replace(/^[-*]\s+/, "")}
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        }
+                        return (
+                          <p key={idx} className="leading-relaxed">
+                            {block}
+                          </p>
+                        );
+                      })}
+                  </div>
+
+                  {/* Article Footer Tags */}
+                  {selectedArticleForModal.tags &&
+                    selectedArticleForModal.tags.length > 0 && (
+                      <div className="pt-6 border-t border-white/[0.06] space-y-2">
+                        <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block font-bold">
+                          Related Research Topics &amp; Skills
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedArticleForModal.tags.map((tag, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                setArticleSearchQuery(tag);
+                                setSelectedArticleForModal(null);
+                              }}
+                              className="px-3 py-1 rounded-lg text-xs font-mono bg-slate-950 hover:bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 cursor-pointer"
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 sm:p-6 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+              <div className="p-4 sm:p-5 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
                 <button
+                  type="button"
                   onClick={() => setSelectedArticleForModal(null)}
                   className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 >
-                  ← Close Article
+                  ← Close Reader
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
+                  {selectedArticleForModal.externalUrl && (
+                    <a
+                      href={selectedArticleForModal.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/[0.1] text-slate-200 hover:text-emerald-300 text-xs font-mono font-semibold flex items-center gap-1.5 transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>External Canonical Link</span>
+                    </a>
+                  )}
                   <button
+                    type="button"
                     onClick={() => {
                       if (navigator.clipboard) {
                         navigator.clipboard.writeText(window.location.href);
-                        setFeedbackToast('Article link copied to clipboard!');
+                        setFeedbackToast("Article link copied to clipboard!");
                         setTimeout(() => setFeedbackToast(null), 3000);
                       }
                     }}
@@ -7596,24 +8372,29 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       <React.Suspense fallback={null}>
         {shouldMountChat && <AIPortfolioChat />}
 
-        {/* Floating Developer Terminal Launcher (Ctrl+K) */}
+        {/* Floating Developer Command Console Launcher (Ctrl+K) */}
         <div className="fixed bottom-4 left-4 z-[90] flex items-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-            className="flex items-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-3.5 sm:py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800/95 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group"
-            title="Open Developer Terminal (Ctrl+K)"
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-3.5 sm:py-2.5 rounded-full ${
+              isTerminalOpen
+                ? 'bg-emerald-500/20 border-emerald-400/70 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+                : 'bg-slate-900/90 hover:bg-slate-800/95 border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400'
+            } border text-xs font-mono font-bold shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer group`}
+            title="Toggle Developer Command Console (Ctrl+K)"
           >
+            <span className={`w-2 h-2 rounded-full ${isTerminalOpen ? 'bg-emerald-400 animate-ping' : 'bg-emerald-400/80'}`} />
             <Terminal className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 group-hover:rotate-6 transition-transform" />
-            <span className="text-[11px] sm:text-xs font-mono font-bold hidden sm:inline">CLI Terminal</span>
+            <span className="text-[11px] sm:text-xs font-mono font-bold hidden sm:inline">Command Console</span>
             <span className="text-[9px] font-mono bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800 hidden md:inline">
               Ctrl+K
             </span>
           </motion.button>
         </div>
 
-        {/* Developer CLI Terminal Modal (loaded strictly on open) */}
+        {/* Floating Developer Command Console Window */}
         {isTerminalOpen && (
           <DeveloperTerminalModal
             isOpen={isTerminalOpen}
@@ -7624,6 +8405,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             education={education}
             metrics={portfolioMetrics}
             profile={profile}
+            currentRoute="/"
           />
         )}
       </React.Suspense>

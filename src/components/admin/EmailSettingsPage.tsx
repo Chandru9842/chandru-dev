@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, Save, Check, RefreshCw, Key, ShieldCheck, Server, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Mail, Send, Save, Check, RefreshCw, Key, ShieldCheck, Server, FileText, ToggleLeft, ToggleRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg: string, type: 'success' | 'error') => void }) {
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const [emailSettings, setEmailSettings] = useState<any>({
     smtpHost: 'smtp.gmail.com',
     smtpPort: 587,
-    smtpUser: 'notifications@alexdev.io',
+    smtpUser: 'chandrumohan550@gmail.com',
     smtpPass: '',
+    smtpConfigured: false,
+    envPassConfigured: false,
     secure: true,
     preset: 'Gmail SMTP',
     autoReplyEnabled: true,
     contactAlertsEnabled: true,
     adminNotificationsEnabled: true,
-    autoReplyTemplate: `Hello {{name}},\n\nThank you for reaching out! I have received your message regarding "{{subject}}" and will get back to you within 24 hours.\n\nBest regards,\nAlex Dev`,
+    autoReplyTemplate: `Hello {{name}},\n\nThank you for reaching out! I have received your message regarding "{{subject}}" and will get back to you within 24 hours.\n\nBest regards,\nChandru Mohan`,
     contactAlertTemplate: `New Contact Submission Received!\nName: {{name}}\nEmail: {{email}}\nSubject: {{subject}}\nMessage:\n{{message}}`
   });
 
@@ -24,7 +27,12 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
       .then(res => res.json())
       .then(data => {
         if (data && Object.keys(data).length > 0) {
-          setEmailSettings((prev: any) => ({ ...prev, ...data }));
+          setEmailSettings((prev: any) => ({
+            ...prev,
+            ...data,
+            smtpUser: (!data.smtpUser || data.smtpUser === 'notifications@alexdev.io') ? 'chandrumohan550@gmail.com' : data.smtpUser,
+            smtpPass: data.smtpPass === '••••••••••••' ? '' : (data.smtpPass || '')
+          }));
         }
       })
       .catch(() => triggerToast('Failed to load email settings', 'error'));
@@ -39,7 +47,11 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
         body: JSON.stringify(emailSettings)
       });
       if (res.ok) {
-        triggerToast('Email system settings updated successfully!', 'success');
+        const data = await res.json();
+        if (data.emailSettings) {
+          setEmailSettings((prev: any) => ({ ...prev, ...data.emailSettings }));
+        }
+        triggerToast('Email & SMTP settings saved successfully!', 'success');
       } else {
         throw new Error('Failed to update email settings');
       }
@@ -56,13 +68,16 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
       const res = await fetch('/api/email/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailSettings.smtpUser })
+        body: JSON.stringify({
+          ...emailSettings,
+          email: emailSettings.smtpUser || 'chandrumohan550@gmail.com'
+        })
       });
       const data = await res.json();
       if (res.ok) {
         triggerToast(data.message || 'Test email dispatched successfully!', 'success');
       } else {
-        throw new Error(data.error);
+        throw new Error(data.error || 'SMTP test failed');
       }
     } catch (e: any) {
       triggerToast(e.message, 'error');
@@ -70,6 +85,8 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
       setTesting(false);
     }
   };
+
+  const isPasswordPresent = !!(emailSettings.smtpPass?.trim() || emailSettings.envPassConfigured);
 
   return (
     <div className="space-y-6">
@@ -80,14 +97,18 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
             <Mail className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2 flex-wrap">
               Enterprise Email & SMTP Management System
-              <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                SMTP / Mail Templates
+              <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${
+                isPasswordPresent
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+              }`}>
+                {isPasswordPresent ? '● Direct SMTP Active' : '● App Password Needed for Direct Gmail'}
               </span>
             </h2>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
-              Configure SMTP servers, auto-replies to contact submissions, and instant alert dispatches.
+              Configure Gmail App Password &amp; SMTP servers so CLI Terminal &amp; Contact inquiries deliver straight to chandrumohan550@gmail.com.
             </p>
           </div>
         </div>
@@ -114,12 +135,17 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
 
       {/* SMTP Server Configuration */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-          <Server className="w-4 h-4" />
-          SMTP Server Connection Details
-        </h3>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+            <Server className="w-4 h-4" />
+            SMTP Server Connection Details
+          </h3>
+          <span className="text-[11px] font-mono text-slate-400">
+            Target Recipient: <strong className="text-emerald-400">chandrumohan550@gmail.com</strong>
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label className="block text-xs font-mono text-slate-400 mb-1">Preset Provider</label>
             <select
@@ -166,13 +192,46 @@ export default function EmailSettingsPage({ triggerToast }: { triggerToast: (msg
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-slate-400 mb-1">SMTP Username / Email</label>
+            <label className="block text-xs font-mono text-slate-400 mb-1">SMTP Username / Gmail</label>
             <input
               type="text"
               value={emailSettings.smtpUser}
               onChange={(e) => setEmailSettings({ ...emailSettings, smtpUser: e.target.value })}
+              placeholder="chandrumohan550@gmail.com"
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-emerald-400 font-bold mb-1 flex items-center gap-1">
+              <Key className="w-3 h-3" />
+              Gmail App Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={emailSettings.smtpPass || ''}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPass: e.target.value })}
+                placeholder={emailSettings.envPassConfigured ? 'Configured via .env' : '16-char Google App Password'}
+                className="w-full bg-slate-950 border border-emerald-500/40 rounded-xl pl-3 pr-9 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
+                title={showPass ? 'Hide password' : 'Show password'}
+              >
+                {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] font-mono text-slate-400 flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="text-slate-200 font-bold">How to enable instant Gmail SMTP delivery to chandrumohan550@gmail.com:</span>{' '}
+            Go to your <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline hover:text-emerald-300">Google Account → App Passwords</a>, generate a 16-character App Password, paste it into the <strong>Gmail App Password</strong> box above, and click <strong>Save Settings</strong>.
           </div>
         </div>
       </div>

@@ -190,32 +190,47 @@ export const AnimatedProfileAvatar: React.FC<AnimatedProfileAvatarProps> = ({
         {/* 5. IMAGE / CONTENT VIEWPORT (100% FULL FIT, CRISP OBJECT-COVER)       */}
         {/* ===================================================================== */}
         <div
-          className={`relative z-10 w-full h-full ${radiusClass} overflow-hidden bg-slate-900 flex items-center justify-center`}
+          className={`relative z-10 w-full h-full ${radiusClass} overflow-hidden bg-slate-950 flex items-center justify-center`}
         >
           {hasImage ? (
-            <img
-              src={src}
-              alt={alt}
-              onError={() => setImageError(true)}
-              referrerPolicy="no-referrer"
-              className={`w-full h-full object-cover ${objectPosition} transition-transform duration-700 ease-out ${
-                isHovered ? 'scale-106' : 'scale-100'
-              }`}
-            />
+            <>
+              <img
+                src={src}
+                alt={alt}
+                onError={() => setImageError(true)}
+                referrerPolicy="no-referrer"
+                className={`w-full h-full object-cover ${objectPosition} transition-transform duration-700 ease-out ${
+                  isHovered ? 'scale-106' : 'scale-100'
+                }`}
+              />
+              {/* Subtle Vignette & Cyber Bottom Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/20 pointer-events-none" />
+            </>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950/70 text-emerald-400">
-              <span className={`font-mono font-extrabold tracking-wider ${config.initials}`}>
+            <div className="relative w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_35%,rgba(16,185,129,0.22),rgba(6,182,212,0.1)_45%,rgba(2,6,23,0.98)_85%)] text-emerald-400 overflow-hidden">
+              {/* Animated SVG Orbital Geometry */}
+              <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(16,185,129,0.35)" strokeWidth="1" strokeDasharray="6 6" />
+                <circle cx="100" cy="100" r="58" fill="none" stroke="rgba(6,182,212,0.3)" strokeWidth="1" />
+                <path d="M 100 12 L 100 32 M 100 168 L 100 188 M 12 100 L 32 100 M 168 100 L 188 100" stroke="rgba(52,211,153,0.45)" strokeWidth="1.5" />
+              </svg>
+              <span className={`relative z-10 font-mono font-extrabold tracking-wider bg-gradient-to-br from-white via-emerald-300 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(16,185,129,0.45)] ${config.initials}`}>
                 {getInitials(alt)}
               </span>
+              {(size === 'about' || size === 'hero' || size === '2xl') && (
+                <span className="relative z-10 mt-2 text-[10px] font-mono uppercase tracking-[0.22em] text-emerald-300/80 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                  SYS.ARCHITECT // VERIFIED
+                </span>
+              )}
             </div>
           )}
 
           {/* Dynamic Specular Flash following cursor */}
           {isHovered && enableTilt && (
             <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-30 mix-blend-overlay z-20"
+              className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-35 mix-blend-overlay z-20"
               style={{
-                background: `radial-gradient(circle 240px at ${tilt.glareX}% ${tilt.glareY}%, rgba(255,255,255,0.9), transparent 70%)`
+                background: `radial-gradient(circle 260px at ${tilt.glareX}% ${tilt.glareY}%, rgba(255,255,255,0.92), transparent 70%)`
               }}
             />
           )}
@@ -229,10 +244,10 @@ export const AnimatedProfileAvatar: React.FC<AnimatedProfileAvatarProps> = ({
         {/* ===================================================================== */}
         {(size === 'about' || size === 'hero' || size === '2xl') && (
           <>
-            <div className="absolute top-2.5 left-2.5 w-3.5 h-3.5 border-t-2 border-l-2 border-emerald-400/90 rounded-tl-sm pointer-events-none z-30" />
-            <div className="absolute top-2.5 right-2.5 w-3.5 h-3.5 border-t-2 border-r-2 border-emerald-400/90 rounded-tr-sm pointer-events-none z-30" />
-            <div className="absolute bottom-2.5 left-2.5 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400/90 rounded-bl-sm pointer-events-none z-30" />
-            <div className="absolute bottom-2.5 right-2.5 w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400/90 rounded-br-sm pointer-events-none z-30" />
+            <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-emerald-400/90 rounded-tl-sm pointer-events-none z-30 shadow-[-2px_-2px_8px_rgba(16,185,129,0.4)]" />
+            <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-emerald-400/90 rounded-tr-sm pointer-events-none z-30 shadow-[2px_-2px_8px_rgba(16,185,129,0.4)]" />
+            <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-emerald-400/90 rounded-bl-sm pointer-events-none z-30 shadow-[-2px_2px_8px_rgba(16,185,129,0.4)]" />
+            <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-emerald-400/90 rounded-br-sm pointer-events-none z-30 shadow-[2px_2px_8px_rgba(16,185,129,0.4)]" />
           </>
         )}
       </div>

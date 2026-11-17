@@ -1,22 +1,46 @@
 /**
- * Sound Effects Engine using Web Audio API
- * Generates tactile, sci-fi, and responsive audio feedback without external audio files.
+ * Sound Effects & Ambient Space Audio Engine using Web Audio API
+ * Generates tactile, sci-fi UI feedback and a subtle, low-volume continuous
+ * 'ambient space' atmospheric drone loop without external audio dependencies.
  */
 
 class SoundEffectsEngine {
   private ctx: AudioContext | null = null;
   private muted: boolean = false;
-  private volume: number = 0.15; // Pleasant, non-intrusive volume
+  private volume: number = 0.15; // Pleasant, non-intrusive UI SFX volume
+
+  // Ambient Space Loop Nodes
+  private ambientPlaying: boolean = false;
+  private ambientMasterGain: GainNode | null = null;
+  private ambientOscillators: OscillatorNode[] = [];
+  private ambientNoiseSource: AudioBufferSourceNode | null = null;
+  private ambientVolume: number = 0.038; // Subtle, low-volume atmospheric pad
 
   constructor() {
-    // Check saved mute preference
     try {
       const saved = localStorage.getItem('portfolio_sound_muted');
       if (saved !== null) {
         this.muted = saved === 'true';
       }
+      const savedAmbient = localStorage.getItem('portfolio_ambient_space');
+      if (savedAmbient === 'true' && !this.muted) {
+        this.ambientPlaying = true;
+      }
     } catch {
       this.muted = false;
+    }
+  }
+
+  private notifyListeners() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('ambient-audio-state-changed', {
+          detail: {
+            muted: this.muted,
+            ambientPlaying: this.ambientPlaying
+          }
+        })
+      );
     }
   }
 
@@ -42,6 +66,208 @@ class SoundEffectsEngine {
     return this.muted;
   }
 
+  public isAmbientPlaying(): boolean {
+    return this.ambientPlaying && !this.muted;
+  }
+
+  /**
+   * Starts the subtle, low-volume 'ambient space' audio loop.
+   * Synthesizes a warm cosmic pad (A1/E2/A2/E3 harmonic drone + slow 0.08Hz LFO filter sweep + cosmic air texture).
+   */
+  public startAmbientSpace(): boolean {
+    const ctx = this.initContext();
+    if (!ctx) return false;
+
+    this.muted = false;
+    try {
+      localStorage.setItem('portfolio_sound_muted', 'false');
+      localStorage.setItem('portfolio_ambient_space', 'true');
+    } catch {
+      // ignore
+    }
+
+    // If nodes are already active, smoothly restore gain
+    if (this.ambientMasterGain && this.ambientOscillators.length > 0) {
+      try {
+        const now = ctx.currentTime;
+        this.ambientMasterGain.gain.cancelScheduledValues(now);
+        this.ambientMasterGain.gain.setValueAtTime(this.ambientMasterGain.gain.value, now);
+        this.ambientMasterGain.gain.linearRampToValueAtTime(this.ambientVolume, now + 0.8);
+        this.ambientPlaying = true;
+        this.notifyListeners();
+        return true;
+      } catch {
+        this.cleanupAmbientNodes();
+      }
+    }
+
+    try {
+      const now = ctx.currentTime;
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.0001, now);
+      masterGain.gain.linearRampToValueAtTime(this.ambientVolume, now + 1.4);
+      masterGain.connect(ctx.destination);
+      this.ambientMasterGain = masterGain;
+
+      // Low-pass filter modulated by a slow respiration LFO (0.085 Hz ~ 12s period)
+      const padFilter = ctx.createBiquadFilter();
+      padFilter.type = 'lowpass';
+      padFilter.frequency.setValueAtTime(260, now);
+      padFilter.Q.setValueAtTime(1.8, now);
+      padFilter.connect(masterGain);
+
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(0.085, now); // Slow cosmic breathing pulse
+      lfoGain.gain.setValueAtTime(110, now); // Sweeps cutoff between 150Hz and 370Hz
+      lfo.connect(lfoGain);
+      lfoGain.connect(padFilter.frequency);
+      lfo.start(now);
+
+      // Harmonic frequencies for a deep-space A-minor9 / suspended fifth chord pad
+      const layers: Array<{ freq: number; type: OscillatorType; detune: number; gain: number }> = [
+        { freq: 55.0, type: 'sine', detune: 0, gain: 0.45 },       // A1 deep sub-bass foundation
+        { freq: 82.41, type: 'sine', detune: -4, gain: 0.32 },     // E2 fifth harmonic
+        { freq: 110.0, type: 'triangle', detune: 5, gain: 0.22 },  // A2 warm body
+        { freq: 164.81, type: 'sine', detune: -6, gain: 0.16 },    // E3 celestial shimmer
+        { freq: 246.94, type: 'sine', detune: 8, gain: 0.09 }      // B3 airy 9th overtone
+      ];
+
+      const oscList: OscillatorNode[] = [lfo];
+
+      layers.forEach((layer) => {
+        const osc = ctx.createOscillator();
+        const layerGain = ctx.createGain();
+        osc.type = layer.type;
+        osc.frequency.setValueAtTime(layer.freq, now);
+        osc.detune.setValueAtTime(layer.detune, now);
+        layerGain.gain.setValueAtTime(layer.gain, now);
+        osc.connect(layerGain);
+        layerGain.connect(padFilter);
+        osc.start(now);
+        oscList.push(osc);
+      });
+
+      // Subtle cosmic air texture using filtered noise loop
+      const bufferSize = ctx.sampleRate * 3;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0;
+      let b1 = 0;
+      let b2 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99765 * b0 + white * 0.099046;
+        b1 = 0.96300 * b1 + white * 0.2965164;
+        b2 = 0.57000 * b2 + white * 1.0526913;
+        output[i] = (b0 + b1 + b2 + white * 0.1848) * 0.04;
+      }
+
+      const noiseNode = ctx.createBufferSource();
+      noiseNode.buffer = noiseBuffer;
+      noiseNode.loop = true;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(320, now);
+      noiseFilter.Q.setValueAtTime(3.5, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.08, now);
+
+      noiseNode.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(masterGain);
+      noiseNode.start(now);
+
+      this.ambientNoiseSource = noiseNode;
+      this.ambientOscillators = oscList;
+      this.ambientPlaying = true;
+      this.notifyListeners();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Smoothly fades out and stops the ambient space audio loop.
+   */
+  public stopAmbientSpace(): void {
+    this.ambientPlaying = false;
+    try {
+      localStorage.setItem('portfolio_ambient_space', 'false');
+    } catch {
+      // ignore
+    }
+
+    if (this.ctx && this.ambientMasterGain) {
+      try {
+        const now = this.ctx.currentTime;
+        this.ambientMasterGain.gain.cancelScheduledValues(now);
+        this.ambientMasterGain.gain.setValueAtTime(this.ambientMasterGain.gain.value, now);
+        this.ambientMasterGain.gain.linearRampToValueAtTime(0.0001, now + 0.45);
+        setTimeout(() => {
+          if (!this.ambientPlaying) {
+            this.cleanupAmbientNodes();
+          }
+        }, 500);
+      } catch {
+        this.cleanupAmbientNodes();
+      }
+    } else {
+      this.cleanupAmbientNodes();
+    }
+    this.notifyListeners();
+  }
+
+  private cleanupAmbientNodes(): void {
+    this.ambientOscillators.forEach((osc) => {
+      try {
+        osc.stop();
+        osc.disconnect();
+      } catch {
+        // ignore
+      }
+    });
+    this.ambientOscillators = [];
+
+    if (this.ambientNoiseSource) {
+      try {
+        this.ambientNoiseSource.stop();
+        this.ambientNoiseSource.disconnect();
+      } catch {
+        // ignore
+      }
+      this.ambientNoiseSource = null;
+    }
+
+    if (this.ambientMasterGain) {
+      try {
+        this.ambientMasterGain.disconnect();
+      } catch {
+        // ignore
+      }
+      this.ambientMasterGain = null;
+    }
+  }
+
+  /**
+   * Toggles the ambient space loop (and unmutes audio when enabling).
+   */
+  public toggleAmbientSpace(): boolean {
+    if (this.isAmbientPlaying()) {
+      this.stopAmbientSpace();
+      return false;
+    } else {
+      this.startAmbientSpace();
+      this.playToggle(true);
+      return true;
+    }
+  }
+
   public toggleMute(): boolean {
     this.muted = !this.muted;
     try {
@@ -49,9 +275,13 @@ class SoundEffectsEngine {
     } catch {
       // ignore
     }
-    if (!this.muted) {
+    if (this.muted) {
+      this.stopAmbientSpace();
+    } else {
+      this.startAmbientSpace();
       this.playToggle(true);
     }
+    this.notifyListeners();
     return this.muted;
   }
 
@@ -62,6 +292,10 @@ class SoundEffectsEngine {
     } catch {
       // ignore
     }
+    if (muted) {
+      this.stopAmbientSpace();
+    }
+    this.notifyListeners();
   }
 
   // --- Audio Generators ---
