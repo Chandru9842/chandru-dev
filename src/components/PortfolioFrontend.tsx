@@ -29,6 +29,7 @@ import { soundFx } from '../utils/soundEffects';
 import { notifyCmsUpdate } from '../utils/notifyCmsSync';
 const AIPortfolioChat = React.lazy(() => import('./AIPortfolioChat'));
 const DeveloperTerminalModal = React.lazy(() => import('./DeveloperTerminalModal'));
+const RecruiterExecutiveBriefModal = React.lazy(() => import('./RecruiterExecutiveBriefModal'));
 
 // Background chunk preloader for instant section jumps and idle mobile hydration
 let hasPreloadedHeavyChunks = false;
@@ -654,13 +655,22 @@ function ProjectCard({
     window.setTimeout(() => setCopiedDeployLog(false), 2000);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setCoords({ x, y });
+  const rafMoveRef = useRef<number | null>(null);
 
-    if (!prefersReduced) {
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (prefersReduced || (typeof window !== "undefined" && window.innerWidth < 768)) return;
+    const currentTarget = e.currentTarget;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+
+    if (rafMoveRef.current !== null) return;
+    rafMoveRef.current = window.requestAnimationFrame(() => {
+      rafMoveRef.current = null;
+      const rect = currentTarget.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      setCoords({ x, y });
+
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
       const nx = centerX > 0 ? (x - centerX) / centerX : 0;
@@ -671,10 +681,14 @@ function ProjectCard({
         rotateX: ny * -maxTilt,
         rotateY: nx * maxTilt,
       });
-    }
+    });
   };
 
   const handleMouseLeave = () => {
+    if (rafMoveRef.current !== null) {
+      window.cancelAnimationFrame(rafMoveRef.current);
+      rafMoveRef.current = null;
+    }
     setIsHovered(false);
     setParallaxOffset({ nx: 0, ny: 0 });
     setTilt({ rotateX: 0, rotateY: 0 });
@@ -707,13 +721,9 @@ function ProjectCard({
   };
 
   return (
-    <div style={{ perspective: 1400 }} className="h-full">
+    <div style={{ perspective: 1400, transformStyle: "preserve-3d" }} className="h-full">
       <motion.article
-        layout="position"
-        initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         animate={{
-          opacity: 1,
-          y: 0,
           rotateX: prefersReduced ? 0 : tilt.rotateX,
           rotateY: prefersReduced ? 0 : tilt.rotateY,
           transformStyle: "preserve-3d",
@@ -726,7 +736,7 @@ function ProjectCard({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
         onClick={handleCardToggle}
-        className={`glass-card relative rounded-2xl overflow-hidden flex flex-col h-full group border backdrop-blur-2xl transition-all duration-300 cursor-pointer ${
+        className={`glass-card relative rounded-2xl overflow-hidden flex flex-col h-full group border backdrop-blur-xl transition-all duration-300 cursor-pointer ${
           isExpanded
             ? "spotlight-card-active-pulse border-emerald-400/90 bg-gradient-to-b from-slate-900/98 via-slate-950/98 to-[#020617] ring-1 ring-emerald-400/50 z-30"
             : isHovered && !prefersReduced
@@ -1751,6 +1761,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   const [prefersReduced, setPrefersReduced] = useState<boolean>(false);
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 1024 : true);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
+  const [isExecutiveBriefOpen, setIsExecutiveBriefOpen] = useState<boolean>(false);
   const [isSoundMuted, setIsSoundMuted] = useState<boolean>(() => soundFx.isMuted());
   
   // Interactive Timeline (Experience & Education) Animation States
@@ -2019,7 +2030,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
         const targetScrollLeft = elLeft - (navWidth / 2) + (elWidth / 2);
         nav.scrollTo({
           left: targetScrollLeft,
-          behavior: 'smooth'
+          behavior: 'auto'
         });
       }
     }
@@ -2102,7 +2113,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
   // Defer heavy WebGL ThreeDHero boot & background chunk preloading until after First Contentful Paint / TTI
   useEffect(() => {
     const isMobileViewport = window.innerWidth < 768;
-    const heroDelay = isMobileViewport ? 180 : 60;
+    const heroDelay = isMobileViewport ? 120 : 40;
     const heroTimer = setTimeout(() => {
       setIsHero3DReady(true);
     }, heroDelay);
@@ -2110,7 +2121,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     const idleHydrateTimer = setTimeout(() => {
       preloadHeavyPortfolioChunks();
       setForceHydrateAllSections(true);
-    }, isMobileViewport ? 1400 : 800);
+    }, isMobileViewport ? 300 : 180);
 
     return () => {
       clearTimeout(heroTimer);
@@ -2132,27 +2143,34 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
       threshold: 0,
     };
 
+    let activeSectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       if (isProgrammaticScrollRef.current) return;
       const intersectingEntries = entries.filter(e => e.isIntersecting);
       if (intersectingEntries.length > 0) {
         const currentId = intersectingEntries[0].target.id;
-        setActiveSection(prev => (prev === currentId ? prev : currentId));
-
-        if (window.parent && window.parent !== window) {
-          let mappedId = currentId;
-          if (currentId === 'home') mappedId = 'hero';
-          if (currentId === 'timeline') mappedId = 'experience';
-
-          if (window.scrollY < 80) {
-            mappedId = 'all';
-          }
-
-          window.parent.postMessage({
-            type: 'PREVIEW_ACTIVE_SECTION',
-            sectionId: mappedId
-          }, '*');
+        if (activeSectionDebounceTimer) {
+          clearTimeout(activeSectionDebounceTimer);
         }
+        activeSectionDebounceTimer = setTimeout(() => {
+          setActiveSection(prev => (prev === currentId ? prev : currentId));
+
+          if (window.parent && window.parent !== window) {
+            let mappedId = currentId;
+            if (currentId === 'home') mappedId = 'hero';
+            if (currentId === 'timeline') mappedId = 'experience';
+
+            if (window.scrollY < 80) {
+              mappedId = 'all';
+            }
+
+            window.parent.postMessage({
+              type: 'PREVIEW_ACTIVE_SECTION',
+              sectionId: mappedId
+            }, '*');
+          }
+        }, 140);
       }
     };
 
@@ -2160,6 +2178,9 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
     observers.forEach(({ el }) => observer.observe(el));
 
     return () => {
+      if (activeSectionDebounceTimer) {
+        clearTimeout(activeSectionDebounceTimer);
+      }
       observers.forEach(({ el }) => observer.unobserve(el));
     };
   }, [projects.length, skills.length, certificates.length, achievements.length, experiences.length, education.length, tools.length, testimonials.length, articles.length]);
@@ -3674,6 +3695,21 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
               )}
             </button>
 
+            {/* One-Click Recruiter Executive Brief & Architecture Blueprint Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playClick();
+                setIsExecutiveBriefOpen(true);
+              }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/35 bg-cyan-500/[0.08] text-cyan-300 hover:text-white hover:border-cyan-400/60 hover:bg-cyan-500/20 transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 shrink-0"
+              title="Open 1-Page Executive Brief & Interactive System Architecture Blueprint"
+              id="btn-executive-brief-header"
+            >
+              <FileText className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-[11px] font-mono font-semibold tracking-wide">Executive Brief</span>
+            </button>
+
             {/* Desktop Dashboard Access Button */}
             <button
               onClick={onEnterCMS}
@@ -3738,14 +3774,24 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   );
                 })}
               </nav>
-              <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Portal Access</span>
+              <div className="pt-2 border-t border-white/[0.04] flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsExecutiveBriefOpen(true);
+                  }}
+                  className="min-h-[44px] px-3.5 py-2 rounded-lg border border-cyan-500/35 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 transition-all flex items-center gap-2 text-xs font-mono font-semibold cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>1-Page Executive Brief</span>
+                </button>
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     onEnterCMS();
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all flex items-center gap-2 text-xs font-mono font-semibold cursor-pointer"
+                  className="min-h-[44px] px-3.5 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all flex items-center gap-2 text-xs font-mono font-semibold cursor-pointer"
                   title="Admin & Recruiter Portal"
                   aria-label="Admin & Recruiter Portal"
                 >
@@ -4055,7 +4101,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3 w-full">
+              <div className="grid grid-cols-1 w-full md:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3">
                 {portfolioMetrics.map((metric, idx) => {
                   const titleLower = (metric.title || '').toLowerCase();
                   const targetSection =
@@ -4163,7 +4209,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       key={metric.id}
                       initial={{ opacity: 0, y: 14, scale: 0.98 }}
                       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                      viewport={{ once: false, amount: 0.15, margin: '-20px' }}
+                      viewport={{ once: true, amount: 0.15 }}
                       transition={{ duration: 0.32, delay: idx * 0.03, ease: [0.22, 1, 0.36, 1] }}
                       onClick={(e) => scrollToSection(targetSection, e)}
                       role="button"
@@ -4522,7 +4568,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                   {/* Custom Admin-Created About Highlight Cards (Only shown if created in Admin Panel) */}
                   {Array.isArray(profile?.aboutHighlights) && profile.aboutHighlights.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-4 pt-2">
                       {profile.aboutHighlights.map((hl: any, idx: number) => (
                         <motion.div
                           key={hl.id || idx}
@@ -4547,7 +4593,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
 
                   {/* Dynamic Metadata Grid (Only renders fields configured in Admin Panel) */}
                   {(profile?.experienceSummary || profile?.yearsExperience || profile?.currentPosition || profile?.location || profile?.availability) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/[0.06] text-xs font-mono">
+                    <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-3 pt-4 border-t border-white/[0.06] text-xs font-mono">
                       {(profile?.experienceSummary || profile?.yearsExperience !== undefined) && (
                         <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/[0.06] flex items-start gap-3">
                           <Briefcase className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -4752,14 +4798,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </button>
 
                 {/* View Mode Segmented Switcher (Grid vs Interactive Split Explorer) */}
-                <div className="grid grid-cols-2 sm:flex items-center p-1 rounded-xl bg-slate-900/95 border border-white/[0.08] w-full sm:w-auto">
+                <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center p-1 rounded-xl bg-slate-900/95 border border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => {
                       soundFx.playToggle(false);
                       setProjectDisplayMode("grid");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                       projectDisplayMode === "grid"
                         ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
                         : "text-slate-400 hover:text-white"
@@ -4774,7 +4820,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                       soundFx.playToggle(true);
                       setProjectDisplayMode("showcase");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                       projectDisplayMode === "showcase"
                         ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
                         : "text-slate-400 hover:text-white"
@@ -4801,7 +4847,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
+              <div className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
                 <motion.div
                   whileHover={{ y: -2 }}
                   className="p-4 rounded-2xl bg-[#030712]/95 border border-emerald-500/20 hover:border-emerald-400/50 transition-all space-y-2"
@@ -4974,29 +5020,37 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             {/* MODE 1: INTERACTIVE 3D-PERSPECTIVE 'PROJECT SPOTLIGHT' GALLERY (DEFAULT)  */}
             {/* ========================================================================= */}
             {projectDisplayMode === "grid" && filteredProjects.length > 0 && (
-              <motion.div
+              <div
                 key="projects-grid-mode"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
+                style={{ perspective: "1000px", transformStyle: "preserve-3d" }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch group/spotlight-grid"
               >
                 {filteredProjects.map((proj, pIdx) => {
                   const isCardExpanded = expandedSpotlightProjectId === proj.id;
+                  const rowIndex = Math.floor(pIdx / 3); // 0 = Row 1 (odd), 1 = Row 2 (even), 2 = Row 3 (odd)
+                  const isOddRow = rowIndex % 2 === 0;
+                  const initialX = isOddRow ? -80 : 80;
+                  const initialRotateY = isOddRow ? 20 : -20;
+
                   return (
                     <motion.div
-                      layout="position"
                       key={proj.id || `grid-proj-${pIdx}`}
+                      style={{
+                        transformStyle: "preserve-3d",
+                        backfaceVisibility: "hidden",
+                        willChange: "transform, opacity",
+                      }}
                       initial={
                         prefersReduced
-                          ? { opacity: 1, y: 0 }
-                          : { opacity: 0, y: 18 }
+                          ? { opacity: 1, x: 0, rotateY: 0 }
+                          : { opacity: 0, x: initialX, rotateY: initialRotateY }
                       }
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: 0.12, margin: "-20px" }}
+                      whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
+                      viewport={{ once: true, amount: 0.12 }}
                       transition={{
-                        duration: 0.34,
-                        delay: Math.min(pIdx * 0.04, 0.18),
+                        duration: 0.72,
+                        delay: pIdx * 0.1,
+                        ease: [0.22, 1, 0.36, 1],
                       }}
                       className={`h-full transition-opacity duration-300 ${
                         isCardExpanded
@@ -5025,7 +5079,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     </motion.div>
                   );
                 })}
-              </motion.div>
+              </div>
             )}
 
             {/* ========================================================================= */}
@@ -5640,14 +5694,14 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   </button>
 
                   {/* View Mode Segmented Switcher */}
-                  <div className="grid grid-cols-2 sm:flex items-center p-1 rounded-xl bg-[#090814]/95 border border-amber-500/20 w-full sm:w-auto">
+                  <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center p-1 rounded-xl bg-[#090814]/95 border border-amber-500/20">
                     <button
                       type="button"
                       onClick={() => {
                         soundFx.playToggle(false);
                         setArticleDisplayMode("grid");
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                      className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                         articleDisplayMode === "grid"
                           ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold shadow-sm"
                           : "text-slate-400 hover:text-white"
@@ -5662,7 +5716,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                         soundFx.playToggle(true);
                         setArticleDisplayMode("showcase");
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                      className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                         articleDisplayMode === "showcase"
                           ? "bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold shadow-sm"
                           : "text-slate-400 hover:text-white"
@@ -6905,6 +6959,48 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                 <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
                 <form onSubmit={handleContactSubmit} className="space-y-5 relative z-10">
+                  {/* Direct Executive & Hiring Instant Connect Bar */}
+                  <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">
+                        Instant Executive & Hiring Connect
+                      </span>
+                      <span className="text-xs text-slate-300 block">
+                        Prefer a direct conversation? Connect via WhatsApp or book a 15-min architecture call.
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <a
+                        href={`https://wa.me/919655384140?text=${encodeURIComponent(
+                          'Hi Chandru, I reviewed your portfolio and would like to connect regarding a Principal / Senior Engineering opportunity.'
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-500/15"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp Direct</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormSubject('15-Min Architecture / Hiring Call');
+                          setContactSubjectPreset('15-Min Architecture / Hiring Call');
+                          if (!formMessage.trim()) {
+                            setFormMessage(
+                              'Hi Chandru, I would like to schedule a 15-minute call this week to discuss a Principal / Full-Stack Java role and system architecture.'
+                            );
+                          }
+                          soundFx.playClick();
+                        }}
+                        className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Book 15-Min Call</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Topic Quick Selection Chips */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">
@@ -6939,7 +7035,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                   </div>
 
                   {/* Name and Email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
                         Your Name <span className="text-emerald-400">*</span>
@@ -7141,7 +7237,7 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
                     <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
                     Quick Navigation
                   </h5>
-                  <nav className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs font-medium text-slate-400 w-full">
+                  <nav className="grid grid-cols-1 w-full md:grid-cols-2 gap-x-4 gap-y-2.5 text-xs font-medium text-slate-400">
                     <a href="#about" onClick={(e) => handleNavLinkClick(e, 'about')} className="hover:text-emerald-400 hover:translate-x-1 transition-all flex items-center gap-1.5 cursor-pointer py-0.5">
                       <span className="text-slate-600 text-[10px]">→</span> About
                     </a>
@@ -8599,6 +8695,30 @@ export default function PortfolioFrontend({ onEnterCMS }: PortfolioFrontendProps
             metrics={portfolioMetrics}
             profile={profile}
             currentRoute="/"
+          />
+        )}
+
+        {/* One-Click Recruiter Executive Brief & System Architecture Blueprint Modal */}
+        {isExecutiveBriefOpen && (
+          <RecruiterExecutiveBriefModal
+            isOpen={isExecutiveBriefOpen}
+            onClose={() => setIsExecutiveBriefOpen(false)}
+            profile={profile}
+            projects={projects}
+            experiences={experiences}
+            skills={skills}
+            certificates={certificates}
+            activeResume={activeResume}
+            onDownloadResume={() => {
+              const fakeEvt = { preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>;
+              handleDownloadResume(fakeEvt, 'executive_brief_resume', 'Download Resume from Executive Brief');
+            }}
+            onBookCallTopic={(topic, presetMessage) => {
+              setFormSubject(topic);
+              setContactSubjectPreset(topic);
+              setFormMessage(presetMessage);
+              scrollToSection('contact');
+            }}
           />
         )}
       </React.Suspense>

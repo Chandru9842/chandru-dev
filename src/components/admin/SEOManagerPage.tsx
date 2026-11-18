@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Save, Globe, Share2, FileCode, Check, RefreshCw, Smartphone, Eye, ExternalLink, Image as ImageIcon, Sparkles, Folder, Trash2 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
+import MediaUploader from './MediaUploader';
 
 // Notify all open tabs & previews of CMS updates
 const notifyCmsUpdate = () => {
@@ -150,7 +151,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          className="min-h-[44px] px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
         >
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>Save & Publish Live</span>
@@ -168,116 +169,40 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Main Website / Navbar Logo */}
-          <div className="border border-slate-850 bg-slate-950/60 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-bold font-mono text-slate-200">Main Navbar / Site Brand Logo</h4>
-                <p className="text-[10px] text-slate-500 font-mono">Displayed top-left in the sticky website header</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <label className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer">
-                  Upload
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleDirectFileUpload('websiteLogo', e)} />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setMediaModalTarget('websiteLogo')}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                >
-                  <Folder className="w-3 h-3" />
-                  Media Library
-                </button>
-                {seoConfig.websiteLogo && (
-                  <button
-                    type="button"
-                    onClick={() => setSeoConfig({ ...seoConfig, websiteLogo: '' })}
-                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                    title="Remove Logo"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
+          <MediaUploader
+            title="Main Navbar / Site Brand Logo"
+            subtitle="Displayed top-left in the sticky website header"
+            badge="Header Brand"
+            assetType="website-logo"
+            currentUrl={seoConfig.websiteLogo || ''}
+            urlPlaceholder="https://example.com/site-logo.png or SVG URL"
+            fallbackHint='If left empty, a clean neon monogram ("C") will be displayed.'
+            onDataUrlReady={(dataUrl) => {
+              setSeoConfig((prev: any) => ({ ...prev, websiteLogo: dataUrl }));
+              triggerToast('Site Logo loaded via drag-and-drop! Click "Save & Publish Live" to apply.', 'success');
+            }}
+            onUrlChange={(val) => setSeoConfig({ ...seoConfig, websiteLogo: val })}
+            onDelete={() => setSeoConfig({ ...seoConfig, websiteLogo: '' })}
+            onOpenMediaLibrary={() => setMediaModalTarget('websiteLogo')}
+          />
 
-            <div className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
-              <div className="w-14 h-14 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0">
-                {seoConfig.websiteLogo ? (
-                  <img src={seoConfig.websiteLogo} alt="Site Logo" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="font-luxury font-bold text-emerald-400 text-xl">C</span>
-                )}
-              </div>
-              <div className="space-y-1 flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={seoConfig.websiteLogo || ''}
-                  onChange={(e) => setSeoConfig({ ...seoConfig, websiteLogo: e.target.value })}
-                  placeholder="https://example.com/site-logo.png or SVG URL"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
-                />
-                <p className="text-[9px] text-slate-500 font-mono">If left empty, a clean neon monogram ("C") will be displayed.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Browser Tab Favicon */}
-          <div className="border border-slate-850 bg-slate-950/60 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-bold font-mono text-slate-200">Browser Tab Search Favicon (.svg / .ico / .png)</h4>
-                <p className="text-[10px] text-slate-500 font-mono">Appears in browser tabs and search engine result listings</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <label className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer">
-                  Upload
-                  <input type="file" accept="image/*,.ico,.svg" className="hidden" onChange={(e) => handleDirectFileUpload('faviconUrl', e)} />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setMediaModalTarget('faviconUrl')}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                >
-                  <Folder className="w-3 h-3" />
-                  Media Library
-                </button>
-                {seoConfig.faviconUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setSeoConfig({ ...seoConfig, faviconUrl: '' })}
-                    className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                    title="Delete / Reset Favicon"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
-              <div className="w-14 h-14 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-center overflow-hidden shrink-0">
-                <img 
-                  src={seoConfig.faviconUrl || '/favicon.svg'} 
-                  alt="Favicon Preview" 
-                  className="w-8 h-8 object-contain" 
-                  referrerPolicy="no-referrer" 
-                />
-              </div>
-              <div className="space-y-1 flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={seoConfig.faviconUrl || ''}
-                  onChange={(e) => setSeoConfig({ ...seoConfig, faviconUrl: e.target.value })}
-                  placeholder="/favicon.svg or https://example.com/favicon.png"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
-                />
-                <p className="text-[9px] text-slate-500 font-mono">Dynamic head synchronizer replaces all icon links immediately.</p>
-              </div>
-            </div>
-          </div>
-
+          <MediaUploader
+            title="Browser Tab Search Favicon (.svg / .ico / .png)"
+            subtitle="Appears in browser tabs and search engine result listings"
+            badge="Browser Tab"
+            assetType="favicon"
+            currentUrl={seoConfig.faviconUrl || ''}
+            accept="image/*,.ico,.svg"
+            urlPlaceholder="/favicon.svg or https://example.com/favicon.png"
+            fallbackHint="Dynamic head synchronizer replaces all icon links immediately."
+            onDataUrlReady={(dataUrl) => {
+              setSeoConfig((prev: any) => ({ ...prev, faviconUrl: dataUrl }));
+              triggerToast('Favicon loaded via drag-and-drop! Click "Save & Publish Live" to apply.', 'success');
+            }}
+            onUrlChange={(val) => setSeoConfig({ ...seoConfig, faviconUrl: val })}
+            onDelete={() => setSeoConfig({ ...seoConfig, faviconUrl: '' })}
+            onOpenMediaLibrary={() => setMediaModalTarget('faviconUrl')}
+          />
         </div>
       </div>
 
@@ -365,7 +290,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
               <button
                 type="button"
                 onClick={() => setMediaModalTarget('ogImage')}
-                className="text-[9px] font-mono text-emerald-400 hover:underline"
+                className="min-h-[44px] px-2.5 text-[10px] font-mono text-emerald-400 hover:underline inline-flex items-center cursor-pointer"
               >
                 Media Library
               </button>
@@ -374,7 +299,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
               type="text"
               value={seoConfig.ogImage}
               onChange={(e) => setSeoConfig({ ...seoConfig, ogImage: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="min-h-[44px] w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
@@ -384,7 +309,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
               type="text"
               value={seoConfig.twitterSite}
               onChange={(e) => setSeoConfig({ ...seoConfig, twitterSite: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="min-h-[44px] w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
             />
           </div>
         </div>
@@ -402,7 +327,7 @@ export default function SEOManagerPage({ triggerToast }: { triggerToast: (msg: s
               href="/sitemap.xml"
               target="_blank"
               rel="noreferrer"
-              className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 hover:underline"
+              className="min-h-[44px] px-2.5 text-[10px] font-mono text-emerald-400 inline-flex items-center gap-1 hover:underline"
             >
               <span>View XML</span>
               <ExternalLink className="w-3 h-3" />

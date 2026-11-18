@@ -1861,7 +1861,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
   ];
 
   return (
-    <div className="flex flex-col w-full min-h-[580px] glass-card rounded-3xl overflow-hidden relative text-slate-100">
+    <div className="admin-dashboard-shell flex flex-col w-full min-h-[580px] glass-card rounded-3xl overflow-hidden relative text-slate-100">
       
       <div className="flex flex-col md:flex-row flex-1 relative">
       
@@ -1887,9 +1887,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
         </div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-slate-400 hover:text-emerald-400 bg-slate-900/40 rounded-lg border border-slate-800 transition-all cursor-pointer shrink-0"
+          aria-label="Toggle navigation menu"
+          className="min-h-[44px] min-w-[44px] p-2.5 text-slate-400 hover:text-emerald-400 bg-slate-900/40 rounded-xl border border-slate-800 transition-all cursor-pointer shrink-0 flex items-center justify-center"
         >
-          {mobileMenuOpen ? <X className="w-4.5 h-4.5" /> : <Menu className="w-4.5 h-4.5" />}
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
@@ -1911,7 +1912,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                     setActiveTab(item.name);
                     setMobileMenuOpen(false);
                   }}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all text-left ${
+                  className={`min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all text-left ${
                     activeTab === item.name
                       ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-lg'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
@@ -1933,7 +1934,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   setMobileMenuOpen(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="px-3 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-red-400 hover:bg-red-500/10 cursor-pointer"
+                className="min-h-[44px] px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-red-400 hover:bg-red-500/10 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout Session</span>
@@ -1985,7 +1986,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
           <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/60 border border-slate-800/80 rounded-xl">
             <button
               onClick={() => setShowGlobalSearch(true)}
-              className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
               title="Global Search (Ctrl+K)"
             >
               <Search className="w-4 h-4" />
@@ -1993,7 +1994,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
             <button
               onClick={() => setShowAIAssistant(true)}
-              className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition flex items-center justify-center cursor-pointer relative group"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition flex items-center justify-center cursor-pointer relative group"
               title="AI Writing Copilot"
             >
               <Sparkles className="w-4 h-4" />
@@ -2001,7 +2002,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
 
             <button
               onClick={() => setShowNotificationsDrawer(true)}
-              className="p-2 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-lg bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition flex items-center justify-center cursor-pointer relative group"
               title="System Notifications"
             >
               <Bell className="w-4 h-4" />
@@ -2014,7 +2015,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
           {/* Live Preview Button */}
           <button
             onClick={() => setShowLivePreview(true)}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/20 hover:from-emerald-500 hover:to-emerald-400 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-500/5 group"
+            className="min-h-[44px] w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/20 hover:from-emerald-500 hover:to-emerald-400 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-500/5 group"
           >
             <Eye className="w-4 h-4 text-emerald-400 group-hover:text-slate-950" />
             <span>Launch Live Preview</span>
@@ -2025,7 +2026,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
               <button
                 key={item.name}
                 onClick={() => setActiveTab(item.name)}
-                className={`relative w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-3.5 transition-colors text-left overflow-hidden cursor-pointer ${
+                className={`min-h-[44px] relative w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-3.5 transition-colors text-left overflow-hidden cursor-pointer ${
                   activeTab === item.name
                     ? 'text-slate-950 font-extrabold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
@@ -2060,7 +2061,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
           
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full px-3 py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-3.5 transition-all text-left text-slate-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer mt-6"
+            className="min-h-[44px] w-full px-3.5 py-2.5 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-3.5 transition-all text-left text-slate-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer mt-6"
           >
             <LogOut className="w-4 h-4 text-slate-500 hover:text-red-400" />
             <span>Logout Session</span>
@@ -2117,7 +2118,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">Quick Jump:</span>
                   <button
                     onClick={() => setActiveTab('Dashboard')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-mono font-semibold transition cursor-pointer flex items-center ${
                       activeTab === 'Dashboard' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
@@ -2125,7 +2126,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   </button>
                   <button
                     onClick={() => setActiveTab('Projects')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-mono font-semibold transition cursor-pointer flex items-center ${
                       activeTab === 'Projects' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
@@ -2133,7 +2134,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   </button>
                   <button
                     onClick={() => setActiveTab('Profile')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-mono font-semibold transition cursor-pointer flex items-center ${
                       activeTab === 'Profile' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
@@ -2141,7 +2142,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   </button>
                   <button
                     onClick={() => setActiveTab('Theme & Appearance')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-mono font-semibold transition cursor-pointer flex items-center ${
                       activeTab === 'Theme & Appearance' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
@@ -2149,7 +2150,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                   </button>
                   <button
                     onClick={() => setActiveTab('Security Settings')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition cursor-pointer ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-mono font-semibold transition cursor-pointer flex items-center ${
                       activeTab === 'Security Settings' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-300 border border-slate-800'
                     }`}
                   >
@@ -2161,14 +2162,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
               <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-400 text-xs font-mono font-semibold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Admin Login</span>
                 </button>
                 <button
                   onClick={() => setShowTourBanner(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] p-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-xl transition cursor-pointer flex items-center justify-center"
                   title="Dismiss banner"
                 >
                   <X className="w-4 h-4" />
@@ -2519,7 +2520,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                 <button
                   type="button"
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/[0.06] hover:bg-white/[0.02] text-xs font-mono text-slate-400 hover:text-slate-200 transition-all cursor-pointer font-bold uppercase"
+                  className="min-h-[44px] flex-1 py-2.5 rounded-xl border border-white/[0.06] hover:bg-white/[0.02] text-xs font-mono text-slate-400 hover:text-slate-200 transition-all cursor-pointer font-bold uppercase flex items-center justify-center"
                 >
                   Cancel
                 </button>
@@ -2535,7 +2536,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps = {}) {
                       window.location.href = '/';
                     }
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white text-xs font-mono font-bold uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-rose-500/10 hover:scale-[1.01]"
+                  className="min-h-[44px] flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white text-xs font-mono font-bold uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-rose-500/10 hover:scale-[1.01] flex items-center justify-center"
                 >
                   Logout
                 </button>

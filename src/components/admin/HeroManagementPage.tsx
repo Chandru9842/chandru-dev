@@ -5,6 +5,7 @@ import {
   RotateCcw, Eye, Download, Info, Globe, Mail, EyeOff, Plus, Folder
 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
+import MediaUploader from './MediaUploader';
 import { AnimatedProfileAvatar } from '../AnimatedProfileAvatar';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
 import { isDemoSessionActive, checkAndBlockDemoAction } from '../../utils/demoAuthUtils';
@@ -378,10 +379,7 @@ const getJwtToken = () =>
   };
 
   // Handle image upload helpers for Avatar and Background
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'background') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleUploadDataUrl = async (dataUrl: string, type: 'avatar' | 'background') => {
     if (checkAndBlockDemoAction(onTriggerToast)) return;
 
     const token = getJwtToken();
@@ -390,49 +388,55 @@ const getJwtToken = () =>
       return;
     }
 
-    // Read file as base64 data URL
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      try {
-        const patchRoute = `/api/profile/${type === 'avatar' ? 'hero-avatar' : 'hero-background'}`;
-        onTriggerToast(`Uploading and compressing ${type} asset...`, "success");
-        
-        const uploadRes = await fetch(patchRoute, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ image: dataUrl })
-        });
+    try {
+      const patchRoute = `/api/profile/${type === 'avatar' ? 'hero-avatar' : 'hero-background'}`;
+      onTriggerToast(`Uploading and compressing ${type} asset...`, "success");
+      
+      const uploadRes = await fetch(patchRoute, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ image: dataUrl })
+      });
 
-        if (uploadRes.ok) {
-          const resData = await uploadRes.json();
-          const data = normalizeHeroData(resData.profile);
-          setProfile(data);
-          setOriginalProfile(JSON.parse(JSON.stringify(data)));
-          setHistory([JSON.parse(JSON.stringify(data))]);
-          setCurrentHistoryIndex(0);
+      if (uploadRes.ok) {
+        const resData = await uploadRes.json();
+        const data = normalizeHeroData(resData.profile);
+        setProfile(data);
+        setOriginalProfile(JSON.parse(JSON.stringify(data)));
+        setHistory([JSON.parse(JSON.stringify(data))]);
+        setCurrentHistoryIndex(0);
 
-          try {
-            localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
-            const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
-            const deleted = deletedStr ? JSON.parse(deletedStr) : {};
-            delete deleted[type === 'avatar' ? 'heroAvatar' : 'heroBackground'];
-            localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
-          } catch (e) {}
+        try {
+          localStorage.setItem('cms_profile_overrides', JSON.stringify(data));
+          const deletedStr = localStorage.getItem('cms_deleted_hero_assets');
+          const deleted = deletedStr ? JSON.parse(deletedStr) : {};
+          delete deleted[type === 'avatar' ? 'heroAvatar' : 'heroBackground'];
+          localStorage.setItem('cms_deleted_hero_assets', JSON.stringify(deleted));
+        } catch (e) {}
 
-          onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
-          notifyCmsUpdate();
-          if (onHeroUpdated) {
-            onHeroUpdated();
-          }
-        } else {
-          onTriggerToast("Server refused asset storage.", "error");
+        onTriggerToast(`Hero ${type} asset updated and saved!`, "success");
+        notifyCmsUpdate();
+        if (onHeroUpdated) {
+          onHeroUpdated();
         }
-      } catch (err) {
-        onTriggerToast("Gateway error uploading image.", "error");
+      } else {
+        onTriggerToast("Server refused asset storage.", "error");
+      }
+    } catch (err) {
+      onTriggerToast("Gateway error uploading image.", "error");
+    }
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'background') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        handleUploadDataUrl(reader.result, type);
       }
     };
     reader.readAsDataURL(file);
@@ -517,7 +521,7 @@ const getJwtToken = () =>
           <button
             onClick={handleUndo}
             disabled={currentHistoryIndex <= 0}
-            className="p-2 border border-slate-800 hover:border-slate-700 bg-slate-950 disabled:opacity-30 rounded-xl text-slate-400 hover:text-slate-200 transition cursor-pointer"
+            className="min-h-[44px] min-w-[44px] p-2.5 border border-slate-800 hover:border-slate-700 bg-slate-950 disabled:opacity-30 rounded-xl text-slate-400 hover:text-slate-200 transition cursor-pointer flex items-center justify-center"
             title="Undo Change"
           >
             <RotateCcw className="w-4 h-4" />
@@ -525,7 +529,7 @@ const getJwtToken = () =>
           <button
             onClick={handleRedo}
             disabled={currentHistoryIndex >= history.length - 1}
-            className="p-2 border border-slate-800 hover:border-slate-700 bg-slate-950 disabled:opacity-30 rounded-xl text-slate-400 hover:text-slate-200 transition cursor-pointer animate-none"
+            className="min-h-[44px] min-w-[44px] p-2.5 border border-slate-800 hover:border-slate-700 bg-slate-950 disabled:opacity-30 rounded-xl text-slate-400 hover:text-slate-200 transition cursor-pointer animate-none flex items-center justify-center"
             title="Redo Change"
           >
             <RotateCcw className="w-4 h-4 transform scale-x-[-1]" />
@@ -533,7 +537,7 @@ const getJwtToken = () =>
 
           <button
             onClick={handleResetToBaseline}
-            className="px-3 py-2 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            className="min-h-[44px] px-3.5 py-2 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
             title="Reset to Baseline Defaults"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -543,7 +547,7 @@ const getJwtToken = () =>
           <button
             onClick={handleSaveHero}
             disabled={!isDirty || saving}
-            className={`px-4 py-2 text-xs font-mono font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+            className={`min-h-[44px] px-4 py-2 text-xs font-mono font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
               isDirty 
                 ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/10' 
                 : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed'
@@ -583,7 +587,7 @@ const getJwtToken = () =>
               </div>
               <button
                 onClick={() => updateProfileWithHistory({ ...profile, heroVisibility: profile.heroVisibility === false ? true : false })}
-                className={`px-3 py-1 text-[10px] font-mono rounded-lg border transition cursor-pointer ${
+                className={`min-h-[44px] px-3.5 py-2 text-[10px] font-mono rounded-lg border transition cursor-pointer flex items-center justify-center ${
                   profile.heroVisibility !== false 
                     ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
                     : 'bg-rose-950/20 border-rose-500/20 text-rose-400 hover:bg-rose-500/10'
@@ -600,138 +604,33 @@ const getJwtToken = () =>
               Visual Media Assets
             </h3>
 
-            {/* Avatar Image (Pic-1) */}
-            <div className="space-y-2">
-              <label className="block text-[11px] font-mono text-slate-400">Hero Avatar Photo (Pic-1 — Independent from Profile & About Image)</label>
-              <div className="p-3.5 bg-slate-950/40 border border-slate-850 rounded-2xl space-y-3">
-                <div className="flex items-center gap-4">
-                  <AnimatedProfileAvatar
-                    src={profile.heroAvatar || ""}
-                    alt={profile.heroName || profile.fullName || "Hero Avatar"}
-                    size="sm"
-                    shape="circle"
-                    glowIntensity="vibrant"
-                    showStatus={false}
-                  />
-                  <div className="flex-grow space-y-2 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="relative">
-                        <input 
-                          type="file" 
-                          accept="image/*"
-                          id="hero-avatar-file-input"
-                          onChange={(e) => handleImageFileChange(e, 'avatar')}
-                          className="hidden"
-                        />
-                        <label 
-                          htmlFor="hero-avatar-file-input"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-xl transition cursor-pointer hover:text-emerald-400"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>{profile.heroAvatar ? 'Replace Avatar' : 'Upload Avatar'}</span>
-                        </label>
-                      </div>
+            <MediaUploader
+              title="Hero Avatar Photo (Pic-1)"
+              subtitle="Independent from Profile & About Image"
+              badge="Hero Pic-1"
+              assetType="hero-avatar"
+              currentUrl={profile.heroAvatar || ""}
+              urlPlaceholder="https://example.com/hero-avatar.jpg"
+              fallbackHint={profile.heroAvatar || "No avatar loaded (Clean Monogram active)"}
+              onDataUrlReady={(dataUrl) => handleUploadDataUrl(dataUrl, 'avatar')}
+              onUrlChange={(val) => updateProfileWithHistory({ ...profile, heroAvatar: val })}
+              onDelete={() => handleDeleteImage('avatar')}
+              onOpenMediaLibrary={() => setMediaModalTarget('avatar')}
+            />
 
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalTarget('avatar')}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-xl transition cursor-pointer"
-                      >
-                        <Folder className="w-3.5 h-3.5" />
-                        <span>Media Library</span>
-                      </button>
-
-                      {profile.heroAvatar && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteImage('avatar')}
-                          className="px-2.5 py-1.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 border border-rose-900/20 hover:border-rose-800/45 text-[10px] font-mono rounded-xl transition cursor-pointer"
-                        >
-                          Delete Avatar
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[9px] text-slate-500 font-mono truncate">{profile.heroAvatar || "No avatar loaded (Clean Monogram active)"}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-mono text-slate-400">Direct Hero Avatar Image URL</label>
-                  <input
-                    type="text"
-                    value={profile.heroAvatar || ""}
-                    onChange={(e) => setProfile({ ...profile, heroAvatar: e.target.value })}
-                    placeholder="https://example.com/hero-avatar.jpg"
-                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Background Image */}
-            <div className="space-y-2">
-              <label className="block text-[11px] font-mono text-slate-400">Hero Landscape Background</label>
-              <div className="space-y-2.5 p-3.5 bg-slate-950/40 border border-slate-850 rounded-2xl">
-                <div className="w-full h-24 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden relative group">
-                  {profile.heroBackground ? (
-                    <img src={profile.heroBackground} alt="Hero Background Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <span className="text-[9px] font-mono text-slate-600">No Custom Background</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative">
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        id="hero-bg-file-input"
-                        onChange={(e) => handleImageFileChange(e, 'background')}
-                        className="hidden"
-                      />
-                      <label 
-                        htmlFor="hero-bg-file-input"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-xl transition cursor-pointer hover:text-emerald-400"
-                      >
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        <span>{profile.heroBackground ? 'Replace Background' : 'Upload Background'}</span>
-                      </label>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setMediaModalTarget('background')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-xl transition cursor-pointer"
-                    >
-                      <Folder className="w-3.5 h-3.5" />
-                      <span>Media Library</span>
-                    </button>
-
-                    {profile.heroBackground && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteImage('background')}
-                        className="px-2.5 py-1.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 border border-rose-900/20 hover:border-rose-800/45 text-[10px] font-mono rounded-xl transition cursor-pointer"
-                      >
-                        Delete Background
-                      </button>
-                    )}
-                  </div>
-                  <span className="text-[9px] text-slate-500 font-mono truncate max-w-[150px]">{profile.heroBackground ? "Custom Background" : "Default Wallpaper"}</span>
-                </div>
-
-                <div className="space-y-1 pt-1">
-                  <label className="block text-[10px] font-mono text-slate-400">Direct Hero Background URL</label>
-                  <input
-                    type="text"
-                    value={profile.heroBackground || ""}
-                    onChange={(e) => setProfile({ ...profile, heroBackground: e.target.value })}
-                    placeholder="https://example.com/hero-background.jpg"
-                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+            <MediaUploader
+              title="Hero Landscape Background"
+              subtitle="Optional wide backdrop behind Hero section"
+              badge="Wallpaper"
+              assetType="hero"
+              currentUrl={profile.heroBackground || ""}
+              urlPlaceholder="https://example.com/hero-background.jpg"
+              fallbackHint={profile.heroBackground ? "Custom Background Active" : "Default Wallpaper"}
+              onDataUrlReady={(dataUrl) => handleUploadDataUrl(dataUrl, 'background')}
+              onUrlChange={(val) => updateProfileWithHistory({ ...profile, heroBackground: val })}
+              onDelete={() => handleDeleteImage('background')}
+              onOpenMediaLibrary={() => setMediaModalTarget('background')}
+            />
 
           </div>
 
@@ -996,7 +895,7 @@ const getJwtToken = () =>
                   </div>
                   <button
                     onClick={() => handleRemoveStat(index)}
-                    className="p-1.5 bg-rose-950/15 border border-rose-950/40 hover:bg-rose-500/10 rounded-lg text-rose-400 transition cursor-pointer shrink-0"
+                    className="min-h-[44px] min-w-[44px] p-2.5 bg-rose-950/15 border border-rose-950/40 hover:bg-rose-500/10 rounded-lg text-rose-400 transition cursor-pointer shrink-0 flex items-center justify-center"
                     title="Remove Metric"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1015,18 +914,18 @@ const getJwtToken = () =>
                     placeholder="Value (e.g. 8+)" 
                     value={newStatValue}
                     onChange={(e) => setNewStatValue(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-100 flex-1 focus:outline-none"
+                    className="min-h-[44px] bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-100 flex-1 focus:outline-none"
                   />
                   <input 
                     type="text" 
                     placeholder="Label (e.g. Years Exp)" 
                     value={newStatLabel}
                     onChange={(e) => setNewStatLabel(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-100 flex-1 focus:outline-none"
+                    className="min-h-[44px] bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-100 flex-1 focus:outline-none"
                   />
                   <button
                     onClick={handleAddStat}
-                    className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                    className="min-h-[44px] px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add</span>
@@ -1052,7 +951,7 @@ const getJwtToken = () =>
           <button
             type="button"
             onClick={handleResetToBaseline}
-            className="px-4 py-2 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex-1 sm:flex-none"
+            className="min-h-[44px] px-4 py-2.5 border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-mono font-bold rounded-xl transition cursor-pointer flex-1 sm:flex-none flex items-center justify-center"
           >
             Reset Defaults
           </button>
@@ -1061,7 +960,7 @@ const getJwtToken = () =>
             type="button"
             onClick={handleSaveHero}
             disabled={!isDirty || saving}
-            className={`px-6 py-2.5 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-none ${
+            className={`min-h-[44px] px-6 py-2.5 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-none ${
               isDirty 
                 ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20' 
                 : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed'
@@ -1093,14 +992,14 @@ const getJwtToken = () =>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleResetToBaseline}
-                className="px-3 py-1.5 border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 text-xs font-mono rounded-xl transition cursor-pointer"
+                className="min-h-[44px] px-3.5 py-2 border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 text-xs font-mono rounded-xl transition cursor-pointer flex items-center justify-center"
               >
                 Reset
               </button>
               <button
                 onClick={handleSaveHero}
                 disabled={saving}
-                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer"
+                className="min-h-[44px] px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                 <span>Publish Live</span>

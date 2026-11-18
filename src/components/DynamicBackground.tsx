@@ -48,21 +48,13 @@ export default React.memo(function DynamicBackground({
       height = canvas.height = window.innerHeight;
     };
 
-    const handleScrollPause = () => {
-      isScrolling = true;
-      if (scrollTimeoutId !== null) {
-        window.clearTimeout(scrollTimeoutId);
-      }
-      scrollTimeoutId = window.setTimeout(() => {
-        isScrolling = false;
-      }, 160);
-    };
-
-    window.addEventListener('resize', handleResize, { passive: true });
-    window.addEventListener('scroll', handleScrollPause, { passive: true });
+    const isMobileViewport = width < 768;
+    const shouldAnimate = !prefersReducedMotion && !isMobileViewport;
 
     const palette = ['#10b981', '#34d399', '#06b6d4', '#38bdf8'];
-    const nodeCount = Math.min(Math.max(Math.floor((width * height) / 68000), 14), 24);
+    const nodeCount = isMobileViewport
+      ? 10
+      : Math.min(Math.max(Math.floor((width * height) / 68000), 14), 24);
 
     const nodes: ParticleNode[] = Array.from({ length: nodeCount }, (_, i) => ({
       x: Math.random() * width,
@@ -76,22 +68,12 @@ export default React.memo(function DynamicBackground({
 
     const maxConnectDistSq = 135 * 135;
 
-    const render = (timestamp: number) => {
-      if (!prefersReducedMotion) {
-        animationFrameId = window.requestAnimationFrame(render);
-      }
-
-      // Pause canvas drawing during active scroll or throttle to ~24 FPS when idle
-      if (isScrolling || timestamp - lastFrameTime < 42) {
-        return;
-      }
-      lastFrameTime = timestamp;
-
+    const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
 
       for (let i = 0; i < nodes.length; i++) {
         const n = nodes[i];
-        if (!prefersReducedMotion) {
+        if (shouldAnimate) {
           n.x += n.vx;
           n.y += n.vy;
 
@@ -127,10 +109,51 @@ export default React.memo(function DynamicBackground({
       ctx.globalAlpha = 1;
     };
 
-    render(0);
+    const render = (timestamp: number) => {
+      if (!shouldAnimate || isScrolling || document.hidden) {
+        animationFrameId = 0;
+        return;
+      }
+      animationFrameId = window.requestAnimationFrame(render);
+
+      if (timestamp - lastFrameTime < 48) {
+        return;
+      }
+      lastFrameTime = timestamp;
+      drawFrame();
+    };
+
+    const handleScrollPause = () => {
+      if (!shouldAnimate) return;
+      isScrolling = true;
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      }
+      if (scrollTimeoutId !== null) {
+        window.clearTimeout(scrollTimeoutId);
+      }
+      scrollTimeoutId = window.setTimeout(() => {
+        isScrolling = false;
+        if (!animationFrameId && shouldAnimate && !document.hidden) {
+          animationFrameId = window.requestAnimationFrame(render);
+        }
+      }, 180);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+    if (shouldAnimate) {
+      window.addEventListener('scroll', handleScrollPause, { passive: true });
+    }
+
+    // Draw initial crisp frame immediately
+    drawFrame();
+    if (shouldAnimate) {
+      animationFrameId = window.requestAnimationFrame(render);
+    }
 
     return () => {
-      window.cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
       if (scrollTimeoutId !== null) window.clearTimeout(scrollTimeoutId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScrollPause);

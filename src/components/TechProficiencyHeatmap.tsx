@@ -382,15 +382,15 @@ export default function TechProficiencyHeatmap({
         setHoveredChartProject(null);
       });
 
-    if (prefersReduced) {
-      bars.attr('width', (d) => xScale(d.usageSharePct));
+    if (prefersReduced || typeof (bars as any).transition !== 'function') {
+      bars
+        .style('transition', prefersReduced ? 'none' : 'width 650ms cubic-bezier(0.22, 1, 0.36, 1)')
+        .attr('width', (d) => xScale(d.usageSharePct));
     } else {
       bars
         .attr('width', 0)
-        .transition()
-        .duration(650)
+        .transition(d3.transition().duration(650).ease(d3.easeCubicOut))
         .delay((_, i) => i * 70)
-        .ease(d3.easeCubicOut)
         .attr('width', (d) => xScale(d.usageSharePct));
     }
 
@@ -406,15 +406,15 @@ export default function TechProficiencyHeatmap({
       .attr('stroke', activeNode.accentColor)
       .attr('stroke-width', 2.5);
 
-    if (prefersReduced) {
-      dots.attr('cx', (d) => xScale(d.usageSharePct));
+    if (prefersReduced || typeof (dots as any).transition !== 'function') {
+      dots
+        .style('transition', prefersReduced ? 'none' : 'cx 650ms cubic-bezier(0.22, 1, 0.36, 1)')
+        .attr('cx', (d) => xScale(d.usageSharePct));
     } else {
       dots
         .attr('cx', 0)
-        .transition()
-        .duration(650)
+        .transition(d3.transition().duration(650).ease(d3.easeCubicOut))
         .delay((_, i) => i * 70)
-        .ease(d3.easeCubicOut)
         .attr('cx', (d) => xScale(d.usageSharePct));
     }
 
@@ -567,13 +567,11 @@ export default function TechProficiencyHeatmap({
       .attr('d', lineGenerator);
 
     const totalLen = (path.node() as SVGPathElement)?.getTotalLength?.() || 600;
-    if (!prefersReduced) {
+    if (!prefersReduced && typeof (path as any).transition === 'function') {
       path
         .attr('stroke-dasharray', `${totalLen} ${totalLen}`)
         .attr('stroke-dashoffset', totalLen)
-        .transition()
-        .duration(750)
-        .ease(d3.easeCubicOut)
+        .transition(d3.transition().duration(750).ease(d3.easeCubicOut))
         .attr('stroke-dashoffset', 0);
     }
 
@@ -675,7 +673,7 @@ export default function TechProficiencyHeatmap({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-1 w-full md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
             {filteredNodes.map((node, nIdx) => {
               const isSelected = activeNode?.skill.id === node.skill.id;
               const nodeColor = d3HeatColorScale(node.heatScore);
@@ -686,7 +684,7 @@ export default function TechProficiencyHeatmap({
                   type="button"
                   initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: 14, scale: 0.96 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: false, amount: 0.1, margin: '-20px' }}
+                  viewport={{ once: true, amount: 0.1 }}
                   transition={{ duration: 0.25, delay: Math.min(nIdx * 0.02, 0.15) }}
                   whileHover={prefersReduced ? {} : { y: -4, scale: 1.03 }}
                   whileTap={prefersReduced ? {} : { scale: 0.98 }}

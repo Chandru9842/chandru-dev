@@ -180,7 +180,7 @@ const WorkbenchToolCard: React.FC<WorkbenchToolCardProps> = ({
           : { opacity: 0, y: 18, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.03, 0.18),
@@ -519,14 +519,14 @@ export default function ToolsEcosystemWorkbench({
         {/* Controls Bar */}
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs w-full sm:w-auto">
+          <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs">
             <button
               type="button"
               onClick={() => {
                 setViewMode('workbench');
                 soundFx.playClick(540);
               }}
-              className={`px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'workbench'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -542,7 +542,7 @@ export default function ToolsEcosystemWorkbench({
                 setViewMode('pipeline');
                 soundFx.playClick(600);
               }}
-              className={`px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'pipeline'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -560,7 +560,7 @@ export default function ToolsEcosystemWorkbench({
               setFeaturedOnly((prev) => !prev);
               soundFx.playClick();
             }}
-            className={`px-3 py-2 rounded-xl font-mono text-[10px] font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+            className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-2 rounded-xl font-mono text-[10px] font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
               featuredOnly
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-sm'
                 : 'bg-slate-950/90 text-slate-400 hover:text-white border-white/[0.08]'
@@ -575,14 +575,14 @@ export default function ToolsEcosystemWorkbench({
           </button>
 
           {/* Search Input */}
-          <div className="relative w-full sm:w-56">
+          <div className="relative w-full md:w-56">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tools, IDEs, CLI..."
-              className="w-full bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-8 pr-7 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
+              className="w-full min-h-[44px] md:min-h-0 bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-8 pr-7 py-2.5 md:py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
             />
             {searchQuery && (
               <button
@@ -596,14 +596,14 @@ export default function ToolsEcosystemWorkbench({
           </div>
 
           {/* Sort Mode */}
-          <div className="grid grid-cols-3 sm:flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs w-full sm:w-auto">
+          <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs">
             <button
               type="button"
               onClick={() => {
                 setSortMode('featured');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer text-center ${
+              className={`min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer text-center ${
                 sortMode === 'featured'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -617,7 +617,7 @@ export default function ToolsEcosystemWorkbench({
                 setSortMode('experience');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer text-center ${
+              className={`min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer text-center ${
                 sortMode === 'experience'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -631,7 +631,7 @@ export default function ToolsEcosystemWorkbench({
                 setSortMode('name');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              className={`min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                 sortMode === 'name'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -690,7 +690,7 @@ export default function ToolsEcosystemWorkbench({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+          className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
         >
           {filteredTools.map((tool, tIdx) => (
             <WorkbenchToolCard

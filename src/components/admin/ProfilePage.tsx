@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ResumeItem } from '../../data/cmsMockData';
 import MediaLibraryModal from './MediaLibraryModal';
+import MediaUploader from './MediaUploader';
 import TechStackPage from './TechStackPage';
 import { AnimatedProfileAvatar } from '../AnimatedProfileAvatar';
 import { notifyCmsUpdate } from '../../utils/notifyCmsSync';
@@ -986,7 +987,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           <button
             onClick={handleUndo}
             disabled={currentHistoryIndex <= 0}
-            className="p-2 border border-slate-800 bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 rounded-xl transition text-slate-300 flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[44px] px-3.5 py-2.5 border border-slate-800 bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 rounded-xl transition text-slate-300 flex items-center gap-1.5 cursor-pointer"
             title="Undo Change"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -997,7 +998,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           <button
             onClick={handleReset}
             disabled={!isProfileDirty}
-            className="p-2 border border-rose-950/20 bg-rose-950/5 hover:bg-rose-500/10 hover:border-rose-500/30 disabled:opacity-30 rounded-xl transition text-rose-400 flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[44px] px-3.5 py-2.5 border border-rose-950/20 bg-rose-950/5 hover:bg-rose-500/10 hover:border-rose-500/30 disabled:opacity-30 rounded-xl transition text-rose-400 flex items-center gap-1.5 cursor-pointer"
             title="Discard Draft Changes"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -1008,7 +1009,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
           <button
             onClick={() => handleSaveProfile(false)}
             disabled={saving || !isProfileDirty}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-45 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[44px] px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-45 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-500/15 flex items-center gap-1.5 cursor-pointer"
           >
             {saving ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1038,7 +1039,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
         <div className="shrink-0 flex items-center gap-2 w-full md:w-auto">
           <button
             onClick={handleAdminLogout}
-            className="px-3 py-1.5 border border-emerald-500/30 hover:bg-emerald-500/10 rounded-lg text-[10px] font-mono tracking-widest uppercase font-bold cursor-pointer text-emerald-400 transition"
+            className="min-h-[44px] px-3.5 py-2 border border-emerald-500/30 hover:bg-emerald-500/10 rounded-lg text-[10px] font-mono tracking-widest uppercase font-bold cursor-pointer text-emerald-400 transition"
           >
             Lock Session
           </button>
@@ -1049,7 +1050,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
       <div className="flex flex-wrap gap-1.5 bg-slate-900/50 border border-slate-900 rounded-2xl p-2.5">
         <button
           onClick={() => setActiveSubTab('basic')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'basic'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1061,7 +1062,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('hero')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'hero'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1073,7 +1074,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('techstack')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'techstack'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1085,7 +1086,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('bio')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'bio'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1097,7 +1098,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('career')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'career'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1109,7 +1110,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('experience')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'experience'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1121,7 +1122,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('location')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'location'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1133,7 +1134,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('availability')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'availability'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1145,7 +1146,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('buttons')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'buttons'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1157,7 +1158,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('resume')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'resume'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1169,7 +1170,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('images')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'images'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1181,7 +1182,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('seo')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'seo'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1193,7 +1194,7 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
         <button
           onClick={() => setActiveSubTab('security')}
-          className={`px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[11px] font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
             activeSubTab === 'security'
               ? 'bg-slate-800 text-emerald-400 font-bold border border-slate-700/50 shadow-md shadow-emerald-500/5'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
@@ -1344,117 +1345,29 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
 
               {/* Visual Media Assets (Avatar & Landscape Background) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Hero Avatar Photo */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Avatar Photo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Floating portrait next to online status node</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
-                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-lg transition cursor-pointer hover:text-emerald-400"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('heroAvatar')}
-                        className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-lg transition cursor-pointer"
-                      >
-                        Media Library
-                      </button>
-                      {profile.heroAvatar && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteImageField('heroAvatar')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete Hero Avatar"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                <MediaUploader
+                  title="Hero Avatar Photo (Pic-1)"
+                  subtitle="Floating portrait next to online status node (independent from Profile & About Image)"
+                  value={profile.heroAvatar || ""}
+                  assetType="hero-avatar"
+                  fallbackName={profile.heroName || profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'hero-avatar', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, heroAvatar: url })}
+                  onDelete={() => handleDeleteImageField('heroAvatar')}
+                  onOpenMediaLibrary={() => setMediaModalField('heroAvatar')}
+                />
 
-                  <div className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
-                    <AnimatedProfileAvatar
-                      src={profile.heroAvatar}
-                      alt={profile.heroName || profile.fullName || "Hero Avatar"}
-                      size="sm"
-                      shape="circle"
-                      glowIntensity="vibrant"
-                      showStatus={false}
-                    />
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <input 
-                        type="text"
-                        value={profile.heroAvatar || ""}
-                        onChange={(e) => updateProfileStateWithHistory({ ...profile, heroAvatar: e.target.value })}
-                        placeholder="https://example.com/avatar.jpg"
-                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      />
-                      <p className="text-[9px] text-slate-500 font-mono truncate">{profile.heroAvatar || "No custom hero avatar loaded"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hero Landscape Background */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Hero Landscape Wallpaper</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Ambient backdrop visualizer</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('hero', 16/9)}
-                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[10px] font-mono rounded-lg transition cursor-pointer hover:text-emerald-400"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('heroBackground')}
-                        className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold rounded-lg transition cursor-pointer"
-                      >
-                        Media Library
-                      </button>
-                      {profile.heroBackground && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteImageField('heroBackground')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                          title="Delete Hero Background"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 p-3 bg-slate-900/50 border border-slate-800/80 rounded-xl">
-                    <div className="w-full h-20 rounded-lg border border-slate-800 bg-slate-950 flex items-center justify-center overflow-hidden relative">
-                      {profile.heroBackground ? (
-                        <img src={profile.heroBackground} alt="Hero Background Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <span className="text-[9px] font-mono text-slate-600">Default Ambient Atmosphere</span>
-                      )}
-                    </div>
-                    <input 
-                      type="text"
-                      value={profile.heroBackground || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroBackground: e.target.value })}
-                      placeholder="https://example.com/background.jpg"
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                    />
-                  </div>
-                </div>
-
+                <MediaUploader
+                  title="Hero Landscape Wallpaper"
+                  subtitle="Ambient backdrop visualizer for the Hero section"
+                  value={profile.heroBackground || ""}
+                  assetType="hero"
+                  fallbackName={profile.heroName || profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'hero', 16/9)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, heroBackground: url })}
+                  onDelete={() => handleDeleteImageField('heroBackground')}
+                  onOpenMediaLibrary={() => setMediaModalField('heroBackground')}
+                />
               </div>
 
               {/* Highlight Tags */}
@@ -1814,65 +1727,17 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
               </div>
 
               {/* Dedicated About Section Portrait Image Control (Strictly Separate from Profile Image & Hero Avatar) */}
-              <div className="border border-emerald-500/25 bg-slate-950/60 rounded-2xl p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h4 className="text-xs font-bold font-mono text-emerald-400">About Section Portrait Image (Independent Link)</h4>
-                    <p className="text-[10px] text-slate-400 font-mono">Dedicated portrait shown ONLY in the About Me section (not linked to Profile Avatar or Hero Pic-1)</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => triggerImageFileBrowse('about', 1)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                    >
-                      Upload Photo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMediaModalField('aboutImage')}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                    >
-                      <Folder className="w-3 h-3" />
-                      Media Library
-                    </button>
-                    {profile.aboutImage && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteImageField('aboutImage')}
-                        className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                        title="Delete About Image"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="shrink-0">
-                    <AnimatedProfileAvatar
-                      src={profile.aboutImage || ""}
-                      alt={profile.fullName || "About Section Portrait"}
-                      size="sm"
-                      shape="squircle"
-                      glowIntensity="vibrant"
-                      showStatus={false}
-                    />
-                  </div>
-                  <div className="w-full space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct About Section Image URL</label>
-                    <input
-                      type="text"
-                      value={profile.aboutImage || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutImage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/about-portrait.jpg (or leave empty for monogram)"
-                    />
-                  </div>
-                </div>
-              </div>
+              <MediaUploader
+                title="About Section Portrait Image (Independent Link)"
+                subtitle="Dedicated portrait shown ONLY in the About Me section (not linked to Profile Avatar or Hero Pic-1)"
+                value={profile.aboutImage || ""}
+                assetType="about"
+                fallbackName={profile.fullName || "Chandru Mohan"}
+                onFileSelected={(file) => handleImageFileSelected(file, 'about', 1)}
+                onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, aboutImage: url })}
+                onDelete={() => handleDeleteImageField('aboutImage')}
+                onOpenMediaLibrary={() => setMediaModalField('aboutImage')}
+              />
 
               <div className="grid grid-cols-1 gap-4">
                 {/* About Section Heading */}
@@ -2451,144 +2316,44 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Website Brand Logo Card */}
-                  <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xs font-bold font-mono text-slate-200">Main Header / Navbar Logo</h4>
-                        <p className="text-[10px] text-slate-500 font-mono">Top-left branding mark across all pages</p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setMediaModalField('websiteLogo')}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                        >
-                          <Folder className="w-3 h-3" />
-                          Media Library
-                        </button>
-                        {(profile.websiteLogo || profile.logoUrl) && (
-                          <button 
-                            type="button"
-                            onClick={() => handleDeleteImageField('websiteLogo')}
-                            className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                            title="Delete logo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                  {/* Website Brand Logo Card via Reusable MediaUploader */}
+                  <MediaUploader
+                    title="Main Header / Navbar Logo"
+                    subtitle="Top-left branding mark across all pages (Independent from Favicon)"
+                    value={profile.websiteLogo || profile.logoUrl || ""}
+                    assetType="website-logo"
+                    fallbackName={profile.logoText || profile.fullName || "Chandru Mohan"}
+                    onFileSelected={(file) => handleImageFileSelected(file, 'website-logo', 1)}
+                    onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, websiteLogo: url, logoUrl: url })}
+                    onDelete={() => handleDeleteImageField('websiteLogo')}
+                    onOpenMediaLibrary={() => setMediaModalField('websiteLogo')}
+                  />
 
-                    {/* Logo Drop Area */}
-                    <div 
-                      onDragOver={handleImageDragOver}
-                      onDrop={(e) => handleImageDrop(e, 'website-logo', 1)}
-                      onClick={() => triggerImageFileBrowse('website-logo', 1)}
-                      className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                    >
-                      {profile.websiteLogo || profile.logoUrl ? (
-                        <div className="relative group p-2 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-center min-w-[96px] min-h-[96px]">
-                          <img 
-                            src={profile.websiteLogo || profile.logoUrl} 
-                            alt="Website Logo" 
-                            referrerPolicy="no-referrer"
-                            className="max-h-20 max-w-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-500">
-                          <span className="font-mono text-xs font-bold text-emerald-400">
-                            {profile.logoText ? profile.logoText.slice(0, 2).toUpperCase() : (profile.fullName ? profile.fullName.slice(0, 2).toUpperCase() : "CM")}
-                          </span>
-                          <span className="text-[8px] font-mono text-slate-500 mt-1">No Logo Set</span>
-                        </div>
-                      )}
-                      <div className="text-center">
-                        <p className="text-xs font-semibold text-slate-300">Drag & drop logo file or <span className="text-emerald-400">browse</span></p>
-                        <p className="text-[9px] text-slate-500 mt-0.5">Recommended 400x400px or transparent SVG</p>
-                      </div>
-                    </div>
-
-                    {/* Direct URL Input */}
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-mono text-slate-400">Direct Logo Image URL / CDN Link</label>
-                      <input 
-                        type="text"
-                        value={profile.websiteLogo || profile.logoUrl || ""}
-                        onChange={(e) => updateProfileStateWithHistory({ ...profile, websiteLogo: e.target.value, logoUrl: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                        placeholder="https://example.com/logo.png"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Brand Monogram / Text & Favicon Card */}
-                  <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-4">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">Brand Monogram & Favicon</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Navbar text title and browser tab icon</p>
-                    </div>
+                  {/* Browser Tab Favicon Card via Reusable MediaUploader */}
+                  <div className="space-y-4">
+                    <MediaUploader
+                      title="Browser Tab Favicon Icon (.ico / .png / .svg)"
+                      subtitle="Appears in browser tabs and search engine result listings"
+                      value={profile.faviconUrl || ""}
+                      assetType="favicon"
+                      fallbackName={profile.fullName || "Chandru Mohan"}
+                      onFileSelected={(file) => handleImageFileSelected(file, 'favicon', 1)}
+                      onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, faviconUrl: url })}
+                      onDelete={() => handleDeleteImageField('faviconUrl')}
+                      onOpenMediaLibrary={() => setMediaModalField('faviconUrl')}
+                    />
 
                     {/* Monogram / Brand Text */}
-                    <div className="space-y-1.5">
+                    <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-1.5">
                       <label className="block text-[10px] font-mono text-slate-400">Navbar Brand / Monogram Text</label>
                       <input 
                         type="text" 
                         value={profile.logoText || profile.displayName || profile.fullName || ""} 
                         onChange={(e) => updateProfileStateWithHistory({ ...profile, logoText: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-100 transition focus:outline-none"
+                        className="w-full min-h-[44px] bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-100 transition focus:outline-none"
                         placeholder="e.g. CHANDRU M or Chandru Dev"
                       />
-                      <span className="text-[9px] text-slate-500 font-mono">Shown beside logo in the top navbar banner.</span>
-                    </div>
-
-                    {/* Browser Favicon */}
-                    <div className="space-y-2 pt-2 border-t border-slate-900">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[10px] font-mono text-slate-400">Browser Tab Favicon Icon (.ico / .png / .svg)</label>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => triggerImageFileBrowse('favicon', 1)}
-                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono transition cursor-pointer"
-                          >
-                            Upload Favicon
-                          </button>
-                          {profile.faviconUrl && (
-                            <button 
-                              type="button"
-                              onClick={() => handleDeleteImageField('faviconUrl')}
-                              className="p-1 text-rose-400 hover:bg-rose-500/10 rounded transition"
-                              title="Remove Favicon"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                          {profile.faviconUrl ? (
-                            <img 
-                              src={profile.faviconUrl} 
-                              alt="Favicon" 
-                              className="w-6 h-6 object-contain"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <Globe className="w-4 h-4 text-emerald-400" />
-                          )}
-                        </div>
-                        <input 
-                          type="text" 
-                          value={profile.faviconUrl || ""} 
-                          onChange={(e) => updateProfileStateWithHistory({ ...profile, faviconUrl: e.target.value })}
-                          className="flex-1 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                          placeholder="https://example.com/favicon.png"
-                        />
-                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono block">Shown beside logo in the top navbar banner.</span>
                     </div>
                   </div>
                 </div>
@@ -2861,571 +2626,109 @@ export default function ProfilePage({ onTriggerToast, onProfileUpdated }: Profil
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* 1. Profile Photo - Aspect 1:1 circular */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">1. Primary Profile Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent profile avatar (not linked to About or Hero)</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('profile', 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('profileImage')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.profileImage && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('profileImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Profile Image"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                {/* 1. Primary Profile Image */}
+                <MediaUploader
+                  title="1. Primary Profile Image"
+                  subtitle="Independent profile avatar (not linked to About or Hero)"
+                  value={profile.profileImage || ""}
+                  assetType="profile"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'profile', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, profileImage: url })}
+                  onDelete={() => handleDeleteImageField('profileImage')}
+                  onOpenMediaLibrary={() => setMediaModalField('profileImage')}
+                />
 
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'profile', 1)}
-                    onClick={() => triggerImageFileBrowse('profile', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    <AnimatedProfileAvatar
-                      src={profile.profileImage || ""}
-                      alt={profile.fullName || "Profile"}
-                      size="lg"
-                      shape="circle"
-                      glowIntensity="vibrant"
-                      showStatus={false}
-                    />
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Live animated cyber preview (Square 1:1)</p>
-                    </div>
-                  </div>
+                {/* 2. Hero Avatar (Pic-1) */}
+                <MediaUploader
+                  title="2. Hero Avatar Photo (Pic-1)"
+                  subtitle="Independent Hero section portrait badge"
+                  value={profile.heroAvatar || ""}
+                  assetType="hero-avatar"
+                  fallbackName={profile.heroName || profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'hero-avatar', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, heroAvatar: url })}
+                  onDelete={() => handleDeleteImageField('heroAvatar')}
+                  onOpenMediaLibrary={() => setMediaModalField('heroAvatar')}
+                />
 
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Profile Image URL</label>
-                    <input
-                      type="text"
-                      value={profile.profileImage || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, profileImage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/profile-avatar.jpg"
-                    />
-                  </div>
-                </div>
+                {/* 3. About Section Portrait Photo */}
+                <MediaUploader
+                  title="3. About Section Portrait Photo"
+                  subtitle="Independent portrait in the About section (not linked to Profile Image)"
+                  value={profile.aboutImage || ""}
+                  assetType="about"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'about', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, aboutImage: url })}
+                  onDelete={() => handleDeleteImageField('aboutImage')}
+                  onOpenMediaLibrary={() => setMediaModalField('aboutImage')}
+                />
 
-                {/* 2. Hero Avatar (Pic-1) - Aspect 1:1 circular */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">2. Hero Avatar Photo (Pic-1)</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent Hero section portrait badge</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('heroAvatar')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.heroAvatar && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('heroAvatar')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Hero Avatar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                {/* 4. Browser Tab Favicon Icon */}
+                <MediaUploader
+                  title="4. Browser Tab Favicon Icon"
+                  subtitle="Independent browser tab icon (.svg / .png / .ico)"
+                  value={profile.faviconUrl || ""}
+                  assetType="favicon"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'favicon', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, faviconUrl: url })}
+                  onDelete={() => handleDeleteImageField('faviconUrl')}
+                  onOpenMediaLibrary={() => setMediaModalField('faviconUrl')}
+                />
 
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'hero-avatar', 1)}
-                    onClick={() => triggerImageFileBrowse('hero-avatar', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    <AnimatedProfileAvatar
-                      src={profile.heroAvatar || ""}
-                      alt={profile.heroName || profile.fullName || "Hero Avatar"}
-                      size="lg"
-                      shape="circle"
-                      glowIntensity="vibrant"
-                      showStatus={false}
-                    />
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Optional Hero Avatar (1:1 circular)</p>
-                    </div>
-                  </div>
+                {/* 5. Website Branding Logo */}
+                <MediaUploader
+                  title="5. Website Branding Logo"
+                  subtitle="Independent Navbar brand emblem"
+                  value={profile.websiteLogo || profile.logoUrl || ""}
+                  assetType="website-logo"
+                  fallbackName={profile.logoText || profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'website-logo', 1)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, websiteLogo: url, logoUrl: url })}
+                  onDelete={() => handleDeleteImageField('websiteLogo')}
+                  onOpenMediaLibrary={() => setMediaModalField('websiteLogo')}
+                />
 
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Hero Avatar URL</label>
-                    <input
-                      type="text"
-                      value={profile.heroAvatar || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroAvatar: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/hero-avatar.jpg"
-                    />
-                  </div>
-                </div>
+                {/* 6. Social Share (OG) Image */}
+                <MediaUploader
+                  title="6. Social Share (OG) Image"
+                  subtitle="Independent 1200×630 link preview thumbnail"
+                  value={profile.ogImage || ""}
+                  assetType="og-image"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'og-image', 1.91)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, ogImage: url })}
+                  onDelete={() => handleDeleteImageField('ogImage')}
+                  onOpenMediaLibrary={() => setMediaModalField('ogImage')}
+                />
 
-                {/* 3. About Image - Aspect 1:1 squircle (Strictly Independent) */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">3. About Section Portrait Photo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent portrait in the About section (not linked to Profile Image)</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('about', 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('aboutImage')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.aboutImage && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('aboutImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete About Image"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                {/* 7. Cover Banner Image */}
+                <MediaUploader
+                  title="7. Cover Banner Image"
+                  subtitle="Top panoramic panel background (3:1 widescreen)"
+                  value={profile.coverImage || ""}
+                  assetType="cover"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'cover', 3)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, coverImage: url })}
+                  onDelete={() => handleDeleteImageField('coverImage')}
+                  onOpenMediaLibrary={() => setMediaModalField('coverImage')}
+                />
 
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'about', 1)}
-                    onClick={() => triggerImageFileBrowse('about', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    <AnimatedProfileAvatar
-                      src={profile.aboutImage || ""}
-                      alt={profile.fullName || "About Section Photo"}
-                      size="lg"
-                      shape="squircle"
-                      glowIntensity="vibrant"
-                      showStatus={false}
-                    />
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">High-quality portrait or photo (Squircle Cyber Frame)</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct About Image URL</label>
-                    <input
-                      type="text"
-                      value={profile.aboutImage || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, aboutImage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/about-photo.jpg"
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Browser Tab Favicon - Aspect 1:1 (Strictly Independent from Website Logo) */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">4. Browser Tab Favicon Icon</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent browser tab icon (.svg / .png / .ico)</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('favicon', 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('faviconUrl')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.faviconUrl && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('faviconUrl')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Favicon"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'favicon', 1)}
-                    onClick={() => triggerImageFileBrowse('favicon', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.faviconUrl ? (
-                      <img 
-                        src={profile.faviconUrl} 
-                        alt="Favicon" 
-                        referrerPolicy="no-referrer"
-                        className="w-20 h-20 rounded-xl object-contain p-3 bg-slate-900 border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-500">
-                        <Globe className="w-7 h-7 text-emerald-400" />
-                        <span className="text-[8px] font-mono text-slate-500 mt-1">Default SVG</span>
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop favicon or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Browser tab icon (Strictly separate from Navbar Logo)</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Favicon URL</label>
-                    <input
-                      type="text"
-                      value={profile.faviconUrl || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, faviconUrl: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="/favicon.svg or https://example.com/favicon.png"
-                    />
-                  </div>
-                </div>
-
-                {/* 5. Website Logo - Aspect 1:1 or wide */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">5. Website Branding Logo</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent Navbar brand emblem</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('website-logo', 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('websiteLogo')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {(profile.websiteLogo || profile.logoUrl) && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('websiteLogo')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Website Logo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'website-logo', 1)}
-                    onClick={() => triggerImageFileBrowse('website-logo', 1)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.websiteLogo || profile.logoUrl ? (
-                      <img 
-                        src={profile.websiteLogo || profile.logoUrl} 
-                        alt="Website Logo" 
-                        referrerPolicy="no-referrer"
-                        className="w-20 h-20 rounded-lg object-contain p-2 bg-slate-900 border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <Globe className="w-7 h-7 text-emerald-400" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop website logo or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Transparent PNG / SVG recommended</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Website Logo URL</label>
-                    <input
-                      type="text"
-                      value={profile.websiteLogo || profile.logoUrl || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, websiteLogo: e.target.value, logoUrl: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/logo.png"
-                    />
-                  </div>
-                </div>
-
-                {/* 6. Social Share OG Image */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">6. Social Share (OG) Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Independent 1200x630 link preview thumbnail</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('og-image', 1.91)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('ogImage')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.ogImage && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('ogImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete OG image"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'og-image', 1.91)}
-                    onClick={() => triggerImageFileBrowse('og-image', 1.91)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.ogImage ? (
-                      <img 
-                        src={profile.ogImage} 
-                        alt="Social Share" 
-                        referrerPolicy="no-referrer"
-                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <Share2 className="w-7 h-7 text-emerald-400" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop OG image or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">1200x630 social card ratio</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct OG Image URL</label>
-                    <input
-                      type="text"
-                      value={profile.ogImage || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, ogImage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/og-card.jpg"
-                    />
-                  </div>
-                </div>
-
-                {/* 7. Cover Photo - Aspect 3:1 banner */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">7. Cover Banner Image</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Top panoramic panel background</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('cover', 3)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('coverImage')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.coverImage && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('coverImage')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Cover Banner"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'cover', 3)}
-                    onClick={() => triggerImageFileBrowse('cover', 3)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.coverImage ? (
-                      <img 
-                        src={profile.coverImage} 
-                        alt="Cover banner" 
-                        referrerPolicy="no-referrer"
-                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <ImageIcon className="w-7 h-7" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop cover banner or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Panoramic 3:1 widescreen ratio</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Cover Banner URL</label>
-                    <input
-                      type="text"
-                      value={profile.coverImage || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, coverImage: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/cover-banner.jpg"
-                    />
-                  </div>
-                </div>
-
-                {/* 8. Hero Background - Aspect 16:9 wallpaper */}
-                <div className="border border-slate-800 bg-slate-950/40 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold font-mono text-slate-200">8. Hero Section Wallpaper</h4>
-                      <p className="text-[10px] text-slate-500 font-mono">Cosmic canvas overlay in portfolio header</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => triggerImageFileBrowse('hero', 16/9)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMediaModalField('heroBackground')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Folder className="w-3 h-3" />
-                        Media
-                      </button>
-                      {profile.heroBackground && (
-                        <button 
-                          type="button"
-                          onClick={() => handleDeleteImageField('heroBackground')}
-                          className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="Delete Hero Wallpaper"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div 
-                    onDragOver={handleImageDragOver}
-                    onDrop={(e) => handleImageDrop(e, 'hero', 16/9)}
-                    onClick={() => triggerImageFileBrowse('hero', 16/9)}
-                    className="border border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition gap-3"
-                  >
-                    {profile.heroBackground ? (
-                      <img 
-                        src={profile.heroBackground} 
-                        alt="Hero background" 
-                        referrerPolicy="no-referrer"
-                        className="w-full max-h-20 rounded-lg object-cover border border-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-20 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
-                        <ImageIcon className="w-7 h-7" />
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-slate-300">Drag & drop hero wallpaper or <span className="text-emerald-400">browse</span></p>
-                      <p className="text-[9px] text-slate-500 mt-0.5">High definition 16:9 widescreen wallpaper</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400">Direct Hero Wallpaper URL</label>
-                    <input
-                      type="text"
-                      value={profile.heroBackground || ""}
-                      onChange={(e) => updateProfileStateWithHistory({ ...profile, heroBackground: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-100 transition focus:outline-none"
-                      placeholder="https://example.com/hero-wallpaper.jpg"
-                    />
-                  </div>
-                </div>
-
+                {/* 8. Hero Section Wallpaper */}
+                <MediaUploader
+                  title="8. Hero Section Wallpaper"
+                  subtitle="Cosmic canvas overlay in portfolio header (16:9)"
+                  value={profile.heroBackground || ""}
+                  assetType="hero"
+                  fallbackName={profile.fullName || "Chandru Mohan"}
+                  onFileSelected={(file) => handleImageFileSelected(file, 'hero', 16/9)}
+                  onUrlChange={(url) => updateProfileStateWithHistory({ ...profile, heroBackground: url })}
+                  onDelete={() => handleDeleteImageField('heroBackground')}
+                  onOpenMediaLibrary={() => setMediaModalField('heroBackground')}
+                />
               </div>
             </div>
           )}

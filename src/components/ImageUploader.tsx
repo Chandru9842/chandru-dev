@@ -248,11 +248,11 @@ export default function ImageUploader({
         <label className="block text-xs font-mono text-slate-400 font-bold">{label}</label>
 
         {/* 2 MAIN OPTIONS: Local Computer vs Media Manager */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setSourceMode('computer')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`min-h-[44px] px-3 py-2 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               sourceMode === 'computer'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
@@ -265,7 +265,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setSourceMode('media')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`min-h-[44px] px-3 py-2 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               sourceMode === 'media'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
@@ -278,7 +278,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setSourceMode('url')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`min-h-[44px] px-3 py-2 rounded-lg text-[11px] font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               sourceMode === 'url'
                 ? 'bg-emerald-500 text-slate-950 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
@@ -324,7 +324,7 @@ export default function ImageUploader({
               setCompressionStats(null);
               onClear();
             }}
-            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors border border-rose-500/20 self-end sm:self-center cursor-pointer"
+            className="min-h-[44px] min-w-[44px] p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors border border-rose-500/20 self-end sm:self-center cursor-pointer flex items-center justify-center"
             title="Remove asset"
           >
             <Trash2 className="w-4 h-4" />
@@ -388,16 +388,16 @@ export default function ImageUploader({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search bulk media by name or tags..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="min-h-[44px] w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
               />
             </div>
             <button
               type="button"
               onClick={fetchMediaItems}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-lg border border-slate-800 transition cursor-pointer self-end sm:self-auto"
+              className="min-h-[44px] min-w-[44px] p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-lg border border-slate-800 transition cursor-pointer self-end sm:self-auto flex items-center justify-center"
               title="Refresh media"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${mediaLoading ? 'animate-spin text-emerald-400' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${mediaLoading ? 'animate-spin text-emerald-400' : ''}`} />
             </button>
           </div>
 
@@ -408,7 +408,7 @@ export default function ImageUploader({
                 key={f}
                 type="button"
                 onClick={() => setSelectedFolder(f)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold whitespace-nowrap transition cursor-pointer ${
+                className={`min-h-[44px] px-3 py-2 rounded-lg text-[10px] font-mono font-bold whitespace-nowrap transition cursor-pointer flex items-center justify-center ${
                   selectedFolder === f
                     ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400'
                     : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
@@ -477,7 +477,7 @@ export default function ImageUploader({
               value={manualUrl}
               onChange={(e) => setManualUrl(e.target.value)}
               placeholder="https://images.unsplash.com/photo-... or CDN link"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+              className="min-h-[44px] flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
             />
             <button
               type="button"
@@ -487,7 +487,7 @@ export default function ImageUploader({
                   setManualUrl('');
                 }
               }}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold rounded-lg cursor-pointer transition"
+              className="min-h-[44px] px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold rounded-lg cursor-pointer transition flex items-center justify-center"
             >
               Apply
             </button>

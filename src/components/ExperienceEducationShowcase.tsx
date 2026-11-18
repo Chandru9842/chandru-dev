@@ -259,7 +259,7 @@ const ExperienceCard3D: React.FC<ExperienceCard3DProps> = ({
         prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.04, 0.16),
@@ -479,7 +479,7 @@ const ExperienceCard3D: React.FC<ExperienceCard3DProps> = ({
                         Related Portfolio Systems ({matchingProjects.length})
                       </span>
                     </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-2.5">
                       {matchingProjects.slice(0, 2).map((proj) => (
                         <a
                           key={proj.id}
@@ -567,7 +567,7 @@ const EducationCard3D: React.FC<EducationCard3DProps> = ({
         prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.04, 0.16),
@@ -928,20 +928,20 @@ export default function ExperienceEducationShowcase({
           <button
             type="button"
             onClick={handleToggleExpandAll}
-            className="px-3.5 py-2 rounded-xl bg-slate-950/90 hover:bg-slate-900 border border-white/[0.08] text-xs font-mono font-bold text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer whitespace-nowrap"
+            className="min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-2 rounded-xl bg-slate-950/90 hover:bg-slate-900 border border-white/[0.08] text-xs font-mono font-bold text-slate-300 hover:text-emerald-300 transition-colors cursor-pointer whitespace-nowrap"
           >
             {allExpanded ? 'Collapse All Cards' : 'Expand All Cards'}
           </button>
 
           {/* Track Switcher */}
-          <div className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/90 border border-white/[0.08] backdrop-blur-xl shadow-xl w-full sm:w-auto">
+          <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/90 border border-white/[0.08] backdrop-blur-xl shadow-xl">
             <button
               type="button"
               onClick={() => {
                 setTimelineFilter('biography');
                 soundFx.playClick(520);
               }}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 timelineFilter === 'biography'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
@@ -957,7 +957,7 @@ export default function ExperienceEducationShowcase({
                 setTimelineFilter('all');
                 soundFx.playClick(540);
               }}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 timelineFilter === 'all'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                   : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
@@ -973,7 +973,7 @@ export default function ExperienceEducationShowcase({
                 setTimelineFilter('experience');
                 soundFx.playClick(580);
               }}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 timelineFilter === 'experience'
                   ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25'
                   : 'text-slate-400 hover:text-emerald-400 hover:bg-white/[0.04]'
@@ -989,7 +989,7 @@ export default function ExperienceEducationShowcase({
                 setTimelineFilter('education');
                 soundFx.playClick(620);
               }}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-1.5 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 timelineFilter === 'education'
                   ? 'bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25'
                   : 'text-slate-400 hover:text-teal-400 hover:bg-white/[0.04]'
@@ -1003,7 +1003,7 @@ export default function ExperienceEducationShowcase({
       </div>
 
       {/* Executive Career & Academic KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/[0.07] flex items-center gap-3.5 backdrop-blur-xl">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
             <Briefcase className="w-5 h-5" />

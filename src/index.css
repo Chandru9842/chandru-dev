@@ -324,3 +324,63 @@ body {
   animation: spotlight-ring-breathe 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* ============================================================================
+ * MOBILE (< 768px) ACCESSIBILITY, VERTICAL GRID STACKING & 44PX TOUCH TARGETS
+ * ============================================================================
+ * 1. Refactor portfolio section grid containers to stack vertically on screens
+ *    smaller than 768px, ensuring full-width display for readability & touch.
+ * 2. Apply a base 44px touch target & padding footprint to all interactive
+ *    elements on mobile devices across portfolio sections.
+ */
+@media (max-width: 767.98px) {
+  main section .grid,
+  #hero .grid,
+  footer .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+  }
+
+  main section button,
+  main section a,
+  main section input:not([type="checkbox"]):not([type="radio"]),
+  main section select,
+  main section textarea,
+  main section [role="button"],
+  #hero button,
+  #hero a,
+  #hero [role="button"],
+  footer button,
+  footer a {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  main section button:not(.p-0):not(.p-0\.5),
+  main section a:not(.p-0),
+  #hero button:not(.p-0):not(.p-0\.5),
+  #hero a:not(.p-0) {
+    padding-top: max(0.625rem, var(--tw-pad-y, 0.625rem));
+    padding-bottom: max(0.625rem, var(--tw-pad-y, 0.625rem));
+  }
+}
+
+/* ============================================================================
+ * ADMIN DASHBOARD 44PX MINIMUM TOUCH TARGET ACCESSIBILITY AUDIT ENFORCEMENT
+ * ============================================================================
+ * Guarantees all clickable interactive elements inside the Admin Dashboard
+ * (buttons, links, inputs, selects, role="button", and file upload triggers)
+ * meet the 44px minimum touch target requirement for mobile & touch accuracy.
+ */
+.admin-dashboard-shell button,
+.admin-dashboard-shell a,
+.admin-dashboard-shell [role="button"],
+.admin-dashboard-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.hidden),
+.admin-dashboard-shell select {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+
+

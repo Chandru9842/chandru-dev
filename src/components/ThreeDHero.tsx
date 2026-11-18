@@ -1198,7 +1198,7 @@ export default function ThreeDHero({ techString }: ThreeDHeroProps) {
     resizeObserver.observe(container);
 
     // --------------------------------------------------------------------------
-    // 7. 60FPS Render Loop
+    // 7. 60FPS Render Loop (Halts RAF completely when scrolled out of view)
     // --------------------------------------------------------------------------
     let animId = 0;
     let clockTime = 0;
@@ -1206,11 +1206,11 @@ export default function ThreeDHero({ techString }: ThreeDHeroProps) {
     let texFrameCounter = 0;
 
     const animate = (now: number) => {
-      animId = requestAnimationFrame(animate);
-      if (!isInViewRef.current) {
-        lastFrameTime = now;
+      if (!isInViewRef.current || document.hidden) {
+        animId = 0;
         return;
       }
+      animId = requestAnimationFrame(animate);
       const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
       lastFrameTime = now;
 
@@ -1304,10 +1304,41 @@ export default function ThreeDHero({ techString }: ThreeDHeroProps) {
       renderer?.render(scene, camera);
     };
 
-    animId = requestAnimationFrame(animate);
+    const startOrStopLoop = () => {
+      if (isInViewRef.current && !document.hidden) {
+        if (!animId) {
+          lastFrameTime = performance.now();
+          animId = requestAnimationFrame(animate);
+        }
+      } else if (animId) {
+        cancelAnimationFrame(animId);
+        animId = 0;
+      }
+    };
+
+    const viewObs =
+      typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(
+            (entries) => {
+              if (entries[0]) {
+                isInViewRef.current = entries[0].isIntersecting;
+                startOrStopLoop();
+              }
+            },
+            { rootMargin: '120px 0px' }
+          )
+        : null;
+    if (viewObs) viewObs.observe(container);
+    document.addEventListener('visibilitychange', startOrStopLoop);
+
+    // Render initial frame and start loop if visible
+    renderer?.render(scene, camera);
+    startOrStopLoop();
 
     return () => {
-      cancelAnimationFrame(animId);
+      if (animId) cancelAnimationFrame(animId);
+      if (viewObs) viewObs.disconnect();
+      document.removeEventListener('visibilitychange', startOrStopLoop);
       resizeObserver.disconnect();
       domEl.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);

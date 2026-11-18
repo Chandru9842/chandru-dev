@@ -131,7 +131,7 @@ const CertificateCard3D: React.FC<CertificateCard3DProps> = ({
         prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.04, 0.16),
@@ -361,7 +361,7 @@ const AchievementCard3D: React.FC<AchievementCard3DProps> = ({
         prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.04, 0.16),
@@ -684,14 +684,14 @@ export default function CertificationsAchievementsShowcase({
 
           {/* Search & Organization Filter Controls */}
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full md:w-64">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={certSearchQuery}
                 onChange={(e) => setCertSearchQuery(e.target.value)}
                 placeholder="Search certificates, issuers, IDs..."
-                className="w-full bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
+                className="w-full min-h-[44px] md:min-h-0 bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
               />
               {certSearchQuery && (
                 <button
@@ -707,7 +707,7 @@ export default function CertificationsAchievementsShowcase({
         </div>
 
         {/* Certifications KPI Telemetry Bar */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/[0.07] flex items-center gap-3.5 backdrop-blur-xl">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
               <Award className="w-5 h-5" />
@@ -778,7 +778,7 @@ export default function CertificationsAchievementsShowcase({
                     setSelectedCertOrg(org);
                     soundFx.playClick(540);
                   }}
-                  className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`min-h-[44px] md:min-h-0 px-3.5 py-2.5 md:py-1.5 rounded-xl font-mono text-xs transition-all font-bold cursor-pointer whitespace-nowrap shrink-0 ${
                     isActive
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                       : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'

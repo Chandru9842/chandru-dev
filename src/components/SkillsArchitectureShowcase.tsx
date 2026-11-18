@@ -325,14 +325,13 @@ const SkillSpotlightCard: React.FC<SkillSpotlightCardProps> = ({
   return (
     <motion.div
       ref={cardRef}
-      layout="position"
       initial={
         prefersReduced
           ? { opacity: 1, y: 0 }
           : { opacity: 0, y: 20, scale: 0.97 }
       }
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+      viewport={{ once: true, amount: 0.12 }}
       transition={{
         duration: 0.32,
         delay: Math.min(index * 0.03, 0.18),
@@ -532,8 +531,8 @@ const SkillSpotlightCard: React.FC<SkillSpotlightCardProps> = ({
             >
               <div className="pt-4 mt-2 border-t border-white/[0.08] space-y-4">
                 {/* Architectural Role & Benchmark Strip */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <div className="sm:col-span-2 p-3 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
+                <div className="grid grid-cols-1 w-full md:grid-cols-3 gap-2.5">
+                  <div className="md:col-span-2 p-3 rounded-xl bg-slate-950/80 border border-white/[0.06] space-y-1">
                     <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1">
                       <Cpu className="w-3 h-3" />
                       <span>Production Architecture Role</span>
@@ -569,7 +568,7 @@ const SkillSpotlightCard: React.FC<SkillSpotlightCardProps> = ({
                   </div>
 
                   {matchingProjects.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 w-full md:grid-cols-2 gap-2">
                       {matchingProjects.slice(0, 4).map((proj) => (
                         <a
                           key={proj.id}
@@ -836,14 +835,14 @@ export default function SkillsArchitectureShowcase({
         {/* Right Controls: View Switcher + Search + Sort */}
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
           {/* View Mode Switcher */}
-          <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs w-full sm:w-auto">
+          <div className="grid grid-cols-1 w-full md:flex md:w-auto items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs">
             <button
               type="button"
               onClick={() => {
                 setViewMode('spotlight');
                 soundFx.playClick(540);
               }}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'spotlight'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -859,7 +858,7 @@ export default function SkillsArchitectureShowcase({
                 setViewMode('heatmap');
                 soundFx.playClick(560);
               }}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'heatmap'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -875,7 +874,7 @@ export default function SkillsArchitectureShowcase({
                 setViewMode('blueprint');
                 soundFx.playClick(580);
               }}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'blueprint'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -891,7 +890,7 @@ export default function SkillsArchitectureShowcase({
                 setViewMode('analytics');
                 soundFx.playClick(620);
               }}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              className={`min-h-[44px] md:min-h-0 px-3 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                 viewMode === 'analytics'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white'
@@ -903,14 +902,14 @@ export default function SkillsArchitectureShowcase({
           </div>
 
           {/* Search Input */}
-          <div className="relative w-full sm:w-56">
+          <div className="relative w-full md:w-56">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter skills, domains..."
-              className="w-full bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-8 pr-7 py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
+              className="w-full min-h-[44px] md:min-h-0 bg-slate-950/90 border border-white/[0.08] text-slate-200 text-xs rounded-xl pl-8 pr-7 py-2.5 md:py-2 focus:outline-none focus:border-emerald-500/60 transition-all placeholder:text-slate-500"
             />
             {searchQuery && (
               <button
@@ -924,14 +923,14 @@ export default function SkillsArchitectureShowcase({
           </div>
 
           {/* Sort Mode */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/[0.08] text-xs w-full md:w-auto">
             <button
               type="button"
               onClick={() => {
                 setSortMode('default');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer ${
+              className={`flex-1 md:flex-initial min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer ${
                 sortMode === 'default'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -945,7 +944,7 @@ export default function SkillsArchitectureShowcase({
                 setSortMode('proficiency');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer ${
+              className={`flex-1 md:flex-initial min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer ${
                 sortMode === 'proficiency'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -959,7 +958,7 @@ export default function SkillsArchitectureShowcase({
                 setSortMode('name');
                 soundFx.playClick();
               }}
-              className={`px-2.5 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              className={`flex-1 md:flex-initial min-h-[44px] md:min-h-0 px-2.5 py-2.5 md:py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                 sortMode === 'name'
                   ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-white'
@@ -973,7 +972,7 @@ export default function SkillsArchitectureShowcase({
       </div>
 
       {/* Domain Telemetry Summary Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-white/[0.07] backdrop-blur-xl flex items-center justify-between gap-3">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block">
@@ -1099,7 +1098,7 @@ export default function SkillsArchitectureShowcase({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 items-stretch"
+          className="grid grid-cols-1 w-full md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 items-stretch"
         >
           {filteredSkills.map((skill, sIdx) => {
             const isExpanded = expandedSkillId === skill.id;
@@ -1109,7 +1108,7 @@ export default function SkillsArchitectureShowcase({
                 key={skill.id || `skill-${sIdx}`}
                 className={
                   isExpanded
-                    ? 'sm:col-span-2 lg:col-span-2 xl:col-span-2'
+                    ? 'md:col-span-2 lg:col-span-2 xl:col-span-2'
                     : 'col-span-1'
                 }
               >

@@ -337,10 +337,9 @@ export default function CodingProfileSpotlightCard({
   return (
     <div style={{ perspective: 1400 }} className="h-full">
       <motion.div
-        layout="position"
         initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: false, amount: 0.12, margin: '-20px' }}
+        viewport={{ once: true, amount: 0.12 }}
         animate={{
           rotateX: prefersReduced ? 0 : tilt.rotateX,
           rotateY: prefersReduced ? 0 : tilt.rotateY,
